@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "skills": [
+    {
+      "slug": "finance/promo-code-summary",
+      "name": "Promo code summary",
+      "description": "Summarize orders that used a given promo code over the last 30 days.",
+      "category": "finance",
+      "icon": "receipt",
+      "path": "finance/promo-code-summary.md",
+      "updated_at": "2026-06-20T00:00:00Z"
+    },
+    {
+      "slug": "finance/monthly-close",
+      "name": "Monthly close report",
+      "description": "Generate a one-page financial summary for the most recently completed calendar month.",
+      "category": "finance",
+      "icon": "file-text",
+      "path": "finance/monthly-close.md",
+      "updated_at": "2026-06-20T00:00:00Z"
+    },
+    {
+      "slug": "finance/top-customers",
+      "name": "Top customers by lifetime value",
+      "description": "Rank customers by lifetime order revenue. Useful for VIP outreach.",
+      "category": "finance",
+      "icon": "trophy",
+      "path": "finance/top-customers.md",
+      "updated_at": "2026-06-20T00:00:00Z"
+    },
+    {
+      "slug": "themes/scrape-into-theme",
+      "name": "Scrape a URL into the active theme",
+      "description": "Fetch a page, extract its layout and copy, scaffold a matching Fluid theme section.",
+      "category": "themes",
+      "icon": "globe",
+      "path": "themes/scrape-into-theme.md",
+      "updated_at": "2026-06-20T00:00:00Z"
+    },
+    {
+      "slug": "themes/accessibility-audit",
+      "name": "Theme accessibility audit",
+      "description": "Scan the active theme for common a11y issues and propose fixes.",
+      "category": "themes",
+      "icon": "accessibility",
+      "path": "themes/accessibility-audit.md",
+      "updated_at": "2026-06-20T00:00:00Z"
+    },
+    {
+      "slug": "mist/scaffold-droplet",
+      "name": "Scaffold a new Droplet for a Mist",
+      "description": "Set up the Droplet UI scaffolding (page, route, schema) for a fresh Mist app.",
+      "category": "mist",
+      "icon": "hammer",
+      "path": "mist/scaffold-droplet.md",
+      "updated_at": "2026-06-20T00:00:00Z"
+    },
+    {
+      "slug": "mist/env-vars-audit",
+      "name": "Audit env vars across all live Mists",
+      "description": "Check every live Mist for missing or inconsistent env vars (Stripe keys, webhook secrets, etc.).",
+      "category": "mist",
+      "icon": "shield-check",
+      "path": "mist/env-vars-audit.md",
+      "updated_at": "2026-06-20T00:00:00Z"
+    },
+    {
+      "slug": "mist/debug-failed-deploy",
+      "name": "Debug a failed Mist deploy",
+      "description": "Pull deployment logs, identify the failure, and propose a fix.",
+      "category": "mist",
+      "icon": "bug",
+      "path": "mist/debug-failed-deploy.md",
+      "updated_at": "2026-06-20T00:00:00Z"
+    }
+  ]
+}
