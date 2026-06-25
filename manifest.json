@@ -47,6 +47,24 @@
       "updated_at": "2026-06-20T00:00:00Z"
     },
     {
+      "slug": "themes/image-optimization",
+      "name": "Optimize theme images",
+      "description": "Add responsive, lazy-loaded <img> markup with ImageKit transformation params to Fluid Liquid themes.",
+      "category": "themes",
+      "icon": "image",
+      "path": "themes/image-optimization.md",
+      "updated_at": "2026-06-24T00:00:00Z"
+    },
+    {
+      "slug": "themes/theme-review",
+      "name": "Theme review & fix",
+      "description": "Iteratively review and fix a Fluid theme one section at a time: schema, Liquid correctness, performance, a11y, and DRY.",
+      "category": "themes",
+      "icon": "clipboard-check",
+      "path": "themes/theme-review.md",
+      "updated_at": "2026-06-24T00:00:00Z"
+    },
+    {
       "slug": "mist/scaffold-droplet",
       "name": "Scaffold a new Droplet for a Mist",
       "description": "Set up the Droplet UI scaffolding (page, route, schema) for a fresh Mist app.",
