@@ -65,6 +65,15 @@
       "updated_at": "2026-06-24T00:00:00Z"
     },
     {
+      "slug": "themes/languages",
+      "name": "Translate theme languages",
+      "description": "Translate a Fluid theme into every language the company has enabled, syncing locales/*.json with professional, on-brand localization.",
+      "category": "themes",
+      "icon": "languages",
+      "path": "themes/languages.md",
+      "updated_at": "2026-06-24T00:00:00Z"
+    },
+    {
       "slug": "mist/scaffold-droplet",
       "name": "Scaffold a new Droplet for a Mist",
       "description": "Set up the Droplet UI scaffolding (page, route, schema) for a fresh Mist app.",
