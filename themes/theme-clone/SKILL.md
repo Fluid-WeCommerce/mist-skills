@@ -43,7 +43,8 @@ Ask the user for ALL of these before doing anything:
 | Input | Required | Description |
 |-------|----------|-------------|
 | `SOURCE_SITE` | Yes | Base URL of the site to clone (e.g. `https://yellowbirdfoods.com`) |
-| `SITE_PREFIX` | Yes | Short prefix for section naming (e.g. `yb`, `hiya`) |
+
+**Do not ask for a section-naming prefix.** Derive a short `SITE_PREFIX` yourself from `SOURCE_SITE` — take the domain's second-level name, strip `www.` and the TLD, and shorten to a 2–5 char slug (e.g. `yellowbirdfoods.com` → `yb`, `hiyahealth.com` → `hiya`). You only need it in the rare case noted under section naming; canonical section names never use it.
 
 For **single page clone**, also collect:
 
