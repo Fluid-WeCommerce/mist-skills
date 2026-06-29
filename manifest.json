@@ -99,6 +99,62 @@
       "icon": "bug",
       "path": "mist/debug-failed-deploy.md",
       "updated_at": "2026-06-20T00:00:00Z"
+    },
+    {
+      "slug": "themes/theme-clone",
+      "name": "Theme Clone",
+      "description": "Clone any website into a pixel-perfect Fluid theme — scrape the source, build sections, push, and visually verify against the original.",
+      "category": "themes",
+      "icon": "copy",
+      "path": "themes/theme-clone/SKILL.md",
+      "updated_at": "2026-06-29T00:00:00Z",
+      "references": [
+        "themes/theme-clone/references/batch-upload-script.md",
+        "themes/theme-clone/references/css-js-patterns.md",
+        "themes/theme-clone/references/dev-preview-visual-diff.md",
+        "themes/theme-clone/references/fluid-rules.md",
+        "themes/theme-clone/references/page-templates.md",
+        "themes/theme-clone/references/schema-settings-reference.md",
+        "themes/theme-clone/references/section-template.md",
+        "themes/theme-clone/references/template-variables.md",
+        "themes/theme-clone/references/theme-upload-api.md"
+      ]
+    },
+    {
+      "slug": "themes/theme-refine",
+      "name": "Theme Refine",
+      "description": "Refine a Fluid theme to the gold standard: pixel-perfect visual QA after a clone, or migrate a legacy theme to the canonical architecture.",
+      "category": "themes",
+      "icon": "sparkles",
+      "path": "themes/theme-refine/SKILL.md",
+      "updated_at": "2026-06-29T00:00:00Z",
+      "references": [
+        "themes/theme-refine/references/dev-preview-visual-diff.md",
+        "themes/references/blocks-vs-sections.md",
+        "themes/references/css-js-hygiene.md",
+        "themes/references/dead-code.md",
+        "themes/references/dynamism.md",
+        "themes/references/editor-attributes.md",
+        "themes/references/examples.md",
+        "themes/references/fairshare-attributes.md",
+        "themes/references/global-settings.md",
+        "themes/references/liquid-correctness.md",
+        "themes/references/navigation.md"
+      ]
+    },
+    {
+      "slug": "onboarding/onboarding-prefill",
+      "name": "Onboarding Pre-Fill",
+      "description": "Pre-fill the Fluid payments onboarding (KYC) form by scraping the company website and researching public records, with confidence scoring before pushing.",
+      "category": "onboarding",
+      "icon": "id-card",
+      "path": "onboarding/onboarding-prefill/SKILL.md",
+      "updated_at": "2026-06-29T00:00:00Z",
+      "references": [
+        "onboarding/onboarding-prefill/references/api-endpoints.md",
+        "onboarding/onboarding-prefill/references/field-coverage.md",
+        "onboarding/onboarding-prefill/references/state-registries.md"
+      ]
     }
   ]
 }
