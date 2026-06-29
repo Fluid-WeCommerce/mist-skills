@@ -53,7 +53,7 @@ These are rendered by `layouts/theme.liquid` and appear on every page. Only modi
 
 | Type | Handling |
 |------|----------|
-| Self-hosted (`.mp4`, `.webm`) | Upload to DAM via `upload.fluid.app`. Use `asset.default_variant_url`. Add `create_media=true` for Media library visibility. |
+| Self-hosted (`.mp4`, `.webm`) | Upload with the `dam_upload` tool (pass `create_media=true` for Media library visibility). Use `asset.default_variant_url`. |
 | YouTube/Vimeo embeds | Keep original embed URLs. Add a `video_url` text setting. |
 | Background videos | Use `autoplay`, `loop`, `muted`, `playsinline` attributes. Include poster image fallback. |
 

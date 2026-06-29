@@ -66,10 +66,9 @@ The `key` maps directly to the theme directory structure:
 Binary files must be uploaded to the Fluid DAM first, then referenced:
 
 ```
-# 1. Upload binary to the Fluid DAM (auth injected by the runtime)
-#    POST the file to https://upload.fluid.app/upload with fields:
-#      file=@/tmp/theme/assets/logo.png, fileName=logo.png, name=Theme Logo
-#    Returns: { "asset": { "default_variant_url": "https://ik.imagekit.io/fluid/..." } }
+# 1. Upload the binary with the dam_upload tool (never POST to upload.fluid.app yourself).
+#    dam_upload(file="assets/logo.png", name="Theme Logo")
+#    → { "asset": { "default_variant_url": "https://ik.imagekit.io/fluid/..." } }
 
 # 2. Register as theme resource
 fluid_api("/api/application_themes/{themeId}/resources", "PUT", {
@@ -80,7 +79,7 @@ fluid_api("/api/application_themes/{themeId}/resources", "PUT", {
 
 ## Step 3: Upload All Files
 
-`fluid theme push` already does this end-to-end and is the preferred path. If you need to drive it yourself, process every file in the theme directory — call `fluid_api` for text resources, and upload binaries to the DAM first (auth injected by the runtime), then register the returned URL:
+`fluid theme push` already does this end-to-end and is the preferred path. If you need to drive it yourself, process every file in the theme directory — call `fluid_api` for text resources, and the `dam_upload` tool for binaries, then register the returned URL:
 
 ```python
 import os
@@ -108,11 +107,9 @@ for root, dirs, files in os.walk(THEME_DIR):
             )
             print(f"[Upload] {key} — done")
         else:
-            # Binary: upload to the Fluid DAM first (auth injected by the runtime),
-            # POST the file to https://upload.fluid.app/upload with fields
-            # file=<binary>, fileName=<fname>, name=<fname>; read
-            # asset.default_variant_url from the response.
-            dam_url = upload_to_fluid_dam(filepath, fname)  # returns default_variant_url
+            # Binary: call the dam_upload tool with the file path; read
+            # asset.default_variant_url from the returned asset record.
+            dam_url = dam_upload(file=filepath, name=fname)["asset"]["default_variant_url"]
             if dam_url:
                 fluid_api(
                     f"/api/application_themes/{THEME_ID}/resources",

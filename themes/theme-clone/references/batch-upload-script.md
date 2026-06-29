@@ -1,103 +1,38 @@
-# Batch Upload Script
+# Batch DAM Upload
 
-Upload images in bulk to the Fluid DAM. The active Fluid company is already selected in Mist Desktop, so the DAM upload auth is injected by the runtime — you never collect or pass a token.
+Upload images in bulk to the Fluid DAM. The active Fluid company is already selected in Mist Desktop, so DAM auth (ImageKit auth + registration + the company-scoped folder) is handled for you — you never collect or pass a token, and you never POST to `upload.fluid.app` yourself.
 
-## Copy-Paste Ready Script
+## Use the `dam_upload` tool — not curl
 
-Copy this script, update the image list, and run. Each `upload_image` call POSTs to the Fluid DAM at `https://upload.fluid.app/upload` (auth injected by the runtime).
-
-```bash
-#!/bin/bash
-# ============================================================
-# Fluid DAM Batch Upload Script
-# Uses https://upload.fluid.app for single-step uploads
-# Auth is injected by the runtime — no token needed.
-# Usage: chmod +x upload.sh && bash upload.sh
-# ============================================================
-
-RESULTS_FILE="/tmp/dam_upload_results.txt"
-> "$RESULTS_FILE"
-
-upload_image() {
-  local URL="$1" NAME="$2"
-  echo "--- Uploading: $NAME ---"
-
-  # POST to the Fluid DAM (auth injected by the runtime)
-  local RESP=$(curl -s -X POST https://upload.fluid.app/upload \
-    -F "external_asset_url=$URL" \
-    -F "name=$NAME" \
-    -F "description=Uploaded from source")
-
-  local DAM=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('asset',{}).get('default_variant_url',''))" 2>/dev/null)
-  local CODE=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('asset',{}).get('code',''))" 2>/dev/null)
-
-  if [ -n "$DAM" ] && [ "$DAM" != "" ] && [ "$DAM" != "None" ]; then
-    echo "SUCCESS [$CODE]: $DAM"
-    echo "$NAME|$DAM" >> "$RESULTS_FILE"
-  else
-    local ERR=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('error','Unknown error'))" 2>/dev/null)
-    echo "FAILED: $ERR"
-    echo "$NAME|FAILED: $ERR" >> "$RESULTS_FILE"
-    return 1
-  fi
-}
-
-# ============================================================
-# ADD YOUR IMAGES HERE
-# Format: upload_image "SOURCE_URL" "display-name"
-# ============================================================
-
-upload_image "https://example.com/cdn/hero.jpg" "hero-desktop"
-upload_image "https://example.com/cdn/team-photo.png" "team-photo"
-upload_image "https://example.com/cdn/icon-star.svg" "icon-star"
-# ... add all images ...
-
-echo ""
-echo "=== ALL UPLOADS COMPLETE ==="
-cat "$RESULTS_FILE"
-echo ""
-echo "Total: $(wc -l < "$RESULTS_FILE") images"
-```
-
-## Running the Script
-
-```bash
-chmod +x /tmp/upload.sh
-bash /tmp/upload.sh
-```
-
-## Results Format
-
-The results file (`/tmp/dam_upload_results.txt`) contains lines like:
+`dam_upload` takes a **file inside the project sandbox** and returns the asset record. To batch-upload, **issue many `dam_upload` calls in parallel in a single turn** — that's the intended pattern for "upload these 20 images." Each result carries the DAM URL at `asset.default_variant_url`.
 
 ```
-hero-desktop|https://ik.imagekit.io/fluid/980243104/hero-desktop_abc123.jpg
-team-photo|https://ik.imagekit.io/fluid/980243104/team-photo_def456.png
-icon-star|https://ik.imagekit.io/fluid/980243104/icon-star_ghi789.svg
+dam_upload(file=".mist-desktop/attachments/hero.jpg",  name="hero-desktop")
+dam_upload(file=".mist-desktop/attachments/team.png",  name="team-photo")
+dam_upload(file="assets/icon-star.svg",                name="icon-star", tags="icon,ui")
+# → each returns { "asset": { "default_variant_url": "https://ik.imagekit.io/fluid/.../hero-desktop_abc123.jpg", ... } }
 ```
 
-Use the URLs after the `|` in your section templates.
+### `dam_upload` arguments
 
-## Upload API Fields
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `file` | Yes | Path to the file inside the project sandbox (absolute or project-relative). |
+| `name` | No | Display name for the DAM asset. Defaults to the file's basename. |
+| `description` | No | Asset description shown in the DAM browser. |
+| `tags` | No | Comma-separated tags (e.g. `"brand,hero,2026-launch"`). |
+| `folder` | No | Override the ImageKit folder. Defaults to the company-scoped folder Fluid assigns. |
+| `create_media` | No | When `true`, also create a Fluid Media resource (works for images, videos, PDFs). |
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `file` | * | The file to upload (required if no `external_asset_url`) |
-| `external_asset_url` | * | URL to fetch the file from (required if no `file`) |
-| `fileName` | ** | Filename with extension (required with `file`, auto-detected from URL) |
-| `name` | No | Display name for the DAM asset |
-| `description` | No | Asset description |
-| `tags` | No | Comma-separated tags (e.g. `"en,product,featured"`) |
-| `useUniqueFileName` | No | `true` (default) or `false` |
-| `create_media` | No | `true` to also create a Fluid Media resource (for videos) |
+Read `asset.default_variant_url` from each result and use it in your section templates and `settings_data.json`.
 
-## Uploading a Local File
+## Remote source-site images
 
-```bash
-# POST to the Fluid DAM (auth injected by the runtime)
-curl -s -X POST https://upload.fluid.app/upload \
-  -F "file=@/tmp/my-image.png" \
-  -F "fileName=my-image.png" \
-  -F "name=My Image" \
-  -F "description=Hero background image"
-```
+`dam_upload` uploads a local file, so for an image hosted on the source CDN, either:
+
+- **Fetch it into the sandbox first** (the `crawl` tool can pull page assets, or download the URL), then call `dam_upload` on the saved path; or
+- **Use the CLI** `fluid dam upload --url <SOURCE_IMAGE_URL> --name <name>`, which fetches a remote URL directly (also accepts `--description`, `--tags`, `--folder`, `--create-media`).
+
+## Oversized assets
+
+If a file is too large for the upload service or to view inline, chain `compress_media` → `dam_upload`. `compress_media` writes a sibling `<name>_compressed.<ext>` (video: H.264/AAC; image: q:v, optional `width` downscale) and returns the new path to feed into `dam_upload`.

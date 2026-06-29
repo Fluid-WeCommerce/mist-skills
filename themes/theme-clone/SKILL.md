@@ -229,15 +229,15 @@ Also check: background images in CSS, lazy-loaded (`data-src`), inline SVGs (cop
 
 **All images must go to the DAM. Never hotlink to source CDNs.**
 
-Upload each image to the Fluid DAM at `https://upload.fluid.app/upload` (auth injected by the runtime — no token header). POST the fields `external_asset_url=<SOURCE_IMAGE_URL>` and `name=<descriptive-name>`:
+Use the **`dam_upload` tool** — never `curl`/POST to `upload.fluid.app` yourself (auth, ImageKit registration, and the company-scoped folder are all handled for you). It takes a file inside the project sandbox plus optional `name` / `description` / `tags` / `create_media`, and returns the asset record — use `asset.default_variant_url` as the image URL in your sections and `settings_data.json`.
 
-```bash
-curl -s -X POST https://upload.fluid.app/upload \
-  -F "external_asset_url=<SOURCE_IMAGE_URL>" \
-  -F "name=<descriptive-name>"
-```
+Source-site images live on a remote CDN, and `dam_upload` uploads a **local file**, so for each image:
 
-Use `asset.default_variant_url` from the response. For batch uploads, see [references/batch-upload-script.md](references/batch-upload-script.md).
+1. Fetch it into the project sandbox (the `crawl` tool can pull page assets, or download the URL directly).
+2. Call `dam_upload` with the saved path. Run one call per file — **parallel tool calls in a single turn batch-upload many images at once**.
+3. If an asset is too large for the upload service, chain `compress_media` → `dam_upload`.
+
+`asset.default_variant_url` from each result is the DAM URL to reference. (Alternatively, the `fluid dam upload --url <SOURCE_IMAGE_URL> --name <name>` CLI fetches a remote URL directly without a local download.) See [references/batch-upload-script.md](references/batch-upload-script.md) for the batch pattern.
 
 ---
 
@@ -809,7 +809,7 @@ theme_id = resp["application_theme"]["id"]
 
 ### 7b: Upload every file
 
-Walk the working directory and PUT each file as a theme resource. Text files go through `fluid_api`; binaries upload to the Fluid DAM first (auth injected by the runtime), then register the returned URL:
+Walk the working directory and PUT each file as a theme resource. Text files go through `fluid_api`; for each binary, call the **`dam_upload` tool** (never POST to `upload.fluid.app` yourself), then register the returned `asset.default_variant_url`:
 
 ```python
 TEXT_EXTS = {'.liquid', '.css', '.js', '.json', '.html', '.txt', '.svg'}
@@ -827,10 +827,9 @@ for root, dirs, files in os.walk(WORK_DIR):
             fluid_api(f"/api/application_themes/{theme_id}/resources", "PUT",
                 {"key": key, "content": content})
         else:
-            # Binary: upload to the Fluid DAM first (auth injected by the runtime),
-            # POST the file to https://upload.fluid.app/upload with fields
-            # file=<binary>, fileName=<fname>; read asset.default_variant_url.
-            dam_url = upload_to_fluid_dam(filepath, fname)  # returns default_variant_url
+            # Binary: call the dam_upload tool with the file path; it returns
+            # the asset record. Register asset.default_variant_url as the resource.
+            dam_url = dam_upload(file=filepath, name=fname)["asset"]["default_variant_url"]
             if dam_url:
                 fluid_api(f"/api/application_themes/{theme_id}/resources", "PUT",
                     {"key": key, "dam_asset": dam_url})
