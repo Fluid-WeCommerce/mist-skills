@@ -55,14 +55,16 @@ Then judge each survivor on relevance to the brand, message quality, and complia
 
 ## 4. Present
 
-Show a numbered markdown list, best first, aiming for 20-30 entries:
+Show a numbered markdown list, best first, aiming for 20-30 entries. **The video URL is the MOST IMPORTANT part of each entry — the reviewer can't evaluate a video they can't open.** Show the full URL plainly on its own line under each entry (never bury it behind link text or omit it):
 
 ```
-N. [thumb](thumbnail_url) — @handle (Xk followers) — Xk views / X.X% ER — "one-line hook from the caption" — compliance: ok
-N. [thumb](thumbnail_url) — @handle (Xk followers) — Xk views / X.X% ER — "one-line hook" — compliance: review: structure/function claim ("supports immunity")
+N. @handle (Xk followers) — Xk views / X.X% ER — "one-line hook from the caption" — compliance: ok
+   https://www.tiktok.com/@handle/video/1234567890123456789
+N. @handle (Xk followers) — Xk views / X.X% ER — "one-line hook" — compliance: review: structure/function claim ("supports immunity")
+   https://www.tiktok.com/@handle/video/9876543210987654321
 ```
 
-Add an **Excluded** section listing disqualified videos with a one-line reason each (e.g. `@handle — income claim in caption`).
+Add an **Excluded** section listing disqualified videos with a one-line reason each, also with their URLs (e.g. `@handle — income claim in caption — https://…`) so the reviewer can spot-check the disqualification.
 
 Then ask which numbers to add to the DAM and **END YOUR TURN immediately** — the question must be the very last thing you output. Finish ALL searching, enrichment, and scoring BEFORE presenting the list; never run a tool call after asking (the user's answer stays queued until your turn ends). **Do NOT rip anything yet** — wait for the user's selection.
 
