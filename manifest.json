@@ -155,6 +155,24 @@
         "onboarding/onboarding-prefill/references/field-coverage.md",
         "onboarding/onboarding-prefill/references/state-registries.md"
       ]
+    },
+    {
+      "slug": "themes/iterative-theme-refine",
+      "name": "Iterative Theme Refine",
+      "description": "Screenshot-based iterative refinement loop that runs after theme-clone: captures paired screenshots each round, fixes the top 1-3 discrepancies, and self-terminates at 5 rounds with a documented remaining-diff report.",
+      "category": "themes",
+      "icon": "refresh-cw",
+      "path": "themes/iterative-theme-refine/SKILL.md",
+      "updated_at": "2026-07-04T00:00:00Z"
+    },
+    {
+      "slug": "onboarding/onboard-launch-company",
+      "name": "Onboard & Launch Company",
+      "description": "Guided flow that collects the website URL + product-import path (Connect / scrape / manual) and fires the flagship onboard-launch-company workflow — clone site, refine theme, import products, tick Getting Started, discover UGC, launch-readiness review.",
+      "category": "onboarding",
+      "icon": "rocket",
+      "path": "onboarding/onboard-launch-company/SKILL.md",
+      "updated_at": "2026-07-04T00:00:00Z"
     }
   ]
 }
