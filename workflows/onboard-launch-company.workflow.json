@@ -1,0 +1,110 @@
+{
+  "slug": "onboard-launch-company",
+  "name": "Onboard & Launch Company",
+  "description": "End-to-end company onboarding: scrape brand + business info, clone the company's current website into a Fluid theme, import products, refine the theme to spec, discover TikTok/UGC content for the DAM, and run a final QA sweep.",
+  "maxParallel": 3,
+  "steps": [
+    {
+      "id": "brand-info",
+      "name": "Scrape brand & company info",
+      "skill": "onboarding/onboarding-prefill",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The company's legal/business name, website URL, and support contact info were located and reported.",
+        "Brand assets (logo URL, primary brand colors) were identified and listed.",
+        "Whatever onboarding/business fields could be pre-filled via the Fluid API were submitted, and the ones that couldn't were explicitly listed for the user."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "clone-website",
+      "name": "Clone website into a Fluid theme",
+      "skill": "themes/theme-clone",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "acceptance": [
+        "Theme files (sections, templates, styles) exist on disk for the cloned pages.",
+        "The theme's homepage structurally matches the source site: header, hero, main content sections, and footer are all present.",
+        "Brand colors and fonts from the source site are used in the theme stylesheet."
+      ],
+      "dependsOn": [
+        "brand-info"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "import-products",
+      "name": "Import products",
+      "prompt": "Import the company's product catalog into Fluid.\n\n1. Using the company website discovered in the earlier steps (see step context above), locate its product/shop pages and extract every product you can find: title, description, price, images, variants (size/color/etc.).\n2. Create each product via the Fluid API: POST /api/company/v1/products with the `{ product: { … } }` wrapper. Set variants and prices via PUT /api/company/v1/variants/{id} where needed.\n3. Before creating, GET /api/company/v1/products and skip any product that already exists with the same title (idempotent re-runs).\n4. Report exactly how many products you created, skipped, or failed, with product ids.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "GET /api/company/v1/products returns the products reported as created, with non-empty titles and prices.",
+        "No duplicate products were created (titles are unique across the catalog).",
+        "The reported created/skipped/failed counts are consistent with what the API returns."
+      ],
+      "dependsOn": [
+        "clone-website"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "refine-theme",
+      "name": "Refine theme to spec",
+      "skill": "themes/theme-refine",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "acceptance": [
+        "Spacing, typography, and colors closely match the source site (verify with a preview screenshot when a preview is running).",
+        "No broken images, missing assets, or Liquid errors in the refined templates.",
+        "Every section edited during refinement still has valid schema settings."
+      ],
+      "dependsOn": [
+        "import-products"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "ugc-discovery",
+      "name": "Discover TikTok / UGC content for the DAM",
+      "prompt": "Find user-generated and social content for this company and load it into the Fluid DAM.\n\n1. From the brand info in the step context above, identify the company's TikTok / Instagram handles and search the web (web_fetch) for recent TikTok videos, reels, and UGC that features the brand or its products.\n2. For each promising item (aim for 3-8), use the video_ripper tool to download it, then dam_upload to push it into the company's DAM. Tag uploads with the brand name.\n3. If no social presence can be found, say so explicitly and list the search queries you tried — that is an acceptable outcome, not a failure.\n4. Report every DAM asset you created with its URL.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Either at least one UGC asset was uploaded to the DAM (verifiable via its reported URL), or an explicit finding documents that the brand has no discoverable social/UGC presence with the queries attempted.",
+        "No unrelated or off-brand content was uploaded."
+      ],
+      "dependsOn": [
+        "refine-theme"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "final-qa",
+      "name": "Final QA sweep",
+      "prompt": "Run a final end-to-end QA sweep over everything this workflow produced (see the step context above for what each step reported).\n\n1. Verify the theme files exist and the homepage renders sensibly (screenshot the preview if one is running).\n2. Verify products exist via GET /api/company/v1/products and spot-check 3 of them for sane titles, prices, and images.\n3. Verify the reported DAM assets and onboarding info are consistent with what the earlier steps claimed.\n4. Produce a launch-readiness report: what is done, what is missing, and a short prioritized list of anything a human still needs to do before launch.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "A launch-readiness report was produced covering theme, products, DAM assets, and onboarding info.",
+        "Every claim in the report is backed by an actual check performed this turn (API call, file read, or screenshot), not by trusting earlier steps."
+      ],
+      "dependsOn": [
+        "ugc-discovery"
+      ],
+      "maxReworkRounds": 2
+    }
+  ]
+}
