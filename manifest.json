@@ -1,178 +1,313 @@
 {
-  "version": 1,
-  "skills": [
-    {
-      "slug": "finance/promo-code-summary",
-      "name": "Promo code summary",
-      "description": "Summarize orders that used a given promo code over the last 30 days.",
-      "category": "finance",
-      "icon": "receipt",
-      "path": "finance/promo-code-summary.md",
-      "updated_at": "2026-06-20T00:00:00Z"
-    },
-    {
-      "slug": "finance/monthly-close",
-      "name": "Monthly close report",
-      "description": "Generate a one-page financial summary for the most recently completed calendar month.",
-      "category": "finance",
-      "icon": "file-text",
-      "path": "finance/monthly-close.md",
-      "updated_at": "2026-06-20T00:00:00Z"
-    },
-    {
-      "slug": "finance/top-customers",
-      "name": "Top customers by lifetime value",
-      "description": "Rank customers by lifetime order revenue. Useful for VIP outreach.",
-      "category": "finance",
-      "icon": "trophy",
-      "path": "finance/top-customers.md",
-      "updated_at": "2026-06-20T00:00:00Z"
-    },
-    {
-      "slug": "themes/scrape-into-theme",
-      "name": "Scrape a URL into the active theme",
-      "description": "Fetch a page, extract its layout and copy, scaffold a matching Fluid theme section.",
-      "category": "themes",
-      "icon": "globe",
-      "path": "themes/scrape-into-theme.md",
-      "updated_at": "2026-06-20T00:00:00Z"
-    },
-    {
-      "slug": "themes/accessibility-audit",
-      "name": "Theme accessibility audit",
-      "description": "Scan the active theme for common a11y issues and propose fixes.",
-      "category": "themes",
-      "icon": "accessibility",
-      "path": "themes/accessibility-audit.md",
-      "updated_at": "2026-06-20T00:00:00Z"
-    },
-    {
-      "slug": "themes/image-optimization",
-      "name": "Optimize theme images",
-      "description": "Add responsive, lazy-loaded <img> markup with ImageKit transformation params to Fluid Liquid themes.",
-      "category": "themes",
-      "icon": "image",
-      "path": "themes/image-optimization.md",
-      "updated_at": "2026-06-24T00:00:00Z"
-    },
-    {
-      "slug": "themes/theme-review",
-      "name": "Theme review & fix",
-      "description": "Iteratively review and fix a Fluid theme one section at a time: schema, Liquid correctness, performance, a11y, and DRY.",
-      "category": "themes",
-      "icon": "clipboard-check",
-      "path": "themes/theme-review.md",
-      "updated_at": "2026-06-24T00:00:00Z"
-    },
-    {
-      "slug": "themes/languages",
-      "name": "Translate theme languages",
-      "description": "Translate a Fluid theme into every language the company has enabled, syncing locales/*.json with professional, on-brand localization.",
-      "category": "themes",
-      "icon": "languages",
-      "path": "themes/languages.md",
-      "updated_at": "2026-06-24T00:00:00Z"
-    },
-    {
-      "slug": "mist/scaffold-droplet",
-      "name": "Scaffold a new Droplet for a Mist",
-      "description": "Set up the Droplet UI scaffolding (page, route, schema) for a fresh Mist app.",
-      "category": "mist",
-      "icon": "hammer",
-      "path": "mist/scaffold-droplet.md",
-      "updated_at": "2026-06-20T00:00:00Z"
-    },
-    {
-      "slug": "mist/env-vars-audit",
-      "name": "Audit env vars across all live Mists",
-      "description": "Check every live Mist for missing or inconsistent env vars (Stripe keys, webhook secrets, etc.).",
-      "category": "mist",
-      "icon": "shield-check",
-      "path": "mist/env-vars-audit.md",
-      "updated_at": "2026-06-20T00:00:00Z"
-    },
-    {
-      "slug": "mist/debug-failed-deploy",
-      "name": "Debug a failed Mist deploy",
-      "description": "Pull deployment logs, identify the failure, and propose a fix.",
-      "category": "mist",
-      "icon": "bug",
-      "path": "mist/debug-failed-deploy.md",
-      "updated_at": "2026-06-20T00:00:00Z"
-    },
-    {
-      "slug": "themes/theme-clone",
-      "name": "Theme Clone",
-      "description": "Clone any website into a pixel-perfect Fluid theme \u2014 scrape the source, build sections, push, and visually verify against the original.",
-      "category": "themes",
-      "icon": "copy",
-      "path": "themes/theme-clone/SKILL.md",
-      "updated_at": "2026-06-29T19:00:00Z",
-      "references": [
-        "themes/theme-clone/references/batch-upload-script.md",
-        "themes/theme-clone/references/css-js-patterns.md",
-        "themes/theme-clone/references/dev-preview-visual-diff.md",
-        "themes/theme-clone/references/fluid-rules.md",
-        "themes/theme-clone/references/page-templates.md",
-        "themes/theme-clone/references/schema-settings-reference.md",
-        "themes/theme-clone/references/section-template.md",
-        "themes/theme-clone/references/template-variables.md",
-        "themes/theme-clone/references/theme-upload-api.md"
-      ]
-    },
-    {
-      "slug": "themes/theme-refine",
-      "name": "Theme Refine",
-      "description": "Refine a Fluid theme to the gold standard: pixel-perfect visual QA after a clone, or migrate a legacy theme to the canonical architecture.",
-      "category": "themes",
-      "icon": "sparkles",
-      "path": "themes/theme-refine/SKILL.md",
-      "updated_at": "2026-06-29T00:00:00Z",
-      "references": [
-        "themes/theme-refine/references/dev-preview-visual-diff.md",
-        "themes/references/blocks-vs-sections.md",
-        "themes/references/css-js-hygiene.md",
-        "themes/references/dead-code.md",
-        "themes/references/dynamism.md",
-        "themes/references/editor-attributes.md",
-        "themes/references/examples.md",
-        "themes/references/fairshare-attributes.md",
-        "themes/references/global-settings.md",
-        "themes/references/liquid-correctness.md",
-        "themes/references/navigation.md"
-      ]
-    },
-    {
-      "slug": "onboarding/onboarding-prefill",
-      "name": "Onboarding Pre-Fill",
-      "description": "Pre-fill the Fluid payments onboarding (KYC) form by scraping the company website and researching public records, with confidence scoring before pushing.",
-      "category": "onboarding",
-      "icon": "id-card",
-      "path": "onboarding/onboarding-prefill/SKILL.md",
-      "updated_at": "2026-06-29T00:00:00Z",
-      "references": [
-        "onboarding/onboarding-prefill/references/api-endpoints.md",
-        "onboarding/onboarding-prefill/references/field-coverage.md",
-        "onboarding/onboarding-prefill/references/state-registries.md"
-      ]
-    },
-    {
-      "slug": "marketing/tiktok-ugc-discovery",
-      "name": "TikTok UGC Discovery",
-      "description": "Find the 20-30 most engaging, FTC/FDA-compliant TikTok UGC videos about a brand or product, let the user pick, and pull the picks into the DAM.",
-      "category": "marketing",
-      "icon": "video",
-      "path": "marketing/tiktok-ugc-discovery.md",
-      "updated_at": "2026-07-04T03:22:55Z"
-    },
-    {
-      "slug": "optimize/suggested-changes",
-      "name": "Suggested Changes",
-      "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
-      "category": "optimize",
-      "icon": "sparkles",
-      "path": "optimize/suggested-changes.md",
-      "updated_at": "2026-07-04T03:42:11Z"
-    }
-  ]
+    "version": 1,
+    "skills": [
+        {
+            "slug": "finance/promo-code-summary",
+            "name": "Promo code summary",
+            "description": "Summarize orders that used a given promo code over the last 30 days.",
+            "category": "finance",
+            "icon": "receipt",
+            "path": "finance/promo-code-summary.md",
+            "updated_at": "2026-06-20T00:00:00Z"
+        },
+        {
+            "slug": "finance/monthly-close",
+            "name": "Monthly close report",
+            "description": "Generate a one-page financial summary for the most recently completed calendar month.",
+            "category": "finance",
+            "icon": "file-text",
+            "path": "finance/monthly-close.md",
+            "updated_at": "2026-06-20T00:00:00Z"
+        },
+        {
+            "slug": "finance/top-customers",
+            "name": "Top customers by lifetime value",
+            "description": "Rank customers by lifetime order revenue. Useful for VIP outreach.",
+            "category": "finance",
+            "icon": "trophy",
+            "path": "finance/top-customers.md",
+            "updated_at": "2026-06-20T00:00:00Z"
+        },
+        {
+            "slug": "themes/scrape-into-theme",
+            "name": "Scrape a URL into the active theme",
+            "description": "Fetch a page, extract its layout and copy, scaffold a matching Fluid theme section.",
+            "category": "themes",
+            "icon": "globe",
+            "path": "themes/scrape-into-theme.md",
+            "updated_at": "2026-06-20T00:00:00Z"
+        },
+        {
+            "slug": "themes/accessibility-audit",
+            "name": "Theme accessibility audit",
+            "description": "Scan the active theme for common a11y issues and propose fixes.",
+            "category": "themes",
+            "icon": "accessibility",
+            "path": "themes/accessibility-audit.md",
+            "updated_at": "2026-06-20T00:00:00Z"
+        },
+        {
+            "slug": "themes/image-optimization",
+            "name": "Optimize theme images",
+            "description": "Add responsive, lazy-loaded <img> markup with ImageKit transformation params to Fluid Liquid themes.",
+            "category": "themes",
+            "icon": "image",
+            "path": "themes/image-optimization.md",
+            "updated_at": "2026-06-24T00:00:00Z"
+        },
+        {
+            "slug": "themes/theme-review",
+            "name": "Theme review & fix",
+            "description": "Iteratively review and fix a Fluid theme one section at a time: schema, Liquid correctness, performance, a11y, and DRY.",
+            "category": "themes",
+            "icon": "clipboard-check",
+            "path": "themes/theme-review.md",
+            "updated_at": "2026-06-24T00:00:00Z"
+        },
+        {
+            "slug": "themes/languages",
+            "name": "Translate theme languages",
+            "description": "Translate a Fluid theme into every language the company has enabled, syncing locales/*.json with professional, on-brand localization.",
+            "category": "themes",
+            "icon": "languages",
+            "path": "themes/languages.md",
+            "updated_at": "2026-06-24T00:00:00Z"
+        },
+        {
+            "slug": "mist/scaffold-droplet",
+            "name": "Scaffold a new Droplet for a Mist",
+            "description": "Set up the Droplet UI scaffolding (page, route, schema) for a fresh Mist app.",
+            "category": "mist",
+            "icon": "hammer",
+            "path": "mist/scaffold-droplet.md",
+            "updated_at": "2026-06-20T00:00:00Z"
+        },
+        {
+            "slug": "mist/env-vars-audit",
+            "name": "Audit env vars across all live Mists",
+            "description": "Check every live Mist for missing or inconsistent env vars (Stripe keys, webhook secrets, etc.).",
+            "category": "mist",
+            "icon": "shield-check",
+            "path": "mist/env-vars-audit.md",
+            "updated_at": "2026-06-20T00:00:00Z"
+        },
+        {
+            "slug": "mist/debug-failed-deploy",
+            "name": "Debug a failed Mist deploy",
+            "description": "Pull deployment logs, identify the failure, and propose a fix.",
+            "category": "mist",
+            "icon": "bug",
+            "path": "mist/debug-failed-deploy.md",
+            "updated_at": "2026-06-20T00:00:00Z"
+        },
+        {
+            "slug": "themes/theme-clone",
+            "name": "Theme Clone",
+            "description": "Clone any website into a pixel-perfect Fluid theme \u2014 scrape the source, build sections, push, and visually verify against the original.",
+            "category": "themes",
+            "icon": "copy",
+            "path": "themes/theme-clone/SKILL.md",
+            "updated_at": "2026-06-29T19:00:00Z",
+            "references": [
+                "themes/theme-clone/references/batch-upload-script.md",
+                "themes/theme-clone/references/css-js-patterns.md",
+                "themes/theme-clone/references/dev-preview-visual-diff.md",
+                "themes/theme-clone/references/fluid-rules.md",
+                "themes/theme-clone/references/page-templates.md",
+                "themes/theme-clone/references/schema-settings-reference.md",
+                "themes/theme-clone/references/section-template.md",
+                "themes/theme-clone/references/template-variables.md",
+                "themes/theme-clone/references/theme-upload-api.md"
+            ]
+        },
+        {
+            "slug": "themes/theme-refine",
+            "name": "Theme Refine",
+            "description": "Refine a Fluid theme to the gold standard: pixel-perfect visual QA after a clone, or migrate a legacy theme to the canonical architecture.",
+            "category": "themes",
+            "icon": "sparkles",
+            "path": "themes/theme-refine/SKILL.md",
+            "updated_at": "2026-06-29T00:00:00Z",
+            "references": [
+                "themes/theme-refine/references/dev-preview-visual-diff.md",
+                "themes/references/blocks-vs-sections.md",
+                "themes/references/css-js-hygiene.md",
+                "themes/references/dead-code.md",
+                "themes/references/dynamism.md",
+                "themes/references/editor-attributes.md",
+                "themes/references/examples.md",
+                "themes/references/fairshare-attributes.md",
+                "themes/references/global-settings.md",
+                "themes/references/liquid-correctness.md",
+                "themes/references/navigation.md"
+            ]
+        },
+        {
+            "slug": "onboarding/onboarding-prefill",
+            "name": "Onboarding Pre-Fill",
+            "description": "Pre-fill the Fluid payments onboarding (KYC) form by scraping the company website and researching public records, with confidence scoring before pushing.",
+            "category": "onboarding",
+            "icon": "id-card",
+            "path": "onboarding/onboarding-prefill/SKILL.md",
+            "updated_at": "2026-06-29T00:00:00Z",
+            "references": [
+                "onboarding/onboarding-prefill/references/api-endpoints.md",
+                "onboarding/onboarding-prefill/references/field-coverage.md",
+                "onboarding/onboarding-prefill/references/state-registries.md"
+            ]
+        },
+        {
+            "slug": "marketing/tiktok-ugc-discovery",
+            "name": "TikTok UGC Discovery",
+            "description": "Find the 20-30 most engaging, FTC/FDA-compliant TikTok UGC videos about a brand or product, let the user pick, and pull the picks into the DAM.",
+            "category": "marketing",
+            "icon": "video",
+            "path": "marketing/tiktok-ugc-discovery.md",
+            "updated_at": "2026-07-04T03:22:55Z"
+        },
+        {
+            "slug": "optimize/suggested-changes",
+            "name": "Suggested Changes",
+            "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
+            "category": "optimize",
+            "icon": "sparkles",
+            "path": "optimize/suggested-changes.md",
+            "updated_at": "2026-07-04T03:42:11Z"
+        },
+        {
+            "slug": "countries/DE/settings",
+            "name": "Germany country settings",
+            "description": "Legal and commercial defaults for selling into Germany \u2014 VAT, currency, language, address, disclosures, privacy law, and price-display rules. Loaded by the compliance-manager skill and the country_settings tool.",
+            "category": "countries",
+            "icon": "flag",
+            "path": "countries/DE/settings.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/DE/compliance-manager",
+            "name": "Germany Compliance Manager",
+            "description": "Review this storefront + products + agreements + themes for Germany compliance. Score each check ok/review/fail with citations to the specific rule.",
+            "category": "countries",
+            "icon": "shield-check",
+            "path": "countries/DE/skills/compliance-manager.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/FR/settings",
+            "name": "France country settings",
+            "description": "Legal and commercial defaults for selling into France \u2014 VAT, currency, language, address, disclosures, privacy law, and price-display rules. Loaded by the compliance-manager skill and the country_settings tool.",
+            "category": "countries",
+            "icon": "flag",
+            "path": "countries/FR/settings.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/FR/compliance-manager",
+            "name": "France Compliance Manager",
+            "description": "Review this storefront + products + agreements + themes for France compliance. Score each check ok/review/fail with citations to the specific rule.",
+            "category": "countries",
+            "icon": "shield-check",
+            "path": "countries/FR/skills/compliance-manager.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/GB/settings",
+            "name": "United Kingdom country settings",
+            "description": "Legal and commercial defaults for selling into United Kingdom \u2014 VAT, currency, language, address, disclosures, privacy law, and price-display rules. Loaded by the compliance-manager skill and the country_settings tool.",
+            "category": "countries",
+            "icon": "flag",
+            "path": "countries/GB/settings.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/GB/compliance-manager",
+            "name": "United Kingdom Compliance Manager",
+            "description": "Review this storefront + products + agreements + themes for United Kingdom compliance. Score each check ok/review/fail with citations to the specific rule.",
+            "category": "countries",
+            "icon": "shield-check",
+            "path": "countries/GB/skills/compliance-manager.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/CA/settings",
+            "name": "Canada country settings",
+            "description": "Legal and commercial defaults for selling into Canada \u2014 VAT, currency, language, address, disclosures, privacy law, and price-display rules. Loaded by the compliance-manager skill and the country_settings tool.",
+            "category": "countries",
+            "icon": "flag",
+            "path": "countries/CA/settings.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/CA/compliance-manager",
+            "name": "Canada Compliance Manager",
+            "description": "Review this storefront + products + agreements + themes for Canada compliance. Score each check ok/review/fail with citations to the specific rule.",
+            "category": "countries",
+            "icon": "shield-check",
+            "path": "countries/CA/skills/compliance-manager.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/MX/settings",
+            "name": "Mexico country settings",
+            "description": "Legal and commercial defaults for selling into Mexico \u2014 VAT, currency, language, address, disclosures, privacy law, and price-display rules. Loaded by the compliance-manager skill and the country_settings tool.",
+            "category": "countries",
+            "icon": "flag",
+            "path": "countries/MX/settings.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/MX/compliance-manager",
+            "name": "Mexico Compliance Manager",
+            "description": "Review this storefront + products + agreements + themes for Mexico compliance. Score each check ok/review/fail with citations to the specific rule.",
+            "category": "countries",
+            "icon": "shield-check",
+            "path": "countries/MX/skills/compliance-manager.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/AU/settings",
+            "name": "Australia country settings",
+            "description": "Legal and commercial defaults for selling into Australia \u2014 VAT, currency, language, address, disclosures, privacy law, and price-display rules. Loaded by the compliance-manager skill and the country_settings tool.",
+            "category": "countries",
+            "icon": "flag",
+            "path": "countries/AU/settings.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/AU/compliance-manager",
+            "name": "Australia Compliance Manager",
+            "description": "Review this storefront + products + agreements + themes for Australia compliance. Score each check ok/review/fail with citations to the specific rule.",
+            "category": "countries",
+            "icon": "shield-check",
+            "path": "countries/AU/skills/compliance-manager.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/JP/settings",
+            "name": "Japan country settings",
+            "description": "Legal and commercial defaults for selling into Japan \u2014 VAT, currency, language, address, disclosures, privacy law, and price-display rules. Loaded by the compliance-manager skill and the country_settings tool.",
+            "category": "countries",
+            "icon": "flag",
+            "path": "countries/JP/settings.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/JP/compliance-manager",
+            "name": "Japan Compliance Manager",
+            "description": "Review this storefront + products + agreements + themes for Japan compliance. Score each check ok/review/fail with citations to the specific rule.",
+            "category": "countries",
+            "icon": "shield-check",
+            "path": "countries/JP/skills/compliance-manager.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        },
+        {
+            "slug": "countries/compliance-manager",
+            "name": "Compliance Manager",
+            "description": "Review this storefront for compliance with the company's currently-selected country by dispatching to the country-specific compliance-manager skill.",
+            "category": "countries",
+            "icon": "shield-check",
+            "path": "countries/compliance-manager.md",
+            "updated_at": "2026-07-04T00:00:00Z"
+        }
+    ]
 }
