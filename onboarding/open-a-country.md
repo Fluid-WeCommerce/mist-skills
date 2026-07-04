@@ -26,7 +26,7 @@ Run these in parallel:
 4. `fluid_api` → `GET /api/agreements` — the company's agreements. These populate the agreements step: any agreement is a candidate; note in the option description when one already applies to other countries.
 5. `fluid_api` → `GET /api/settings/languages` — the company's installed languages. Each entry has `iso` and `active_in_company`. You'll diff this against the country's languages in step 3; **do NOT create a steps step for language selection.**
 
-# Step 1 — The steps (one call, up to seven steps — some are conditional)
+# Step 1 — The steps (one call, up to eight steps — some are conditional)
 
 Compute `missingLanguages` FIRST: the country's `languageCode` plus every code in `country_recommendations.widelySpokenLanguages` MINUS every ISO in `/api/settings/languages` where `active_in_company === true`. If it's empty, DROP the `languages` step from the call — never ask about a language the company already has enabled.
 
@@ -39,11 +39,15 @@ Then call `steps` with title like `Open Germany 🇩🇪` and these steps in ord
    - id `otg`, label `OTG — On The Ground`, description "You have (or are setting up) an entity in-country. Local fulfillment, local pricing, local compliance."
    - id `usd`, label `USD`, description "Sell and settle in USD — mainly digital products. No local currency or entity needed."
 2. `entity_name` — text_input "What's your legal entity name in <country>?", `show_if: { step_id: "mode", equals: "otg" }`, `skippable: true`, skip label "Skip for now". Only OTG needs an entity (that's the whole point of On The Ground).
-3. `languages` — multi_select (mode `opt_in`, all pre-checked) "Add languages spoken in <country>?" — ONLY include this step when `missingLanguages` is non-empty. Each option: id = ISO code (e.g. `fr`), label = display name (e.g. "French"), description = short "primary language of France" / "widely spoken in France" note. Skip the whole step when nothing is missing.
-4. `agreements` — multi_select (mode `opt_out`, everything pre-checked) "Fluid's agreements for <country>" listing the company's agreements from the API (option id = agreement id as a string). If the company has none yet, offer Fluid's standard baseline instead: `terms_of_service`, `privacy_policy`, `rep_agreement`, `refund_policy`.
-5. `payment_methods` — multi_select (mode `opt_out`) "Recommended payment methods for <country>" from `country_recommendations`. Set `pre_checked: true` only for entries with `recommended: true`; include the non-recommended ones unchecked so the user can opt in.
-6. `enrollment_fields` — multi_select (mode `opt_out`) "Enrollment fields for <country>" from `country_recommendations.enrollmentFields`, same pre_checked treatment — the user adds/removes freely.
-7. `product_pricing` — single_select "How should existing products be priced in <country>?" — you MUST offer these two options with these EXACT labels (recommend the first; both are reasonable):
+3. `otg_posture` — single_select "In <country>, will you sell mainly B2B, B2C, or both?", `show_if: { step_id: "mode", equals: "otg" }`. Only OTG needs this — it shapes the finalizer's compliance review (B2C sellers pick up Impressum / Mentions Légales / 特定商取引法 disclosure duties that pure B2B relaxes). Three options with these EXACT ids and labels:
+   - id `b2c`, label `B2C — end consumers`, description "Selling to end consumers. Consumer-protection disclosure pages are statutorily required for this posture."
+   - id `b2b`, label `B2B — business builders / distributors`, description "Selling to business builders and distributors. Consumer-protection pages are recommended but not statutorily required."
+   - id `both`, label `Both`, description "A mix — the compliance review applies the B2C bar to be safe."
+4. `languages` — multi_select (mode `opt_in`, all pre-checked) "Add languages spoken in <country>?" — ONLY include this step when `missingLanguages` is non-empty. Each option: id = ISO code (e.g. `fr`), label = display name (e.g. "French"), description = short "primary language of France" / "widely spoken in France" note. Skip the whole step when nothing is missing.
+5. `agreements` — multi_select (mode `opt_out`, everything pre-checked) "Fluid's agreements for <country>" listing the company's agreements from the API (option id = agreement id as a string). If the company has none yet, offer Fluid's standard baseline instead: `terms_of_service`, `privacy_policy`, `rep_agreement`, `refund_policy`.
+6. `payment_methods` — multi_select (mode `opt_out`) "Recommended payment methods for <country>" from `country_recommendations`. Set `pre_checked: true` only for entries with `recommended: true`; include the non-recommended ones unchecked so the user can opt in.
+7. `enrollment_fields` — multi_select (mode `opt_out`) "Enrollment fields for <country>" from `country_recommendations.enrollmentFields`, same pre_checked treatment — the user adds/removes freely.
+8. `product_pricing` — single_select "How should existing products be priced in <country>?" — you MUST offer these two options with these EXACT labels (recommend the first; both are reasonable):
    - id `convert`, label `Convert Product Pricing by <fx_rate> from USD` (interpolate the fx_rate you computed — e.g. `Convert Product Pricing by 0.92 from USD`), description "Fluid multiplies every existing USD-priced product by <fx_rate> to create the local <currency> price and activates them in this country. You can override individual prices later."
    - id `leave_inactive`, label `Leave Products Inactive in Country for now`, description "Nothing gets a local price; every existing product stays inactive in <country> until you set prices yourself later."
 
@@ -77,7 +81,8 @@ run_workflow({
     languages_to_add: <array of ISO codes the user kept in the languages step; [] when the step was dropped or all opt-outs>,
     pricing_choice: <"convert" or "leave_inactive" from the product_pricing step>,
     fx_rate: <the numeric fx_rate you computed; still send it when pricing_choice is "leave_inactive" for the record>,
-    mode: <"otg" | "nfr" | "usd" — the mode answer, verbatim>
+    mode: <"otg" | "nfr" | "usd" — the mode answer, verbatim>,
+    otg_posture: <"b2b" | "b2c" | "both" from the otg_posture step; null when mode != "otg">
   }
 })
 ```
