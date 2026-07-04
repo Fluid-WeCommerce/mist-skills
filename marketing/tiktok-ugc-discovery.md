@@ -18,7 +18,7 @@ Before running ANY searches, ask the user which kind of search they want:
 1. **Brand search** — everything people post about the brand overall
 2. **Specific product search** — UGC about one product (ask which product, if they haven't named it)
 
-Also ask for the brand/product name if they haven't given one. Ask this as one short question, then **END YOUR TURN and wait for their answer — do not search, enrich, or run any tool until they've responded.** If the user already made the scope unambiguous in their request (e.g. "find UGC about our collagen gummies"), confirm it in one line and proceed without re-asking.
+Also ask for the brand/product name if they haven't given one, and let them know up front that **this can take some time — every candidate video gets reviewed individually for compliance** before the shortlist is presented. Ask this as one short question, then **END YOUR TURN and wait for their answer — do not search, enrich, or run any tool until they've responded.** If the user already made the scope unambiguous in their request (e.g. "find UGC about our collagen gummies"), confirm it in one line (including the heads-up that the review takes a while) and proceed without re-asking.
 
 ## 1. Search
 
@@ -67,7 +67,6 @@ Then judge each survivor on relevance to the brand, message quality, and complia
 - income or earnings claims
 - guarantees, or "no side effects" claims
 - "doctor recommended" (or similar authority claims) without substantiation
-- apparently brand-affiliated creator — discount code, "partner"/"ambassador" language, or affiliate link — **without** #ad or #sponsored in the caption itself
 
 **Mark "review"** (include, flagged) for structure/function claims — "supports", "helps maintain", "promotes" and similar. These are often permissible but need a human look.
 
