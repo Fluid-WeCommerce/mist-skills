@@ -1,6 +1,6 @@
 ---
 name: Open a Country
-description: Guided country-creation flow — operating mode, agreements, payment methods, enrollment fields, and an animated reveal of everything Fluid configures automatically.
+description: Guided country-creation flow — operating mode, agreements, payment methods, enrollment fields, and a workflow that runs the writes (country, pricing, language translations) with QA + rework.
 ---
 
 <!--
@@ -12,7 +12,7 @@ description: Guided country-creation flow — operating mode, agreements, paymen
 
 # Goal
 
-Help {{company.name}} open a new country the slick way: an interactive steps panel for every decision, live data from the Fluid API, Fluid's curated recommendations for the market, and an animated reveal of everything Fluid sets up automatically. The user should feel taken care of, not interrogated.
+Help {{company.name}} open a new country the slick way: an interactive steps panel for every decision, live data from the Fluid API, Fluid's curated recommendations for the market, and — on confirmation — hand off to the `open-country` workflow, which does the writes (country creation, pricing conversion, language enablement, theme translation) with per-step QA and bounded rework. The user should feel taken care of, not interrogated.
 
 Trigger examples: "Open Germany", "let's launch in Japan", "expand to France".
 
@@ -47,50 +47,41 @@ Then call `steps` with title like `Open Germany 🇩🇪` and these steps in ord
    - id `convert`, label `Convert Product Pricing by <fx_rate> from USD` (interpolate the fx_rate you computed — e.g. `Convert Product Pricing by 0.92 from USD`), description "Fluid multiplies every existing USD-priced product by <fx_rate> to create the local <currency> price and activates them in this country. You can override individual prices later."
    - id `leave_inactive`, label `Leave Products Inactive in Country for now`, description "Nothing gets a local price; every existing product stays inactive in <country> until you set prices yourself later."
 
-**Do NOT ask about VAT.** VAT is not a decision — it's the country's fixed consumption-tax rate; use `country_recommendations.vat` (name + standardRatePct) as-is and show it in the reveal so the user knows it was set.
+**Do NOT ask about VAT.** VAT is not a decision — it's the country's fixed consumption-tax rate; use `country_recommendations.vat` (name + standardRatePct) as-is and mention it in the confirmation summary so the user knows it will be set automatically.
 
 If the user answers any step by typing in chat instead of clicking, record it with `steps_answer` right away so the panel stays in sync.
 
-# Step 2 — Confirm before touching anything
+# Step 2 — Confirm, then hand off to the `open-country` workflow
 
-Summarize the plan in 3-5 lines (mode, entity, languages being added if any, kept agreements, payment methods, enrollment fields, product-pricing choice + the automatic items below). Then ask ONE yes/no question: whether to create the country now.
+Summarize the plan in 3-5 lines (mode, entity, languages being added if any, kept agreements, payment methods, enrollment fields, product-pricing choice, plus a one-line note that currency, tax engine, VAT, and address formatting are configured automatically). Then ask ONE yes/no question: whether to open the country now.
 
-- The real write is `fluid_api` → `POST /api/settings/company_countries` with `{ company_country: { country_id: <id from /api/countries>, currency: <currency_code>, ... } }`. Only send it after an explicit yes.
-- If they picked `convert` in product_pricing: the follow-up write is the bulk product-pricing update — do this AFTER the country POST succeeds. If they picked `leave_inactive`, skip the pricing write entirely.
-- If the user declines, is just exploring, or the write fails: run everything below in **plan mode** — show what WOULD be configured, write nothing.
+**On yes** — do NOT call `fluid_api` yourself. Hand off to the workflow:
 
-# Step 3 — The animated reveal
+```
+run_workflow({
+  workflow_slug: "open-country",
+  context: {
+    country_id: <country id from /api/countries>,
+    currency_code: <currency_code from /api/countries>,
+    agreement_ids: <array of kept agreement ids from the agreements step>,
+    payment_method_ids: <array of kept payment method ids from the payment_methods step>,
+    enrollment_field_ids: <array of kept enrollment field ids from the enrollment_fields step>,
+    entity_name: <entity_name answer or null when mode != "otg" or the step was skipped>,
+    languages_to_add: <array of ISO codes the user kept in the languages step; [] when the step was dropped or all opt-outs>,
+    pricing_choice: <"convert" or "leave_inactive" from the product_pricing step>,
+    fx_rate: <the numeric fx_rate you computed; still send it when pricing_choice is "leave_inactive" for the record>
+  }
+})
+```
 
-Call `steps` again with a single `reveal` step titled "Setting up <country>" (or "What Fluid will set up" in plan mode). Items — pull the specifics from `country_recommendations` and the `/api/countries` record:
+Then END YOUR TURN with a one-line confirmation like "Kicking off the setup — watch the card below." The workflow-run card renders in this same chat and takes over: it POSTs the company_country, enables the added languages, converts pricing (or skips when the user chose leave_inactive), translates themes for each added language, and runs a final QA sweep. Each step gets QA-reviewed and reworked automatically on failure.
 
-- `currency` — "Currency: <code>" (detail: symbol / formatting)
-- `tax` — "Tax engine" (detail: tax_rates from the catalog record)
-- `vat` — "VAT: <name> <rate>%" (skip when vat is null) — informational only, no user input
-- `languages` — "Add language(s): <chosen joined>" — ONLY include when the user KEPT at least one option in step 1's `languages` step (or when the step was skipped because nothing was missing, and every relevant language is already installed — in that case drop this item too).
-- `address` — "Address formatting" (detail: first addressFormat note)
-- `agreements` — "Agreements linked" (detail: count kept)
-- `payments` — "Payment methods" (detail: kept list)
-- `pricing` — depends on the `product_pricing` answer:
-  - `convert` → "Product pricing: converted from USD by <fx_rate> ×" (detail: N products activated)
-  - `leave_inactive` → "Products: kept inactive in <country>" (detail: user will price them later)
+Do NOT poll `workflow_status` in a loop. The user can watch the card live, and can ask you for progress later.
 
-Mode selection:
-
-- **Configured for real** (user confirmed + POST succeeded): `mode: "live"` — fire the reveal steps FIRST, then perform each remaining configuration action and call `steps_mark_item` after each one succeeds so the checkmarks track genuine progress. Anything with no real API behind it gets marked immediately after its sibling completes.
-- **Plan mode**: `mode: "plan"` with `item_duration_ms` around 800 — the panel animates on its own. Close by telling the user nothing was written and what it would take to go live.
-
-# Step 4 — Translate themes if the user added a language
-
-AFTER the reveal completes, IF the user kept at least one option in the `languages` step (i.e. added a new language to the company), ask ONE follow-up in plain chat:
-
-> "You added `<language names>`. Want me to run the Translate Theme skill next so your storefronts are ready in <language(s)>?"
-
-Wait for a yes/no. On yes, run the `translate-theme` community skill (`themes/translate-theme` in the mist-skills manifest) with the added language codes as context. On no or skip, close out politely — the languages are enabled and the user can translate later.
-
-If NO language was added, skip this step entirely.
+**On no / decline / "just exploring"** — do NOT run the workflow. Tell the user nothing was written and give a short text summary (3-6 bullets) of what the setup WOULD have configured, including the automatic items (currency, tax, VAT, address formatting) and the automated tail (language enablement, product pricing, theme translation, final QA). Offer to run it whenever they're ready.
 
 # Rules
 
-- READ endpoints are always safe; the ONLY write in this flow is `POST /api/settings/company_countries`, and only after explicit confirmation.
+- READ endpoints during data-gathering are always safe. The ONLY writes in this flow are performed by the `open-country` workflow, and only after the user's explicit yes.
 - Never invent VAT rates or payment methods — use `country_recommendations` and label uncurated markets honestly.
-- Keep chat text short; the panel does the talking.
+- Keep chat text short; the panel and the workflow-run card do the talking.
