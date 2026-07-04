@@ -9,17 +9,35 @@ category: marketing
 
 Find the best user-generated TikTok content about a brand or product for {{company.name}}, screen it for engagement and FTC/FDA compliance, present a ranked shortlist, and import only the videos the user picks into the DAM.
 
-Ask the user for the brand/product name if they haven't given one. Today is {{today}} — use it for the recency bonus weighting below.
+Today is {{today}} — use it for the recency bonus weighting below.
+
+## 0. Scope the search (ask FIRST, wait for the answer)
+
+Before running ANY searches, ask the user which kind of search they want:
+
+1. **Brand search** — everything people post about the brand overall
+2. **Specific product search** — UGC about one product (ask which product, if they haven't named it)
+
+Also ask for the brand/product name if they haven't given one. Ask this as one short question, then **END YOUR TURN and wait for their answer — do not search, enrich, or run any tool until they've responded.** If the user already made the scope unambiguous in their request (e.g. "find UGC about our collagen gummies"), confirm it in one line and proceed without re-asking.
 
 ## 1. Search
 
-Build 4-6 query variants covering how real people talk about the brand:
+Build 4-6 query variants covering how real people talk about the target.
+
+For a **brand search**:
 
 - the brand name alone
-- brand + product name
+- brand + flagship product name
 - brand + "review"
 - the brand hashtag (mode `hashtag`)
 - 1-2 common misspellings or spaced/joined variants
+
+For a **specific product search**:
+
+- product name alone, and brand + product name
+- product + "review" / "before and after"
+- the product hashtag if one exists (mode `hashtag`)
+- 1-2 common nicknames, misspellings, or spaced/joined variants of the product name
 
 Call `tiktok_search` for each variant with `mode: "keyword"` (or `"hashtag"` for the hashtag variant) and `count: 30`. If any response has `degraded: true`, tell the user which source was actually used (`source_used`) before continuing. Merge all results and dedupe by `id` — TikTok returns duplicates across queries.
 
