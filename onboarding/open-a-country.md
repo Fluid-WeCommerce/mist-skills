@@ -53,15 +53,22 @@ If the user answers any step by typing in chat instead of clicking, record it wi
 
 # Step 2 — Confirm, then hand off to the `open-country` workflow
 
-Summarize the plan in 3-5 lines (mode, entity, languages being added if any, kept agreements, payment methods, enrollment fields, product-pricing choice, plus a one-line note that currency, tax engine, VAT, and address formatting are configured automatically). Then ask ONE yes/no question: whether to open the country now.
+Summarize the plan in 3-5 lines (mode, entity, languages being added if any, kept agreements, payment methods, enrollment fields, product-pricing choice, plus a one-line note that currency, tax engine, VAT, and address formatting are configured automatically). Add ONE more line naming the mode-specific finalizer that will run after the base setup:
 
-**On yes** — do NOT call `fluid_api` yourself. Hand off to the workflow:
+- `mode === "otg"` → "After the base setup, I'll run the OTG finalizer to draft VAT-registration guidance, configure local invoicing, surface local payment gateways, and run a full compliance review."
+- `mode === "nfr"` → "After the base setup, I'll run the NFR finalizer to verify the international shipping profile, confirm import-duty disclosure, spot-check product country-of-origin labeling, and run a light compliance review."
+- `mode === "usd"` → "After the base setup, I'll run the USD finalizer to check digital-services-tax registration for foreign sellers, guardrail USD-only pricing, verify cross-border digital ToS coverage, and run a compliance review."
+
+Then ask ONE yes/no question: whether to open the country now.
+
+**On yes** — do NOT call `fluid_api` yourself. Hand off to the workflows in order — the base `open-country` first, then the mode-specific finalizer after it completes. Kick off the base workflow immediately:
 
 ```
 run_workflow({
   workflow_slug: "open-country",
   context: {
     country_id: <country id from /api/countries>,
+    country_iso: <iso from /api/countries — useful downstream for country_settings lookups>,
     currency_code: <currency_code from /api/countries>,
     agreement_ids: <array of kept agreement ids from the agreements step>,
     payment_method_ids: <array of kept payment method ids from the payment_methods step>,
@@ -69,14 +76,23 @@ run_workflow({
     entity_name: <entity_name answer or null when mode != "otg" or the step was skipped>,
     languages_to_add: <array of ISO codes the user kept in the languages step; [] when the step was dropped or all opt-outs>,
     pricing_choice: <"convert" or "leave_inactive" from the product_pricing step>,
-    fx_rate: <the numeric fx_rate you computed; still send it when pricing_choice is "leave_inactive" for the record>
+    fx_rate: <the numeric fx_rate you computed; still send it when pricing_choice is "leave_inactive" for the record>,
+    mode: <"otg" | "nfr" | "usd" — the mode answer, verbatim>
   }
 })
 ```
 
+Once the base `open-country` run reaches `completed` (watch the run card; workflow_status also reports it), fire the mode-specific finalizer with the SAME `context` payload:
+
+- `mode === "otg"` → `run_workflow({ workflow_slug: "finalize-otg-country", context: <same payload> })`
+- `mode === "nfr"` → `run_workflow({ workflow_slug: "finalize-nfr-country", context: <same payload> })`
+- `mode === "usd"` → `run_workflow({ workflow_slug: "finalize-usd-country", context: <same payload> })`
+
+Never fire the finalizer when the base workflow's terminal status is `failed`, `cancelled`, or `interrupted` — surface the failure and stop.
+
 Then END YOUR TURN with a one-line confirmation like "Kicking off the setup — watch the card below." The workflow-run card renders in this same chat and takes over: it POSTs the company_country, enables the added languages, converts pricing (or skips when the user chose leave_inactive), translates themes for each added language, and runs a final QA sweep. Each step gets QA-reviewed and reworked automatically on failure.
 
-Do NOT poll `workflow_status` in a loop. The user can watch the card live, and can ask you for progress later.
+Do NOT poll `workflow_status` in a tight loop — one check when the base run's card shows `completed` (to decide whether to fire the finalizer) is enough. The user can watch both cards live and can ask for progress later.
 
 **On no / decline / "just exploring"** — do NOT run the workflow. Tell the user nothing was written and give a short text summary (3-6 bullets) of what the setup WOULD have configured, including the automatic items (currency, tax, VAT, address formatting) and the automated tail (language enablement, product pricing, theme translation, final QA). Offer to run it whenever they're ready.
 
