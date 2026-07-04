@@ -1,27 +1,26 @@
 {
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
-  "description": "End-to-end company onboarding: scrape brand + business info, clone the company's current website into a Fluid theme, import products, refine the theme to spec, discover TikTok/UGC content for the DAM, and run a final QA sweep.",
-  "maxParallel": 3,
+  "description": "Flagship end-to-end onboarding: gather brand + business info from the public site, clone it into a Fluid theme, iteratively refine the theme against paired screenshots, import products (Connect / scrape / manual), tick off the Getting Started checklist, discover UGC, and deliver a live-verified launch-readiness review.",
   "steps": [
     {
-      "id": "brand-info",
-      "name": "Scrape brand & company info",
+      "id": "gather-context",
+      "name": "Gather brand & business info",
       "skill": "onboarding/onboarding-prefill",
       "target": {
         "type": "manager"
       },
       "acceptance": [
-        "The company's legal/business name, website URL, and support contact info were located and reported.",
-        "Brand assets (logo URL, primary brand colors) were identified and listed.",
-        "Whatever onboarding/business fields could be pre-filled via the Fluid API were submitted, and the ones that couldn't were explicitly listed for the user."
+        "The company's website was crawled and the legal/business name, support contact, and business hours (where publicly listed) were located and reported.",
+        "Brand assets (logo URL, primary brand colors, fonts) were identified and captured for downstream steps.",
+        "Whatever onboarding/business fields could be pre-filled via the Fluid API were submitted (HIGH + MEDIUM confidence only); LOW-confidence fields were reported but not pushed.",
+        "The step's STEP_OUTPUT includes the canonical website_url the rest of the workflow will use."
       ],
-      "dependsOn": [],
-      "maxReworkRounds": 2
+      "dependsOn": []
     },
     {
-      "id": "clone-website",
-      "name": "Clone website into a Fluid theme",
+      "id": "clone-site",
+      "name": "Clone site into a Fluid theme",
       "skill": "themes/theme-clone",
       "target": {
         "type": "kind",
@@ -29,82 +28,97 @@
         "fallbackToManager": true
       },
       "acceptance": [
-        "Theme files (sections, templates, styles) exist on disk for the cloned pages.",
-        "The theme's homepage structurally matches the source site: header, hero, main content sections, and footer are all present.",
-        "Brand colors and fonts from the source site are used in the theme stylesheet."
+        "Theme files (sections, templates, styles) exist on disk for at minimum the homepage; the manifest also lists any additional pages that were scaffolded.",
+        "The dev preview renders the homepage successfully (no server errors, no blank screen) — verify with a screenshot_preview call this turn.",
+        "Brand colors and fonts from the gather-context step are wired into the theme's config (theme tokens, not hardcoded hex)."
       ],
       "dependsOn": [
-        "brand-info"
-      ],
-      "maxReworkRounds": 2
+        "gather-context"
+      ]
     },
     {
-      "id": "import-products",
-      "name": "Import products",
-      "prompt": "Import the company's product catalog into Fluid.\n\n1. Using the company website discovered in the earlier steps (see step context above), locate its product/shop pages and extract every product you can find: title, description, price, images, variants (size/color/etc.).\n2. Create each product via the Fluid API: POST /api/company/v1/products with the `{ product: { … } }` wrapper. Set variants and prices via PUT /api/company/v1/variants/{id} where needed.\n3. Before creating, GET /api/company/v1/products and skip any product that already exists with the same title (idempotent re-runs).\n4. Report exactly how many products you created, skipped, or failed, with product ids.",
-      "target": {
-        "type": "manager"
-      },
-      "acceptance": [
-        "GET /api/company/v1/products returns the products reported as created, with non-empty titles and prices.",
-        "No duplicate products were created (titles are unique across the catalog).",
-        "The reported created/skipped/failed counts are consistent with what the API returns."
-      ],
-      "dependsOn": [
-        "clone-website"
-      ],
-      "maxReworkRounds": 2
-    },
-    {
-      "id": "refine-theme",
-      "name": "Refine theme to spec",
-      "skill": "themes/theme-refine",
+      "id": "iterative-theme-refine",
+      "name": "Iterative screenshot-based theme refine",
+      "skill": "themes/iterative-theme-refine",
       "target": {
         "type": "kind",
         "kind": "theme",
         "fallbackToManager": true
       },
+      "maxReworkRounds": 5,
       "acceptance": [
-        "Spacing, typography, and colors closely match the source site (verify with a preview screenshot when a preview is running).",
-        "No broken images, missing assets, or Liquid errors in the refined templates.",
-        "Every section edited during refinement still has valid schema settings."
+        "The skill ran the source-vs-clone screenshot loop and reported STATUS: pass OR STATUS: cap-reached — either is acceptable; a silent loop is not.",
+        "The STEP_OUTPUT names the pages verified this run and, if not passing, lists remaining majors and minors so the launch-readiness review can pick them up.",
+        "The theme's dev preview is still healthy — verify with a final screenshot_preview after refinement completes."
       ],
       "dependsOn": [
-        "import-products"
+        "clone-site"
+      ]
+    },
+    {
+      "id": "products-import",
+      "name": "Import products (Connect / scrape / manual)",
+      "prompt": "Import the company's product catalog into Fluid. The manager step context includes a `products_source` field set by the fronting `onboarding/onboard-launch-company` skill — branch on it:\n\n**Case A — `products_source: \"connect\"`**\n  A Connect droplet (Shopify / Exigo / ByDesign / Pillars / Infotrax) was chosen. The context also has `connect_provider` (slug) and `connect_droplet_uuid`.\n  1. GET /api/droplets/{connect_droplet_uuid} and confirm `is_connected: true`. If not, drop through to Case B and note the switch in your report.\n  2. Trigger the droplet's product-sync entrypoint. Providers today expose different sync verbs (Shopify: `POST /api/droplets/{uuid}/sync?resource=products`; others: check the droplet's own actions). If unsure, GET /api/droplets/{uuid} and read `settings.actions` for the sync endpoint.\n  3. Poll GET /api/company/v1/products until the count stops climbing (or 60 s elapses), then report the final count.\n\n**Case B — `products_source: \"scrape\"`**\n  1. Using `website_url` from the gather-context step output, locate the site's product/shop pages via the crawl tool. Firecrawl's markdown output makes titles + prices readable.\n  2. For each product, POST /api/company/v1/products with `{ product: { title, description, price, images, variants } }`. Add variants via PUT /api/company/v1/variants/{id}.\n  3. Before creating, GET /api/company/v1/products and skip products whose title already exists (idempotent re-runs).\n  4. Report created / skipped / failed counts with product ids.\n\n**Case C — `products_source: \"manual\"`**\n  1. Create exactly one stub product with title 'Sample Product', description 'Replace me before launch.', price 0. This unblocks the Getting Started 'Add a product' task without pretending the catalog is real.\n  2. Explicitly report 'MANUAL ENTRY REQUIRED for N products' and list what was found on the site (from a light crawl) so the human has a checklist.\n\nAlways end with STEP_OUTPUT that includes: products_source used, count of products in the API after this step, any failures, and — for Case C — the list of products the human still has to add.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "GET /api/company/v1/products returns at least one product after this step (real for A/B, stub for C).",
+        "For Case A/B: the created/skipped/failed counts in the report match what the API returns; no duplicate titles were created.",
+        "For Case C: the report explicitly says 'MANUAL ENTRY REQUIRED' and names how many products need human entry.",
+        "The step's STEP_OUTPUT records which branch ran (`products_source`) so the launch-readiness step can grade coverage accordingly."
       ],
-      "maxReworkRounds": 2
+      "dependsOn": [
+        "clone-site"
+      ]
+    },
+    {
+      "id": "populate-getting-started",
+      "name": "Tick off the Getting Started checklist",
+      "prompt": "The Fluid admin's Getting Started page (`/getting-started`) drives a server-side onboarding checklist. Your job is to walk it and mark every task that's actually done — using data the earlier steps just produced — and explicitly defer the rest.\n\n1. GET /api/v1/onboardings. The response shape is `{ onboarding: { sections: [{ id, name, steps: [{ id, name, status, allow_manual_completion }] }] }, ... }`. Statuses are `pending` | `completed` | `skipped`.\n\n2. For every step still `pending`, decide:\n   a. **Check via PATCH /api/v1/onboardings/check_step?section=<sid>&step_id=<stepid>** — this asks the server to re-evaluate whether the step's underlying data now exists. Call it whenever the earlier workflow steps plausibly satisfied the task (e.g. brand info was pushed → 'Set brand colors' should re-evaluate to completed).\n   b. **Manually complete via PATCH /api/v1/onboardings/complete_step?section=<sid>&step_id=<stepid>** — only when `allow_manual_completion: true` AND you have a real reason (e.g. the task doesn't map to an API surface but the human intent is satisfied).\n   c. **Explicitly defer** — record in your report `DEFERRED: <sid>/<stepid> — <reason>`. Acceptable reasons: 'requires payments onboarding KYC', 'requires Connect provider not chosen', 'requires human decision'.\n\n3. GET /api/v1/onboardings once more at the end and report: completed count, deferred count, still-pending count, and the overall percentage.\n\n4. Do NOT invent step ids — the checklist is server-driven; only touch ids you actually saw in the GET. Do NOT re-mark completed/skipped steps.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The step made a real GET /api/v1/onboardings call this turn and the report cites concrete section/step ids from that response.",
+        "Every previously-pending step is now either completed, skipped, or explicitly deferred with a reason — nothing was left silently pending.",
+        "At least 70% of the checklist is completed/skipped OR every remaining pending step has an explicit deferred-reason (payments KYC, Connect not chosen, human decision required)."
+      ],
+      "dependsOn": [
+        "products-import"
+      ]
     },
     {
       "id": "ugc-discovery",
       "name": "Discover TikTok / UGC content for the DAM",
-      "prompt": "Find user-generated and social content for this company and load it into the Fluid DAM.\n\n1. From the brand info in the step context above, identify the company's TikTok / Instagram handles and search the web (web_fetch) for recent TikTok videos, reels, and UGC that features the brand or its products.\n2. For each promising item (aim for 3-8), use the video_ripper tool to download it, then dam_upload to push it into the company's DAM. Tag uploads with the brand name.\n3. If no social presence can be found, say so explicitly and list the search queries you tried — that is an acceptable outcome, not a failure.\n4. Report every DAM asset you created with its URL.",
+      "prompt": "Find user-generated and social content for this company and load it into the Fluid DAM. This step is best-effort — a company with no discoverable social presence is a valid outcome.\n\n1. From the gather-context step's output, pull TikTok / Instagram handles. If none were found there, run one tiktok_search with the company name as a keyword to double-check.\n2. If no handles and no keyword hits: emit a short 'no discoverable UGC presence — queries attempted: [...]' report and return. This is acceptance, not failure.\n3. Otherwise, for 3-8 promising videos, use the video_ripper tool to download and dam_upload to push into the company's DAM. Tag uploads with the brand name from gather-context.\n4. Report every DAM asset URL you created.",
       "target": {
         "type": "manager"
       },
       "acceptance": [
-        "Either at least one UGC asset was uploaded to the DAM (verifiable via its reported URL), or an explicit finding documents that the brand has no discoverable social/UGC presence with the queries attempted.",
+        "Either at least one UGC asset was uploaded to the DAM (verifiable via its reported URL), or an explicit finding documents no discoverable social/UGC presence with the queries tried.",
         "No unrelated or off-brand content was uploaded."
       ],
       "dependsOn": [
-        "refine-theme"
-      ],
-      "maxReworkRounds": 2
+        "populate-getting-started"
+      ]
     },
     {
-      "id": "final-qa",
-      "name": "Final QA sweep",
-      "prompt": "Run a final end-to-end QA sweep over everything this workflow produced (see the step context above for what each step reported).\n\n1. Verify the theme files exist and the homepage renders sensibly (screenshot the preview if one is running).\n2. Verify products exist via GET /api/company/v1/products and spot-check 3 of them for sane titles, prices, and images.\n3. Verify the reported DAM assets and onboarding info are consistent with what the earlier steps claimed.\n4. Produce a launch-readiness report: what is done, what is missing, and a short prioritized list of anything a human still needs to do before launch.",
+      "id": "launch-readiness-review",
+      "name": "Launch-readiness review",
+      "prompt": "Produce a live-verified launch-readiness report. This is NOT a summary of what earlier steps said — every claim here must be backed by a check YOU performed this turn.\n\n1. **Storefront live check** — from the gather-context step's context, find the company's public storefront URL (from /api/settings/companies/{id}). crawl(<url>, formats: ['screenshot']) and confirm it returns without error. Attach the screenshot's URL to the report.\n2. **Theme sanity** — screenshot_preview once to confirm the theme's dev preview still renders. Read the iterative-theme-refine step's STEP_OUTPUT for any remaining majors/minors and surface them.\n3. **Products** — GET /api/company/v1/products and count. Spot-check 3 for non-empty title + price + at least one image. Flag any product whose title matches 'Sample Product' — that's the manual stub and it must not ship.\n4. **Getting Started** — GET /api/v1/onboardings and record the current overall.percentage AND the list of still-pending steps by id. Compare to what populate-getting-started reported; if the API shows more pending than the earlier step claimed, flag the drift.\n5. **Brand + business info** — GET /api/settings/brand_guidelines and confirm the brand color + font tokens from gather-context landed. If a token is still default/empty, flag it.\n6. **Prioritized checklist** — assemble a `Before you launch:` list. Each entry has:\n   - severity: `blocker` (unlaunchable), `high` (embarrassing at launch), `medium` (fix week 1), `low` (nice-to-have)\n   - what: one line\n   - why: which check this turn produced it\n   - suggested action\n\nRank by severity. If there are zero blockers and ≤ 2 highs, say so plainly — the report is not required to invent problems.",
       "target": {
         "type": "manager"
       },
       "acceptance": [
-        "A launch-readiness report was produced covering theme, products, DAM assets, and onboarding info.",
-        "Every claim in the report is backed by an actual check performed this turn (API call, file read, or screenshot), not by trusting earlier steps."
+        "The report cites live checks performed THIS turn: at least one GET /api/company/v1/products, at least one GET /api/v1/onboardings, and either a crawl-screenshot of the public storefront or an explicit 'storefront URL not yet published' note.",
+        "The 'Before you launch' checklist exists and every entry has severity + what + why + suggested action.",
+        "Any remaining majors from iterative-theme-refine's STEP_OUTPUT appear in the checklist with severity assigned.",
+        "The manual-stub product 'Sample Product' is either flagged as a blocker (Case C ran) or explicitly noted as absent (Case A/B ran)."
       ],
       "dependsOn": [
         "ugc-discovery"
-      ],
-      "maxReworkRounds": 2
+      ]
     }
   ]
 }
