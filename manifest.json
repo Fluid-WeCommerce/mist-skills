@@ -164,6 +164,15 @@
       "icon": "video",
       "path": "marketing/tiktok-ugc-discovery.md",
       "updated_at": "2026-07-04T03:22:55Z"
+    },
+    {
+      "slug": "optimize/suggested-changes",
+      "name": "Suggested Changes",
+      "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
+      "category": "optimize",
+      "icon": "sparkles",
+      "path": "optimize/suggested-changes.md",
+      "updated_at": "2026-07-04T03:42:11Z"
     }
   ]
 }
