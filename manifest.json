@@ -195,6 +195,11 @@
   ],
   "workflows": [
     {
+      "slug": "onboard-launch-company",
+      "path": "workflows/onboard-launch-company.workflow.json",
+      "updated_at": "2026-07-04T00:00:00Z"
+    },
+    {
       "slug": "open-country",
       "path": "workflows/open-country.workflow.json",
       "updated_at": "2026-07-04T00:00:00Z"
