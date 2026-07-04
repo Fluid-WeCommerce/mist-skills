@@ -191,13 +191,31 @@
       "icon": "scale",
       "path": "countries/compliance-manager/SKILL.md",
       "updated_at": "2026-07-04T00:00:00Z"
+    },
+    {
+      "slug": "onboarding/onboard-launch-company",
+      "name": "Onboard & Launch Company",
+      "description": "Guided end-to-end company onboarding: collect the website URL, auto-detect available Connect integrations (Shopify / Exigo / ByDesign droplets) or fall back to public scraping, then fire the flagship onboard-launch-company workflow — clone the site, iteratively refine the theme against screenshots, import products, tick off Getting Started, discover UGC, and deliver a launch-readiness review.",
+      "category": "onboarding",
+      "icon": "rocket",
+      "path": "onboarding/onboard-launch-company/SKILL.md",
+      "updated_at": "2026-07-05T00:00:00Z"
+    },
+    {
+      "slug": "themes/iterative-theme-refine",
+      "name": "Iterative Theme Refine",
+      "description": "Screenshot-based iterative refinement loop that runs after theme-clone: each round captures paired screenshots (source vs cloned preview), fixes the top 1-3 discrepancies, and re-checks — capped at 5 iterations with a documented remaining-diff report if the cap is hit.",
+      "category": "themes",
+      "icon": "refresh-cw",
+      "path": "themes/iterative-theme-refine/SKILL.md",
+      "updated_at": "2026-07-05T00:00:00Z"
     }
   ],
   "workflows": [
     {
       "slug": "onboard-launch-company",
       "path": "workflows/onboard-launch-company.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-07-05T00:00:00Z"
     },
     {
       "slug": "open-country",
