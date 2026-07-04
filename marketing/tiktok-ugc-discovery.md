@@ -1,0 +1,90 @@
+---
+name: TikTok UGC Discovery
+description: Find the 20-30 most engaging, FTC/FDA-compliant TikTok UGC videos about a brand or product, let the user pick, and pull the picks into the DAM.
+icon: video
+category: marketing
+---
+
+# TikTok UGC Discovery
+
+Find the best user-generated TikTok content about a brand or product for {{company.name}}, screen it for engagement and FTC/FDA compliance, present a ranked shortlist, and import only the videos the user picks into the DAM.
+
+Today is {{today}} — use it for the recency bonus weighting below.
+
+## 0. Scope the search (ask FIRST, wait for the answer)
+
+Before running ANY searches, ask the user which kind of search they want:
+
+1. **Brand search** — everything people post about the brand overall
+2. **Specific product search** — UGC about one product (ask which product, if they haven't named it)
+
+Also ask for the brand/product name if they haven't given one, and let them know up front that **this can take some time — every candidate video gets reviewed individually for compliance** before the shortlist is presented. Ask this as one short question, then **END YOUR TURN and wait for their answer — do not search, enrich, or run any tool until they've responded.** If the user already made the scope unambiguous in their request (e.g. "find UGC about our collagen gummies"), confirm it in one line (including the heads-up that the review takes a while) and proceed without re-asking.
+
+## 1. Search
+
+Build 4-6 query variants covering how real people talk about the target.
+
+For a **brand search**:
+
+- the brand name alone
+- brand + flagship product name
+- brand + "review"
+- the brand hashtag (mode `hashtag`)
+- 1-2 common misspellings or spaced/joined variants
+
+For a **specific product search**:
+
+- product name alone, and brand + product name
+- product + "review" / "before and after"
+- the product hashtag if one exists (mode `hashtag`)
+- 1-2 common nicknames, misspellings, or spaced/joined variants of the product name
+
+Call `tiktok_search` for each variant with `mode: "keyword"` (or `"hashtag"` for the hashtag variant) and `count: 30`. If any response has `degraded: true`, tell the user which source was actually used (`source_used`) before continuing. Merge all results and dedupe by `id` — TikTok returns duplicates across queries.
+
+## 2. Enrich
+
+Compute engagement rate for every unique video: `ER = (likes + comments + shares) / views`. Take the top ~50 by ER.
+
+For each of those, call the `video_metadata` tool (one URL per call) to confirm stats and pull the caption + transcript — it uses the app's bundled yt-dlp with no download, so it's fast.
+
+If an individual video fails (private, deleted, region-locked), **skip that video and continue — never abort the run**. Videos without enrichment keep their `tiktok_search` stats and are judged on caption alone.
+
+## 3. Score and gate
+
+Prefilter — drop videos failing any of:
+
+- ER < 3%
+- more than 2 videos from the same creator (keep their 2 best)
+- shorter than 8 seconds or longer than 3 minutes
+
+Views and age are NOT filters — a small creator's perfect-fit video or an evergreen banger from two years ago can still be great UGC. Apply both as **bonus weights** when ranking instead: higher view counts boost a video's rank, and recency adds a meaningful boost inside 90 days, a small one inside 12 months, and no boost (no penalty) beyond that.
+
+Then judge each survivor on relevance to the brand, message quality, and compliance.
+
+**DISQUALIFY** (exclude, with reason) any video whose caption or transcript contains:
+
+- disease claims — cures, treats, prevents, or heals a named condition or symptom
+- income or earnings claims
+- guarantees, or "no side effects" claims
+- "doctor recommended" (or similar authority claims) without substantiation
+
+**Mark "review"** (include, flagged) for structure/function claims — "supports", "helps maintain", "promotes" and similar. These are often permissible but need a human look.
+
+## 4. Present
+
+Show a numbered markdown list, best first, aiming for 20-30 entries. **The video URL is the MOST IMPORTANT part of each entry — the reviewer can't evaluate a video they can't open.** Show the full URL plainly on its own line under each entry (never bury it behind link text or omit it):
+
+```
+N. @handle (Xk followers) — Xk views / X.X% ER — "one-line hook from the caption" — compliance: ok
+   https://www.tiktok.com/@handle/video/1234567890123456789
+N. @handle (Xk followers) — Xk views / X.X% ER — "one-line hook" — compliance: review: structure/function claim ("supports immunity")
+   https://www.tiktok.com/@handle/video/9876543210987654321
+```
+
+Add an **Excluded** section listing disqualified videos with a one-line reason each, also with their URLs (e.g. `@handle — income claim in caption — https://…`) so the reviewer can spot-check the disqualification.
+
+Then ask which numbers to add to the DAM and **END YOUR TURN immediately** — the question must be the very last thing you output. Finish ALL searching, enrichment, and scoring BEFORE presenting the list; never run a tool call after asking (the user's answer stays queued until your turn ends). **Do NOT rip anything yet** — wait for the user's selection.
+
+## 5. Import on selection
+
+For each picked video, call `video_ripper` with the video URL and tags `ugc,tiktok,<brand>` (lowercased brand). Report the DAM/Media links as each rip completes. If an individual rip fails, note it and continue with the rest; summarize successes and failures at the end.

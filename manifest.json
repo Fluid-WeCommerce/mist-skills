@@ -103,7 +103,7 @@
     {
       "slug": "themes/theme-clone",
       "name": "Theme Clone",
-      "description": "Clone any website into a pixel-perfect Fluid theme — scrape the source, build sections, push, and visually verify against the original.",
+      "description": "Clone any website into a pixel-perfect Fluid theme \u2014 scrape the source, build sections, push, and visually verify against the original.",
       "category": "themes",
       "icon": "copy",
       "path": "themes/theme-clone/SKILL.md",
@@ -155,6 +155,15 @@
         "onboarding/onboarding-prefill/references/field-coverage.md",
         "onboarding/onboarding-prefill/references/state-registries.md"
       ]
+    },
+    {
+      "slug": "marketing/tiktok-ugc-discovery",
+      "name": "TikTok UGC Discovery",
+      "description": "Find the 20-30 most engaging, FTC/FDA-compliant TikTok UGC videos about a brand or product, let the user pick, and pull the picks into the DAM.",
+      "category": "marketing",
+      "icon": "video",
+      "path": "marketing/tiktok-ugc-discovery.md",
+      "updated_at": "2026-07-04T03:22:55Z"
     }
   ]
 }
