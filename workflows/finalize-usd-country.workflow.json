@@ -1,0 +1,72 @@
+{
+  "slug": "finalize-usd-country",
+  "name": "Finalize USD-mode country setup",
+  "description": "Post-open-country finalizer for USD mode: audit digital-services-tax registration obligations for foreign sellers, enforce USD-only pricing (no local-currency prices), verify cross-border digital ToS + refund policy coverage, and run a compliance review focused on digital-services duties. Expects the caller `context` from open-country PLUS `mode: \"usd\"`.",
+  "maxParallel": 3,
+  "steps": [
+    {
+      "id": "digital-services-tax-check",
+      "name": "Digital-services-tax registration check",
+      "prompt": "Many countries tax cross-border digital services sold to their residents even when the seller has no local entity — EU VAT MOSS / OSS, UK VAT on digital services, Japan JCT reverse-charge / foreign-seller rules, Australia GST-on-imported-digital-services, New Zealand GST-on-remote-services, Norway VOEC. Produce a concrete answer for THIS country.\n\n1. Read `context.country_id`, `context.currency_code` (should be USD), `context.mode` (should be `usd`), and `context.country_iso` from the context. If mode is not `usd`, emit `STEP_OUTPUT: mode is not usd; nothing to do` and STOP.\n2. Call `country_settings` with the ISO. Read `vat` (name + notes; the numeric rate is on GET /api/countries) and any `mandatoryDisclosurePages` that hint at foreign-seller registration.\n3. Match the country against the well-known digital-services-tax regimes and produce ONE of these three answers:\n   a. `REGISTER: <threshold> — <authority> at <url>` — when the country has a documented foreign-seller obligation (EU non-Union OSS, UK, JP, AU, NZ, NO, ZA). Include the threshold as a specific figure or 'from first sale' when zero-threshold.\n   b. `EXEMPT — <reason>` — when the country is documented not to tax cross-border digital services from foreign sellers (US, CA at federal level for non-resident digital, etc.).\n   c. `UNKNOWN — verify with local counsel` — when the country's rulebook doesn't cover this AND the country isn't one of the well-known regimes. Do NOT guess.\n4. Do ONE `web_fetch` to the authority's homepage (europa.eu/taxation, gov.uk, nta.go.jp, ato.gov.au, ird.govt.nz, skatteetaten.no) to confirm the current URL when producing answer (a).\n5. STEP_OUTPUT names the answer (REGISTER | EXEMPT | UNKNOWN) plus the sentence backing it.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The report produces exactly ONE of: REGISTER (with a specific threshold + authority + a live public link), EXEMPT (with a reason), or UNKNOWN (explicitly acknowledging the rulebook gap — no guessing).",
+        "When the answer is REGISTER, the threshold is a concrete figure OR the string 'from first sale' — never vague.",
+        "STEP_OUTPUT tags the answer with the exact token (REGISTER | EXEMPT | UNKNOWN) so downstream steps can branch off it."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "currency-only-pricing-guardrail",
+      "name": "USD-only pricing guardrail",
+      "prompt": "The whole point of USD mode is no local-currency friction: every product active in this country must have a USD price and NO local-currency price. This is a REAL guardrail, not a spot check — sweep the whole catalog.\n\n1. Read `context.country_id` and confirm `context.currency_code === 'USD'`. If it isn't, emit `STEP_OUTPUT: currency_code is not USD; refusing to enforce guardrail — check open-country context` and STOP (this is a data-integrity failure, not a compliance failure).\n2. GET `/api/company/v1/products?status[]=active` and paginate the FULL result via `meta.pagination.next_page` (or the pagination shape the API uses) until every active product is loaded. For each product, GET `/api/company/v1/products/{id}` and inspect `variant_countries` on each variant (see the shape open-country's convert-pricing step writes).\n3. For EVERY product loaded in step 2 — not just the first few — check each variant for both of:\n   a. A `variant_countries` entry with `country_id === context.country_id` and `currency_code === 'USD'` (present ✓).\n   b. NO `variant_countries` entry for `country_id === context.country_id` in a currency other than USD (violation ✗).\n4. For EVERY offending row found in step 3b (across the whole catalog, not just the first three): PUT `/api/company/v1/variants/{variantId}` with the offending row's `id` and `active: false` — flip it inactive rather than deleting (audit trail). Do NOT abort the sweep on a single-variant failure — record it, keep going.\n5. STEP_OUTPUT records: total products scanned (must equal the paginated total), USD-priced count, offending variants (with ids) that were flipped inactive, and any that couldn't be flipped (with the API error). The report is a violation catalog, not a sample.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The report names the TOTAL products scanned this step and that number equals the paginated `meta.pagination.total_count` (or the API's equivalent) from GET /api/company/v1/products?status[]=active — the guardrail refuses to declare success on a partial sweep.",
+        "Every offending variant_countries row for context.country_id in a non-USD currency was flipped inactive via PUT /api/company/v1/variants/{variantId} — the report either lists each flipped variant id OR explicitly states 'no offending rows across N products scanned'.",
+        "STEP_OUTPUT lists total-scanned / usd-priced / offending / flipped-inactive counts so the compliance review can pick up any remaining issue."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "cross-border-digital-tos",
+      "name": "Cross-border digital ToS + refund policy",
+      "prompt": "USD-mode selling is mainly digital + cross-border. The terms of service and refund policy shown to buyers in this country must cover: no physical shipping, digital-goods refund carve-outs (many countries let digital-goods refunds be waived once the download starts), and a jurisdictional clause naming which law governs the sale.\n\n1. GET `/api/agreements` for the company and find agreements linked to `context.country_id` (either directly via `country_ids` on the agreement or transitively via the company_country's `agreements` array — check both).\n2. Confirm at least these two exist and are linked: a Terms of Service (or ToS-equivalent) AND a Refund Policy. If either is missing, report `MISSING: <name>` and continue.\n3. For each linked agreement, fetch its body (GET /api/agreements/{id}) and search for the three markers:\n   a. Cross-border digital: keywords `digital`, `download`, `access`, `no physical`, or explicit language that the offering is not shipped.\n   b. Refund carve-out: keywords `once download`, `once accessed`, `non-refundable after`, or an explicit digital-goods clause.\n   c. Jurisdiction: a `governed by`, `laws of`, or similar clause naming a jurisdiction.\n4. Per agreement, report which markers were found (marker: found | not-found) and, when missing, suggest a specific clause the human should add.\n5. STEP_OUTPUT names each agreement checked + the marker-coverage summary.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "GET /api/agreements was called this turn and the report names the agreements linked to context.country_id — including explicit MISSING notes when the ToS or Refund Policy isn't linked.",
+        "For each linked agreement, the three markers (cross-border digital / refund carve-out / jurisdiction) are graded found | not-found with a snippet or a specific gap description.",
+        "When a marker is missing, the report includes a concrete one-sentence suggested clause the human can drop into the agreement."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "compliance-review",
+      "name": "Digital-focused compliance review",
+      "skill": "countries/compliance-manager",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "A compliance report was produced with an explicit USD-mode-posture note in the summary — the audit is weighted toward digital-services tax + cross-border ToS, and lighter on physical-goods labeling / VAT-inclusive-price display than the OTG audit would be.",
+        "Findings from the digital-services-tax-check, currency-only-pricing-guardrail, and cross-border-digital-tos steps appear in the report with severity assigned.",
+        "Every finding cites a specific rule from `country_settings` OR names the earlier workflow step whose check produced it — no unattributed findings."
+      ],
+      "dependsOn": [
+        "digital-services-tax-check",
+        "currency-only-pricing-guardrail",
+        "cross-border-digital-tos"
+      ],
+      "maxReworkRounds": 2
+    }
+  ]
+}

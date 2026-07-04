@@ -1,0 +1,107 @@
+{
+  "slug": "open-country",
+  "name": "Open a Country",
+  "description": "Backend for the Open a Country skill, driven by Fluid's Country Atlas: create the company_country (currency + tax profile + 3DS), create the atlas's recommended agreements from their full legal templates, enable added languages, convert product pricing (or leave inactive), translate themes into the market's languages, and QA the whole thing — ending with the operating mode's launch checklist as the human to-do list. Expects a caller `context` with country_id, country_iso, currency_code, mode, entity_name, tax_name, tax_inclusive, requires_3ds, agreements_to_create, payment_integration_types, enrollment_fields, languages_to_add, theme_languages, pricing_choice, fx_rate, launch_checklist.",
+  "maxParallel": 3,
+  "steps": [
+    {
+      "id": "create-country",
+      "name": "Create the company country",
+      "prompt": "Create the company_country record for the country the user just confirmed, carrying Fluid's Country Atlas tax profile plus the mode-specific fields the steps panel collected.\n\n1. Read from the `## Context from caller` block above: `context.country_id`, `context.currency_code`, `context.tax_name`, `context.tax_inclusive`, `context.requires_3ds`, and — when present — `context.warehouse_id` (numeric; null when the user chose a NEW warehouse), `context.entity_legally_registered` (boolean; true only for OTG when they already operate in-country), `context.business_id` (their local tax/registration number), and `context.settlement_currency` (set for NFR/USD when charging local but settling elsewhere).\n2. Build the `company_country` body from ONLY the fields present in context. The writable keys (see `apps/fluid-admin/networking/countries-v2.api.ts` `countryInputSchema`) are: `country_id`, `currency`, `tax_name`, `tax_inclusive_pricing`, `requires_3ds`, `warehouse_id`, `entity_legally_registered`, `tax_business_id` (← `context.business_id`), and `settlement_currency`. Omit any key whose context value is null/undefined. Do NOT invent keys outside this list (there is no `entity_name` field on company_country — the entity is handled by the OTG finalizer).\n   ```json\n   {\n     \"company_country\": {\n       \"country_id\": <context.country_id>,\n       \"currency\": <context.currency_code>,\n       \"tax_name\": <context.tax_name>,\n       \"tax_inclusive_pricing\": <context.tax_inclusive>,\n       \"requires_3ds\": <context.requires_3ds>,\n       \"warehouse_id\": <context.warehouse_id>,\n       \"entity_legally_registered\": <context.entity_legally_registered>,\n       \"tax_business_id\": <context.business_id>,\n       \"settlement_currency\": <context.settlement_currency>\n     }\n   }\n   ```\n3. POST `/api/settings/company_countries` with that body. If it fails because the country already exists, GET `/api/settings/company_countries`, find the existing record for `country_id`, and PUT `/api/settings/company_countries/{id}` with the same body instead — opening a country must be idempotent.\n4. Verify with `fluid_api` → GET `/api/settings/company_countries` that a record now exists for `country_id` with the expected currency (and warehouse_id when one was set).\n5. Report the company_country id, its `country_id`, its `currency`, its `tax_name`, and its `warehouse_id` as the STEP_OUTPUT (later steps need the id).",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "GET /api/settings/company_countries returns an entry whose country_id matches context.country_id, with a non-null id and a currency matching context.currency_code.",
+        "When context.warehouse_id was a numeric id, the created record's warehouse_id matches it; when it was null (new warehouse) the STEP_OUTPUT flags that a warehouse still needs to be created.",
+        "The reported STEP_OUTPUT includes the company_country id (numeric or string, as the API returned it)."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "create-agreements",
+      "name": "Create the country's agreements",
+      "prompt": "Create Fluid's recommended agreements for this country from the Country Atlas legal templates the user opted to keep.\n\n1. Read `context.agreements_to_create` (an array of atlas agreement localIds, possibly empty) and `context.country_iso`. If the array is empty, report exactly `STEP_OUTPUT: no agreements to create` and STOP — that is a valid pass, not a skip.\n2. Read the created company_country id from the earlier step output. GET `/api/agreements` once and note existing agreement titles (case-insensitive) — never create a duplicate title; count those as skipped.\n3. For each localId in `context.agreements_to_create`:\n   a. Call `country_atlas` with `country_code: <context.country_iso>` and `agreement_local_id: <localId>` — it returns the agreement's full `translations` (title + legal body HTML per `language_iso`) plus its checkout flags.\n   b. Create it from the English translation (fall back to the first translation when there is no `en`): `fluid_api` → POST `/api/agreements` with body:\n      ```json\n      { \"agreement\": { \"title\": <translation title>, \"description\": <translation body>, \"active\": true, \"required_on_checkout\": <flag>, \"show_at_checkout\": <flag>, \"default_checked\": <flag>, \"language_iso\": <translation language_iso>, \"company_country_ids\": [<company_country id>] } }\n      ```\n      This is the exact shape fluid-admin's agreement form submits (see `apps/fluid-admin/networking/agreements.api.ts` `agreementInputSchema`).\n   c. For each REMAINING translation, add it to the created agreement: PUT `/api/agreements/{id}?language_iso=<iso>` with the same `{ agreement: { ... } }` body carrying that translation's title + description.\n   d. A single agreement failing must not abort the step — record it in the failed bucket and keep going.\n4. Report created / skipped (already existed) / failed counts with agreement ids and titles as STEP_OUTPUT.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Either context.agreements_to_create is empty and STEP_OUTPUT explicitly said `no agreements to create`, OR GET /api/agreements shows an agreement (with a non-null id) for every localId reported as created, each scoped to the new company_country.",
+        "No duplicate agreement titles were created — anything already present was reported as skipped, not re-created.",
+        "STEP_OUTPUT reports created/skipped/failed counts, and every failure has a reason."
+      ],
+      "dependsOn": [
+        "create-country"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "enable-languages",
+      "name": "Enable added languages",
+      "prompt": "Enable every language ISO the user opted into in the Open a Country flow.\n\n1. Read `context.languages_to_add` (an array of ISO codes, possibly empty). If it is empty, report exactly `STEP_OUTPUT: no languages to enable` and STOP — that is a valid pass, not a skip.\n2. Otherwise, GET `/api/settings/languages` to find the numeric `id` for each ISO in the array. The response shape is `{ languages: [{ id, name, iso, active_in_company, ... }] }`.\n3. For each ISO in `context.languages_to_add`, call `fluid_api` → POST `/api/settings/languages` with body `{ id: <numeric id from step 2>, iso: <iso>, active_in_company: true }`. (This is the same call the fluid-admin `upsertLanguage` helper makes when turning a language on: POST when enabling, DELETE /{id} when disabling.)\n4. If an ISO isn't in the global languages catalog, note it in your output as a skip with a reason — don't fail the whole step over it.\n5. Report the enabled ISOs and any skipped ISOs as STEP_OUTPUT.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Either context.languages_to_add is empty and STEP_OUTPUT explicitly said `no languages to enable`, OR every ISO listed in context.languages_to_add now appears in GET /api/settings/languages with active_in_company === true.",
+        "STEP_OUTPUT lists which ISOs were enabled and which (if any) were skipped, with reasons for the skips."
+      ],
+      "dependsOn": [
+        "create-country"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "convert-pricing",
+      "name": "Convert product pricing (or leave inactive)",
+      "prompt": "Apply the user's product-pricing choice for the newly-opened country.\n\n1. Read `context.pricing_choice` (either `\"convert\"` or `\"leave_inactive\"`) and `context.fx_rate` (a number) from the caller context. Read the created company_country's `country_id` from the earlier step output.\n2. If `context.pricing_choice === \"leave_inactive\"`, report exactly `STEP_OUTPUT: user chose leave_inactive; skipping.` and STOP — that is a valid pass.\n3. If `context.pricing_choice === \"convert\"`:\n   a. List the company's active products with `fluid_api` → GET `/api/company/v1/products?status[]=active` (follow pagination via `meta.pagination` until you've seen them all).\n   b. For each product, GET `/api/company/v1/products/{id}` if you need the variant list, then for each variant on that product PUT `/api/company/v1/variants/{variantId}` with body:\n      ```json\n      { \"variant\": { \"variant_countries_attributes\": [ { \"country_id\": <context.country_id>, \"active\": true, \"price\": <usd_price * context.fx_rate, rounded to 2 decimals>, \"wholesale\": 0, \"compare_price\": 0, \"cost_of_goods_sold\": 0, \"shipping\": 0, \"currency_code\": <context.currency_code> } ] } }\n      ```\n      This is the shape fluid-admin uses (see `apps/fluid-admin/networking/products/variant.ts` `updateVariant`) — variant_countries_attributes appends a new country-scoped price row for that variant. If the variant already has a row for this country_id, include its `id` in the attributes object so the API updates in place instead of duplicating.\n   c. Keep counts: converted / skipped / failed. Do NOT abort the whole step on a single-variant failure — record it, keep going.\n4. Report the converted / skipped / failed counts (with example product ids for each bucket) as STEP_OUTPUT.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Either the user chose leave_inactive and STEP_OUTPUT said so explicitly, OR (for convert) a spot check of 3 products via GET /api/company/v1/products/{id} shows each has a variant_countries entry for the new country_id with a non-null local price in context.currency_code.",
+        "STEP_OUTPUT reports converted/skipped/failed counts, and no more than 10% of variants are in the failed bucket unless the failures are explicitly explained."
+      ],
+      "dependsOn": [
+        "create-country"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "translate-themes",
+      "name": "Translate themes into the market's languages",
+      "prompt": "Make sure the storefront is available in the language(s) this market actually shops in — NOT just the languages the user newly enabled. A Spanish-primary market like Mexico must have a Spanish storefront even if Spanish was already an enabled company language; skipping that is the #1 way this flow ships a launch that looks broken to local buyers.\n\n1. Determine the target languages: use `context.theme_languages` (the market's major languages from the atlas, e.g. `['es']` for Mexico). Fall back to `context.languages_to_add` only if `theme_languages` is absent. If the resolved list is empty, report exactly `STEP_OUTPUT: no market languages to translate; skipping` and STOP.\n2. GET `/api/application_themes` to list the company's themes. (Internal admin scope, not the versioned `/api/v202604/*` scope. Filter to active/published themes when you can; otherwise translate them all.)\n3. For each theme × each target language, check whether the theme is ALREADY translated into that language; skip the ones that are (idempotent — don't re-translate). For the rest, delegate to the theme-translation community skill: prefer a `themes/translate-theme` slug if present, else `themes/languages` (aka `translating-theme-languages`), passing the theme id + the target ISO codes.\n4. Aggregate results. Report, per theme + per language, one of: already-translated / translated-now / failed — as STEP_OUTPUT.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The step targeted the market languages from context.theme_languages (falling back to languages_to_add) — NOT an empty set just because no new languages were enabled. If the resolved target list was genuinely empty, STEP_OUTPUT said so explicitly.",
+        "For every target language, each active theme is reported as already-translated, translated-now, or failed — backed by the sub-skill's actual report, no invented success."
+      ],
+      "dependsOn": [
+        "enable-languages"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "final-qa",
+      "name": "Final QA + launch checklist",
+      "prompt": "Verify the whole Open a Country flow holistically, then hand the user their launch checklist. Every verification claim you make MUST be backed by an API call performed THIS turn — do not trust the earlier steps' summaries.\n\nWrite the entire report in plain language for a non-technical store owner: NO internal identifiers (translate ids into what they are — \"the Mexico store\", \"the Spanish privacy policy\", \"3 of your 5 products\"), and no jargon like \"STEP_OUTPUT\", \"company_country\", or \"acceptance criteria\". Describe what's set up and what they still need to do, not the checking you did.\n\n1. GET `/api/settings/company_countries` and confirm an entry exists for `context.country_id` with the expected currency, tax_name, tax_inclusive_pricing, and requires_3ds.\n2. GET `/api/agreements` and confirm every agreement reported as created in the create-agreements step exists and is active.\n3. Spot-check 3 products via GET `/api/company/v1/products/{id}`:\n   - If `context.pricing_choice === \"convert\"`: each product's variants should have a `variant_countries` row for the new country with a non-null local price. If any fail, list them.\n   - If `context.pricing_choice === \"leave_inactive\"`: confirm those variants do NOT have an active country row for the new country (or that any auto-created rows are `active: false`).\n4. GET `/api/settings/languages` and confirm every ISO in `context.languages_to_add` now has `active_in_company === true`.\n5. Confirm the storefront is available in the market's languages: for each ISO in `context.theme_languages` (fallback `context.languages_to_add`), spot-check one active theme via GET `/api/application_themes/{id}` and confirm it carries that language. This is the check that catches a Spanish market shipped with an English-only storefront — call it out loudly in the summary if a market language is missing from the themes. If the API doesn't expose per-language translation state, say so and rely on the translate-themes step's report.\n6. GET `/api/payment_integrations` and compare against `context.payment_integration_types`: list which of the user's chosen methods are already configured and which still need onboarding in Payments settings. This is a report, not a write — payment integrations need credentials only a human can supply.\n7. If `context.enrollment_fields` is non-empty, note them as a follow-up: the enrollment form for this country should carry those fields (id, label, component). Do not attempt to build the form yourself.\n8. Produce the ready-to-launch report in two parts:\n   a. **Setup verification** — what's confirmed, what's missing or degraded, follow-ups from steps 6-7 (payment onboarding gaps, enrollment form fields), plus any converted-price or translated-copy review notes.\n   b. **Launch checklist** — render `context.launch_checklist` (the atlas checklist for the user's operating mode) as a numbered to-do list, each item's label bold with its description underneath, VERBATIM from the context — these are per-market compliance obligations (registrations, licenses, filings); do not summarize, reorder, or drop any.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The summary explicitly covers: country existence (with tax profile), agreements created, pricing outcome (converted or intentionally inactive), language enablement, theme translation status, and payment-integration gaps.",
+        "Every verification claim is backed by an actual API call performed in this turn — no claim rests only on trust of earlier STEP_OUTPUT lines.",
+        "The launch checklist from context.launch_checklist is reproduced in full — same item count, labels and descriptions intact."
+      ],
+      "dependsOn": [
+        "create-agreements",
+        "convert-pricing",
+        "translate-themes"
+      ],
+      "maxReworkRounds": 2
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "slug": "finalize-otg-country",
+  "name": "Finalize OTG (On The Ground) country setup",
+  "description": "Post-open-country finalizer for OTG mode: register for VAT/GST, configure local invoicing, wire the country's preferred local payment gateways, capture whether operations are B2B/B2C/both, and run a full compliance review. Expects the caller `context` from open-country PLUS `mode: \"otg\"`.",
+  "maxParallel": 3,
+  "steps": [
+    {
+      "id": "vat-registration-guidance",
+      "name": "VAT / GST registration guidance",
+      "prompt": "The company is opening this country On The Ground (local entity, local invoicing). Local sellers almost always need a VAT / GST / consumption-tax registration — produce concrete, citable guidance so the human can register.\n\n1. Read `context.country_id`, `context.currency_code`, `context.mode` (should be `otg`), and any `context.vat_id` (may or may not be present) from the `## Context from caller` block above. If mode is not `otg`, emit `STEP_OUTPUT: mode is not otg; nothing to do` and STOP — this workflow was fired incorrectly and should not write anything.\n2. Resolve the country's ISO from `context.country_iso` if present; otherwise call `fluid_api` → GET `/api/countries` and match on `id === context.country_id` to get the ISO.\n3. Call the `country_settings` tool with `country_code: <iso>`. Read `vat` (name; standardRatePct is null in the atlas projection), `mandatoryDisclosurePages` (to spot registration-authority references), and any curator notes. Countries without a `vat` entry are the exception — for those, produce `STEP_OUTPUT: no VAT-style tax documented for this country; verify with local counsel.` and STOP.\n4. Produce guidance that names, in order:\n   a. The specific tax (e.g. `Mehrwertsteuer / USt` for DE, `TVA` for FR, `JCT` for JP, `IVA` for MX, `GST` for AU).\n   b. The standard rate percentage: `country_settings.vat.standardRatePct` is null in the atlas projection, so read the numeric rate from `fluid_api` -> GET `/api/countries` (the country's tax_rates); if unavailable, say 'confirm the current rate with the authority'.\n   c. The registration authority + a public link to its registration portal. Prefer well-known official portals: Bundeszentralamt für Steuern (DE), impots.gouv.fr (FR), HMRC (UK), CRA (CA), NTA (JP), SAT (MX), ATO (AU). If you're not sure of the exact URL, do ONE `web_fetch` on a search-style URL to confirm the current page.\n   d. The registration threshold when the country has one (EU distance-selling €10k EU-wide, UK £90k, AU A$75k, JP JCT foreign-seller ¥10M). If the country's rulebook doesn't spell one out, say `no explicit threshold — register from first sale`.\n5. If `context.vat_id` is present AND the country has a public VAT-check service (EU has VIES at https://ec.europa.eu/taxation_customs/vies/), verify the ID via one `web_fetch` to that service and report whether the check succeeded. Never fail the step over a verification miss — record it and move on.\n6. STEP_OUTPUT includes: tax name, standard rate, registration authority + URL, threshold, and (when applicable) VIES-check result.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The report names the specific consumption tax (e.g. Mehrwertsteuer / TVA / JCT / IVA / GST) the country levies AND cites the standard rate (from GET /api/countries tax_rates — the atlas carries the tax name, not the rate).",
+        "The guidance names a specific registration authority (Bundeszentralamt / HMRC / NTA / SAT / ATO / etc.) AND includes a public link to that authority's registration portal.",
+        "A registration threshold is named — either a specific figure sourced from `country_settings` (or a well-known cross-border rule) OR an explicit 'no explicit threshold — register from first sale' when the rulebook is silent.",
+        "When `context.vat_id` was provided and the country has a public verifier (EU VIES), the report records the verification result — pass, fail, or 'verifier unreachable' — without failing the whole step."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "local-invoicing-config",
+      "name": "Configure local invoicing template",
+      "prompt": "OTG operations invoice locally, in the local currency, from the local entity. Configure Fluid's invoicing template for this country (or, when no API surface exists, produce a concrete manual-task list the human can work through).\n\n1. Read `context.country_id`, `context.currency_code`, and `context.entity_name` from the context block. If `entity_name` is null/empty, note `entity_name missing — human must add before invoices ship` and continue (do NOT fail here — invoicing config can start without the name).\n2. Probe for an invoicing settings endpoint. Try in order:\n   a. GET `/api/settings/invoicing` — if 200, read the schema and PATCH the country-scoped block with `{ entity_name, currency: context.currency_code, country_id: context.country_id }` plus any country-specific fields the schema exposes (VAT ID slot, invoice numbering scheme).\n   b. GET `/api/settings/company_countries/{id}` for the record created by open-country — if it has an `invoicing` sub-block, PATCH it there.\n   c. Neither exists → drop through to the manual list.\n3. Add country-specific manual tasks based on `country_settings`:\n   - Mexico: register for CFDI 4.0 with SAT; every invoice needs a UUID / folio. Fluid doesn't emit CFDI natively — the human will need a CFDI issuance provider (Facturama, TimbreFiscal, etc.).\n   - France B2G: Chorus Pro registration for public-sector invoices.\n   - Italy: SdI e-invoicing (Sistema di Interscambio) for B2B / B2G.\n   - Poland: KSeF once mandated.\n   - Otherwise: sequential invoice numbering + entity name / VAT ID on every invoice.\n4. STEP_OUTPUT lists which path ran (API PATCH OR manual list) and, for the manual case, enumerates each task with a one-line why.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Either an API PATCH to /api/settings/invoicing or /api/settings/company_countries/{id} succeeded (verify with a follow-up GET showing the entity_name + currency landed), OR a concrete manual-task list was produced with at least one item per country-specific quirk from `country_settings`.",
+        "The report explicitly states whether entity_name was present in context; if missing, the follow-up items include 'add legal entity name'.",
+        "STEP_OUTPUT names the branch taken (api-patch | manual-list) so downstream reports know whether an API surface was actually written."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "local-payment-gateway-guidance",
+      "name": "Local payment-gateway guidance",
+      "prompt": "Every OTG country needs local payment methods — cards alone are not enough. Turn `country_settings.paymentMethods` into concrete gateway-connection guidance.\n\n1. Read `context.country_iso` from the caller context (the open-a-country skill passes it alongside country_id). If the context somehow lacks it, GET /api/countries and match `id === context.country_id` to derive the ISO — the lookup is self-contained so this step can run in parallel with vat-registration-guidance.\n2. Call `country_settings` with that ISO. Read `paymentMethods` — an array of `{ id, label, description, recommended }`.\n3. Filter to the TOP 2 recommended local methods (`recommended: true`) that are NOT the always-present card / PayPal / wallet_pay defaults. Concretely: SEPA + Klarna for DE, Cartes Bancaires + PayPal-Local for FR, PIX for BR, iDEAL for NL, Konbini + Pay-easy for JP, OXXO for MX, PayNow for SG, etc.\n4. For each of those methods, produce a short block:\n   - method label + why it matters in-market (from `description`)\n   - where to enable in Fluid: the payments settings page (typically `/settings/payment_methods` in the admin) — link the user there\n   - what the human will need to onboard the gateway (bank details, KYC docs, provider account) at a high level\n5. If `country_settings` returns a covered: false marker or a `paymentMethods` array with fewer than 2 non-default entries, degrade gracefully: recommend the defaults (cards + wallet_pay) with an explicit 'no curated local methods for this market yet — verify locally'.\n6. STEP_OUTPUT names each recommended method + its enablement guidance.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The report names AT LEAST TWO country-appropriate local payment methods sourced from `country_settings.paymentMethods` (recommended: true) OR explicitly documents the market as uncurated with a fallback to card + wallet.",
+        "For each recommended method, the report includes: label, one-line why-it-matters, and where in the Fluid admin to connect it.",
+        "The always-present defaults (generic credit_card / paypal / wallet_pay) are not counted toward the two local methods — the point is to surface the market-specific ones."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "b2b-vs-b2c-check",
+      "name": "B2B vs B2C posture interpretation",
+      "prompt": "Different countries impose different consumer-facing obligations for B2C sellers (Germany's Impressum, France's Mentions Légales, Japan's 特定商取引法に基づく表記 are all B2C-oriented disclosure duties). Shape the compliance review with the B2B/B2C posture the user pre-selected in the Open a Country steps panel — this step never blocks on a chat reply.\n\n1. Read `context.otg_posture` from the caller context. Expected values: `b2b`, `b2c`, `both`. If the field is missing or unrecognized, default to `both` AND note the default in your report (do NOT ask the user mid-workflow — the manager may not be watching this step's chat).\n2. Read `context.country_iso` and call `country_settings` with it. Pull `mandatoryDisclosurePages`.\n3. Produce a short interpretation block based on posture + the country's disclosure pages. Examples:\n   - DE + b2c → 'Impressum + Widerrufsbelehrung + AGB must be linked in the footer.'\n   - FR + b2c → 'Mentions Légales + Conditions Générales de Vente + Politique de Retour required.'\n   - JP + b2c → '特定商取引法に基づく表記 required with a specific set of fields.'\n   - Any + b2b-only → 'Consumer-protection pages still recommended but not statutorily required for pure-B2B sales.'\n4. STEP_OUTPUT captures the resolved posture (with a `posture_source: context | default` tag) AND the shaped interpretation so the compliance review reads both.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The resolved B2B/B2C posture came from `context.otg_posture` OR the step defaulted to `both` and the report explicitly says so (with a `posture_source: default` tag) — no mid-workflow chat questions were asked.",
+        "The report includes a short interpretation section that references at least one entry from `country_settings.mandatoryDisclosurePages` and connects it to the B2C obligation posture (or explicitly notes that pure-B2B operations relax the requirement).",
+        "STEP_OUTPUT includes both the resolved posture (with its `posture_source` tag) and the shaped interpretation so downstream steps can read them."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "compliance-review",
+      "name": "Full OTG compliance review",
+      "skill": "countries/compliance-manager",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "A per-country compliance report was produced covering mandatory disclosure pages, price display (VAT-inclusive / GST / IVA / total-price rule as applicable), cookie banner / privacy policy, linked agreements, product labeling, and theme copy language — with EXTRA weight on B2C obligations when the b2b-vs-b2c-check step captured `b2c` or `both`.",
+        "Every finding cites a specific rule loaded from the `country_settings` tool response (Impressum §5 TMG, PAngV §4, LCEN Art X, 特定商取引法 §11, LFPDPPP Art X, etc.) — findings without a citation must be dropped or reworded.",
+        "Findings are grouped as Critical (fail) / Should review (review) / Passed (ok) with a Follow-ups section for items a human still needs to own (VAT registration completion, gateway KYC, entity_name if missing)."
+      ],
+      "dependsOn": [
+        "vat-registration-guidance",
+        "local-invoicing-config",
+        "local-payment-gateway-guidance",
+        "b2b-vs-b2c-check"
+      ],
+      "maxReworkRounds": 2
+    }
+  ]
+}
