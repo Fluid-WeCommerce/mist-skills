@@ -173,6 +173,15 @@
       "icon": "sparkles",
       "path": "optimize/suggested-changes.md",
       "updated_at": "2026-07-04T03:42:11Z"
+    },
+    {
+      "slug": "onboarding/open-a-country",
+      "name": "Open a Country",
+      "description": "Guided country-creation flow \u2014 operating mode (NFR/OTG/USD), agreements, payment methods, enrollment fields, and an animated reveal of everything Fluid configures automatically.",
+      "category": "onboarding",
+      "icon": "globe",
+      "path": "onboarding/open-a-country.md",
+      "updated_at": "2026-07-04T07:42:36Z"
     }
   ]
 }
