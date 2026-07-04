@@ -173,6 +173,46 @@
       "icon": "sparkles",
       "path": "optimize/suggested-changes.md",
       "updated_at": "2026-07-04T03:42:11Z"
+    },
+    {
+      "slug": "countries/open-a-country",
+      "name": "Open a Country",
+      "description": "Guided company-launch flow powered by Fluid's Country Atlas: pick the operating mode (NFR / OTG / USD), branch into mode-specific setup (operations status, entity, business id, warehouse), pick payment methods, missing languages, agreements, and enrollment fields, then run the open-country workflow with QA and chain the mode finalizer.",
+      "category": "countries",
+      "icon": "globe",
+      "path": "countries/open-a-country.md",
+      "updated_at": "2026-07-04T00:00:00Z"
+    },
+    {
+      "slug": "countries/compliance-manager",
+      "name": "Country Compliance Manager",
+      "description": "Audit a storefront against a country's legal requirements — disclosure pages, price display, cookie/privacy law, agreements, product labeling, storefront language — using the Country Atlas as the rulebook. Runs standalone and as the final step of the mode finalizers.",
+      "category": "countries",
+      "icon": "scale",
+      "path": "countries/compliance-manager/SKILL.md",
+      "updated_at": "2026-07-04T00:00:00Z"
+    }
+  ],
+  "workflows": [
+    {
+      "slug": "open-country",
+      "path": "workflows/open-country.workflow.json",
+      "updated_at": "2026-07-04T00:00:00Z"
+    },
+    {
+      "slug": "finalize-otg-country",
+      "path": "workflows/finalize-otg-country.workflow.json",
+      "updated_at": "2026-07-04T00:00:00Z"
+    },
+    {
+      "slug": "finalize-nfr-country",
+      "path": "workflows/finalize-nfr-country.workflow.json",
+      "updated_at": "2026-07-04T00:00:00Z"
+    },
+    {
+      "slug": "finalize-usd-country",
+      "path": "workflows/finalize-usd-country.workflow.json",
+      "updated_at": "2026-07-04T00:00:00Z"
     }
   ]
 }

@@ -36,10 +36,19 @@ mist-skills/
 ├── mist/
 │   ├── scaffold-droplet.md
 │   └── env-vars-audit.md
+├── countries/
+│   ├── open-a-country.md          ← flat skill (front-end steps flow)
+│   └── compliance-manager/        ← folder skill
+│       └── SKILL.md
+├── workflows/                     ← declarative multi-step chains (JSON, not skills)
+│   ├── open-country.workflow.json
+│   ├── finalize-otg-country.workflow.json
+│   ├── finalize-nfr-country.workflow.json
+│   └── finalize-usd-country.workflow.json
 └── README.md
 ```
 
-Directories are categories. The category shows as a section header in the desktop sidebar.
+Directories under the skill categories are categories (the category shows as a section header in the desktop sidebar). `workflows/` is special — see [Workflows](#workflows) below.
 
 ### Two skill shapes
 
@@ -159,6 +168,75 @@ The desktop pulls `manifest.json` first, diffs it against its cached copy, and r
 | `path`        | yes      | Flat: `<category>/<filename>.md`. Folder: `<category>/<folder>/SKILL.md`.                                       |
 | `updated_at`  | yes      | ISO-8601 UTC. Bump on body changes.                                                                            |
 | `references`  | no       | Array of repo-relative paths. Omit for flat skills. List every file the agent should see alongside the body.   |
+
+## Workflows
+
+A **skill** is a prompt the user reads and runs. A **workflow** is a declarative, multi-step chain the desktop's orchestrator runs across dedicated agent chats — each step gets QA-reviewed against acceptance criteria and reworked automatically on failure. Skills and workflows compose: an interactive skill (e.g. `countries/open-a-country`) collects the user's answers through the steps panel, then hands off to a workflow (`open-country`) that does the writes.
+
+Workflows live in `workflows/` as **plain JSON** (`<slug>.workflow.json`) and are listed in `manifest.json` under a `workflows` array (separate from `skills`). The desktop syncs them into its cache exactly like skill bodies and loads them with this precedence, most-specific winning:
+
+```
+built-in (compiled into the app)  <  community (this repo)  <  user (~/Fluid/workflows/)
+```
+
+So a workflow shipped in the app can be **hot-fixed from this repo without an app release** — same win skills get — and a user can still fork one locally.
+
+### Workflow file shape
+
+```jsonc
+{
+  "slug": "open-country",                      // matches the manifest entry; overrides a built-in of the same slug
+  "name": "Open a Country",
+  "description": "…",
+  "steps": [
+    {
+      "id": "create-country",
+      "name": "Create the company country",
+      "prompt": "…",                           // inline instructions for this step's agent turn
+      // OR: "skill": "countries/compliance-manager"  ← delegate the step to a skill by slug
+      "target": { "type": "manager" },         // which project runs it (manager = the chat you're in)
+      "acceptance": ["…"],                      // criteria the QA turn verifies before the step passes
+      "dependsOn": [],                          // step ids that must pass first (enables parallelism)
+      "maxReworkRounds": 2                      // bounded auto-rework on QA failure
+    }
+  ]
+}
+```
+
+Manifest entry (in the top-level `workflows` array):
+
+```jsonc
+"workflows": [
+  { "slug": "open-country", "path": "workflows/open-country.workflow.json", "updated_at": "2026-07-04T00:00:00Z" }
+]
+```
+
+Bump `updated_at` on any change, same as skills.
+
+> **Trust:** workflows are more powerful than skills — they autonomously fan out agent turns that make real API writes. That's why what merges here is the trust boundary: only maintainers approve PRs to this repo; publish-tier contributors can't. Keep a workflow's writes idempotent, and prefer delegating judgment-heavy steps to a `skill:` so the logic stays reviewable.
+
+## Tools
+
+Skills and workflow steps run with Claude's full tool set in Mist Desktop. **Tools are code — they're compiled into the app and can't be added or changed from this repo.** This section is the reference for *which* tools a skill or workflow can call by name; to change a tool's behavior, change the app.
+
+| Tool | What it does |
+| ---- | ------------ |
+| `fluid_api(path, method, body)` | Call the user's Fluid API with their token — the workhorse for reads and writes. |
+| `country_atlas(country_code, [agreement_local_id])` | Fluid's per-market pre-setup profile (modes, launch checklists, agreements, tax/legal settings, payment methods, address layout, languages). Pass `agreement_local_id` for one agreement's full legal text. |
+| `country_settings(country_code)` | The compliance rulebook projected from the atlas (disclosure pages, cookie/VAT/unit-price rules) — what `compliance-manager` reads. |
+| `steps` / `steps_answer` / `steps_mark_item` | Open an interactive click-through panel, record a typed-in answer, or check off a live "setting up…" item. |
+| `run_workflow(workflow_slug, [context])` / `workflow_status` | Kick off a workflow chain (passing collected answers as `context`) and check a run's progress. |
+| `run_skill(slug)` | Load another skill's body and follow it (skill composition). |
+| File I/O: `read_file`, `write_file`, `edit_file`, `list_dir` (+ `*_in` cross-project variants) | Read/write files scoped to the active project. |
+| `run_cli` | The `fluid` CLI (`fluid theme push`, `fluid mist push --watch`, …), allowlisted subcommands only. |
+| `web_fetch`, `crawl` | Fetch a URL as text, or crawl a page (markdown + screenshot). |
+| `dam_upload`, `compress_media`, `video_ripper`, `video_metadata` | Push media into the Fluid DAM, shrink it (bundled ffmpeg), rip/inspect a social video. |
+| `screenshot_preview`, `start_preview`, `read_recent_log_tail`, `retry_lifecycle` | Drive + inspect a running dev preview. |
+| `db_query`, `sql_answer_card`, `list_projects` | Query a connected Mist database and list projects. |
+| `product_card`, `resource_card`, `order_card` | Render a rich card for a product / storefront resource / order in the chat. |
+| `human_in_the_loop` | Gate a change on the user's approval. |
+
+Name the exact tool + endpoint you expect in a skill or workflow step, not "figure it out from the docs."
 
 ## Contributing a skill
 

@@ -1,0 +1,70 @@
+{
+  "slug": "finalize-nfr-country",
+  "name": "Finalize NFR (Not For Resale) country setup",
+  "description": "Post-open-country finalizer for NFR mode: verify the international shipping profile, confirm import-duty disclosure at checkout, spot-check product country-of-origin labeling, and run a light compliance review acknowledging the NFR posture. Expects the caller `context` from open-country PLUS `mode: \"nfr\"`.",
+  "maxParallel": 3,
+  "steps": [
+    {
+      "id": "shipping-profile-setup",
+      "name": "International shipping profile",
+      "prompt": "NFR means the customer imports the product cross-border — every NFR country needs an international shipping zone or the checkout will refuse the address.\n\n1. Read `context.country_id`, `context.mode` (should be `nfr`), and `context.country_iso` (or resolve via GET /api/countries) from the context block. If mode is not `nfr`, emit `STEP_OUTPUT: mode is not nfr; nothing to do` and STOP.\n2. Probe for a shipping-zones endpoint. Try in order:\n   a. GET `/api/shipping/zones` — if 200, look for a zone whose `country_ids` includes `context.country_id`.\n   b. GET `/api/settings/shipping_zones` — same check.\n   c. GET `/api/settings/company_countries/{id}` for a `shipping` sub-block that flags cross-border-shipping-enabled.\n3. If a zone already covers the country, report `already covered by zone <id> (<name>)` and STOP.\n4. If no zone covers it, either:\n   a. POST to whichever endpoint returned a schema in step 2 with a body like `{ zone: { name: 'International — <country>', country_ids: [<context.country_id>], rate_type: 'flat', rate_cents: 0 } }` — pick a conservative flat rate and note that the human should tune it, OR\n   b. If no shipping-zones endpoint exists AT ALL, emit a manual step: `SETUP REQUIRED: navigate to /settings/shipping in the admin and add <country> to an international zone.`\n5. STEP_OUTPUT names the resolution: already-covered / zone-created / manual-step-emitted.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "GET /api/shipping/zones (or the alternate endpoint the probe found) shows a zone whose country_ids includes context.country_id, OR the report explicitly notes 'no shipping-zones endpoint available' with a manual follow-up.",
+        "STEP_OUTPUT reports which branch ran: already-covered | zone-created | manual-step-emitted — no silent success."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "import-duty-display-check",
+      "name": "Import-duty disclosure check",
+      "prompt": "NFR without an import-duty disclosure at checkout leads to customs surprises and chargebacks. The storefront MUST tell the buyer that import duties/taxes may apply and are paid on delivery.\n\n1. Read `context.country_id` and `context.country_iso` from the context.\n2. Crawl the public storefront's checkout / cart page and one product detail page. Use `crawl(<url>, formats: ['markdown', 'screenshot'])`. Locate the storefront URL via GET /api/settings/companies/{id} or from an earlier step's STEP_OUTPUT.\n3. Search the crawled markdown for import-duty language — case-insensitive match on any of: 'import dut', 'customs dut', 'may apply on delivery', 'paid by the recipient', 'DDU', 'delivered duty unpaid', 'buyer is responsible for'.\n4. If found, record `import-duty disclosure present at <page url>` with the matched sentence.\n5. If NOT found, produce a specific fix instruction: recommend adding a short paragraph to the checkout page and the product page footer for shipments to this country. Draft ONE sentence the human can drop in, in the country's primary language (from `country_settings.languageCode` — English fallback when not curated). Example draft: 'Orders shipped to <country> may be subject to import duties and taxes on delivery, paid by the recipient.'\n6. STEP_OUTPUT names the pages checked, the search terms tried, and the resolution (present | fix-required).",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "At least one storefront page (checkout and/or product detail) was crawled THIS turn — the report includes the URL and either the matched disclosure sentence OR a note that no match was found.",
+        "If no disclosure is found, the report includes a concrete one-sentence draft in the country's primary language (or English fallback) that a human can paste into the theme.",
+        "STEP_OUTPUT lists the pages checked and the search terms used so the compliance review can pick up the finding."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "product-labeling-check",
+      "name": "Product labeling spot check",
+      "prompt": "Even though NFR imports fall on the buyer for most consumer-protection duties, the physical products themselves still need to comply with the destination's minimum labeling — country-of-origin marking on the goods, and (for many countries) English-language or destination-language labels on consumer goods regardless of the local language.\n\n1. GET `/api/company/v1/products?per_page=3` for a spot-check sample (three active products is enough).\n2. For each product, check the product record for a `country_of_origin` field (either directly on the product or on any variant). Report present/absent per product.\n3. If the product record has photos, look at the primary image via `web_fetch` — is a country-of-origin label visible on the packaging? This is best-effort; a null answer is acceptable.\n4. Read `country_settings.languageCode` — most non-English-primary countries still require English labels for imported consumer goods (an EU regulatory floor + national conventions in JP, MX, etc.). Note whether the sample's labeling appears to satisfy that.\n5. STEP_OUTPUT: per-product `country_of_origin: present | absent | unknown`, and a summary line like `2/3 products missing country_of_origin — human must add before shipping to <country>`.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Three products were spot-checked via GET /api/company/v1/products; the report names each by id and records `country_of_origin: present | absent | unknown`.",
+        "The report includes a one-line labeling summary and, when items are missing, a follow-up item that names how many products need country-of-origin added before shipping to this country."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "compliance-review",
+      "name": "Light NFR compliance review",
+      "skill": "countries/compliance-manager",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "A compliance report was produced with an explicit NFR-posture note in the summary — most consumer-facing website obligations are graded at a lower bar because the buyer imports the goods, and the report says so plainly.",
+        "Findings from the earlier NFR-specific steps (import-duty disclosure, country-of-origin labeling) appear in the report with severity assigned.",
+        "Every finding cites a specific rule from `country_settings` or, for NFR-specific findings, cites the earlier workflow step whose spot check produced it."
+      ],
+      "dependsOn": [
+        "shipping-profile-setup",
+        "import-duty-display-check",
+        "product-labeling-check"
+      ],
+      "maxReworkRounds": 2
+    }
+  ]
+}
