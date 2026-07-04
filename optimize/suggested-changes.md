@@ -69,7 +69,11 @@ human_in_the_loop({
 
 ## 4. Act on decisions
 
-- On `Approved: …` — perform exactly the `proposed_action`. Use `fluid_api` for resource mutations (they're recorded in the Time Machine automatically), file tools for theme code. Then fetch the freshest score if cheap (`GET …/lighthouse` or `…/compliance`) and call `human_in_the_loop` with `mode: "record_outcome"`, `after_score`, and an `after_payload` snapshot. Note: fresh scans take time server-side — if the score hasn't updated yet, record the state payload now; the next run of this skill auto-captures the new score on re-detection.
+- On `Approved: …` — perform exactly the `proposed_action`. **First determine WHERE the change lives — the resource or its template:**
+  - **Resource data** — structured fields like price, title, description, images, SKUs, variants — lives on the resource itself. Change it with `fluid_api` (PATCH the resource; mutations are recorded in the Time Machine automatically).
+  - **Template content** — marketing copy, headlines, claims language, layout, scripts, styling — lives on that resource's TEMPLATE (the theme/template that renders it), not the resource record. Inspect the resource's template (e.g. its `application_theme_template` reference / the theme's template files) and make the change there with the file tools or the template's API, not by PATCHing the resource.
+  - When a finding could be either (e.g. a compliance issue quoting text that appears in both the description field and the template copy), check BOTH, fix where the offending content actually is, and say which one you changed.
+- Then fetch the freshest score if cheap (`GET …/lighthouse` or `…/compliance`) and call `human_in_the_loop` with `mode: "record_outcome"`, `after_score`, and an `after_payload` snapshot. Note: fresh scans take time server-side — if the score hasn't updated yet, record the state payload now; the next run of this skill auto-captures the new score on re-detection.
 - On `Dismissed: …` — skip it forever (the store enforces this) and continue with remaining suggestions.
 
 ## 5. Wrap up
