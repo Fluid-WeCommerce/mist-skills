@@ -60,13 +60,12 @@ Run these in order. Steps 2 and 3 are **questions to the user** — ask them, do
 
 ### 1. Find the company's enabled languages
 
-Translations are only worth shipping for languages the store actually serves. Read them from
-the Fluid API (same credentials as the `fluid-admin` skill — ask the user for the Fluid URL and
-API token if you don't have them):
+Translations are only worth shipping for languages the store actually serves. Read them with the
+`fluid_api` tool — the active company is already selected in Mist Desktop and the token is
+injected automatically, so never ask for a store URL or API token:
 
-```bash
-curl -s "${FLUID_URL}/api/settings/languages" \
-  -H "Authorization: Bearer ${FLUID_TOKEN}"
+```
+fluid_api("/api/settings/languages", "GET")
 ```
 
 This returns the languages enabled on the company. Extract each language's **ISO code** and
