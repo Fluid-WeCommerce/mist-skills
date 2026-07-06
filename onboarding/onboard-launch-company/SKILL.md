@@ -127,3 +127,27 @@ Do not poll `workflow_status` unsolicited. When the user asks, use it.
   the user the workflow needs a project selected in the sidebar and stop.
 - If the user cancels in Step 1, respond with one line ("no worries — ping
   me when you're ready") and stop. Do not re-prompt.
+
+## API & sequencing gotchas (from live onboarding runs)
+
+These are non-obvious and cost real time when rediscovered. Bake them in.
+
+- **Create pages via `POST /api/company/pages`.** The `/api/company/v1/pages`
+  variant 404s. `html_code` compiles async — re-GET (or re-PATCH) if the body
+  comes back empty. Deleting a page and reusing its slug tombstones the slug;
+  always use a fresh slug.
+- **Push theme edits BEFORE creating pages.** Creating a page auto-generates
+  an `application_theme_template` in the active theme. A subsequent
+  `theme push` then tries to delete those orphans and can fail or clobber. Do
+  all theme pushes first, then create pages. Orphaned templates are removable
+  via `DELETE /api/application_theme_templates/:id`.
+- **Cloud Armor throttles page-create bursts.** A rapid run of POST-with-body
+  requests gets persistently 403'd by the prod WAF (GET stays 200), and a
+  short cooldown doesn't clear it. Space page creates out; don't hammer.
+- **Products create as `status:draft`** even with `active:true` → PATCH
+  `{product:{status:"active"}}` after each. Options only materialize via
+  `option_attrs` (product = names, variant = values). Collection membership is
+  `PATCH product {collection_ids:[...]}` — `collections/{id}/add_product` 404s.
+- **Storefront status checks MUST use a real headless browser.** Prod Cloud
+  Armor returns 500/302 to curl/HTTP clients even with a browser UA, while a
+  real browser gets 200. Never conclude a route is broken from a curl status.
