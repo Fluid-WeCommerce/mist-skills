@@ -7,7 +7,9 @@ description: >-
   onboard-launch-company workflow — which clones the site into a theme,
   iteratively refines it against screenshots, imports products, ticks off the
   Getting Started checklist, discovers UGC, and delivers a real launch-readiness
-  review. Use this to launch a brand-new company in one sitting.
+  review. Runs against the ALREADY-SELECTED active company — it does NOT create a
+  company; it populates the existing one from its website. Use when the user says
+  "onboard from <url>", "onboard this company", or "launch this store".
 icon: rocket
 ---
 
@@ -22,8 +24,15 @@ The active Fluid company is already selected in Mist Desktop — `fluid_api(path
 method, body)` targets it and injects the token. Never ask for a store URL or
 API key.
 
-Trigger examples: "onboard this company", "launch this store", "let's go end to
-end on {{company.name}}", "run the flagship onboarding".
+Trigger examples: "onboard from https://acme.com", "onboard this company",
+"launch this store", "let's go end to end on {{company.name}}", "run the flagship
+onboarding". When the user gives a URL ("onboard from <url>"), take it as the
+`website_url` — pre-fill it in the Step 1 panel, but still SHOW the step so the user
+can confirm or change the source URL (never silently skip the "pull from" question).
+
+**This is a RUN, not an authoring task.** Execute the steps below now — collect the
+inputs and fire the workflow. Do NOT offer to save, diff, summarize, or edit this
+skill; that only applies when authoring in a Skill project, not here.
 
 ## Step 0 — Detect Connect availability up front
 
@@ -74,10 +83,15 @@ YOUR TURN and wait for answers:
    - id `data_only`, label `Data onboarding only`, description "Gather, QA, and push
      brand/business/country data. No theme, no products."
 
-2. `website_url` — text_input "What's the company's current public website?"
-   Pre-fill from `/api/settings/companies/{id}` if available. Skippable: false.
-   Validation: must look like an http(s) URL — if the user types garbage, use
-   `steps_answer` to re-prompt.
+2. `website_url` — text_input "What URL should we pull the store from? (the live
+   site to clone the theme + import products/pages/collections from)" Skippable:
+   false. **Always include this step and always show it** — even when the user said
+   "onboard from <url>" or the company already has a website on file. Pre-fill the
+   field with that value (the `<url>` they gave, else `/api/settings/companies/{id}`'s
+   website) as a SUGGESTION, but keep the step visible so the user can confirm or
+   change the source — the site to pull from is not necessarily the company's stored
+   URL. Do NOT silently skip it. Validation: must look like an http(s) URL — if the
+   user types garbage, use `steps_answer` to re-prompt.
 
 3. `products_source` — single_select "Where should we pull products from?"
    `show_if: { step_id: "run_scope", any_of: ["full"] }` (only when products are in
