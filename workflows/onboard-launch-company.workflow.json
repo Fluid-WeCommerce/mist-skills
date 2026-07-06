@@ -124,7 +124,9 @@
         "seo-metadata-qa",
         "storefront-route-health-qa",
         "ugc-discovery",
-        "verify-links"
+        "verify-links",
+        "page-route-content-qa",
+        "font-substitution-qa"
       ]
     },
     {
@@ -238,7 +240,40 @@
         "Every route type has a non-empty, resource-specific <title> (not a generic default) and a meaningful meta description.",
         "Every route type has a <link rel=canonical> and exactly one <h1> with real content.",
         "Product and collection pages emit the relevant JSON-LD.",
-        "Theme-controllable gaps are fixed; store-level SEO-setting gaps are flagged for the human. STEP_OUTPUT lists the per-route SEO check."
+        "Theme-controllable gaps are fixed; store-level SEO-setting gaps are flagged for the human. STEP_OUTPUT lists the per-route SEO check.",
+        "Each PDP <title> contains the product name; if Fluid's layout scope makes product unavailable so the title falls to the brand default, flag it for the human rather than leaving it silently generic."
+      ]
+    },
+    {
+      "id": "page-route-content-qa",
+      "name": "Page route content QA",
+      "dependsOn": [
+        "storefront-route-health-qa"
+      ],
+      "target": "manager",
+      "maxReworkRounds": 2,
+      "prompt": "Focused QA — CONTENT PAGE ROUTES ONLY (browser-based). For every content/info page the onboarding authored (About, Contact, Shipping, Privacy, Terms, FAQ, Store locator, etc.), load /home/pages/<slug> in a real browser and assert the AUTHORED BODY renders — not just the nav + footer chrome. A page whose main region is empty means a page RECORD was never created (a template alone does not route content). CREATE the missing record via POST /api/company/pages (note: /api/company/v1/pages and /api/pages both 404 — use /api/company/pages), then re-check; html_code compiles async so re-GET/re-PATCH if the body returns empty, and use a FRESH slug (deleting a page tombstones its slug). Confirm every footer/nav link that points at a /pages/ route lands on a page with real body copy. STEP_OUTPUT: a table of page slug -> record exists? -> body renders? -> linked-from resolves? -> pass/fixed/flag.",
+      "acceptance": [
+        "Every authored content page renders its real body copy in a browser, not just nav + footer.",
+        "Missing page records are created via POST /api/company/pages (fresh slug) and re-verified.",
+        "Every footer/nav link to a /pages/ route resolves to a page with real content.",
+        "STEP_OUTPUT lists per-page record-exists / body-renders / linked-from status."
+      ]
+    },
+    {
+      "id": "font-substitution-qa",
+      "name": "Font substitution QA",
+      "dependsOn": [
+        "storefront-route-health-qa"
+      ],
+      "target": "manager",
+      "maxReworkRounds": 2,
+      "prompt": "Focused QA — FONT LICENSING & SUBSTITUTION ONLY. Determine the source brand's primary display + body typefaces. If a source font is proprietary (not OFL/Google-hosted/freely licensable) and was substituted with a free alternative, assert the substitution is done honestly and completely: (1) the closest free family is used consistently across the theme (no lingering references to the proprietary family name), (2) a license disclaimer naming the original font and the free substitute is embedded in the theme (e.g. a comment in layouts/theme.liquid), and (3) a sane font-stack fallback is present so text never renders in an unstyled default. If the brand's own licensed font files ARE importable (this is their store), import the real @font-face and keep the disclaimer noting the licensing assumption. STEP_OUTPUT: source font(s) -> proprietary? -> substitute used -> disclaimer present? -> fallback present? -> pass/flag.",
+      "acceptance": [
+        "Source typefaces identified; any proprietary font that was substituted is called out.",
+        "Substitute family is applied consistently with no leftover proprietary-family references.",
+        "A license disclaimer (original + substitute) is embedded in the theme and a fallback stack is present.",
+        "STEP_OUTPUT lists per-font substitution + disclaimer + fallback status."
       ]
     }
   ]
