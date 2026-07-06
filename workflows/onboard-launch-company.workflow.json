@@ -101,6 +101,28 @@
       }
     },
     {
+      "id": "content-import",
+      "name": "Import every page as a resource (collections, categories, pages, posts, menus)",
+      "prompt": "Create EVERY page on the source site as its Fluid RESOURCE \u2014 not just products (products are handled by products-import), and not just templates (theme-clone copies the layouts). Two axes must both be satisfied: (1) each page/URL on the source becomes a Fluid resource record, and (2) each page-type template was copied by theme-clone. This step owns axis (1) for non-product content. Follow the `fluid-product-admin-import` skill for the exact payloads.\n\nFIRST: if context flag `import_products` is not true, emit STEP_OUTPUT { skipped: true, reason: 'content out of scope' } and return.\n\nEnumerate the full source site (sitemap.xml + crawl) and, for each URL, create the matching resource \u2014 idempotent (GET-before-POST, skip existing, no duplicates):\n- **Collections** \u2192 POST /api/company/v1/collections (with product membership). Exclude $0 app-helper/internal collections (subscription tiers, ymal/crosssell, test) \u2014 see the skill's junk-filter note.\n- **Categories** \u2192 POST /api/company/v1/categories, ONLY if the source has a curated category taxonomy distinct from collections (else skip, correct-by-design).\n- **Static pages** (/pages/*: about, faq, contact, shipping, policies, etc.) \u2192 create a page resource for each. Use the pages endpoint per the skill (note: POST /api/company/pages currently works; the /v1/pages variant may 404 pending a fix \u2014 do not build a client-side fallback). Push theme/brand resources BEFORE creating pages (page creation auto-generates theme templates a later theme push would delete \u2014 that's why this step depends on clone-site).\n- **Blog posts** (/blogs/*/*) \u2192 POST /api/posts for each published article (title, body, hero image via DAM, date, slug). If the source blog has 0 published articles, that's correctly 0.\n- **Menus / nav** \u2192 POST /api/menus to mirror the source header/footer navigation so links resolve.\n\nSpace out page-create bursts (WAF throttles them). After creating, RE-COUNT each type via its list endpoint (meta.pagination.total_count) and reconcile against the source. End with STEP_OUTPUT: { collections:{source,created}, categories:{...}, pages:{source,created}, posts:{...}, menus:{...}, skipped_junk:[...], remaining_for_human:[...] }.",
+      "target": {
+        "type": "manager"
+      },
+      "runIf": {
+        "flag": "import_products"
+      },
+      "maxReworkRounds": 3,
+      "acceptance": [
+        "If import_products was not selected, the step correctly skipped and did no work.",
+        "Otherwise: every source collection (minus $0 app/internal junk), every curated category (or justified none), every static /pages/* page, every published blog post, and the site nav/menus were created as Fluid resources \u2014 reconciled against the source via each type's list-endpoint total_count (report exact source-vs-created counts per type).",
+        "Creates are idempotent (GET-before-POST, no duplicates on re-run); pages were created AFTER theme templates exist; legitimately-empty types (e.g. no blog articles) are justified, not fabricated.",
+        "STEP_OUTPUT reports per-type source-vs-created counts and any remaining_for_human items."
+      ],
+      "dependsOn": [
+        "gather-context-qa",
+        "clone-site"
+      ]
+    },
+    {
       "id": "populate-getting-started",
       "name": "Tick off the Getting Started checklist",
       "prompt": "The Fluid admin's Getting Started page (`/getting-started`) drives a server-side onboarding checklist. Your job is to walk it and mark every task that's actually done \u2014 using data the earlier steps just produced \u2014 and explicitly defer the rest.\n\n1. GET /api/v1/onboardings. The response shape is `{ onboarding: { sections: [{ id, name, steps: [{ id, name, status, allow_manual_completion }] }] }, ... }`. Statuses are `pending` | `completed` | `skipped`.\n\n2. For every step still `pending`, decide:\n   a. **Check via PATCH /api/v1/onboardings/check_step?section=<sid>&step_id=<stepid>** \u2014 this asks the server to re-evaluate whether the step's underlying data now exists. Call it whenever the earlier workflow steps plausibly satisfied the task (e.g. brand info was pushed \u2192 'Set brand colors' should re-evaluate to completed).\n   b. **Manually complete via PATCH /api/v1/onboardings/complete_step?section=<sid>&step_id=<stepid>** \u2014 only when `allow_manual_completion: true` AND you have a real reason (e.g. the task doesn't map to an API surface but the human intent is satisfied).\n   c. **Explicitly defer** \u2014 record in your report `DEFERRED: <sid>/<stepid> \u2014 <reason>`. Acceptable reasons: 'requires payments onboarding KYC', 'requires Connect provider not chosen', 'requires human decision'.\n\n3. GET /api/v1/onboardings once more at the end and report: completed count, deferred count, still-pending count, and the overall percentage.\n\n4. Do NOT invent step ids \u2014 the checklist is server-driven; only touch ids you actually saw in the GET. Do NOT re-mark completed/skipped steps.",
@@ -177,7 +199,8 @@
         "ugc-discovery",
         "verify-links",
         "page-route-content-qa",
-        "font-substitution-qa"
+        "font-substitution-qa",
+        "content-import"
       ]
     },
     {
