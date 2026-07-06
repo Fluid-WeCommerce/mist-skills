@@ -197,11 +197,24 @@ So a workflow shipped in the app can be **hot-fixed from this repo without an ap
       "target": { "type": "manager" },         // which project runs it (manager = the chat you're in)
       "acceptance": ["…"],                      // criteria the QA turn verifies before the step passes
       "dependsOn": [],                          // step ids that must pass first (enables parallelism)
-      "maxReworkRounds": 2                      // bounded auto-rework on QA failure
+      "maxReworkRounds": 2,                     // bounded auto-rework on QA failure
+      "runIf": { "flag": "build_theme" }        // optional: only run when this run-context flag is truthy (see below)
     }
   ]
 }
 ```
+
+#### Conditional steps — `runIf` (optional)
+
+A step may declare `"runIf": { "flag": "<contextKey>" }`. The step runs **only if that boolean flag is truthy in the run's start context** (the `context` object the fronting skill passes to `run_workflow`). If the flag is falsy or absent, the step is **condition-skipped**: marked `skipped`, but — unlike a step skipped because a dependency failed — it **satisfies its dependents**, so downstream steps still run. A run whose only non-passed steps are condition-skips still completes successfully.
+
+Use it to let **one** workflow cover scoped runs instead of maintaining separate workflow files. Example: `onboard-launch-company` sets `build_theme` / `import_products` / `push_business_data` flags from a `run_scope` picker, and tags the theme-track and product-track steps with `runIf` so a "data only" run skips the theme + product steps while still running data gathering, its QA, and the launch review.
+
+Guidance for implementers:
+- The fronting skill must put the boolean in the `run_workflow` `context` (e.g. derive `build_theme` from a `run_scope` answer). An absent flag reads as "don't run."
+- `runIf` gates a **whole step**. For finer-grained skips inside a step, branch in the step's `prompt` instead (a prompt step can self-skip and emit `STEP_OUTPUT { skipped: true }`).
+- Prefer `runIf` over per-scope workflow copies — it keeps one source of truth and the progress card shows the skip explicitly.
+- Requires desktop engine support (fluid-mono `mist-desktop` ≥ the runIf release). Older builds ignore the unknown key and simply run the step, so tagging is backward-safe — but don't rely on skipping until the engine ships it.
 
 Manifest entry (in the top-level `workflows` array):
 
