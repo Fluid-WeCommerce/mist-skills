@@ -50,18 +50,38 @@ Also GET `/api/settings/companies/{active_id}` (or the equivalent company-detail
 route) to check whether the company already has a `website_url` set. If so,
 suggest it as the default — do not silently reuse it, but pre-fill.
 
+Finally, GET `/api/application_themes` to list the company's existing themes
+(capture `id` + `name`). This populates the "clone into an existing theme or
+create a new one" question in Step 1. If the company has no themes yet, the only
+option is "create new."
+
 ## Step 1 — Steps panel
 
 Call `steps` with title `Onboard {{company.name}}` and these steps, then END
 YOUR TURN and wait for answers:
 
-1. `website_url` — text_input "What's the company's current public website?"
+1. `run_scope` — single_select "What should this run do?" Skippable: false. Gates
+   which downstream tracks execute. Brand + country **data gathering always runs and
+   is QA'd first** (it drives everything below), so every option includes it.
+   - id `full`, label `Full onboarding (recommended)`, description "Gather + QA
+     brand/business/country data, clone & refine the theme, import products, tick off
+     Getting Started."
+   - id `data_theme`, label `Data + theme (no products)`, description "Gather + QA the
+     data, then clone & refine the theme. Skip product import."
+   - id `theme_only`, label `Theme only`, description "Clone & refine the theme. Still
+     gathers + QAs brand colors/fonts/countries first (they drive the theme), but skips
+     the business/KYC push and products."
+   - id `data_only`, label `Data onboarding only`, description "Gather, QA, and push
+     brand/business/country data. No theme, no products."
+
+2. `website_url` — text_input "What's the company's current public website?"
    Pre-fill from `/api/settings/companies/{id}` if available. Skippable: false.
    Validation: must look like an http(s) URL — if the user types garbage, use
    `steps_answer` to re-prompt.
 
-2. `products_source` — single_select "Where should we pull products from?"
-   Options depend on Step 0's discovery. Always include at least the last two:
+3. `products_source` — single_select "Where should we pull products from?"
+   `show_if: { step_id: "run_scope", any_of: ["full"] }` (only when products are in
+   scope). Options depend on Step 0's discovery. Always include at least the last two:
 
    - When a Connect droplet is `is_connected: true`, add ONE option with id
      `connect_<slug>` (e.g. `connect_shopify`), label
@@ -78,12 +98,31 @@ YOUR TURN and wait for answers:
      "The workflow creates a placeholder product. You'll add real products
      later by hand."
 
-3. `confirm` — single_select "Ready to run the flagship onboarding? This
-   spawns 7 dedicated agent chats and takes ~15-30 minutes." Options: id
-   `go` label `Yes, launch it`, id `cancel` label `Not yet`.
+4. `theme_target` — single_select "Clone into an existing theme, or create a new
+   one?" `show_if: { step_id: "run_scope", any_of: ["full", "data_theme", "theme_only"] }`
+   (only when the theme is in scope). Ask upfront (not mid-workflow) so the run stays
+   walk-away.
+   - Always: id `new`, label `Create a new theme (recommended)`, description "Scaffold a
+     fresh theme for {{brand}} — keeps the clone isolated and safe to iterate."
+   - For each existing theme from Step 0, add id `existing_<theme_id>`, label
+     `Clone into: <theme name>`, description "Refine this existing theme instead of
+     creating a new one." If the company has no themes, only `new` is offered.
 
-Keep this to three steps. Anything else (Connect credentials, brand info
-prompts, etc.) belongs INSIDE the workflow, not this picker.
+5. `extras` — multi_select (mode `opt_in` — empty by default) "Add any optional content
+   steps?" Off unless picked.
+   - id `import_brand_social`, label `Import the brand's own YouTube + TikTok videos`,
+     description "Find the company's official social accounts, register them in Fluid, and
+     pull THEIR videos into the DAM + Media (the brand's own content)."
+   - id `discover_ugc`, label `Discover UGC about the brand (TikTok)`, description "Search
+     TikTok for other people's content about the brand and pull the best picks into the
+     DAM. Different from the brand's own content above."
+
+6. `confirm` — single_select "Ready to run? This spawns dedicated agent chats; a full run
+   takes ~20-40 minutes." Options: id `go` label `Yes, launch it`, id `cancel` label
+   `Not yet`.
+
+Keep this to these steps. Anything else (Connect credentials, brand info prompts, etc.)
+belongs INSIDE the workflow, not this picker.
 
 ## Step 2 — Fire the workflow
 
@@ -95,13 +134,37 @@ context: {
   "website_url": <answer from step 1>,
   "connect_provider": <null | "shopify" | "exigo" | "bydesign" | "pillars" | "infotrax">,
   "connect_droplet_uuid": <uuid from Step 0, or null>,
-  "products_source": "connect" | "scrape" | "manual"
+  "products_source": "connect" | "scrape" | "manual" | null,
+  "theme_target": "new" | "existing" | null,
+  "theme_id": <null | existing theme id>,
+  "run_scope": "full" | "data_theme" | "theme_only" | "data_only",
+  "build_theme": <bool>,
+  "import_products": <bool>,
+  "push_business_data": <bool>,
+  "import_brand_social": <bool>,
+  "discover_ugc": <bool>
 }
 ```
 
 Derive `connect_provider` from the `products_source` answer:
 - id starts with `connect_` → provider is the slug after the prefix
 - id is `scrape` or `manual` → provider is `null`
+- `products_source` skipped (products out of scope) → `products_source: null`, provider `null`
+
+Derive `theme_target` + `theme_id` from the `theme_target` answer:
+- id `new` → `theme_target: "new"`, `theme_id: null`
+- id `existing_<theme_id>` → `theme_target: "existing"`, `theme_id: <that id>`
+- skipped (theme out of scope) → `theme_target: null`, `theme_id: null`
+
+Derive the track flags from `run_scope` (they gate which steps do work via the workflow's
+`runIf`):
+- `build_theme`: true for `full`, `data_theme`, `theme_only`; false for `data_only`
+- `import_products`: true for `full`; false otherwise
+- `push_business_data`: true for `full`, `data_only`; false for `data_theme`, `theme_only`
+  (brand + country gathering always runs regardless — it drives the theme)
+
+Derive the extras flags from the `extras` multi_select:
+- `import_brand_social`: true iff selected; `discover_ugc`: true iff selected (both default false)
 
 `run_workflow` returns immediately with a run plan; the progress card renders
 in this chat and updates as steps advance. End your turn after the tool call —
