@@ -704,7 +704,7 @@ Read [references/page-templates.md](references/page-templates.md) for the correc
 - Each `{% section 'name', id: 'unique_id' %}` needs a unique `id`
 - The `{% schema %}` block maps each `id` to a section `type` with optional `settings` overrides
 - The `order` array controls rendering order
-- **Product pages**: always include `{% section 'main_product', id: 'product_main' %}` first — never replace it
+- **Product pages**: always include `{% section 'main_product', id: 'product_main' %}` first — never replace it. Build the `product/default/index.liquid` template to **match the source PDP's section structure and order** (hero/gallery layout, benefits, ingredients, how-to-use, reviews, related — whatever the source uses). This one `default` template is what **every** product renders through, so matching it once makes all PDPs faithful; only add a `product/<slug>/index.liquid` when a specific product genuinely needs a bespoke layout. A generic default template = every product page looks off.
 - Read [references/fluid-rules.md](references/fluid-rules.md) for what NOT to touch
 - Read [references/template-variables.md](references/template-variables.md) for available variables per page type
 

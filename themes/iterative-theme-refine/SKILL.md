@@ -83,10 +83,36 @@ clone  = screenshot_preview()
         → returns an inline PNG the model can see + a saved path
 ```
 
-For sources with different pages you care about (usually just `/`; sometimes
-`/products` or `/about` if the workflow context lists them), rotate the URL
-per round: round 1 = homepage, round 2 = second-priority page, etc. Don't try
-to fit every page into one round.
+**Refine EVERY template TYPE, not just the homepage.** A homepage-only refine is how a
+clone ships looking generic-branded on its product and collection pages — the exact way
+this disappoints. Across the run you MUST capture and compare one instance of each template
+the source has:
+
+1. Homepage (`/`) — establishes the design language; do it first.
+2. **Product-detail page (PDP)** — a real product URL. This is the highest-value page and
+   the one most often skipped. The cloned `product/default` template is what EVERY product
+   renders through, so matching it once fixes all products. Treat a PDP that's structurally
+   different from the source (wrong hero/gallery layout, missing benefit/ingredient/review
+   sections, generic instead of the source's section order) as a **major**.
+3. Collection / category listing.
+4. Blog index + one post (only if the source has published articles).
+5. Cart and each distinct static page (about / FAQ / contact / policies).
+
+Rotate one template per round and **track which types you've covered** — a type you never
+screenshotted is a blind spot, not a pass. `STEP_OUTPUT.pages_verified` must list at least
+one of each existing type; a run that only verified `/` does NOT satisfy this skill. If 5
+rounds can't both cover every type AND fix all majors, prioritize covering every type once,
+then hand remaining majors to the cap report.
+
+**Route health before you diff.** Before comparing a template, confirm its URL renders a
+real page (not a 500/blank) using a real browser (`crawl`/`screenshot_preview`), and — when
+using an HTTP client — a faithful `Accept: text/html,…` header (a bare browser UA still
+sends `Accept: */*`, which the product route rejects). A page that only "renders" as an
+error screen is a major, not a pass.
+
+Also **dismiss overlays first** — source sites fire promo popups/cookie banners that will
+otherwise fill your screenshot and make the comparison meaningless. Close them (or use the
+crawl tool's screenshot, which handles most) before capturing.
 
 ### 2. Compare
 
