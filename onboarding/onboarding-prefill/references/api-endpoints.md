@@ -65,3 +65,41 @@ Authentication is injected automatically by the Mist runtime — call these endp
 |--------|----------|----------|
 | GET | `/api/settings/company` | Company identity (id, name) for preflight confirmation |
 | GET | `/api/settings/company_countries` | Token validation + country data |
+| GET | `/api/settings/brand_guidelines` | Read current brand (logo, colors) before pushing |
+| PATCH | `/api/settings/brand_guidelines` | Set brand colors + logo/icon/favicon/OG images |
+
+## Brand Guidelines (logo + colors) — exact contract
+
+`PATCH /api/settings/brand_guidelines` accepts EXACTLY these fields (verified against the
+Rails `UpdateAction` params schema — anything else is dropped):
+
+```jsonc
+{ "brand_guidelines": {
+  "name": "Brand Name",                 // optional, string
+  "logo_url": "https://…",              // optional, string URL — see logo flow below
+  "icon_url": "https://…",              // optional, string URL
+  "favicon_url": "https://…",           // optional, string URL
+  "color": "#1A2B3C",                   // optional — PRIMARY brand color
+  "secondary_color": "#DDEEFF",         // optional
+  "default_og_image": "https://…",      // optional, string URL
+  "default_og_description": "…",        // optional, string
+  "default_fallback_image": "https://…" // optional, string URL
+}}
+```
+
+**Logo/image flow — two steps, in order.** The endpoint takes a **URL**, not a file:
+1. Upload the image to the Fluid DAM first. In Mist, use the `dam_upload` tool (or the
+   upload service with `external_asset_url: <source image URL>` so it fetches the remote
+   file server-side). It returns `asset.default_variant_url`.
+2. `PATCH /api/settings/brand_guidelines` with `logo_url` (and/or `icon_url`,
+   `favicon_url`) set to that DAM URL. Never point these at the source site's CDN — those
+   links rot and leak the source domain.
+
+Notes:
+- Wrap the payload in the `brand_guidelines` key — a flat body is ignored.
+- A successful update auto-re-evaluates the Getting Started "brand guidelines" step
+  (`onboarding.check_brand_guidelines`) — no separate check_step call needed for it.
+- **Fonts are NOT part of brand_guidelines** — there is no font field in this schema.
+  Brand fonts live in the theme (theme tokens / settings_data), so set them via the
+  theme, and don't fail a brand-QA check for a "missing font" on this endpoint.
+- Verify after push: `GET /api/settings/brand_guidelines` and confirm the fields landed.
