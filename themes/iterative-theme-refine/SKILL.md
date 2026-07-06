@@ -71,16 +71,29 @@ Before entering the loop, verify:
 
 For each round `N` from 1 to 5:
 
-### 1. Capture paired screenshots
+### 1. Capture paired screenshots — FULL PAGE, section by section (not just the hero)
 
-Call these in this order (never in parallel — the second depends on the first's
-save):
+> ⚠️ **`screenshot_preview` and `crawl(... ["screenshot"])` are VIEWPORT-ONLY — they
+> capture just the hero.** `screenshot_preview` is Electron `capturePage()` (visible pane
+> only, no scroll); Firecrawl's `screenshot` is the viewport (no full-page variant exposed).
+> If you refine off those alone you only ever fix the hero and everything below the fold
+> ships unrefined. **Do NOT drive the comparison off single viewport shots.**
+
+Instead capture the **whole page, section by section**, using the Playwright full-page diff
+that `themes/theme-clone` already provides — [references/dev-preview-visual-diff.md](../theme-clone/references/dev-preview-visual-diff.md#the-diff-script). It scrolls to the
+bottom to trigger lazy-loaded images, takes a `fullPage: true` reference shot, then walks one
+viewport at a time (`sec01, sec02, …`) at **matched scroll positions** on both the live
+source and the localhost build, at desktop / tablet / mobile. `Read` each matched pair.
+(Playwright is already a theme-clone prerequisite and the dev server is already up from the
+clone step.)
+
+`screenshot_preview` is still fine for a quick "is the preview alive / did my last edit land"
+gut-check between rounds — just never treat a hero-only shot as the actual comparison.
 
 ```
-source = crawl(SOURCE_URL, formats: ["screenshot"])
-        → returns a Firecrawl-hosted PNG URL
-clone  = screenshot_preview()
-        → returns an inline PNG the model can see + a saved path
+# per page, per breakpoint — the diff script yields matched pairs covering the FULL page:
+diff/<page>/<label>-{desktop,tablet,mobile}-{source,built}-{full,sec01,sec02,…}.png
+# compare sec-by-sec, not just the hero; a below-the-fold section you never scrolled to is unrefined.
 ```
 
 **Refine EVERY template TYPE, not just the homepage.** A homepage-only refine is how a
