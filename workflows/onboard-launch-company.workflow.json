@@ -117,7 +117,25 @@
         "The manual-stub product 'Sample Product' is either flagged as a blocker (Case C ran) or explicitly noted as absent (Case A/B ran)."
       ],
       "dependsOn": [
-        "ugc-discovery"
+        "ugc-discovery",
+        "verify-links"
+      ]
+    },
+    {
+      "id": "verify-links",
+      "name": "Verify links resolve to the right resource templates",
+      "dependsOn": [
+        "iterative-theme-refine",
+        "products-import"
+      ],
+      "target": "manager",
+      "maxReworkRounds": 2,
+      "prompt": "Audit EVERY link in the storefront and make each point to a valid, correctly-rendering Fluid resource template — this is the step that catches nav items wired to dead or generic routes. Cover: the header navigation, the footer (support / legal / social / localization), and primary in-page CTAs (hero, category tiles, banners). For each link, resolve the target and confirm it (a) returns HTTP 200 and (b) renders the CORRECT template: collection links -> collection template, category -> category, page -> page, product -> /home/products/<slug>, home -> home. FIX links that point to: a dead or generic route (e.g. a bare `/shop` that 204s instead of `/home/shop`), the wrong template, a Shopify-style URL that doesn't map to Fluid's `/home/...` routes, or a 302/404/406. Navigation menu items MUST map to real resources — e.g. 'By Scent' -> a collections/scent index (`/home/collections`), NOT a generic shop URL; 'Best Sellers' -> `/home/collections/best-sellers`; 'Gifts & Sets' -> `/home/collections/sets`. Prefer binding the nav to a real Fluid navigation menu (link_list) with correct resource URLs so it stays admin-manageable; otherwise correct the hrefs. Point footer info links at the imported pages (`/home/pages/<slug>`). Product-detail pages may 500 platform-side on some stores — that is NOT a link bug: just verify the link SHAPE is the correct `/home/products/<slug>` and do not fail the step on the 500 itself. End with STEP_OUTPUT containing a table: link label -> target URL -> HTTP status -> resolved template.",
+      "acceptance": [
+        "Every header-nav, footer, and primary in-page link resolves to HTTP 200 and the correct resource template (product-detail pages excepted — they may 500 platform-side; those only need the correct `/home/products/<slug>` link shape).",
+        "No link points to a dead/generic route (e.g. a bare `/shop`), a Shopify-style URL, or the wrong template type.",
+        "Navigation menu items map to real resources (By Scent -> a collections/scent index, Best Sellers -> the best-sellers collection, Gifts & Sets -> the sets collection), ideally via a bound Fluid navigation menu rather than hardcoded hrefs.",
+        "STEP_OUTPUT includes the link-audit table (label -> target -> HTTP status -> resolved template)."
       ]
     }
   ]
