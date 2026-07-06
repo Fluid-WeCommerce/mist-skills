@@ -210,7 +210,9 @@
         "iterative-theme-refine",
         "products-import"
       ],
-      "target": "manager",
+      "target": {
+        "type": "manager"
+      },
       "maxReworkRounds": 2,
       "prompt": "Audit EVERY link in the storefront and make each point to a valid, correctly-rendering Fluid resource template \u2014 this is the step that catches nav items wired to dead or generic routes. Cover: the header navigation, the footer (support / legal / social / localization), and primary in-page CTAs (hero, category tiles, banners). For each link, resolve the target and confirm it (a) returns HTTP 200 and (b) renders the CORRECT template: collection links -> collection template, category -> category, page -> page, product -> /home/products/<slug>, home -> home. FIX links that point to: a dead or generic route (e.g. a bare `/shop` that 204s instead of `/home/shop`), the wrong template, a Shopify-style URL that doesn't map to Fluid's `/home/...` routes, or a 302/404/406. Navigation menu items MUST map to real resources \u2014 e.g. 'By Scent' -> a collections/scent index (`/home/collections`), NOT a generic shop URL; 'Best Sellers' -> `/home/collections/best-sellers`; 'Gifts & Sets' -> `/home/collections/sets`. Prefer binding the nav to a real Fluid navigation menu (link_list) with correct resource URLs so it stays admin-manageable; otherwise correct the hrefs. Point footer info links at the imported pages (`/home/pages/<slug>`). Product-detail pages may 500 platform-side on some stores \u2014 that is NOT a link bug: just verify the link SHAPE is the correct `/home/products/<slug>` and do not fail the step on the 500 itself. End with STEP_OUTPUT containing a table: link label -> target URL -> HTTP status -> resolved template.",
       "acceptance": [
@@ -229,7 +231,9 @@
       "dependsOn": [
         "product-active-status-qa"
       ],
-      "target": "manager",
+      "target": {
+        "type": "manager"
+      },
       "maxReworkRounds": 2,
       "prompt": "Focused QA \u2014 PRICES ONLY. Visit EVERY product's PDP (enumerate via GET /api/company/v1/products) and confirm the displayed RETAIL price and, where a subscription plan exists, the SUBSCRIPTION price render on the page and MATCH the API variant data for the store's default country (variant_countries.price / subscription_price). Flag any PDP where the price is missing, $0, or differs from the API. If the store serves MULTIPLE countries, switch the storefront country (or request with the country's locale) for at least a couple of products and confirm the price + currency update correctly to that country's variant_country pricing. Do NOT check anything else (links, cart, layout are other steps). STEP_OUTPUT: a table of product -> displayed retail / subscription price -> API expected -> match?, plus any mismatches and the country-switch check result.",
       "acceptance": [
@@ -248,7 +252,9 @@
       "dependsOn": [
         "product-active-status-qa"
       ],
-      "target": "manager",
+      "target": {
+        "type": "manager"
+      },
       "maxReworkRounds": 2,
       "prompt": "Focused QA \u2014 ADD TO CART ONLY. Visit EVERY PDP and confirm the add-to-cart button is correctly wired through FairShare: `data-fluid-add-to-cart=\"<variantId>\"` is present and the id is a REAL active variant of that product; on multi-variant products it is VARIANT-AWARE (selecting a scent/size updates the button's variant id + price); `data-fluid-quantity` and `data-fluid-open-cart-after-add` are sane. Confirm the cart drawer/FairShare SDK is present (the `fluid-cdn-script` is injected). Flag any PDP with a missing, hardcoded, placeholder, or stale variant id, or a non-variant-aware selector. Do NOT check prices/links/layout. STEP_OUTPUT: a table of PDP -> data-fluid-add-to-cart value -> real active variant? -> variant-aware?, plus any failures.",
       "acceptance": [
@@ -268,7 +274,9 @@
         "iterative-theme-refine",
         "products-import"
       ],
-      "target": "manager",
+      "target": {
+        "type": "manager"
+      },
       "maxReworkRounds": 2,
       "prompt": "Focused QA \u2014 MOBILE ONLY. Using Playwright at a mobile viewport (390x844, deviceScaleFactor 2), visit one of EACH sitemap route type \u2014 home, a collection, a category (if any), a product PDP, a content page, and the cart \u2014 and confirm each is ready for mobile traffic: NO horizontal overflow/scroll (document.scrollWidth <= viewport width), the header nav collapses to a working mobile/hamburger menu, tap targets are adequately sized (>=40px), images scale within the viewport, and text is readable (no tiny/overflowing type). Screenshot each route at mobile width. Flag any route with overflow, an overlapping/cut-off section, a broken mobile nav, or unreadable text. Do NOT check prices/cart-wiring/link-targets. STEP_OUTPUT: a table of route -> mobile status -> issues, with screenshot paths.",
       "acceptance": [
@@ -287,7 +295,9 @@
       "dependsOn": [
         "products-import"
       ],
-      "target": "manager",
+      "target": {
+        "type": "manager"
+      },
       "maxReworkRounds": 2,
       "prompt": "Focused QA \u2014 PRODUCT STATUS ONLY, and run this BEFORE the price/add-to-cart QA (they depend on it). The Fluid Products API SILENTLY creates products as `status: \"draft\"` even when the create payload includes `active: true` \u2014 the real switch is `PATCH /api/company/v1/products/{id}` with `{product:{status:\"active\"}}`. A draft product 404s its PDP and is hidden from its membership collections, which silently breaks the storefront and every downstream QA. Enumerate ALL products (GET /api/company/v1/products) and confirm each has `status == \"active\"` (not draft/scheduled/archived). For any product still draft, PATCH it to active. Then confirm each product's PDP renders 200 and the product appears in at least one collection it belongs to. Do NOT check price/cart/layout (other steps). STEP_OUTPUT: count of products by status, list of any drafts you activated, and PDP + collection-membership render confirmation for a sample.",
       "acceptance": [
@@ -307,7 +317,9 @@
         "product-active-status-qa",
         "iterative-theme-refine"
       ],
-      "target": "manager",
+      "target": {
+        "type": "manager"
+      },
       "maxReworkRounds": 2,
       "prompt": "Focused QA \u2014 ROUTE HEALTH, BROWSER-ONLY. Assert the home index AND one of EACH resource type \u2014 a collection, a category (if any), a product PDP, a content page, and the cart \u2014 returns HTTP 200 with a non-trivial rendered body. CRITICAL METHODOLOGY: use a REAL headless browser (Playwright) for every status check. DO NOT trust curl / HTTP-client status codes: prod Cloud Armor / the WAF returns 500 / 302->404 to non-browser clients EVEN WITH a browser User-Agent, while a real browser gets 200. If a route fails only under curl but renders 200 in Playwright, it is a WAF/bot artifact, NOT a defect \u2014 report it as healthy and do not chase it as a platform bug. Only a route that fails IN A REAL BROWSER is a real problem. STEP_OUTPUT: a table of route type -> URL -> Playwright HTTP status -> rendered? , and an explicit note that curl status was disregarded.",
       "acceptance": [
@@ -325,7 +337,9 @@
       "dependsOn": [
         "storefront-route-health-qa"
       ],
-      "target": "manager",
+      "target": {
+        "type": "manager"
+      },
       "maxReworkRounds": 2,
       "prompt": "Focused QA \u2014 SEO METADATA ONLY (browser-based). For each route type (home, a collection, a product PDP, a content page), load it in a real browser and assert the <head> + document are SEO-ready: a non-empty, resource-SPECIFIC <title> (NOT empty and NOT a generic storefront default like 'Live Free.'), a meaningful <meta name=description> (not the generic default), a <link rel=canonical>, and exactly ONE <h1> with real resource content. Product and collection pages should also emit the relevant JSON-LD (Product / ItemList / BreadcrumbList). Fix what the THEME controls (title/description/canonical/h1/JSON-LD in the layout + templates, driven by the resource drop \u2014 e.g. `{{ page_title }}`, product/collection fields). FLAG what only store-level SEO settings can fix (site-wide default title/description, robots) for the human. STEP_OUTPUT: a per-route-type table -> title / description / canonical / h1 / JSON-LD present? -> pass/flag.",
       "acceptance": [
@@ -345,7 +359,9 @@
       "dependsOn": [
         "storefront-route-health-qa"
       ],
-      "target": "manager",
+      "target": {
+        "type": "manager"
+      },
       "maxReworkRounds": 2,
       "prompt": "Focused QA \u2014 CONTENT PAGE ROUTES ONLY (browser-based). For every content/info page the onboarding authored (About, Contact, Shipping, Privacy, Terms, FAQ, Store locator, etc.), load /home/pages/<slug> in a real browser and assert the AUTHORED BODY renders \u2014 not just the nav + footer chrome. A page whose main region is empty means a page RECORD was never created (a template alone does not route content). CREATE the missing record via POST /api/company/pages (note: /api/company/v1/pages and /api/pages both 404 \u2014 use /api/company/pages), then re-check; html_code compiles async so re-GET/re-PATCH if the body returns empty, and use a FRESH slug (deleting a page tombstones its slug). Confirm every footer/nav link that points at a /pages/ route lands on a page with real body copy. STEP_OUTPUT: a table of page slug -> record exists? -> body renders? -> linked-from resolves? -> pass/fixed/flag.",
       "acceptance": [
@@ -364,7 +380,9 @@
       "dependsOn": [
         "storefront-route-health-qa"
       ],
-      "target": "manager",
+      "target": {
+        "type": "manager"
+      },
       "maxReworkRounds": 2,
       "prompt": "Focused QA \u2014 FONT LICENSING & SUBSTITUTION ONLY. Determine the source brand's primary display + body typefaces. If a source font is proprietary (not OFL/Google-hosted/freely licensable) and was substituted with a free alternative, assert the substitution is done honestly and completely: (1) the closest free family is used consistently across the theme (no lingering references to the proprietary family name), (2) a license disclaimer naming the original font and the free substitute is embedded in the theme (e.g. a comment in layouts/theme.liquid), and (3) a sane font-stack fallback is present so text never renders in an unstyled default. If the brand's own licensed font files ARE importable (this is their store), import the real @font-face and keep the disclaimer noting the licensing assumption. STEP_OUTPUT: source font(s) -> proprietary? -> substitute used -> disclaimer present? -> fallback present? -> pass/flag.",
       "acceptance": [
