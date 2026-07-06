@@ -119,6 +119,7 @@
       "dependsOn": [
         "add-to-cart-qa",
         "mobile-responsive-qa",
+        "product-active-status-qa",
         "product-price-qa",
         "ugc-discovery",
         "verify-links"
@@ -145,7 +146,7 @@
       "id": "product-price-qa",
       "name": "Product price QA",
       "dependsOn": [
-        "products-import"
+        "product-active-status-qa"
       ],
       "target": "manager",
       "maxReworkRounds": 2,
@@ -161,7 +162,7 @@
       "id": "add-to-cart-qa",
       "name": "Add to cart QA",
       "dependsOn": [
-        "products-import"
+        "product-active-status-qa"
       ],
       "target": "manager",
       "maxReworkRounds": 2,
@@ -188,6 +189,22 @@
         "The header navigation has a working mobile (hamburger) state.",
         "Primary CTAs/tap targets are adequately sized and images scale within the viewport.",
         "STEP_OUTPUT includes a per-route mobile check with screenshots and any flagged issues."
+      ]
+    },
+    {
+      "id": "product-active-status-qa",
+      "name": "Product active-status QA",
+      "dependsOn": [
+        "products-import"
+      ],
+      "target": "manager",
+      "maxReworkRounds": 2,
+      "prompt": "Focused QA — PRODUCT STATUS ONLY, and run this BEFORE the price/add-to-cart QA (they depend on it). The Fluid Products API SILENTLY creates products as `status: \"draft\"` even when the create payload includes `active: true` — the real switch is `PATCH /api/company/v1/products/{id}` with `{product:{status:\"active\"}}`. A draft product 404s its PDP and is hidden from its membership collections, which silently breaks the storefront and every downstream QA. Enumerate ALL products (GET /api/company/v1/products) and confirm each has `status == \"active\"` (not draft/scheduled/archived). For any product still draft, PATCH it to active. Then confirm each product's PDP renders 200 and the product appears in at least one collection it belongs to. Do NOT check price/cart/layout (other steps). STEP_OUTPUT: count of products by status, list of any drafts you activated, and PDP + collection-membership render confirmation for a sample.",
+      "acceptance": [
+        "Zero products remain in draft/scheduled — every imported product is status == active.",
+        "Every product's PDP renders 200 (not 404 from a draft).",
+        "No collection is left with only draft members.",
+        "STEP_OUTPUT reports the status counts and any drafts activated."
       ]
     }
   ]
