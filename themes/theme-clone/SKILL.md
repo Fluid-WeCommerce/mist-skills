@@ -34,6 +34,16 @@ This skill requires local tooling so the agent can spin up the theme on `localho
 
 The `fluid` CLI is installed and already authenticated to the active company. Never install local tooling silently — surface the install commands and wait for explicit user approval. If the user opts out, fall back to a single full-page screenshot pass and note the missing capability in the final report.
 
+### Fonts & licensing (surface this to the user)
+
+Typography is a big part of pixel fidelity, and brand sites usually run a **custom/licensed web font** (e.g. a Klim/Commercial-Type face). Handle it like this:
+
+- **Extract the real font.** From the source page, read the `@font-face` rules and the actual loaded font files (Playwright: capture responses matching `\.(woff2?|otf|ttf)` and evaluate `document.styleSheets` for `CSSFontFaceRule`). Note the family name(s), weights, and the file URLs.
+- **If the font file is reachable, import it — with a disclaimer.** When you're cloning the company's OWN site, they almost certainly hold the license, so `@font-face` the real file (self-hosted `.woff2` on their CDN, or a Google Fonts link) into the theme for a true match — upload the file to the DAM or reference the URL. **Always add a disclaimer in your report:** the company must confirm they hold a license to use this font in the new theme.
+- **If the font is NOT importable** (no reachable file, or a proprietary face you can't legally embed): **call it out explicitly** — name the font, state that type won't be 100% identical, pick the closest free fallback (a grotesque/geometric sans that matches the metrics), and ask the user to either provide a licensed copy or approve the fallback. Never silently substitute a font and imply a perfect match.
+
+This is also the standard reason a section is otherwise pixel-perfect but "feels off" — flag the font decision every time.
+
 ---
 
 ## Step 1: Collect Inputs
