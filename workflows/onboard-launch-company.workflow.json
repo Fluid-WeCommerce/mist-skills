@@ -71,6 +71,7 @@
       },
       "maxReworkRounds": 5,
       "acceptance": [
+        "Phase A CODE-parity gate ran FIRST and reported CODE_PARITY: pass before any screenshot round: per-template structural comparison vs the source (sections present + ordered), brand tokens (no hardcoded hex/fonts), lint clean (no Liquid errors in the dev server log), and every template route renders. Screenshots are the granular FINAL pass \u2014 a run that started pixel-diffing before code parity does not satisfy this step.",
         "The skill ran the source-vs-clone screenshot loop and reported STATUS: pass OR STATUS: cap-reached \u2014 either is acceptable; a silent loop is not.",
         "The STEP_OUTPUT names the pages verified this run and, if not passing, lists remaining majors and minors so the launch-readiness review can pick them up.",
         "The theme's dev preview is still healthy \u2014 verify with a final screenshot_preview after refinement completes."

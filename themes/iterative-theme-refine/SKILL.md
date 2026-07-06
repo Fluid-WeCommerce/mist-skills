@@ -67,7 +67,32 @@ Before entering the loop, verify:
    the returned image is not a blank/error screen. A dead preview is a
    fail-fast, not a rework — return early with `PREVIEW_NOT_READY`.
 
-## Round protocol
+## Phase A — CODE parity gate (runs BEFORE any screenshot round)
+
+**Screenshots are the granular FINAL pass, not the first tool you reach for.** Pixel
+comparison is slow and can only see one viewport at a time; structural problems (missing
+sections, wrong order, broken routes, hardcoded values) are faster and more reliably
+caught in code. Do not start the screenshot loop until a CODE review believes the theme
+is at parity:
+
+1. **Structural parity per template.** For each template type (home, product, collection,
+   blog, cart, static pages): compare the source page's structure (crawl the source URL —
+   the markdown/HTML output shows its section order and content blocks) against the
+   theme's template + sections. Every source section is present, in the source's order;
+   no placeholder/leftover base-theme sections the source doesn't have.
+2. **Token discipline.** Brand colors/fonts wired as theme tokens (settings), not
+   hardcoded hex/font-family sprinkled in section CSS.
+3. **Lint + render health.** The theme lints clean (`fluid theme dev` output has no
+   Liquid errors), and every template ROUTE renders without a 500/blank — check the dev
+   server log tail and load each route in the preview.
+4. **Verdict.** Grade explicitly: `CODE_PARITY: pass` or a list of structural fixes.
+   Fix and re-review (this inner loop is cheap — no screenshots). Only when code parity
+   passes do you enter the screenshot rounds below.
+
+A screenshot round that starts before code parity just burns rounds discovering
+structural problems one viewport at a time.
+
+## Phase B — Round protocol (screenshot refinement — the granular final pass)
 
 For each round `N` from 1 to 5:
 
