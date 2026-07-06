@@ -7,7 +7,9 @@ description: >-
   onboard-launch-company workflow — which clones the site into a theme,
   iteratively refines it against screenshots, imports products, ticks off the
   Getting Started checklist, discovers UGC, and delivers a real launch-readiness
-  review. Use this to launch a brand-new company in one sitting.
+  review. Runs against the ALREADY-SELECTED active company — it does NOT create a
+  company; it populates the existing one from its website. Use when the user says
+  "onboard from <url>", "onboard this company", or "launch this store".
 icon: rocket
 ---
 
@@ -22,8 +24,14 @@ The active Fluid company is already selected in Mist Desktop — `fluid_api(path
 method, body)` targets it and injects the token. Never ask for a store URL or
 API key.
 
-Trigger examples: "onboard this company", "launch this store", "let's go end to
-end on {{company.name}}", "run the flagship onboarding".
+Trigger examples: "onboard from https://acme.com", "onboard this company",
+"launch this store", "let's go end to end on {{company.name}}", "run the flagship
+onboarding". When the user gives a URL ("onboard from <url>"), take it as the
+`website_url` — pre-fill it in the Step 1 panel and skip re-asking.
+
+**This is a RUN, not an authoring task.** Execute the steps below now — collect the
+inputs and fire the workflow. Do NOT offer to save, diff, summarize, or edit this
+skill; that only applies when authoring in a Skill project, not here.
 
 ## Step 0 — Detect Connect availability up front
 
