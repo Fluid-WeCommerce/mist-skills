@@ -121,6 +121,7 @@
         "mobile-responsive-qa",
         "product-active-status-qa",
         "product-price-qa",
+        "storefront-route-health-qa",
         "ugc-discovery",
         "verify-links"
       ]
@@ -205,6 +206,22 @@
         "Every product's PDP renders 200 (not 404 from a draft).",
         "No collection is left with only draft members.",
         "STEP_OUTPUT reports the status counts and any drafts activated."
+      ]
+    },
+    {
+      "id": "storefront-route-health-qa",
+      "name": "Storefront route health QA (browser-only)",
+      "dependsOn": [
+        "product-active-status-qa",
+        "iterative-theme-refine"
+      ],
+      "target": "manager",
+      "maxReworkRounds": 2,
+      "prompt": "Focused QA — ROUTE HEALTH, BROWSER-ONLY. Assert the home index AND one of EACH resource type — a collection, a category (if any), a product PDP, a content page, and the cart — returns HTTP 200 with a non-trivial rendered body. CRITICAL METHODOLOGY: use a REAL headless browser (Playwright) for every status check. DO NOT trust curl / HTTP-client status codes: prod Cloud Armor / the WAF returns 500 / 302->404 to non-browser clients EVEN WITH a browser User-Agent, while a real browser gets 200. If a route fails only under curl but renders 200 in Playwright, it is a WAF/bot artifact, NOT a defect — report it as healthy and do not chase it as a platform bug. Only a route that fails IN A REAL BROWSER is a real problem. STEP_OUTPUT: a table of route type -> URL -> Playwright HTTP status -> rendered? , and an explicit note that curl status was disregarded.",
+      "acceptance": [
+        "Every sampled route type (home, collection, category, PDP, content page, cart) renders HTTP 200 with a non-trivial body IN A REAL BROWSER (Playwright).",
+        "Any route that fails only under curl but passes in-browser is identified as a WAF/bot artifact, not flagged as a bug.",
+        "STEP_OUTPUT reports the per-route-type browser status and states that curl status was disregarded."
       ]
     }
   ]
