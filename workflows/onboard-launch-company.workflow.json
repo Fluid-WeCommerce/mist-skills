@@ -121,6 +121,7 @@
         "mobile-responsive-qa",
         "product-active-status-qa",
         "product-price-qa",
+        "seo-metadata-qa",
         "storefront-route-health-qa",
         "ugc-discovery",
         "verify-links"
@@ -222,6 +223,22 @@
         "Every sampled route type (home, collection, category, PDP, content page, cart) renders HTTP 200 with a non-trivial body IN A REAL BROWSER (Playwright).",
         "Any route that fails only under curl but passes in-browser is identified as a WAF/bot artifact, not flagged as a bug.",
         "STEP_OUTPUT reports the per-route-type browser status and states that curl status was disregarded."
+      ]
+    },
+    {
+      "id": "seo-metadata-qa",
+      "name": "SEO metadata QA",
+      "dependsOn": [
+        "storefront-route-health-qa"
+      ],
+      "target": "manager",
+      "maxReworkRounds": 2,
+      "prompt": "Focused QA — SEO METADATA ONLY (browser-based). For each route type (home, a collection, a product PDP, a content page), load it in a real browser and assert the <head> + document are SEO-ready: a non-empty, resource-SPECIFIC <title> (NOT empty and NOT a generic storefront default like 'Live Free.'), a meaningful <meta name=description> (not the generic default), a <link rel=canonical>, and exactly ONE <h1> with real resource content. Product and collection pages should also emit the relevant JSON-LD (Product / ItemList / BreadcrumbList). Fix what the THEME controls (title/description/canonical/h1/JSON-LD in the layout + templates, driven by the resource drop — e.g. `{{ page_title }}`, product/collection fields). FLAG what only store-level SEO settings can fix (site-wide default title/description, robots) for the human. STEP_OUTPUT: a per-route-type table -> title / description / canonical / h1 / JSON-LD present? -> pass/flag.",
+      "acceptance": [
+        "Every route type has a non-empty, resource-specific <title> (not a generic default) and a meaningful meta description.",
+        "Every route type has a <link rel=canonical> and exactly one <h1> with real content.",
+        "Product and collection pages emit the relevant JSON-LD.",
+        "Theme-controllable gaps are fixed; store-level SEO-setting gaps are flagged for the human. STEP_OUTPUT lists the per-route SEO check."
       ]
     }
   ]
