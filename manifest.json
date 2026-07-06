@@ -149,7 +149,7 @@
       "category": "onboarding",
       "icon": "id-card",
       "path": "onboarding/onboarding-prefill/SKILL.md",
-      "updated_at": "2026-07-06T08:30:00Z",
+      "updated_at": "2026-07-06T14:30:00Z",
       "references": [
         "onboarding/onboarding-prefill/references/api-endpoints.md",
         "onboarding/onboarding-prefill/references/field-coverage.md",
@@ -208,7 +208,7 @@
       "category": "onboarding",
       "icon": "rocket",
       "path": "onboarding/onboard-launch-company/SKILL.md",
-      "updated_at": "2026-07-05T00:00:00Z"
+      "updated_at": "2026-07-06T14:30:00Z"
     },
     {
       "slug": "themes/iterative-theme-refine",
@@ -224,7 +224,7 @@
     {
       "slug": "onboard-launch-company",
       "path": "workflows/onboard-launch-company.workflow.json",
-      "updated_at": "2026-07-06T09:05:00Z"
+      "updated_at": "2026-07-06T14:30:00Z"
     },
     {
       "slug": "open-country",
