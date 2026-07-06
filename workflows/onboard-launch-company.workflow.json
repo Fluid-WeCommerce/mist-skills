@@ -117,6 +117,9 @@
         "The manual-stub product 'Sample Product' is either flagged as a blocker (Case C ran) or explicitly noted as absent (Case A/B ran)."
       ],
       "dependsOn": [
+        "add-to-cart-qa",
+        "mobile-responsive-qa",
+        "product-price-qa",
         "ugc-discovery",
         "verify-links"
       ]
@@ -136,6 +139,55 @@
         "No link points to a dead/generic route (e.g. a bare `/shop`), a Shopify-style URL, or the wrong template type.",
         "Navigation menu items map to real resources (By Scent -> a collections/scent index, Best Sellers -> the best-sellers collection, Gifts & Sets -> the sets collection), ideally via a bound Fluid navigation menu rather than hardcoded hrefs.",
         "STEP_OUTPUT includes the link-audit table (label -> target -> HTTP status -> resolved template)."
+      ]
+    },
+    {
+      "id": "product-price-qa",
+      "name": "Product price QA",
+      "dependsOn": [
+        "products-import"
+      ],
+      "target": "manager",
+      "maxReworkRounds": 2,
+      "prompt": "Focused QA — PRICES ONLY. Visit EVERY product's PDP (enumerate via GET /api/company/v1/products) and confirm the displayed RETAIL price and, where a subscription plan exists, the SUBSCRIPTION price render on the page and MATCH the API variant data for the store's default country (variant_countries.price / subscription_price). Flag any PDP where the price is missing, $0, or differs from the API. If the store serves MULTIPLE countries, switch the storefront country (or request with the country's locale) for at least a couple of products and confirm the price + currency update correctly to that country's variant_country pricing. Do NOT check anything else (links, cart, layout are other steps). STEP_OUTPUT: a table of product -> displayed retail / subscription price -> API expected -> match?, plus any mismatches and the country-switch check result.",
+      "acceptance": [
+        "Every PDP shows a non-zero retail price that matches the API variant price for the default country.",
+        "Subscription price is shown on products that have a subscription plan, and matches the API.",
+        "For multi-country stores, at least one country switch is verified to change the displayed price + currency correctly (or the report states the store is single-country).",
+        "STEP_OUTPUT lists every product's price check and names any mismatch."
+      ]
+    },
+    {
+      "id": "add-to-cart-qa",
+      "name": "Add to cart QA",
+      "dependsOn": [
+        "products-import"
+      ],
+      "target": "manager",
+      "maxReworkRounds": 2,
+      "prompt": "Focused QA — ADD TO CART ONLY. Visit EVERY PDP and confirm the add-to-cart button is correctly wired through FairShare: `data-fluid-add-to-cart=\"<variantId>\"` is present and the id is a REAL active variant of that product; on multi-variant products it is VARIANT-AWARE (selecting a scent/size updates the button's variant id + price); `data-fluid-quantity` and `data-fluid-open-cart-after-add` are sane. Confirm the cart drawer/FairShare SDK is present (the `fluid-cdn-script` is injected). Flag any PDP with a missing, hardcoded, placeholder, or stale variant id, or a non-variant-aware selector. Do NOT check prices/links/layout. STEP_OUTPUT: a table of PDP -> data-fluid-add-to-cart value -> real active variant? -> variant-aware?, plus any failures.",
+      "acceptance": [
+        "Every PDP has a data-fluid-add-to-cart bound to a real, active variant id for that product.",
+        "Multi-variant products update the add-to-cart variant id (and price) when a variant is selected.",
+        "No PDP has a missing, placeholder, or stale variant id.",
+        "STEP_OUTPUT lists every PDP's add-to-cart wiring and names any failure."
+      ]
+    },
+    {
+      "id": "mobile-responsive-qa",
+      "name": "Mobile responsive QA",
+      "dependsOn": [
+        "iterative-theme-refine",
+        "products-import"
+      ],
+      "target": "manager",
+      "maxReworkRounds": 2,
+      "prompt": "Focused QA — MOBILE ONLY. Using Playwright at a mobile viewport (390x844, deviceScaleFactor 2), visit one of EACH sitemap route type — home, a collection, a category (if any), a product PDP, a content page, and the cart — and confirm each is ready for mobile traffic: NO horizontal overflow/scroll (document.scrollWidth <= viewport width), the header nav collapses to a working mobile/hamburger menu, tap targets are adequately sized (>=40px), images scale within the viewport, and text is readable (no tiny/overflowing type). Screenshot each route at mobile width. Flag any route with overflow, an overlapping/cut-off section, a broken mobile nav, or unreadable text. Do NOT check prices/cart-wiring/link-targets. STEP_OUTPUT: a table of route -> mobile status -> issues, with screenshot paths.",
+      "acceptance": [
+        "No sampled route has horizontal overflow at 390px width.",
+        "The header navigation has a working mobile (hamburger) state.",
+        "Primary CTAs/tap targets are adequately sized and images scale within the viewport.",
+        "STEP_OUTPUT includes a per-route mobile check with screenshots and any flagged issues."
       ]
     }
   ]
