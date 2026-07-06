@@ -1,5 +1,9 @@
 # Onboarding API Reference
 
+> **All calls go through the `fluid_api` tool** — `fluid_api(path, method, body)` with a
+> RELATIVE path (e.g. `/api/settings/brand_guidelines`). The token and active company are
+> injected automatically; never use raw fetch/curl or collect an API key.
+
 All endpoints are paths on the active company's Fluid API.
 
 Authentication is injected automatically by the Mist runtime — call these endpoints via the `fluid_api(path, method, body)` tool, which targets the active company and adds the token for you. You never pass a token or store URL. For example: `fluid_api("/api/companies/{id}/onboarding_info", "GET")`.
@@ -103,3 +107,29 @@ Notes:
   Brand fonts live in the theme (theme tokens / settings_data), so set them via the
   theme, and don't fail a brand-QA check for a "missing font" on this endpoint.
 - Verify after push: `GET /api/settings/brand_guidelines` and confirm the fields landed.
+
+## Company profile (rename, support email, country) — exact contracts
+
+**`PATCH /api/settings/companies/{id}`** — rename + support email live HERE (verified
+against the Rails UpdateAction schema). The `{id}` in the path is REQUIRED (integer — the
+company id from `GET /api/settings/company`); PATCHing `/api/settings/company` (no id) or
+sending a flat body 400s. Body wrapped in the `company` key:
+
+```jsonc
+{ "company": {
+  "name": "Bucked Up",              // rename
+  "support_email": "cs@brand.com",  // support/customer-service email
+  "country_code": "US"              // company-level country code
+}}
+```
+(Other permitted fields: appstore_url, playstore_url, active, allow_signup, sandbox,
+mobile_app_identifier, … — anything not in the schema is dropped.)
+
+**`POST /api/settings/company_countries`** — add a selling country/market. Body wrapped in
+`company_country`:
+
+```jsonc
+{ "company_country": { "country_id": 214, "currency": "USD", "default": true } }
+```
+(`country_id` integer required — 214 = US. `GET /api/settings/company_countries` first to
+check what exists; note `company_country_id` ≠ `country_id`.)
