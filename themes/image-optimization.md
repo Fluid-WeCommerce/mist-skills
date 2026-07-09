@@ -125,7 +125,7 @@ Common ImageKit transform codes: `w-` width · `h-` height · `q-` quality (1–
 | Mistake | Fix |
 |---|---|
 | Hand-writing an `<img>` with `?tr=` query URLs | Pipe through `media_tag` — it builds the `tr:` URLs and full markup |
-| `img_url: '300x200'` / `'master'` (Shopify size strings) | **Not supported** — they return the original image unchanged. Use `image_url: 'w-300,h-200'` or `media_tag` |
+| `img_url: '300x200'` / `'master'` (Shopify size strings) | **Not supported** — they return the original image unchanged. Prefer `{{ image \| media_tag: width: 300 }}` (fixed display size + auto retina `srcset`); use `image_url: 'w-300,h-200'` only when you need a bare URL |
 | Expecting `image_tag` to add `srcset`/`loading` | It doesn't — use `media_tag` |
 | No `width`/`height` → page jumps | `media_tag` sets them when the input carries them; for pickers pass `width`/`height` (or CSS `aspect-ratio`) |
 | Lazy-loading the hero image | `loading: 'eager'` + `fetchpriority: 'high'` on the LCP image only |
