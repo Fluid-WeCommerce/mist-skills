@@ -49,11 +49,11 @@
     {
       "slug": "themes/image-optimization",
       "name": "Optimize theme images",
-      "description": "Add responsive, lazy-loaded <img> markup with ImageKit transformation params to Fluid Liquid themes.",
+      "description": "Add responsive, lazy-loaded images and videos to Fluid Liquid themes with the media_tag filter (srcset/sizes/width/height/loading) and ImageKit transforms.",
       "category": "themes",
       "icon": "image",
       "path": "themes/image-optimization.md",
-      "updated_at": "2026-06-24T00:00:00Z"
+      "updated_at": "2026-07-09T00:00:00Z"
     },
     {
       "slug": "themes/theme-review",
