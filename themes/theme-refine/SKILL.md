@@ -1020,7 +1020,7 @@ CSS wire-up in `{%- style -%}`:
     {% if section.settings.section_border_width > 0 %}border: {{ section.settings.section_border_width }}px solid {{ section.settings.section_border_color }};{% endif %}
     background-color: {{ section.settings.background_color | default: 'transparent' }};
     {%- if section.settings.background_image != blank -%}
-      background-image: url({{ section.settings.background_image | img_url: '2400x' }});
+      background-image: url({{ section.settings.background_image | img_url: 'w-2400,f-auto,q-80' }});
       background-size: cover; background-position: center; background-repeat: no-repeat;
     {%- endif -%}
   }
@@ -1034,7 +1034,7 @@ CSS wire-up in `{%- style -%}`:
     {%- if cp -%}padding: {{ cp.top | default: 0 }}px {{ cp.right | default: 64 }}px {{ cp.bottom | default: 0 }}px {{ cp.left | default: 64 }}px;{%- else -%}padding: 0 64px;{%- endif -%}
     background-color: {{ section.settings.container_background_color | default: 'transparent' }};
     {%- if section.settings.container_background_image != blank -%}
-      background-image: url({{ section.settings.container_background_image | img_url: '2400x' }});
+      background-image: url({{ section.settings.container_background_image | img_url: 'w-2400,f-auto,q-80' }});
       background-size: cover; background-position: center; background-repeat: no-repeat;
     {%- endif -%}
     {%- assign ccr = section.settings.container_border_radius -%}
@@ -1572,7 +1572,7 @@ Drop-in fixes for every pattern that shows up in legacy themes. Each recipe: (1)
   {%- endcapture -%}
   <div class="media-wrap" style="{{ _wrap_style | strip_newlines }}" {{ image_block.fluid_attributes }}>
     {% if image_block.settings.image %}
-      <img src="{{ image_block.settings.image | img_url: '1600x' }}" alt="{{ _alt | escape }}"
+      <img src="{{ image_block.settings.image | img_url: 'w-1600,f-auto,q-80' }}" alt="{{ _alt | escape }}"
            style="object-fit: {{ image_block.settings.fit | default: 'cover' }}; object-position: {{ image_block.settings.object_position | default: 'center' }};">
     {% else %}
       <div class="media-placeholder">
@@ -1729,7 +1729,7 @@ Hardcoded dimensions, no merchant control over padding / background / border / c
     {%- if r -%}border-radius: {{ r.tl }}px {{ r.tr }}px {{ r.br }}px {{ r.bl }}px;{%- endif -%}
     {% if section.settings.section_border_width > 0 %}border: {{ section.settings.section_border_width }}px solid {{ section.settings.section_border_color }};{% endif %}
     background-color: {{ section.settings.background_color | default: 'transparent' }};
-    {%- if section.settings.background_image != blank -%}background-image: url({{ section.settings.background_image | img_url: '2400x' }});background-size:cover;background-position:center;{%- endif -%}
+    {%- if section.settings.background_image != blank -%}background-image: url({{ section.settings.background_image | img_url: 'w-2400,f-auto,q-80' }});background-size:cover;background-position:center;{%- endif -%}
   }
   .sec.section-{{ section.id }} .sec__container {
     position: relative;
@@ -1738,7 +1738,7 @@ Hardcoded dimensions, no merchant control over padding / background / border / c
     {%- assign cp = section.settings.container_padding -%}
     {%- if cp -%}padding: {{ cp.top | default: 0 }}px {{ cp.right | default: 64 }}px {{ cp.bottom | default: 0 }}px {{ cp.left | default: 64 }}px;{%- else -%}padding: 0 64px;{%- endif -%}
     background-color: {{ section.settings.container_background_color | default: 'transparent' }};
-    {%- if section.settings.container_background_image != blank -%}background-image: url({{ section.settings.container_background_image | img_url: '2400x' }});background-size:cover;background-position:center;{%- endif -%}
+    {%- if section.settings.container_background_image != blank -%}background-image: url({{ section.settings.container_background_image | img_url: 'w-2400,f-auto,q-80' }});background-size:cover;background-position:center;{%- endif -%}
     {%- assign ccr = section.settings.container_border_radius -%}
     {%- if ccr -%}border-radius: {{ ccr.tl }}px {{ ccr.tr }}px {{ ccr.br }}px {{ ccr.bl }}px;{%- endif -%}
     {% if section.settings.container_border_width > 0 %}border: {{ section.settings.container_border_width }}px solid {{ section.settings.container_border_color }};{% endif %}

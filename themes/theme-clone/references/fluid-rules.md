@@ -75,7 +75,7 @@ Use these instead of hardcoded values where applicable:
 {{ company.shop_page_url }}
 {{ company.checkout_url }}
 {{ 'key' | t }}                          {%- comment -%} Translations {%- endcomment -%}
-{{ image.url | img_url: '600x400' }}     {%- comment -%} Product images {%- endcomment -%}
+{{ image.url | img_url: 'w-600,h-400,f-auto,q-80' }}   {%- comment -%} Product images (ImageKit transform, not a size string) {%- endcomment -%}
 ```
 
 ---

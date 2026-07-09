@@ -553,7 +553,7 @@ Put `block.fluid_attributes` on the OUTER wrapper, swap the inner content (image
 {% if image_block %}
   <div class="media-wrap" {{ image_block.fluid_attributes }}>
     {% if image_block.settings.image %}
-      <img src="{{ image_block.settings.image | img_url: '1600x' }}" ...>
+      <img src="{{ image_block.settings.image | img_url: 'w-1600,f-auto,q-80' }}" ...>
     {% else %}
       <div class="placeholder">…</div>
     {% endif %}
@@ -562,11 +562,11 @@ Put `block.fluid_attributes` on the OUTER wrapper, swap the inner content (image
 ```
 
 **3. Image-picker return shape varies — resolve defensively.**
-`block.settings.image` can be: an object with `.url`, an object with `.src`, a Fluid media object that needs `| img_url:'Nx'`, or a raw URL string. Try each in order:
+`block.settings.image` can be: an object with `.url`, an object with `.src`, a Fluid media object that needs `| img_url:'w-N'`, or a raw URL string. Try each in order:
 ```liquid
 {%- if img.url != blank -%}{%- assign _u = img.url -%}
 {%- elsif img.src != blank -%}{%- assign _u = img.src -%}
-{%- else -%}{%- assign _u = img | img_url: '600x' -%}
+{%- else -%}{%- assign _u = img | img_url: 'w-600,f-auto,q-80' -%}
 {%- endif -%}
 {%- if _u == blank -%}{%- assign _u = img -%}{%- endif -%}
 ```
@@ -1055,7 +1055,7 @@ When you update [references/schema-settings-reference.md](references/schema-sett
 {{ company.name }}
 {{ company.logo_url }}
 {{ 'key' | t }}
-{{ image.url | img_url: '600x400' }}
+{{ image.url | img_url: 'w-600,h-400,f-auto,q-80' }}
 ```
 
 ---

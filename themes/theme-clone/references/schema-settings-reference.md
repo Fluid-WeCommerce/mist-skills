@@ -238,7 +238,7 @@ Every section with an intro (heading, eyebrow, subhead) exposes them as canonica
 **Access:**
 ```liquid
 {{ section.settings.hero_image.url }}     {# image/video/media return an object #}
-{{ section.settings.hero_image | img_url: '1200x' }}
+{{ section.settings.hero_image | img_url: 'w-1200,f-auto,q-80' }}
 ```
 
 ### Background color — select with option group
