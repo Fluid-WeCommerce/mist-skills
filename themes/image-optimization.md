@@ -83,8 +83,8 @@ A video object or a URL ending in `.mp4`/`.mov`/`.webm`/`.m4v` renders a `<video
 {{ section.settings.bg_video | media_tag: autoplay: true, loop: true, muted: true, class: 'section__bg' }}
 ```
 ```text
-<video src="…/clip.mp4?tr=f-mp4" poster="…/clip.mp4/ik-thumbnail.jpg"
-       autoplay loop muted playsinline></video>
+<video src="…/clip.mp4?tr=f-mp4" autoplay loop muted playsinline
+       poster="…/clip.mp4/ik-thumbnail.jpg" class="section__bg"></video>
 ```
 
 | Option | Default | Effect |
