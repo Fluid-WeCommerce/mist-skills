@@ -175,6 +175,15 @@
       "updated_at": "2026-07-06T00:00:00Z"
     },
     {
+      "slug": "marketing/brand-setup",
+      "name": "Brand Setup",
+      "description": "Interview the company to build a living brand.md — a brand-voice document that Mist, themes, portals, and widgets read to match the company's tone and style. Prefills colors/name from brand guidelines and saves via the update_brand_voice tool. Also use to append a single brand decision later.",
+      "category": "marketing",
+      "icon": "palette",
+      "path": "marketing/brand-setup.md",
+      "updated_at": "2026-07-13T00:00:00Z"
+    },
+    {
       "slug": "optimize/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
