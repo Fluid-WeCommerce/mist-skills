@@ -4,10 +4,11 @@ description: >-
   Guided end-to-end company onboarding flow: collect the company website URL,
   auto-detect available Connect integrations (Shopify / Exigo / ByDesign / etc.
   droplets) or fall back to public scraping, then fire the flagship
-  onboard-launch-company workflow — which clones the site into a theme,
-  iteratively refines it against screenshots, imports products, ticks off the
-  Getting Started checklist, discovers UGC, and delivers a real launch-readiness
-  review. Runs against the ALREADY-SELECTED active company — it does NOT create a
+  onboard-launch-company workflow — which imports products FIRST (so the theme
+  renders a real catalog), clones the site into a theme through six small
+  individually-QA'd build steps, iteratively refines it against screenshots,
+  reconciles onboarding info, discovers UGC, and delivers a real
+  launch-readiness review. Runs against the ALREADY-SELECTED active company — it does NOT create a
   company; it populates the existing one from its website. Use when the user says
   "onboard from <url>", "onboard this company", or "launch this store".
 icon: rocket
@@ -221,10 +222,15 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
 - **Cloud Armor throttles page-create bursts.** A rapid run of POST-with-body
   requests gets persistently 403'd by the prod WAF (GET stays 200), and a
   short cooldown doesn't clear it. Space page creates out; don't hammer.
-- **Products create as `status:draft`** even with `active:true` → PATCH
-  `{product:{status:"active"}}` after each. Options only materialize via
-  `option_attrs` (product = names, variant = values). Collection membership is
-  `PATCH product {collection_ids:[...]}` — `collections/{id}/add_product` 404s.
+- **Product creates need the NESTED-attributes payload** — a flat
+  `{product:{title,price}}` silently creates $0 shells. Pricing lives on
+  `variants_attributes[].variant_countries_attributes` (`country_iso`,
+  `currency_code`, `price`); exactly one variant `is_master:true`; include
+  `active:true` + `status:"active"` in the create body so no draft→active pass
+  is needed (if a product still lands draft, PATCH `{product:{status:"active"}}`).
+  Options only materialize via `option_attrs` (product = names, variant =
+  values). Collection membership is `PATCH product {collection_ids:[...]}` —
+  `collections/{id}/add_product` 404s.
 - **Storefront status checks MUST use a real headless browser.** Prod Cloud
   Armor returns 500/302 to curl/HTTP clients even with a browser UA, while a
   real browser gets 200. Never conclude a route is broken from a curl status.

@@ -18,6 +18,16 @@ This skill supports two modes:
 - **Single page clone** — clone one specific URL
 - **Full site clone** — systematically clone all key pages of a website
 
+**Workflow mode (phased execution).** When you were launched by the
+`onboard-launch-company` workflow, the clone is split into six small,
+individually-QA'd steps and your step prompt names the ONLY phases you own
+(1: discovery/scrape/assets → 2: tokens/skeleton → 3: header/footer →
+4: homepage → 5: product/collection templates → 6: content pages + audit +
+push). Execute just those phases, read/write the shared `clone-manifest.json`
+at the theme project root instead of re-scraping, and record cosmetic
+deviations as notes for the refine pass rather than fixing everything in one
+step. The rules and gotchas below apply to whichever phase you're executing.
+
 ## Every run is a fresh run
 
 This skill is used across many different sites. **Never reuse data from a previous run.** Always start with a fresh working directory. The active Fluid company is already selected in Mist Desktop — you do not collect or validate a Fluid token or store URL.
