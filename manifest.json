@@ -227,6 +227,15 @@
       "icon": "refresh-cw",
       "path": "themes/iterative-theme-refine/SKILL.md",
       "updated_at": "2026-07-06T09:05:00Z"
+    },
+    {
+      "slug": "connect/connection-health",
+      "name": "Connect connection health",
+      "description": "Report on the health of the company's Fluid Connect integration over the last 7 days — sync errors, stuck records, and where the pipeline typically breaks.",
+      "category": "connect",
+      "icon": "heart-pulse",
+      "path": "connect/connection-health.md",
+      "updated_at": "2026-07-23T09:00:00Z"
     }
   ],
   "workflows": [
