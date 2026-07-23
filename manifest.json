@@ -227,6 +227,15 @@
       "icon": "refresh-cw",
       "path": "themes/iterative-theme-refine/SKILL.md",
       "updated_at": "2026-07-06T09:05:00Z"
+    },
+    {
+      "slug": "mist/smart-dashboard",
+      "name": "Smart Dashboard",
+      "description": "Self-fabricate a live business dashboard from real data \u2014 gather what every department cares about, render it with show_dashboard, then learn what the user wants front-and-center and remember it.",
+      "category": "mist",
+      "icon": "layout-dashboard",
+      "path": "mist/smart-dashboard/SKILL.md",
+      "updated_at": "2026-07-23T00:00:00Z"
     }
   ],
   "workflows": [
