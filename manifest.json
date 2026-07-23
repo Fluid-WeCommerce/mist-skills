@@ -35,7 +35,7 @@
       "category": "finance",
       "icon": "heart-pulse",
       "path": "finance/subscription-retention-waterfall.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-07-23T09:00:00Z"
     },
     {
       "slug": "finance/failed-payment-recovery",
@@ -44,7 +44,7 @@
       "category": "finance",
       "icon": "credit-card",
       "path": "finance/failed-payment-recovery.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-07-23T09:00:00Z"
     },
     {
       "slug": "finance/promo-code-roi-ranking",
@@ -53,7 +53,7 @@
       "category": "finance",
       "icon": "percent",
       "path": "finance/promo-code-roi-ranking.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-07-23T09:00:00Z"
     },
     {
       "slug": "finance/commission-liability-check",
@@ -62,7 +62,7 @@
       "category": "finance",
       "icon": "scale",
       "path": "finance/commission-liability-check.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-07-23T09:00:00Z"
     },
     {
       "slug": "themes/scrape-into-theme",

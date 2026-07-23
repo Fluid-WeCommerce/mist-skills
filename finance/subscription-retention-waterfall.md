@@ -10,11 +10,11 @@ For `{{company.name}}`, build a subscription-revenue retention waterfall as of `
 
 # Steps
 
-1. Call `fluid_api("/api/checkout/v2026-04/subscriptions?limit=100&active=true", "GET")`, paginating until exhausted. Note the top-level `stats` block (`total_count`, `active_count`, `average_order_value`, `churn_rate`) as the baseline.
-2. Call the same endpoint with `active=false` to pull the cancelled side, same pagination.
+1. Call `fluid_api("/api/checkout/v2026-04/subscriptions?limit=100&status=active", "GET")`, paginating until exhausted. Note the top-level `stats` block (`total_count`, `active_count`, `average_order_value`, `churn_rate`) as the baseline. Use `status=active` — the subscription record has no boolean `active` field; filtering with `active=true`/`active=false` 500s with a `PG::UndefinedColumn` error (confirmed live), because the real column backing this is `status` (a string: `"active"`, `"cancelled"`, etc.).
+2. Call the same endpoint with `status=cancelled` to pull the cancelled side, same pagination.
 3. Bucket every subscription by billing health:
-   - **Healthy** — `active: true`, `decline_count: 0`, `next_bill_date` in the future.
-   - **At risk** — `active: true` and (`last_failed_at` is set or `decline_count > 0`) — billing is failing but Fluid hasn't cancelled it yet.
+   - **Healthy** — `status: "active"`, `decline_count: 0`, `next_bill_date` in the future.
+   - **At risk** — `status: "active"` and (`last_failed_at` is set or `decline_count > 0`) — billing is failing but Fluid hasn't cancelled it yet.
    - **Skipped** — `skipped_count > 0` in the trailing 60 days — not a failure, but a save opportunity.
    - **Lost this period** — `cancelled_at` falls within the last 30 days of `{{today}}`.
 4. Sum `price` per bucket for monthly-recurring-revenue-at-stake. Multiply the at-risk and lost totals by 12 for an annualized figure.
