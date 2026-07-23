@@ -101,6 +101,42 @@
       "updated_at": "2026-06-20T00:00:00Z"
     },
     {
+      "slug": "compliance/content-claims-compliance-sweep",
+      "name": "Content claims compliance sweep",
+      "description": "Scan every product, page, and post through Fluid's compliance scanner for income/health-claim risk, and rank fixes by enforcement likelihood.",
+      "category": "compliance",
+      "icon": "shield-alert",
+      "path": "compliance/content-claims-compliance-sweep.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "compliance/agreement-disclosure-drift-audit",
+      "name": "Agreement & disclosure drift audit",
+      "description": "Cross-check every legal agreement against the countries you actually operate in, and flag missing, inactive, or orphaned agreements.",
+      "category": "compliance",
+      "icon": "file-warning",
+      "path": "compliance/agreement-disclosure-drift-audit.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "compliance/region-launch-readiness-check",
+      "name": "Region readiness check — all active markets",
+      "description": "Run a quick compliance pass across every country you're actually open in, ranked by risk, so nothing drifts out of compliance after launch.",
+      "category": "compliance",
+      "icon": "map-pinned",
+      "path": "compliance/region-launch-readiness-check.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "compliance/pii-webhook-hygiene-audit",
+      "name": "PII exposure & webhook-endpoint hygiene audit",
+      "description": "Check every registered webhook and installed Droplet for where customer PII actually flows, and flag insecure or overexposed endpoints.",
+      "category": "compliance",
+      "icon": "lock",
+      "path": "compliance/pii-webhook-hygiene-audit.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
       "slug": "themes/theme-clone",
       "name": "Theme Clone",
       "description": "Clone any website into a pixel-perfect Fluid theme \u2014 scrape the source, build sections, push, and visually verify against the original.",
