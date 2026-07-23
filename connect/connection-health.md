@@ -27,7 +27,10 @@ Compute the window as `{{today}}` minus 7 days.
    - A company events/webhooks feed, e.g. `fluid_api("/api/v202604/company_events?filter[created_at_gte]=<start>&limit=100", "GET")` or `fluid_api("/api/v202604/webhooks/events?filter[created_at_gte]=<start>", "GET")` (paginate via cursor if present).
    - Any connect-scoped log endpoint, e.g. `fluid_api("/api/v202604/connect/<slug>/events", "GET")` using the slug(s) from step 1.
    - Same 403/404 degrade rule as above — 404 means try the next candidate, 403 means tell the user what's missing.
-2. For every non-`fluid` reporting database found in step 1 (i.e. an actual distributor DB, not just the native Fluid one), also run `db_query` against it for sync/queue tables. You won't know the exact schema up front — introspect first (list tables if the tool supports it, or ask a broad `SELECT` against likely names) and look for tables that resemble a sync/import queue: names containing `queue`, `sync`, `import`, `log`, or `error`. Common shapes to expect: a row per record with a status (`pending` / `success` / `failed` / `error`), a `record_type` (order, customer/distributor, enrollment, commission, inventory, etc.), a timestamp, and a failure reason/message column.
+2. `db_query` only ever runs against **the active project's own database connection** — it has no parameter for picking a different reporting database by slug, and it will not "reach into" a distributor DB just because `reporting_databases` listed one. So before relying on it:
+   - Check whether the project you're currently running in *is* that reporting-database connection (a "database" kind project named after the provider, e.g. "Exigo"). If it is, you're clear to use `db_query` directly against it.
+   - If you're running from a Mist app project instead, `db_query` will happily execute — but against that **app's own Postgres/Neon database**, not Exigo/ByDesign/etc. Do not treat rows it returns as distributor sync data. If the active project isn't the reporting-database connection, skip DB-level enrichment entirely and say so in the summary ("DB-level sync/queue detail wasn't available — open the `<provider>` reporting-database connection as its own project and re-run this skill there for row-level detail"). Don't guess at table names against the wrong database.
+   - Only when you've confirmed you're against the right connection: introspect first (list tables if the tool supports it, or a broad `SELECT` against likely names) and look for tables that resemble a sync/import queue: names containing `queue`, `sync`, `import`, `log`, or `error`. Common shapes to expect: a row per record with a status (`pending` / `success` / `failed` / `error`), a `record_type` (order, customer/distributor, enrollment, commission, inventory, etc.), a timestamp, and a failure reason/message column.
 3. Keep every event/row you pull scoped to the last 7 days — filter at the query/API level where you can, otherwise filter client-side after fetching.
 
 ## 3. Compute success vs. error counts
@@ -40,17 +43,20 @@ Compute the window as `{{today}}` minus 7 days.
 
 1. A record is **stuck** if it's `pending` or `failed` and has been in that state for **more than 48 hours** as of `{{today}}`.
 2. Cluster stuck records by `(record_type, failure_stage or reason)` — e.g. "12 orders stuck at inventory-hold sync, failing with `sku_not_mapped`". Don't present one row per record; present one card per cluster.
-3. For each cluster, ask the user how to proceed via `human_in_the_loop` before taking any action — this skill **never auto-retries, auto-skips, or auto-fixes** anything:
+3. For each cluster, present it via `human_in_the_loop` before taking any action — this skill **never auto-retries, auto-skips, or auto-fixes** anything. The tool is Approve/Dismiss only (no custom multi-choice options), so frame `proposed_action` as the single follow-up you'd flag, and let Approve/Dismiss mean "flag this for follow-up" vs. "no action needed":
    ```
    human_in_the_loop({
      suggestion_id: "connect-health:<provider_slug>:<record_type>:<failure_reason>",
      source: "connect_health",
      title: "12 orders stuck at inventory-hold sync (sku_not_mapped)",
-     detail: "Pending 48h+, first seen <date>, last seen <date>. Sample record ids: [...]",
-     options: ["Retry", "Skip", "Manual fix — I'll handle it myself", "Leave alone for now"]
+     description: "Pending 48h+, first seen <date>, last seen <date>. Sample record ids: [...]",
+     proposed_action: "Flag this cluster for manual follow-up in the report — Connect has no verified retry/skip endpoint, so this skill will not attempt to act on it automatically.",
+     metadata: { provider_slug: "<slug>", record_type: "<type>", failure_reason: "<reason>", sample_ids: [/* … */] }
    })
    ```
-4. Record whichever option the user picks against that cluster for the report. If they choose "Retry" or "Skip", still don't execute it yourself unless the user separately asks you to and it's backed by a real, verified mutation endpoint — the default is to record the decision, not act on it silently.
+   - If the tool returns a card payload, present your batch (cap at 3 per turn, same as other skills that use this tool) and END YOUR TURN — the user's Approve/Dismiss click comes back as the next message.
+   - If it returns "already approved/dismissed" for a cluster, don't re-prompt; use the stored decision in the report.
+4. Record each cluster's decision (flagged for follow-up / no action needed) in the report. Never execute a retry, skip, or fix yourself, even on approval — there is no verified mutation endpoint for this, and the whole point of this skill is read + report + ask.
 5. If there are no stuck clusters, say so plainly — don't manufacture a section.
 
 ## 5. Identify where records typically get stuck
