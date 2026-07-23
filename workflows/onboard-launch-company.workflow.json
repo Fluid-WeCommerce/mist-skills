@@ -2,6 +2,12 @@
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: gather brand + business info from the public site, import the product catalog FIRST (so the theme renders real products), then clone the site into a Fluid theme through small, individually-QA'd build steps (scrape/assets, tokens/skeleton, header/footer, homepage, product/collection templates, content pages + push), iteratively refine against paired screenshots, reconcile onboarding info, discover UGC, and deliver a live-verified launch-readiness review. QA on each step grades against explicit hard-fail bars — cosmetic gaps become notes for the refine pass, not run-killers.",
+  "deriveContext": [
+    { "set": "build_theme",         "when": { "in":       { "key": "run_scope", "values": ["full", "data_theme", "theme_only"] } } },
+    { "set": "import_products",     "when": { "equals":   { "key": "run_scope", "value": "full" } } },
+    { "set": "discover_ugc",        "when": { "includes": { "key": "extras", "value": "discover_ugc" } } },
+    { "set": "import_brand_social", "when": { "includes": { "key": "extras", "value": "import_brand_social" } } }
+  ],
   "steps": [
     {
       "id": "gather-context",
@@ -22,7 +28,7 @@
     {
       "id": "gather-context-qa",
       "name": "QA brand + business data before the build",
-      "prompt": "Independently verify the data gather-context produced BEFORE the product import and theme build consume it — a wrong brand color, missing font, or wrong market propagates into every theme section and the store config. Re-fetch from the API and check against the SOURCE site; do not trust gather-context's self-report. Exact brand_guidelines contract (allowed fields incl. logo_url; PATCH body wrapped in the brand_guidelines key; logo/icon/favicon must be DAM URLs uploaded first via dam_upload): see onboarding/onboarding-prefill/references/api-endpoints.md.\n\n1. Brand (drives the theme): GET /api/settings/brand_guidelines. Confirm primary/secondary/accent colors are SET (not defaults/placeholders) and match the source site's actual palette (sample the source CSS/logo). Confirm brand fonts were IDENTIFIED for the theme build (brand_guidelines has NO font field — do not fail QA for a missing font on that endpoint; fonts land in theme tokens).\n2. Countries/markets (drive currency, locale, tax, theme): GET the company countries; confirm the intended market(s) are configured with correct currency/locale.\n3. Business info: only when push_business_data is in scope, confirm legal/business name, support contact, business hours (where public) landed; otherwise brand+countries correctness alone is required.\n4. Loop: for any field wrong/missing and recoverable from the source, fix it (re-push) and re-verify; else record it.\n\nEnd with STEP_OUTPUT: { brand:{colors,fonts,source_match}, countries:[...], business:{...}|'out-of-scope', status:'pass'|'cap-reached', remaining_for_human:[...] }.",
+      "prompt": "Independently verify the data gather-context produced BEFORE the product import and theme build consume it — a wrong brand color, missing font, or wrong market propagates into every theme section and the store config. Re-fetch from the API and check against the SOURCE site; do not trust gather-context's self-report. Exact brand_guidelines contract (allowed fields incl. logo_url; PATCH body wrapped in the brand_guidelines key; logo/icon/favicon must be DAM URLs uploaded first via dam_upload): see onboarding/onboarding-prefill/references/api-endpoints.md.\n\n1. Brand (drives the theme): GET /api/settings/brand_guidelines. Confirm primary/secondary/accent colors are SET (not defaults/placeholders) and match the source site's actual palette (sample the source CSS/logo). Confirm brand fonts were IDENTIFIED for the theme build (brand_guidelines has NO font field — do not fail QA for a missing font on that endpoint; fonts land in theme tokens).\n2. Countries/markets (drive currency, locale, tax, theme): GET the company countries; confirm the intended market(s) are configured with correct currency/locale.\n3. Business info (best-effort, never flag-gated): where recoverable from the source, confirm legal/business name, support contact, and business hours (where public) landed; if a field is not present or not recoverable, mark it deferred-for-human — do NOT hard-fail QA on missing business info.\n4. Loop: for any field wrong/missing and recoverable from the source, fix it (re-push) and re-verify; else record it.\n\nEnd with STEP_OUTPUT: { brand:{colors,fonts,source_match}, countries:[...], business:{...}|'deferred', status:'pass'|'cap-reached', remaining_for_human:[...] }.",
       "target": {
         "type": "manager"
       },
@@ -30,7 +36,7 @@
       "acceptance": [
         "Brand colors + fonts were verified against the SOURCE site (not merely 'set') — the palette handed to the theme build matches the source. A wrong/default palette that is fixable from the source this turn should be FIXED and re-verified, not failed.",
         "The intended market country/countries are configured with correct currency/locale.",
-        "If push_business_data is in scope, business fields landed and were re-verified; otherwise brand+countries correctness alone is confirmed and business marked out-of-scope.",
+        "Brand + countries correctness is confirmed, and business fields (legal/business name, support contact, business hours) were verified where recoverable from the source OR explicitly marked deferred-for-human — missing business info is a remainder, never a hard blocker.",
         "STEP_OUTPUT reports status 'pass' or 'cap-reached' with an itemized remaining_for_human list — no silent pass.",
         "HARD-FAIL BAR: grading is against OUTCOMES AVAILABLE DOWNSTREAM, not push mechanics. A value that failed to persist via settings but is correctly RECORDED in STEP_OUTPUT for downstream steps (e.g. brand color the theme build applies directly) plus listed in remaining_for_human is acceptable — do not fail the run over a field-level 400. FAIL only when the brand palette is wrong/unverified against the source AND unrecoverable this turn, or the intended market cannot be determined."
       ],
@@ -258,7 +264,8 @@
         "HARD-FAIL BAR: fail only for fabrication (claiming reads/writes the API doesn't show) or destructive overwrites. 'Read-only outcome, everything deferred to the human' is a PASSING outcome when reported honestly."
       ],
       "dependsOn": [
-        "products-import"
+        "products-import",
+        "gather-context-qa"
       ]
     },
     {
@@ -494,7 +501,7 @@
     {
       "id": "launch-readiness-review",
       "name": "Launch-readiness review",
-      "prompt": "Produce a live-verified launch-readiness report. This is NOT a summary of what earlier steps said — every claim here must be backed by a check YOU performed this turn.\n\n1. **Storefront live check** — from the gather-context step's context, find the company's public storefront URL (from /api/settings/companies/{id}). crawl(<url>, formats: ['screenshot']) and confirm it returns without error. Attach the screenshot's URL to the report.\n2. **Theme sanity** — screenshot_preview once to confirm the theme's dev preview still renders. Read the iterative-theme-refine step's STEP_OUTPUT for any remaining majors/minors and surface them.\n3. **Products** — GET /api/company/v1/products and count via meta.pagination.total_count. Spot-check 3 for non-empty title + price + at least one image. Flag any product whose title matches 'Sample Product' — that's the manual stub and it must not ship.\n4. **Onboarding info** — GET /api/companies/{id}/onboarding_info (the legacy /api/v1/onboardings endpoints are removed — do not call them) and record what business/country info is on file vs still missing. Compare to what populate-getting-started reported; flag drift.\n5. **Brand + business info** — GET /api/settings/brand_guidelines and confirm the brand color tokens from gather-context landed. If a token is still default/empty, flag it.\n6. **Degraded steps** — if any earlier step finished in a degraded/needs-review state (its findings appear in your context), fold its unresolved findings into the checklist below with appropriate severity.\n7. **Prioritized checklist** — assemble a `Before you launch:` list. Each entry has:\n   - severity: `blocker` (unlaunchable), `high` (embarrassing at launch), `medium` (fix week 1), `low` (nice-to-have)\n   - what: one line\n   - why: which check this turn produced it\n   - suggested action\n\nRank by severity. If there are zero blockers and ≤ 2 highs, say so plainly — the report is not required to invent problems.",
+      "prompt": "Produce a live-verified launch-readiness report. This is NOT a summary of what earlier steps said — every claim here must be backed by a check YOU performed this turn.\n\n1. **Storefront live check** — from the gather-context step's context, find the company's public storefront URL (from /api/settings/companies/{id}). crawl(<url>, formats: ['screenshot']) and confirm it returns without error. If that crawl returns a SCRAPE_TIMEOUT, retry ONCE with a plain/markdown crawl (crawl(<url>) with no screenshot format — it succeeds when the screenshot renderer times out) and treat a clean plain crawl as the storefront being live BEFORE you record a storefront miss. Attach the screenshot's URL (or, on the fallback, the plain-crawl result) to the report.\n2. **Theme sanity** — screenshot_preview once to confirm the theme's dev preview still renders. Read the iterative-theme-refine step's STEP_OUTPUT for any remaining majors/minors and surface them.\n3. **Products** — GET /api/company/v1/products and count via meta.pagination.total_count. Spot-check 3 for non-empty title + price + at least one image. Flag any product whose title matches 'Sample Product' — that's the manual stub and it must not ship.\n4. **Onboarding info** — GET /api/companies/{id}/onboarding_info (the legacy /api/v1/onboardings endpoints are removed — do not call them) and record what business/country info is on file vs still missing. Compare to what populate-getting-started reported; flag drift. CLASSIFY missing fields, do not blanket-blocker them: a field populate-getting-started listed as `deferred` with a human-input reason (KYC/payments/legal-entity — these ALWAYS need a human) is an EXPECTED gap, so surface it as a `medium`/human-action item, NOT a launch blocker. An empty `onboarding_info: {}` is therefore not automatically unlaunchable — only treat a missing field as a `high`/`blocker` when it should have been filled this run but is absent because a scrape or earlier step FAILED (not merely deferred). Reserve `blocker` for fields that truly block going live.\n5. **Brand + business info** — GET /api/settings/brand_guidelines and confirm the brand color tokens from gather-context landed. If a token is still default/empty, flag it.\n6. **Degraded steps** — if any earlier step finished in a degraded/needs-review state (its findings appear in your context), fold its unresolved findings into the checklist below with appropriate severity.\n7. **Prioritized checklist** — assemble a `Before you launch:` list. Each entry has:\n   - severity: `blocker` (unlaunchable), `high` (embarrassing at launch), `medium` (fix week 1), `low` (nice-to-have)\n   - what: one line\n   - why: which check this turn produced it\n   - suggested action\n\nRank by severity. If there are zero blockers and ≤ 2 highs, say so plainly — the report is not required to invent problems.",
       "target": {
         "type": "manager"
       },
@@ -502,7 +509,8 @@
         "The report cites live checks performed THIS turn: at least one GET /api/company/v1/products, at least one GET /api/companies/{id}/onboarding_info (never the removed /api/v1/onboardings), and either a crawl-screenshot of the public storefront or an explicit 'storefront URL not yet published' note.",
         "The 'Before you launch' checklist exists and every entry has severity + what + why + suggested action.",
         "Any remaining majors from iterative-theme-refine's STEP_OUTPUT (and any degraded/needs-review step findings present in context) appear in the checklist with severity assigned.",
-        "The manual-stub product 'Sample Product' is either flagged as a blocker (Case C ran) or explicitly noted as absent (Case A/B ran)."
+        "The manual-stub product 'Sample Product' is either flagged as a blocker (Case C ran) or explicitly noted as absent (Case A/B ran).",
+        "Missing onboarding_info fields are classified, not blanket-blockered: KYC/payments/legal fields populate-getting-started deferred to a human are surfaced as human-action items (not launch blockers), while fields absent due to a scrape/step failure are flagged with real severity. An empty onboarding_info is not, by itself, treated as unlaunchable."
       ],
       "dependsOn": [
         "add-to-cart-qa",
@@ -515,7 +523,9 @@
         "verify-links",
         "page-route-content-qa",
         "font-substitution-qa",
-        "content-import"
+        "content-import",
+        "gather-context-qa",
+        "populate-getting-started"
       ]
     }
   ]
