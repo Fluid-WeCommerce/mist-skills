@@ -235,7 +235,7 @@
       "category": "customer",
       "icon": "crown",
       "path": "customer/vip-ltv-segmentation.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-07-23T09:00:00Z"
     },
     {
       "slug": "customer/first-90-days-journey-audit",
@@ -244,7 +244,7 @@
       "category": "customer",
       "icon": "calendar-check",
       "path": "customer/first-90-days-journey-audit.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-07-23T09:00:00Z"
     },
     {
       "slug": "customer/payment-fulfillment-friction",
@@ -262,7 +262,7 @@
       "category": "customer",
       "icon": "user-x",
       "path": "customer/subscriber-churn-signals.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-07-23T09:00:00Z"
     }
   ],
   "workflows": [
