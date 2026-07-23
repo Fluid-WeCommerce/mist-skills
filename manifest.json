@@ -227,6 +227,42 @@
       "icon": "refresh-cw",
       "path": "themes/iterative-theme-refine/SKILL.md",
       "updated_at": "2026-07-06T09:05:00Z"
+    },
+    {
+      "slug": "customer/vip-ltv-segmentation",
+      "name": "VIP / at-risk LTV segmentation",
+      "description": "Segment customers by lifetime value and recent order recency into VIP/Growing/At-Risk/Dormant tiers, each with a next-best-action.",
+      "category": "customer",
+      "icon": "crown",
+      "path": "customer/vip-ltv-segmentation.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "customer/first-90-days-journey-audit",
+      "name": "First-90-days journey audit",
+      "description": "Audit whether new customers are coming back — repeat-purchase and subscription-conversion rates by weekly cohort, plus what single-order customers actually bought.",
+      "category": "customer",
+      "icon": "calendar-check",
+      "path": "customer/first-90-days-journey-audit.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "customer/payment-fulfillment-friction",
+      "name": "Payment & fulfillment friction audit",
+      "description": "Surface payment-decline spikes and the unfulfilled-order backlog — the two verified signals that map directly to support tickets — since bulk refund/return-reason data isn't exposed by the admin API.",
+      "category": "customer",
+      "icon": "life-buoy",
+      "path": "customer/payment-fulfillment-friction.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "customer/subscriber-churn-signals",
+      "name": "Subscriber churn-risk signals",
+      "description": "Flag customers who cancelled or let a subscription go inactive, ranked by what they were spending, with a save-play scoped to what they last subscribed to.",
+      "category": "customer",
+      "icon": "user-x",
+      "path": "customer/subscriber-churn-signals.md",
+      "updated_at": "2026-07-23T00:00:00Z"
     }
   ],
   "workflows": [
