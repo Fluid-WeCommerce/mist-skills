@@ -101,6 +101,42 @@
       "updated_at": "2026-06-20T00:00:00Z"
     },
     {
+      "slug": "logistics/stuck-fulfillment-queue",
+      "name": "Stuck-fulfillment & aging-order queue",
+      "description": "Find every order stalled past a normal ship SLA, broken down by stage, so the oldest and biggest orders get unstuck first.",
+      "category": "logistics",
+      "icon": "package-search",
+      "path": "logistics/stuck-fulfillment-queue.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "logistics/stockout-risk-vs-velocity",
+      "name": "Stockout risk vs. sales velocity",
+      "description": "Compare current inventory against trailing sales velocity to flag every SKU on track to sell out, with a reorder recommendation and revenue at risk.",
+      "category": "logistics",
+      "icon": "package-x",
+      "path": "logistics/stockout-risk-vs-velocity.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "logistics/shipping-cost-vs-collected",
+      "name": "Shipping cost vs. collected",
+      "description": "Compare what customers were charged for shipping against actual carrier cost, by carrier and region, to find where you're losing money on delivery.",
+      "category": "logistics",
+      "icon": "truck",
+      "path": "logistics/shipping-cost-vs-collected.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "logistics/slow-mover-clearance-list",
+      "name": "Slow-mover clearance list",
+      "description": "Find inventory tying up capital with near-zero sell-through and build a ranked clearance list by dollars freed.",
+      "category": "logistics",
+      "icon": "archive",
+      "path": "logistics/slow-mover-clearance-list.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
       "slug": "themes/theme-clone",
       "name": "Theme Clone",
       "description": "Clone any website into a pixel-perfect Fluid theme \u2014 scrape the source, build sections, push, and visually verify against the original.",
