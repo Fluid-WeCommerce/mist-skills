@@ -107,7 +107,7 @@
       "category": "logistics",
       "icon": "package-search",
       "path": "logistics/stuck-fulfillment-queue.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-07-23T09:00:00Z"
     },
     {
       "slug": "logistics/stockout-risk-vs-velocity",
@@ -116,7 +116,7 @@
       "category": "logistics",
       "icon": "package-x",
       "path": "logistics/stockout-risk-vs-velocity.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-07-23T09:00:00Z"
     },
     {
       "slug": "logistics/shipping-cost-vs-collected",
@@ -125,7 +125,7 @@
       "category": "logistics",
       "icon": "truck",
       "path": "logistics/shipping-cost-vs-collected.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-07-23T09:00:00Z"
     },
     {
       "slug": "logistics/slow-mover-clearance-list",
@@ -134,7 +134,7 @@
       "category": "logistics",
       "icon": "archive",
       "path": "logistics/slow-mover-clearance-list.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-07-23T09:00:00Z"
     },
     {
       "slug": "themes/theme-clone",
