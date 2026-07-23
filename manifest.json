@@ -227,6 +227,42 @@
       "icon": "refresh-cw",
       "path": "themes/iterative-theme-refine/SKILL.md",
       "updated_at": "2026-07-06T09:05:00Z"
+    },
+    {
+      "slug": "leadership/field-leader-scoreboard",
+      "name": "Field leader scoreboard",
+      "description": "Rank field leaders by tenure, activity, and content engagement, with an optional deeper team-depth/genealogy pass when a reporting database (e.g. Exigo) is connected.",
+      "category": "leadership",
+      "icon": "award",
+      "path": "leadership/field-leader-scoreboard.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "leadership/rising-stars-at-risk",
+      "name": "Rising stars & at-risk leaders",
+      "description": "Find brand-new reps already showing content-activity momentum worth a shout-out, and long-tenured reps who've gone quiet before it shows up in the numbers.",
+      "category": "leadership",
+      "icon": "trending-up",
+      "path": "leadership/rising-stars-at-risk.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "leadership/recognition-milestone-digest",
+      "name": "Recognition & milestone digest",
+      "description": "Draft a short, rallying field update covering new joiners, rank achievers (when tracked), and top content sharers this period.",
+      "category": "leadership",
+      "icon": "megaphone",
+      "path": "leadership/recognition-milestone-digest.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "leadership/genealogy-rank-pipeline",
+      "name": "Genealogy & rank-advancement pipeline",
+      "description": "Show who's closest to their next rank using a connected reporting database (Exigo or similar) when one exists, degrading gracefully to admin-API rank data when it doesn't.",
+      "category": "leadership",
+      "icon": "network",
+      "path": "leadership/genealogy-rank-pipeline.md",
+      "updated_at": "2026-07-23T00:00:00Z"
     }
   ],
   "workflows": [
