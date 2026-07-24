@@ -153,13 +153,21 @@ context: {
   "theme_target": "new" | "existing" | null,
   "theme_id": <null | existing theme id>,
   "run_scope": "full" | "data_theme" | "theme_only" | "data_only",
+  "extras": <string[] — the `extras` multi_select ids, e.g. ["import_brand_social", "discover_ugc"]; [] if none>,
   "build_theme": <bool>,
   "import_products": <bool>,
-  "push_business_data": <bool>,
   "import_brand_social": <bool>,
   "discover_ugc": <bool>
 }
 ```
+
+`run_scope` and `extras` are the raw inputs the engine keys off to derive the run-gating
+flags at run start — ALWAYS include both. But you MUST STILL pass every boolean flag
+(`build_theme`, `import_products`, `import_brand_social`, `discover_ugc`) explicitly, set
+per the derivation rules below: treat them as REQUIRED, not optional. They are a mandatory
+belt-and-suspenders so the run gates correctly even where derivation is unavailable, and an
+explicitly-passed flag always wins over the derived value. Do NOT emit a bare `extras` array
+without the flags — that was the shape that caused every gated step to skip.
 
 Derive `connect_provider` from the `products_source` answer:
 - id starts with `connect_` → provider is the slug after the prefix
@@ -175,8 +183,7 @@ Derive the track flags from `run_scope` (they gate which steps do work via the w
 `runIf`):
 - `build_theme`: true for `full`, `data_theme`, `theme_only`; false for `data_only`
 - `import_products`: true for `full`; false otherwise
-- `push_business_data`: true for `full`, `data_only`; false for `data_theme`, `theme_only`
-  (brand + country gathering always runs regardless — it drives the theme)
+  (brand + country gathering always runs regardless of scope — it drives the theme)
 
 Derive the extras flags from the `extras` multi_select:
 - `import_brand_social`: true iff selected; `discover_ugc`: true iff selected (both default false)

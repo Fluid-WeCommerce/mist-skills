@@ -235,6 +235,39 @@
       "category": "mist",
       "icon": "layout-dashboard",
       "path": "mist/smart-dashboard/SKILL.md",
+      "slug": "sales/checkout-funnel-diagnosis",
+      "name": "Checkout funnel diagnosis",
+      "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
+      "category": "sales",
+      "icon": "filter",
+      "path": "sales/checkout-funnel-diagnosis.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "sales/stalled-order-recovery",
+      "name": "Stalled order revenue recovery",
+      "description": "Rank orders stuck in draft/pending/pending_review by recoverable revenue and win probability, and hand over a call list.",
+      "category": "sales",
+      "icon": "shopping-cart",
+      "path": "sales/stalled-order-recovery.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "sales/aov-lever-audit",
+      "name": "AOV lever audit",
+      "description": "Find which levers actually move average order value — item count, bundles, discount depth — with a dollar figure per lever.",
+      "category": "sales",
+      "icon": "trending-up",
+      "path": "sales/aov-lever-audit.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "sales/rep-momentum-scoreboard",
+      "name": "Rep signup momentum scoreboard",
+      "description": "Track rep/enrollment signup momentum by week and market, and surface the newest reps already active enough to be worth a personal spotlight.",
+      "category": "sales",
+      "icon": "users",
+      "path": "sales/rep-momentum-scoreboard.md",
       "updated_at": "2026-07-23T00:00:00Z"
     }
   ],
