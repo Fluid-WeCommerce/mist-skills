@@ -1,0 +1,26 @@
+{
+  "spec": 1,
+  "revision": "fixture-1",
+  "slug": "fixture-dependency-cycle",
+  "name": "Dependency cycle fixture",
+  "steps": [
+    {
+      "id": "first",
+      "name": "First",
+      "prompt": "Run first.",
+      "acceptance": ["First passed."],
+      "dependsOn": ["second"]
+    },
+    {
+      "id": "second",
+      "name": "Second",
+      "prompt": "Run second.",
+      "acceptance": ["Second passed."],
+      "dependsOn": ["first"]
+    }
+  ],
+  "finalGate": {
+    "stepId": "second",
+    "allowNeedsReview": false
+  }
+}

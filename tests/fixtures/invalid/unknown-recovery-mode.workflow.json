@@ -1,0 +1,21 @@
+{
+  "spec": 1,
+  "revision": "fixture-1",
+  "slug": "fixture-unknown-recovery",
+  "name": "Unknown recovery fixture",
+  "steps": [
+    {
+      "id": "only-step",
+      "name": "Only step",
+      "prompt": "Validate the fixture.",
+      "acceptance": ["The fixture was checked."],
+      "recovery": {
+        "mode": "automatic"
+      }
+    }
+  ],
+  "finalGate": {
+    "stepId": "only-step",
+    "allowNeedsReview": false
+  }
+}

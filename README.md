@@ -52,10 +52,10 @@ Directories under the skill categories are categories (the category shows as a s
 
 ### Two skill shapes
 
-| Shape          | When to use                                                                                                  | Layout                                                                  |
-| -------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| **Flat**       | The skill body fits on one screen of Markdown and doesn't need supporting tables/snippets — most cases.      | `<category>/<slug>.md`                                                  |
-| **Folder**     | The body is long enough that you want to factor out reference material — schemas, code patterns, examples. | `<category>/<slug>/SKILL.md` + `<category>/<slug>/references/*.md`      |
+| Shape      | When to use                                                                                                | Layout                                                             |
+| ---------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Flat**   | The skill body fits on one screen of Markdown and doesn't need supporting tables/snippets — most cases.    | `<category>/<slug>.md`                                             |
+| **Folder** | The body is long enough that you want to factor out reference material — schemas, code patterns, examples. | `<category>/<slug>/SKILL.md` + `<category>/<slug>/references/*.md` |
 
 Use the folder shape when the **main body** (the part the agent reasons about every turn) wants to stay lean while still shipping deep reference material. The runtime inlines every referenced file at the end of the prompt under `## Reference — <filename>` headers, capped at **256KB total** so a runaway reference can't blow up the turn.
 
@@ -89,25 +89,25 @@ Summarize orders from the last 30 days that used the promo code SUMMER10.
 
 ### Frontmatter fields
 
-| Field         | Required | Notes                                                                          |
-| ------------- | -------- | ------------------------------------------------------------------------------ |
-| `name`        | yes      | Display name in the sidebar                                                    |
-| `description` | yes      | One-sentence summary; shown under the name in the preview pane                 |
+| Field         | Required | Notes                                                                                    |
+| ------------- | -------- | ---------------------------------------------------------------------------------------- |
+| `name`        | yes      | Display name in the sidebar                                                              |
+| `description` | yes      | One-sentence summary; shown under the name in the preview pane                           |
 | `icon`        | no       | A [Lucide](https://lucide.dev/icons) icon name (e.g. `receipt`, `paint-bucket`, `flame`) |
 
 ### Template tokens
 
 The runtime substitutes a fixed set of `{{tokens}}` before the body is sent to Claude. Use them so a skill works regardless of who's running it.
 
-| Token                  | Resolves to                                |
-| ---------------------- | ------------------------------------------ |
-| `{{user.name}}`        | Active user's display name                 |
-| `{{user.email}}`       | Active user's email                        |
-| `{{company.name}}`     | Active company's display name              |
-| `{{company.subdomain}}`| Active company's subdomain                 |
-| `{{company.api_base}}` | API base URL (e.g. `https://api.fluid.app`)|
-| `{{today}}`            | Today, ISO-8601 (`2026-06-20`)             |
-| `{{thirty_days_ago}}`  | 30 days ago, ISO-8601                      |
+| Token                   | Resolves to                                 |
+| ----------------------- | ------------------------------------------- |
+| `{{user.name}}`         | Active user's display name                  |
+| `{{user.email}}`        | Active user's email                         |
+| `{{company.name}}`      | Active company's display name               |
+| `{{company.subdomain}}` | Active company's subdomain                  |
+| `{{company.api_base}}`  | API base URL (e.g. `https://api.fluid.app`) |
+| `{{today}}`             | Today, ISO-8601 (`2026-06-20`)              |
+| `{{thirty_days_ago}}`   | 30 days ago, ISO-8601                       |
 
 Anything that's not a known token is left literal.
 
@@ -118,13 +118,13 @@ Anything that's not a known token is left literal.
   "version": 1,
   "skills": [
     {
-      "slug": "finance/promo-code-summary",        // unique identifier; the path-without-`.md`
-      "name": "Promo code summary",                // matches frontmatter
-      "description": "Summarize orders…",          // matches frontmatter
-      "category": "finance",                       // matches the directory
-      "icon": "receipt",                           // matches frontmatter
-      "path": "finance/promo-code-summary.md",     // path inside the repo
-      "updated_at": "2026-06-20T18:00:00Z"         // bump on every meaningful body change
+      "slug": "finance/promo-code-summary", // unique identifier; the path-without-`.md`
+      "name": "Promo code summary", // matches frontmatter
+      "description": "Summarize orders…", // matches frontmatter
+      "category": "finance", // matches the directory
+      "icon": "receipt", // matches frontmatter
+      "path": "finance/promo-code-summary.md", // path inside the repo
+      "updated_at": "2026-06-20T18:00:00Z", // bump on every meaningful body change
     },
 
     // FOLDER shape — `path` points at SKILL.md, `references[]` lists
@@ -142,10 +142,10 @@ Anything that's not a known token is left literal.
       "references": [
         "themes/theme-refine/references/dev-preview-visual-diff.md",
         "themes/references/blocks-vs-sections.md",
-        "themes/references/css-js-hygiene.md"
-      ]
-    }
-  ]
+        "themes/references/css-js-hygiene.md",
+      ],
+    },
+  ],
 }
 ```
 
@@ -158,16 +158,16 @@ The desktop pulls `manifest.json` first, diffs it against its cached copy, and r
 
 ### Manifest fields
 
-| Field         | Required | Notes                                                                                                          |
-| ------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
-| `slug`        | yes      | Unique. Flat: `<category>/<filename>`. Folder: `<category>/<folder-name>`.                                     |
-| `name`        | yes      | Must match the file's frontmatter `name`.                                                                      |
-| `description` | yes      | Must match the file's frontmatter `description`.                                                               |
-| `category`    | yes      | Must match the parent directory name.                                                                          |
-| `icon`        | no       | Lucide icon name.                                                                                              |
-| `path`        | yes      | Flat: `<category>/<filename>.md`. Folder: `<category>/<folder>/SKILL.md`.                                       |
-| `updated_at`  | yes      | ISO-8601 UTC. Bump on body changes.                                                                            |
-| `references`  | no       | Array of repo-relative paths. Omit for flat skills. List every file the agent should see alongside the body.   |
+| Field         | Required | Notes                                                                                                        |
+| ------------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| `slug`        | yes      | Unique. Flat: `<category>/<filename>`. Folder: `<category>/<folder-name>`.                                   |
+| `name`        | yes      | Must match the file's frontmatter `name`.                                                                    |
+| `description` | yes      | Must match the file's frontmatter `description`.                                                             |
+| `category`    | yes      | Must match the parent directory name.                                                                        |
+| `icon`        | no       | Lucide icon name.                                                                                            |
+| `path`        | yes      | Flat: `<category>/<filename>.md`. Folder: `<category>/<folder>/SKILL.md`.                                    |
+| `updated_at`  | yes      | ISO-8601 UTC. Bump on body changes.                                                                          |
+| `references`  | no       | Array of repo-relative paths. Omit for flat skills. List every file the agent should see alongside the body. |
 
 ## Workflows
 
@@ -185,24 +185,50 @@ So a workflow shipped in the app can be **hot-fixed from this repo without an ap
 
 ```jsonc
 {
-  "slug": "open-country",                      // matches the manifest entry; overrides a built-in of the same slug
+  "spec": 1, // authored file-format version
+  "revision": "2026-07-24.1", // change whenever behavior changes
+  "slug": "open-country", // matches the manifest entry; overrides a built-in of the same slug
   "name": "Open a Country",
   "description": "…",
   "steps": [
     {
       "id": "create-country",
       "name": "Create the company country",
-      "prompt": "…",                           // inline instructions for this step's agent turn
+      "prompt": "…", // inline instructions for this step's agent turn
       // OR: "skill": "countries/compliance-manager"  ← delegate the step to a skill by slug
-      "target": { "type": "manager" },         // which project runs it (manager = the chat you're in)
-      "acceptance": ["…"],                      // criteria the QA turn verifies before the step passes
-      "dependsOn": [],                          // step ids that must pass first (enables parallelism)
-      "maxReworkRounds": 2,                     // bounded auto-rework on QA failure
-      "runIf": { "flag": "build_theme" }        // optional: only run when this run-context flag is truthy (see below)
-    }
-  ]
+      "target": { "type": "manager" }, // which project runs it (manager = the chat you're in)
+      "acceptance": ["…"], // criteria the QA turn verifies before the step passes
+      "dependsOn": [], // step ids that must pass first (enables parallelism)
+      "maxReworkRounds": 2, // bounded auto-rework on QA failure
+      "runIf": { "flag": "build_theme" }, // optional: only run when this run-context flag is truthy (see below)
+      "recovery": { "mode": "manual" }, // optional: confirmed rerun is safe; omission disables recovery
+    },
+  ],
+  "finalGate": {
+    "stepId": "final-qa", // QA verdict that determines the business outcome
+    "allowNeedsReview": false, // always make this decision explicit
+  },
 }
 ```
+
+Published workflows must declare `spec`, `revision`, and `finalGate`.
+`allowNeedsReview` is never implicit in catalog files. Manual recovery is an
+explicit opt-in on a step: add it only when a confirmed rerun re-checks current
+state and cannot duplicate or corrupt side effects. Every declaration or
+intentional omission is recorded in
+[`docs/workflow-recovery-decisions.json`](docs/workflow-recovery-decisions.json).
+
+The versioned publication contract lives at
+[`schemas/workflows/v1/workflow.schema.json`](schemas/workflows/v1/workflow.schema.json).
+Validate the catalog locally with:
+
+```bash
+node scripts/validate-workflows.mjs --test
+```
+
+This has no install step. It validates the JSON Schema, manifest coverage,
+unique step ids, dependency references and cycles, final-gate references,
+recovery decisions, and deliberately broken rejection fixtures.
 
 #### Conditional steps — `runIf` (optional)
 
@@ -211,6 +237,7 @@ A step may declare `"runIf": { "flag": "<contextKey>" }`. The step runs **only i
 Use it to let **one** workflow cover scoped runs instead of maintaining separate workflow files. Example: `onboard-launch-company` derives `build_theme` / `import_products` flags from a `run_scope` picker, and tags the theme-track and product-track steps with `runIf` so a "data only" run skips the theme + product steps while still running data gathering, its QA, and the launch review.
 
 Guidance for implementers:
+
 - The fronting skill must put the boolean in the `run_workflow` `context` (e.g. derive `build_theme` from a `run_scope` answer). An absent flag reads as "don't run."
 - `runIf` gates a **whole step**. For finer-grained skips inside a step, branch in the step's `prompt` instead (a prompt step can self-skip and emit `STEP_OUTPUT { skipped: true }`).
 - Prefer `runIf` over per-scope workflow copies — it keeps one source of truth and the progress card shows the skip explicitly.
@@ -230,24 +257,24 @@ Bump `updated_at` on any change, same as skills.
 
 ## Tools
 
-Skills and workflow steps run with Claude's full tool set in Mist Desktop. **Tools are code — they're compiled into the app and can't be added or changed from this repo.** This section is the reference for *which* tools a skill or workflow can call by name; to change a tool's behavior, change the app.
+Skills and workflow steps run with Claude's full tool set in Mist Desktop. **Tools are code — they're compiled into the app and can't be added or changed from this repo.** This section is the reference for _which_ tools a skill or workflow can call by name; to change a tool's behavior, change the app.
 
-| Tool | What it does |
-| ---- | ------------ |
-| `fluid_api(path, method, body)` | Call the user's Fluid API with their token — the workhorse for reads and writes. |
-| `country_atlas(country_code, [agreement_local_id])` | Fluid's per-market pre-setup profile (modes, launch checklists, agreements, tax/legal settings, payment methods, address layout, languages). Pass `agreement_local_id` for one agreement's full legal text. |
-| `country_settings(country_code)` | The compliance rulebook projected from the atlas (disclosure pages, cookie/VAT/unit-price rules) — what `compliance-manager` reads. |
-| `steps` / `steps_answer` / `steps_mark_item` | Open an interactive click-through panel, record a typed-in answer, or check off a live "setting up…" item. |
-| `run_workflow(workflow_slug, [context])` / `workflow_status` | Kick off a workflow chain (passing collected answers as `context`) and check a run's progress. |
-| `run_skill(slug)` | Load another skill's body and follow it (skill composition). |
-| File I/O: `read_file`, `write_file`, `edit_file`, `list_dir` (+ `*_in` cross-project variants) | Read/write files scoped to the active project. |
-| `run_cli` | The `fluid` CLI (`fluid theme push`, `fluid mist push --watch`, …), allowlisted subcommands only. |
-| `web_fetch`, `crawl` | Fetch a URL as text, or crawl a page (markdown + screenshot). |
-| `dam_upload`, `compress_media`, `video_ripper`, `video_metadata` | Push media into the Fluid DAM, shrink it (bundled ffmpeg), rip/inspect a social video. |
-| `screenshot_preview`, `start_preview`, `read_recent_log_tail`, `retry_lifecycle` | Drive + inspect a running dev preview. |
-| `db_query`, `sql_answer_card`, `list_projects` | Query a connected Mist database and list projects. |
-| `product_card`, `resource_card`, `order_card` | Render a rich card for a product / storefront resource / order in the chat. |
-| `human_in_the_loop` | Gate a change on the user's approval. |
+| Tool                                                                                           | What it does                                                                                                                                                                                                |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fluid_api(path, method, body)`                                                                | Call the user's Fluid API with their token — the workhorse for reads and writes.                                                                                                                            |
+| `country_atlas(country_code, [agreement_local_id])`                                            | Fluid's per-market pre-setup profile (modes, launch checklists, agreements, tax/legal settings, payment methods, address layout, languages). Pass `agreement_local_id` for one agreement's full legal text. |
+| `country_settings(country_code)`                                                               | The compliance rulebook projected from the atlas (disclosure pages, cookie/VAT/unit-price rules) — what `compliance-manager` reads.                                                                         |
+| `steps` / `steps_answer` / `steps_mark_item`                                                   | Open an interactive click-through panel, record a typed-in answer, or check off a live "setting up…" item.                                                                                                  |
+| `run_workflow(workflow_slug, [context])` / `workflow_status`                                   | Kick off a workflow chain (passing collected answers as `context`) and check a run's progress.                                                                                                              |
+| `run_skill(slug)`                                                                              | Load another skill's body and follow it (skill composition).                                                                                                                                                |
+| File I/O: `read_file`, `write_file`, `edit_file`, `list_dir` (+ `*_in` cross-project variants) | Read/write files scoped to the active project.                                                                                                                                                              |
+| `run_cli`                                                                                      | The `fluid` CLI (`fluid theme push`, `fluid mist push --watch`, …), allowlisted subcommands only.                                                                                                           |
+| `web_fetch`, `crawl`                                                                           | Fetch a URL as text, or crawl a page (markdown + screenshot).                                                                                                                                               |
+| `dam_upload`, `compress_media`, `video_ripper`, `video_metadata`                               | Push media into the Fluid DAM, shrink it (bundled ffmpeg), rip/inspect a social video.                                                                                                                      |
+| `screenshot_preview`, `start_preview`, `read_recent_log_tail`, `retry_lifecycle`               | Drive + inspect a running dev preview.                                                                                                                                                                      |
+| `db_query`, `sql_answer_card`, `list_projects`                                                 | Query a connected Mist database and list projects.                                                                                                                                                          |
+| `product_card`, `resource_card`, `order_card`                                                  | Render a rich card for a product / storefront resource / order in the chat.                                                                                                                                 |
+| `human_in_the_loop`                                                                            | Gate a change on the user's approval.                                                                                                                                                                       |
 
 Name the exact tool + endpoint you expect in a skill or workflow step, not "figure it out from the docs."
 
@@ -267,7 +294,7 @@ Name the exact tool + endpoint you expect in a skill or workflow step, not "figu
 
 - **Keep the main body lean**. The agent re-reads it every turn — if it's 2k lines of schema reference, every turn pays the token cost. Move "look this up if you need it" material into `references/`.
 - **Frontmatter `description` should be one sentence**, action-first ("Translate a Fluid theme into…", not "This skill is for…"). Mist Desktop shows it under the name.
-- **Bump `updated_at` whenever the SKILL body changes**. Adding a brand-new reference path to the manifest is free (the fetcher's missing-file check catches it); editing an existing reference *also* needs an `updated_at` bump on the parent skill so users pick up the change.
+- **Bump `updated_at` whenever the SKILL body changes**. Adding a brand-new reference path to the manifest is free (the fetcher's missing-file check catches it); editing an existing reference _also_ needs an `updated_at` bump on the parent skill so users pick up the change.
 - **One canonical reference per concept**. If two skills cite the same material, put it in `<category>/references/` and link both manifest entries at it. Don't fork the file.
 - **Write the body as if the user is reading it before clicking Run**. Skills are prompts, not scripts — the user sees what's about to happen.
 - **Be specific about tools**. Skills run with the full tool set Claude has in Mist Desktop:

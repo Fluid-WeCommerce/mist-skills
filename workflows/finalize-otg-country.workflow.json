@@ -1,4 +1,6 @@
 {
+  "spec": 1,
+  "revision": "2026-07-24.1",
   "slug": "finalize-otg-country",
   "name": "Finalize OTG (On The Ground) country setup",
   "description": "Post-open-country finalizer for OTG mode: register for VAT/GST, configure local invoicing, wire the country's preferred local payment gateways, capture whether operations are B2B/B2C/both, and run a full compliance review. Expects the caller `context` from open-country PLUS `mode: \"otg\"`.",
@@ -18,7 +20,10 @@
         "When `context.vat_id` was provided and the country has a public verifier (EU VIES), the report records the verification result — pass, fail, or 'verifier unreachable' — without failing the whole step."
       ],
       "dependsOn": [],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "local-invoicing-config",
@@ -33,7 +38,10 @@
         "STEP_OUTPUT names the branch taken (api-patch | manual-list) so downstream reports know whether an API surface was actually written."
       ],
       "dependsOn": [],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "local-payment-gateway-guidance",
@@ -48,7 +56,10 @@
         "The always-present defaults (generic credit_card / paypal / wallet_pay) are not counted toward the two local methods — the point is to surface the market-specific ones."
       ],
       "dependsOn": [],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "b2b-vs-b2c-check",
@@ -63,7 +74,10 @@
         "STEP_OUTPUT includes both the resolved posture (with its `posture_source` tag) and the shaped interpretation so downstream steps can read them."
       ],
       "dependsOn": [],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "compliance-review",
@@ -83,7 +97,14 @@
         "local-payment-gateway-guidance",
         "b2b-vs-b2c-check"
       ],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     }
-  ]
+  ],
+  "finalGate": {
+    "stepId": "compliance-review",
+    "allowNeedsReview": false
+  }
 }

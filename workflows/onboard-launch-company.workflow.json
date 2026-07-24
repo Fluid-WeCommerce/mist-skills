@@ -1,12 +1,46 @@
 {
+  "spec": 1,
+  "revision": "2026-07-24.1",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: gather brand + business info from the public site, import the product catalog FIRST (so the theme renders real products), then clone the site into a Fluid theme through small, individually-QA'd build steps (scrape/assets, tokens/skeleton, header/footer, homepage, product/collection templates, content pages + push), iteratively refine against paired screenshots, reconcile onboarding info, discover UGC, and deliver a live-verified launch-readiness review. QA on each step grades against explicit hard-fail bars — cosmetic gaps become notes for the refine pass, not run-killers.",
   "deriveContext": [
-    { "set": "build_theme",         "when": { "in":       { "key": "run_scope", "values": ["full", "data_theme", "theme_only"] } } },
-    { "set": "import_products",     "when": { "equals":   { "key": "run_scope", "value": "full" } } },
-    { "set": "discover_ugc",        "when": { "includes": { "key": "extras", "value": "discover_ugc" } } },
-    { "set": "import_brand_social", "when": { "includes": { "key": "extras", "value": "import_brand_social" } } }
+    {
+      "set": "build_theme",
+      "when": {
+        "in": {
+          "key": "run_scope",
+          "values": ["full", "data_theme", "theme_only"]
+        }
+      }
+    },
+    {
+      "set": "import_products",
+      "when": {
+        "equals": {
+          "key": "run_scope",
+          "value": "full"
+        }
+      }
+    },
+    {
+      "set": "discover_ugc",
+      "when": {
+        "includes": {
+          "key": "extras",
+          "value": "discover_ugc"
+        }
+      }
+    },
+    {
+      "set": "import_brand_social",
+      "when": {
+        "includes": {
+          "key": "extras",
+          "value": "import_brand_social"
+        }
+      }
+    }
   ],
   "steps": [
     {
@@ -40,9 +74,10 @@
         "STEP_OUTPUT reports status 'pass' or 'cap-reached' with an itemized remaining_for_human list — no silent pass.",
         "HARD-FAIL BAR: grading is against OUTCOMES AVAILABLE DOWNSTREAM, not push mechanics. A value that failed to persist via settings but is correctly RECORDED in STEP_OUTPUT for downstream steps (e.g. brand color the theme build applies directly) plus listed in remaining_for_human is acceptable — do not fail the run over a field-level 400. FAIL only when the brand palette is wrong/unverified against the source AND unrecoverable this turn, or the intended market cannot be determined."
       ],
-      "dependsOn": [
-        "gather-context"
-      ]
+      "dependsOn": ["gather-context"],
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "products-import",
@@ -60,9 +95,7 @@
         "The step's STEP_OUTPUT records which branch ran (`products_source`) so later steps can grade coverage accordingly.",
         "HARD-FAIL BAR: fail only when NO product exists after the step, or imported products are broken at the spot-check level ($0 shells with no pricing, zero images across the board, or still draft). A shortfall vs the source count (some products failed/skipped) is a remainder for the report, not a failure — record it in STEP_OUTPUT.remaining_for_human."
       ],
-      "dependsOn": [
-        "gather-context-qa"
-      ],
+      "dependsOn": ["gather-context-qa"],
       "runIf": {
         "flag": "import_products"
       }
@@ -82,9 +115,7 @@
         "The section inventory covers every visible homepage section (compare against the live source homepage).",
         "HARD-FAIL BAR: fail only when the source site could not be scraped at all, the manifest file is missing/empty, or zero images landed on the DAM despite the source clearly having images. Missing individual pages, sections noted as 'could not capture', or a partial asset map are NOTES for later steps — not failures."
       ],
-      "dependsOn": [
-        "gather-context-qa"
-      ],
+      "dependsOn": ["gather-context-qa"],
       "runIf": {
         "flag": "build_theme"
       }
@@ -104,9 +135,7 @@
         "The dev preview boots and renders without server errors — verified with a screenshot_preview this turn (placeholder content is acceptable; this step is about tokens + skeleton, not content).",
         "HARD-FAIL BAR: fail only when a config file is invalid/unwritten, tokens still hold base-theme defaults, or the dev preview cannot boot. Imperfect color mapping or a debatable font substitute is a NOTE for the refine pass."
       ],
-      "dependsOn": [
-        "theme-scrape-inventory"
-      ],
+      "dependsOn": ["theme-scrape-inventory"],
       "runIf": {
         "flag": "build_theme"
       }
@@ -127,9 +156,7 @@
         "A mobile-width screenshot shows a working hamburger/collapsed nav state.",
         "HARD-FAIL BAR: fail only for Liquid errors, missing sections, destroyed JS hooks, or unfixed audit violations. Pixel-level spacing/typography deltas vs the source are NOTES for the refine pass — record them, do not fail."
       ],
-      "dependsOn": [
-        "theme-tokens-skeleton"
-      ],
+      "dependsOn": ["theme-tokens-skeleton"],
       "runIf": {
         "flag": "build_theme"
       }
@@ -150,9 +177,7 @@
         "Desktop + mobile screenshots were taken this turn and the page is structurally coherent at both widths (no blank page, no stacked garbage).",
         "HARD-FAIL BAR: fail only for a broken/blank homepage, a missing majority of sections, placeholder content standing in for real copy, or unfixed audit violations. Spacing/size/color deltas vs the source are refine-pass NOTES."
       ],
-      "dependsOn": [
-        "theme-header-footer"
-      ],
+      "dependsOn": ["theme-header-footer"],
       "runIf": {
         "flag": "build_theme"
       }
@@ -172,10 +197,7 @@
         "`python3 scripts/theme_audit.py` passes on the touched files.",
         "HARD-FAIL BAR: fail only for erroring PDP/collection routes, a replaced/modified main_product section, or unfixed audit violations. Fidelity gaps vs the source PDP layout are refine-pass NOTES."
       ],
-      "dependsOn": [
-        "theme-homepage",
-        "products-import"
-      ],
+      "dependsOn": ["theme-homepage", "products-import"],
       "runIf": {
         "flag": "build_theme"
       }
@@ -196,9 +218,7 @@
         "Key static page TEMPLATES from the manifest exist (up to 4); STEP_OUTPUT carries the aggregated remaining_for_refine list.",
         "HARD-FAIL BAR: fail only when the push did not land (no theme id verifiable via the API), audit violations remain, or the preview is broken after push. A shorter-than-hoped page list or a long remaining_for_refine list is fine — the refine pass exists for that."
       ],
-      "dependsOn": [
-        "theme-product-collection"
-      ],
+      "dependsOn": ["theme-product-collection"],
       "runIf": {
         "flag": "build_theme"
       }
@@ -219,9 +239,7 @@
         "The theme's dev preview is still healthy — verify with a final screenshot_preview after refinement completes.",
         "HARD-FAIL BAR: fail only when the refine loop never ran, the preview is left broken, or the report is a silent/fabricated pass. cap-reached with an honest majors/minors list is a PASSING outcome."
       ],
-      "dependsOn": [
-        "theme-content-pages-push"
-      ],
+      "dependsOn": ["theme-content-pages-push"],
       "runIf": {
         "flag": "build_theme"
       }
@@ -244,10 +262,7 @@
         "STEP_OUTPUT reports per-type source-vs-created counts and any remaining_for_human items.",
         "HARD-FAIL BAR: fail only when a whole resource TYPE that clearly exists on the source was never attempted, duplicates were created, or counts were fabricated. Per-item failures (a page create 403'd by the WAF, one post failed) recorded in remaining_for_human are notes, not failures."
       ],
-      "dependsOn": [
-        "gather-context-qa",
-        "theme-content-pages-push"
-      ]
+      "dependsOn": ["gather-context-qa", "theme-content-pages-push"]
     },
     {
       "id": "populate-getting-started",
@@ -263,10 +278,7 @@
         "STEP_OUTPUT follows the documented shape with fields_set / fields_filled / deferred.",
         "HARD-FAIL BAR: fail only for fabrication (claiming reads/writes the API doesn't show) or destructive overwrites. 'Read-only outcome, everything deferred to the human' is a PASSING outcome when reported honestly."
       ],
-      "dependsOn": [
-        "products-import",
-        "gather-context-qa"
-      ]
+      "dependsOn": ["products-import", "gather-context-qa"]
     },
     {
       "id": "ugc-discovery",
@@ -279,9 +291,7 @@
         "Either at least one UGC asset was uploaded to the DAM (verifiable via its reported URL), or an explicit finding documents no discoverable social/UGC presence with the queries tried.",
         "No unrelated or off-brand content was uploaded."
       ],
-      "dependsOn": [
-        "populate-getting-started"
-      ],
+      "dependsOn": ["populate-getting-started"],
       "runIf": {
         "flag": "discover_ugc"
       }
@@ -302,17 +312,12 @@
         "Otherwise: each account's videos were ripped into DAM + Media tagged `brand-content` (never `ugc`), idempotently, per-video failures noted without aborting; or an explicit finding documents no discoverable official social presence.",
         "No UGC / other-people's content was imported by this step (that is ugc-discovery)."
       ],
-      "dependsOn": [
-        "gather-context"
-      ]
+      "dependsOn": ["gather-context"]
     },
     {
       "id": "verify-links",
       "name": "Verify links resolve to the right resource templates",
-      "dependsOn": [
-        "iterative-theme-refine",
-        "products-import"
-      ],
+      "dependsOn": ["iterative-theme-refine", "products-import"],
       "target": {
         "type": "manager"
       },
@@ -326,14 +331,15 @@
       ],
       "runIf": {
         "flag": "build_theme"
+      },
+      "recovery": {
+        "mode": "manual"
       }
     },
     {
       "id": "product-price-qa",
       "name": "Product price QA",
-      "dependsOn": [
-        "product-active-status-qa"
-      ],
+      "dependsOn": ["product-active-status-qa"],
       "target": {
         "type": "manager"
       },
@@ -347,14 +353,15 @@
       ],
       "runIf": {
         "flag": "import_products"
+      },
+      "recovery": {
+        "mode": "manual"
       }
     },
     {
       "id": "add-to-cart-qa",
       "name": "Add to cart QA",
-      "dependsOn": [
-        "product-active-status-qa"
-      ],
+      "dependsOn": ["product-active-status-qa"],
       "target": {
         "type": "manager"
       },
@@ -368,15 +375,15 @@
       ],
       "runIf": {
         "flag": "import_products"
+      },
+      "recovery": {
+        "mode": "manual"
       }
     },
     {
       "id": "mobile-responsive-qa",
       "name": "Mobile responsive QA",
-      "dependsOn": [
-        "iterative-theme-refine",
-        "products-import"
-      ],
+      "dependsOn": ["iterative-theme-refine", "products-import"],
       "target": {
         "type": "manager"
       },
@@ -390,14 +397,15 @@
       ],
       "runIf": {
         "flag": "build_theme"
+      },
+      "recovery": {
+        "mode": "manual"
       }
     },
     {
       "id": "product-active-status-qa",
       "name": "Product active-status QA",
-      "dependsOn": [
-        "products-import"
-      ],
+      "dependsOn": ["products-import"],
       "target": {
         "type": "manager"
       },
@@ -411,15 +419,15 @@
       ],
       "runIf": {
         "flag": "import_products"
+      },
+      "recovery": {
+        "mode": "manual"
       }
     },
     {
       "id": "storefront-route-health-qa",
       "name": "Storefront route health QA (browser-only)",
-      "dependsOn": [
-        "product-active-status-qa",
-        "iterative-theme-refine"
-      ],
+      "dependsOn": ["product-active-status-qa", "iterative-theme-refine"],
       "target": {
         "type": "manager"
       },
@@ -432,14 +440,15 @@
       ],
       "runIf": {
         "flag": "build_theme"
+      },
+      "recovery": {
+        "mode": "manual"
       }
     },
     {
       "id": "seo-metadata-qa",
       "name": "SEO metadata QA",
-      "dependsOn": [
-        "storefront-route-health-qa"
-      ],
+      "dependsOn": ["storefront-route-health-qa"],
       "target": {
         "type": "manager"
       },
@@ -454,14 +463,15 @@
       ],
       "runIf": {
         "flag": "build_theme"
+      },
+      "recovery": {
+        "mode": "manual"
       }
     },
     {
       "id": "page-route-content-qa",
       "name": "Page route content QA",
-      "dependsOn": [
-        "storefront-route-health-qa"
-      ],
+      "dependsOn": ["storefront-route-health-qa"],
       "target": {
         "type": "manager"
       },
@@ -475,14 +485,15 @@
       ],
       "runIf": {
         "flag": "build_theme"
+      },
+      "recovery": {
+        "mode": "manual"
       }
     },
     {
       "id": "font-substitution-qa",
       "name": "Font substitution QA",
-      "dependsOn": [
-        "storefront-route-health-qa"
-      ],
+      "dependsOn": ["storefront-route-health-qa"],
       "target": {
         "type": "manager"
       },
@@ -496,6 +507,9 @@
       ],
       "runIf": {
         "flag": "build_theme"
+      },
+      "recovery": {
+        "mode": "manual"
       }
     },
     {
@@ -526,7 +540,14 @@
         "content-import",
         "gather-context-qa",
         "populate-getting-started"
-      ]
+      ],
+      "recovery": {
+        "mode": "manual"
+      }
     }
-  ]
+  ],
+  "finalGate": {
+    "stepId": "launch-readiness-review",
+    "allowNeedsReview": false
+  }
 }

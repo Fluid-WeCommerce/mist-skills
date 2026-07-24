@@ -1,4 +1,6 @@
 {
+  "spec": 1,
+  "revision": "2026-07-24.1",
   "slug": "open-country",
   "name": "Open a Country",
   "description": "Backend for the Open a Country skill, driven by Fluid's Country Atlas: create the company_country (currency + tax profile + 3DS), create the atlas's recommended agreements from their full legal templates, enable added languages, convert product pricing (or leave inactive), translate themes into the market's languages, and QA the whole thing — ending with the operating mode's launch checklist as the human to-do list. Expects a caller `context` with country_id, country_iso, currency_code, mode, entity_name, tax_name, tax_inclusive, requires_3ds, agreements_to_create, payment_integration_types, enrollment_fields, languages_to_add, theme_languages, pricing_choice, fx_rate, launch_checklist.",
@@ -17,7 +19,10 @@
         "The reported STEP_OUTPUT includes the company_country id (numeric or string, as the API returned it)."
       ],
       "dependsOn": [],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "create-agreements",
@@ -31,9 +36,7 @@
         "No duplicate agreement titles were created — anything already present was reported as skipped, not re-created.",
         "STEP_OUTPUT reports created/skipped/failed counts, and every failure has a reason."
       ],
-      "dependsOn": [
-        "create-country"
-      ],
+      "dependsOn": ["create-country"],
       "maxReworkRounds": 2
     },
     {
@@ -47,10 +50,11 @@
         "Either context.languages_to_add is empty and STEP_OUTPUT explicitly said `no languages to enable`, OR every ISO listed in context.languages_to_add now appears in GET /api/settings/languages with active_in_company === true.",
         "STEP_OUTPUT lists which ISOs were enabled and which (if any) were skipped, with reasons for the skips."
       ],
-      "dependsOn": [
-        "create-country"
-      ],
-      "maxReworkRounds": 2
+      "dependsOn": ["create-country"],
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "convert-pricing",
@@ -63,10 +67,11 @@
         "Either the user chose leave_inactive and STEP_OUTPUT said so explicitly, OR (for convert) a spot check of 3 products via GET /api/company/v1/products/{id} shows each has a variant_countries entry for the new country_id with a non-null local price in context.currency_code.",
         "STEP_OUTPUT reports converted/skipped/failed counts, and no more than 10% of variants are in the failed bucket unless the failures are explicitly explained."
       ],
-      "dependsOn": [
-        "create-country"
-      ],
-      "maxReworkRounds": 2
+      "dependsOn": ["create-country"],
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "translate-themes",
@@ -79,10 +84,11 @@
         "The step targeted the market languages from context.theme_languages (falling back to languages_to_add) — NOT an empty set just because no new languages were enabled. If the resolved target list was genuinely empty, STEP_OUTPUT said so explicitly.",
         "For every target language, each active theme is reported as already-translated, translated-now, or failed — backed by the sub-skill's actual report, no invented success."
       ],
-      "dependsOn": [
-        "enable-languages"
-      ],
-      "maxReworkRounds": 2
+      "dependsOn": ["enable-languages"],
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "final-qa",
@@ -96,12 +102,15 @@
         "Every verification claim is backed by an actual API call performed in this turn — no claim rests only on trust of earlier STEP_OUTPUT lines.",
         "The launch checklist from context.launch_checklist is reproduced in full — same item count, labels and descriptions intact."
       ],
-      "dependsOn": [
-        "create-agreements",
-        "convert-pricing",
-        "translate-themes"
-      ],
-      "maxReworkRounds": 2
+      "dependsOn": ["create-agreements", "convert-pricing", "translate-themes"],
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     }
-  ]
+  ],
+  "finalGate": {
+    "stepId": "final-qa",
+    "allowNeedsReview": false
+  }
 }

@@ -1,0 +1,32 @@
+name: Validate workflows
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/validate-workflows.yml"
+      - "docs/workflow-recovery-decisions.json"
+      - "manifest.json"
+      - "schemas/workflows/**"
+      - "scripts/validate-workflows.mjs"
+      - "tests/fixtures/**"
+      - "workflows/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/validate-workflows.yml"
+      - "docs/workflow-recovery-decisions.json"
+      - "manifest.json"
+      - "schemas/workflows/**"
+      - "scripts/validate-workflows.mjs"
+      - "tests/fixtures/**"
+      - "workflows/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out catalog
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Validate published workflows and rejection fixtures
+        run: node scripts/validate-workflows.mjs --test

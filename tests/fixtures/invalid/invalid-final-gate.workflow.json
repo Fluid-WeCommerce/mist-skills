@@ -1,0 +1,18 @@
+{
+  "spec": 1,
+  "revision": "fixture-1",
+  "slug": "fixture-invalid-final-gate",
+  "name": "Invalid final gate fixture",
+  "steps": [
+    {
+      "id": "only-step",
+      "name": "Only step",
+      "prompt": "Validate the fixture.",
+      "acceptance": ["The fixture was checked."]
+    }
+  ],
+  "finalGate": {
+    "stepId": "missing-step",
+    "allowNeedsReview": false
+  }
+}

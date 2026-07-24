@@ -1,4 +1,6 @@
 {
+  "spec": 1,
+  "revision": "2026-07-24.1",
   "slug": "finalize-usd-country",
   "name": "Finalize USD-mode country setup",
   "description": "Post-open-country finalizer for USD mode: audit digital-services-tax registration obligations for foreign sellers, enforce USD-only pricing (no local-currency prices), verify cross-border digital ToS + refund policy coverage, and run a compliance review focused on digital-services duties. Expects the caller `context` from open-country PLUS `mode: \"usd\"`.",
@@ -17,7 +19,10 @@
         "STEP_OUTPUT tags the answer with the exact token (REGISTER | EXEMPT | UNKNOWN) so downstream steps can branch off it."
       ],
       "dependsOn": [],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "currency-only-pricing-guardrail",
@@ -32,7 +37,10 @@
         "STEP_OUTPUT lists total-scanned / usd-priced / offending / flipped-inactive counts so the compliance review can pick up any remaining issue."
       ],
       "dependsOn": [],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "cross-border-digital-tos",
@@ -47,7 +55,10 @@
         "When a marker is missing, the report includes a concrete one-sentence suggested clause the human can drop into the agreement."
       ],
       "dependsOn": [],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "compliance-review",
@@ -66,7 +77,14 @@
         "currency-only-pricing-guardrail",
         "cross-border-digital-tos"
       ],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     }
-  ]
+  ],
+  "finalGate": {
+    "stepId": "compliance-review",
+    "allowNeedsReview": false
+  }
 }

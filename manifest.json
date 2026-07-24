@@ -103,7 +103,7 @@
     {
       "slug": "themes/theme-clone",
       "name": "Theme Clone",
-      "description": "Clone any website into a pixel-perfect Fluid theme \u2014 scrape the source, build sections, push, and visually verify against the original.",
+      "description": "Clone any website into a pixel-perfect Fluid theme — scrape the source, build sections, push, and visually verify against the original.",
       "category": "themes",
       "icon": "copy",
       "path": "themes/theme-clone/SKILL.md",
@@ -168,7 +168,7 @@
     {
       "slug": "marketing/brand-social-import",
       "name": "Brand Social Content Import",
-      "description": "Import a company's OWN YouTube + TikTok videos into Fluid: find the official accounts, register them in social-media settings, and pull their videos into the DAM + Media. Not UGC \u2014 this is the brand's own content.",
+      "description": "Import a company's OWN YouTube + TikTok videos into Fluid: find the official accounts, register them in social-media settings, and pull their videos into the DAM + Media. Not UGC — this is the brand's own content.",
       "category": "marketing",
       "icon": "video",
       "path": "marketing/brand-social-import.md",
@@ -186,7 +186,7 @@
     {
       "slug": "optimize/suggested-changes",
       "name": "Suggested Changes",
-      "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
+      "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix — approvals are applied and their impact is tracked.",
       "category": "optimize",
       "icon": "sparkles",
       "path": "optimize/suggested-changes.md",
@@ -204,7 +204,7 @@
     {
       "slug": "countries/compliance-manager",
       "name": "Country Compliance Manager",
-      "description": "Audit a storefront against a country's legal requirements \u2014 disclosure pages, price display, cookie/privacy law, agreements, product labeling, storefront language \u2014 using the Country Atlas as the rulebook. Runs standalone and as the final step of the mode finalizers.",
+      "description": "Audit a storefront against a country's legal requirements — disclosure pages, price display, cookie/privacy law, agreements, product labeling, storefront language — using the Country Atlas as the rulebook. Runs standalone and as the final step of the mode finalizers.",
       "category": "countries",
       "icon": "scale",
       "path": "countries/compliance-manager/SKILL.md",
@@ -213,7 +213,7 @@
     {
       "slug": "onboarding/onboard-launch-company",
       "name": "Onboard & Launch Company",
-      "description": "Guided end-to-end company onboarding: collect the website URL, auto-detect available Connect integrations (Shopify / Exigo / ByDesign droplets) or fall back to public scraping, then fire the flagship onboard-launch-company workflow \u2014 clone the site, iteratively refine the theme against screenshots, import products, tick off Getting Started, discover UGC, and deliver a launch-readiness review.",
+      "description": "Guided end-to-end company onboarding: collect the website URL, auto-detect available Connect integrations (Shopify / Exigo / ByDesign droplets) or fall back to public scraping, then fire the flagship onboard-launch-company workflow — clone the site, iteratively refine the theme against screenshots, import products, tick off Getting Started, discover UGC, and deliver a launch-readiness review.",
       "category": "onboarding",
       "icon": "rocket",
       "path": "onboarding/onboard-launch-company/SKILL.md",
@@ -222,19 +222,13 @@
     {
       "slug": "themes/iterative-theme-refine",
       "name": "Iterative Theme Refine",
-      "description": "Screenshot-based iterative refinement loop that runs after theme-clone: each round captures paired screenshots (source vs cloned preview), fixes the top 1-3 discrepancies, and re-checks \u2014 capped at 5 iterations with a documented remaining-diff report if the cap is hit.",
+      "description": "Screenshot-based iterative refinement loop that runs after theme-clone: each round captures paired screenshots (source vs cloned preview), fixes the top 1-3 discrepancies, and re-checks — capped at 5 iterations with a documented remaining-diff report if the cap is hit.",
       "category": "themes",
       "icon": "refresh-cw",
       "path": "themes/iterative-theme-refine/SKILL.md",
       "updated_at": "2026-07-06T09:05:00Z"
     },
     {
-      "slug": "mist/smart-dashboard",
-      "name": "Smart Dashboard",
-      "description": "Self-fabricate a live business dashboard from real data \u2014 gather what every department cares about, render it with show_dashboard, then learn what the user wants front-and-center and remember it.",
-      "category": "mist",
-      "icon": "layout-dashboard",
-      "path": "mist/smart-dashboard/SKILL.md",
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
@@ -275,27 +269,27 @@
     {
       "slug": "onboard-launch-company",
       "path": "workflows/onboard-launch-company.workflow.json",
-      "updated_at": "2026-07-06T09:05:00Z"
+      "updated_at": "2026-07-24T00:00:00Z"
     },
     {
       "slug": "open-country",
       "path": "workflows/open-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-07-24T00:00:00Z"
     },
     {
       "slug": "finalize-otg-country",
       "path": "workflows/finalize-otg-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-07-24T00:00:00Z"
     },
     {
       "slug": "finalize-nfr-country",
       "path": "workflows/finalize-nfr-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-07-24T00:00:00Z"
     },
     {
       "slug": "finalize-usd-country",
       "path": "workflows/finalize-usd-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-07-24T00:00:00Z"
     }
   ]
 }

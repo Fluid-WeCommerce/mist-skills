@@ -1,0 +1,11 @@
+{
+  "spec": 1,
+  "revision": "fixture-1",
+  "slug": "fixture-schema-violation",
+  "name": "Schema violation fixture",
+  "steps": [],
+  "finalGate": {
+    "stepId": "missing-step",
+    "allowNeedsReview": false
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "spec": 1,
+  "slug": "fixture-missing-revision",
+  "name": "Missing revision fixture",
+  "steps": [
+    {
+      "id": "only-step",
+      "name": "Only step",
+      "prompt": "Validate the fixture.",
+      "acceptance": ["The fixture was checked."]
+    }
+  ],
+  "finalGate": {
+    "stepId": "only-step",
+    "allowNeedsReview": false
+  }
+}

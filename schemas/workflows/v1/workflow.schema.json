@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "spec": {
+      "default": 1,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1
+    },
+    "revision": {
+      "default": "legacy",
+      "type": "string",
+      "minLength": 1
+    },
+    "slug": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "default": "",
+      "type": "string"
+    },
+    "maxParallel": {
+      "default": 3,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
+    "steps": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "skill": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "target": {
+            "default": {
+              "type": "manager"
+            },
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "manager"
+                  }
+                },
+                "required": ["type"]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "kind"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": ["theme", "portal", "mist", "widget"]
+                  },
+                  "fallbackToManager": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": ["type", "kind"]
+              }
+            ]
+          },
+          "acceptance": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "dependsOn": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxReworkRounds": {
+            "default": 2,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "runIf": {
+            "type": "object",
+            "properties": {
+              "flag": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["flag"]
+          },
+          "recovery": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "const": "manual"
+              }
+            },
+            "required": ["mode"]
+          }
+        },
+        "required": ["id", "name", "acceptance"]
+      }
+    },
+    "deriveContext": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "set": {
+            "type": "string",
+            "minLength": 1
+          },
+          "when": {
+            "type": "object",
+            "properties": {
+              "equals": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "value": {}
+                },
+                "required": ["key", "value"]
+              },
+              "in": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "values": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {}
+                  }
+                },
+                "required": ["key", "values"]
+              },
+              "includes": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "value": {}
+                },
+                "required": ["key", "value"]
+              }
+            }
+          }
+        },
+        "required": ["set", "when"]
+      }
+    },
+    "finalGate": {
+      "type": "object",
+      "properties": {
+        "stepId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "allowNeedsReview": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "required": ["stepId", "allowNeedsReview"]
+    }
+  },
+  "required": ["spec", "revision", "slug", "name", "steps", "finalGate"],
+  "$id": "https://github.com/Fluid-WeCommerce/mist-skills/blob/main/schemas/workflows/v1/workflow.schema.json",
+  "title": "Mist workflow definition (spec 1)",
+  "description": "Publication schema for community Mist workflow definitions. Runtime-only legacy defaults are intentionally required for published files."
+}

@@ -1,4 +1,6 @@
 {
+  "spec": 1,
+  "revision": "2026-07-24.1",
   "slug": "finalize-nfr-country",
   "name": "Finalize NFR (Not For Resale) country setup",
   "description": "Post-open-country finalizer for NFR mode: verify the international shipping profile, confirm import-duty disclosure at checkout, spot-check product country-of-origin labeling, and run a light compliance review acknowledging the NFR posture. Expects the caller `context` from open-country PLUS `mode: \"nfr\"`.",
@@ -16,7 +18,10 @@
         "STEP_OUTPUT reports which branch ran: already-covered | zone-created | manual-step-emitted — no silent success."
       ],
       "dependsOn": [],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "import-duty-display-check",
@@ -31,7 +36,10 @@
         "STEP_OUTPUT lists the pages checked and the search terms used so the compliance review can pick up the finding."
       ],
       "dependsOn": [],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "product-labeling-check",
@@ -45,7 +53,10 @@
         "The report includes a one-line labeling summary and, when items are missing, a follow-up item that names how many products need country-of-origin added before shipping to this country."
       ],
       "dependsOn": [],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "compliance-review",
@@ -64,7 +75,14 @@
         "import-duty-display-check",
         "product-labeling-check"
       ],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     }
-  ]
+  ],
+  "finalGate": {
+    "stepId": "compliance-review",
+    "allowNeedsReview": false
+  }
 }

@@ -1,0 +1,184 @@
+{
+  "finalize-nfr-country": {
+    "shipping-profile-setup": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "import-duty-display-check": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "product-labeling-check": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "compliance-review": {
+      "policy": "manual",
+      "rationale": "The delegated compliance-manager skill is explicitly read-only, so a confirmed rerun cannot duplicate store mutations."
+    }
+  },
+  "finalize-otg-country": {
+    "vat-registration-guidance": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "local-invoicing-config": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "local-payment-gateway-guidance": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "b2b-vs-b2c-check": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "compliance-review": {
+      "policy": "manual",
+      "rationale": "The delegated compliance-manager skill is explicitly read-only, so a confirmed rerun cannot duplicate store mutations."
+    }
+  },
+  "finalize-usd-country": {
+    "digital-services-tax-check": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "currency-only-pricing-guardrail": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "cross-border-digital-tos": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "compliance-review": {
+      "policy": "manual",
+      "rationale": "The delegated compliance-manager skill is explicitly read-only, so a confirmed rerun cannot duplicate store mutations."
+    }
+  },
+  "onboard-launch-company": {
+    "gather-context": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "gather-context-qa": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "products-import": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "theme-scrape-inventory": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "theme-tokens-skeleton": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "theme-header-footer": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "theme-homepage": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "theme-product-collection": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "theme-content-pages-push": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "iterative-theme-refine": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "content-import": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "populate-getting-started": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "ugc-discovery": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "brand-social-import": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "verify-links": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "product-price-qa": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "add-to-cart-qa": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "mobile-responsive-qa": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "product-active-status-qa": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "storefront-route-health-qa": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "seo-metadata-qa": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "page-route-content-qa": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "font-substitution-qa": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "launch-readiness-review": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    }
+  },
+  "open-country": {
+    "create-country": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "create-agreements": {
+      "policy": "disabled",
+      "rationale": "A rerun could duplicate imports, content, uploads, agreements, or overwrite partially-built state, so failures remain diagnostics-only."
+    },
+    "enable-languages": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "convert-pricing": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "translate-themes": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    },
+    "final-qa": {
+      "policy": "manual",
+      "rationale": "A confirmed rerun re-checks current state before acting and is read-only or reconciles an existing record safely."
+    }
+  }
+}
