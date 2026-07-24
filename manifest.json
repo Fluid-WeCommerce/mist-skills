@@ -229,6 +229,12 @@
       "updated_at": "2026-07-06T09:05:00Z"
     },
     {
+      "slug": "mist/smart-dashboard",
+      "name": "Smart Dashboard",
+      "description": "Self-fabricate a live business dashboard from real data \u2014 gather what every department cares about, render it with show_dashboard, then learn what the user wants front-and-center and remember it.",
+      "category": "mist",
+      "icon": "layout-dashboard",
+      "path": "mist/smart-dashboard/SKILL.md",
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
