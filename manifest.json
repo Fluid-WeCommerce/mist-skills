@@ -157,13 +157,13 @@
       ]
     },
     {
-      "slug": "marketing/tiktok-ugc-discovery",
-      "name": "TikTok UGC Discovery",
-      "description": "Find the 20-30 most engaging, FTC/FDA-compliant TikTok UGC videos about a brand or product, let the user pick, and pull the picks into the DAM.",
+      "slug": "marketing/ugc-discovery",
+      "name": "UGC Discovery",
+      "description": "Find the 20-30 most engaging, FTC/FDA-compliant UGC posts about a brand or product across TikTok, Instagram, YouTube, and Pinterest, let the user pick, and pull the picks into the DAM.",
       "category": "marketing",
       "icon": "video",
-      "path": "marketing/tiktok-ugc-discovery.md",
-      "updated_at": "2026-07-04T03:22:55Z"
+      "path": "marketing/ugc-discovery.md",
+      "updated_at": "2026-07-24T00:00:00Z"
     },
     {
       "slug": "marketing/brand-social-import",
