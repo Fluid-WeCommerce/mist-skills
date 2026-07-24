@@ -1,0 +1,33 @@
+{
+  "spec": 1,
+  "revision": "fixture-1",
+  "slug": "fixture-conflicting-predicate",
+  "name": "Conflicting predicate fixture",
+  "deriveContext": [
+    {
+      "set": "fixture",
+      "when": {
+        "equals": {
+          "key": "mode",
+          "value": "test"
+        },
+        "includes": {
+          "key": "modes",
+          "value": "test"
+        }
+      }
+    }
+  ],
+  "steps": [
+    {
+      "id": "only-step",
+      "name": "Only step",
+      "prompt": "Validate the fixture.",
+      "acceptance": ["The fixture was checked."]
+    }
+  ],
+  "finalGate": {
+    "stepId": "only-step",
+    "allowNeedsReview": false
+  }
+}

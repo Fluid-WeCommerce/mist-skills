@@ -128,7 +128,29 @@
             "required": ["mode"]
           }
         },
-        "required": ["id", "name", "acceptance"]
+        "required": ["id", "name", "acceptance"],
+        "oneOf": [
+          {
+            "required": ["skill"],
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["prompt"]
+                }
+              ]
+            }
+          },
+          {
+            "required": ["prompt"],
+            "not": {
+              "anyOf": [
+                {
+                  "required": ["skill"]
+                }
+              ]
+            }
+          }
+        ]
       }
     },
     "deriveContext": {
@@ -181,7 +203,48 @@
                 },
                 "required": ["key", "value"]
               }
-            }
+            },
+            "oneOf": [
+              {
+                "required": ["equals"],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": ["in"]
+                    },
+                    {
+                      "required": ["includes"]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": ["in"],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": ["equals"]
+                    },
+                    {
+                      "required": ["includes"]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": ["includes"],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": ["equals"]
+                    },
+                    {
+                      "required": ["in"]
+                    }
+                  ]
+                }
+              }
+            ]
           }
         },
         "required": ["set", "when"]
@@ -205,5 +268,11 @@
   "required": ["spec", "revision", "slug", "name", "steps", "finalGate"],
   "$id": "https://github.com/Fluid-WeCommerce/mist-skills/blob/main/schemas/workflows/v1/workflow.schema.json",
   "title": "Mist workflow definition (spec 1)",
-  "description": "Publication schema for community Mist workflow definitions. Runtime-only legacy defaults are intentionally required for published files."
+  "description": "Publication schema for community Mist workflow definitions. Runtime-only legacy defaults are intentionally required for published files.",
+  "x-mist-semantic-rules": [
+    "unique-step-ids",
+    "known-dependency-step-ids",
+    "known-final-gate-step-id",
+    "acyclic-dependency-graph"
+  ]
 }

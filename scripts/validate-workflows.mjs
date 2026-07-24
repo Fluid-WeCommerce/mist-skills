@@ -8,6 +8,12 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const workflowsDirectory = path.join(repositoryRoot, "workflows");
 const schemaPath = path.join(repositoryRoot, "schemas", "workflows", "v1", "workflow.schema.json");
 const recoveryDecisionsPath = path.join(repositoryRoot, "docs", "workflow-recovery-decisions.json");
+const REQUIRED_SEMANTIC_RULES = [
+  "unique-step-ids",
+  "known-dependency-step-ids",
+  "known-final-gate-step-id",
+  "acyclic-dependency-graph",
+];
 
 function valueType(value) {
   if (Array.isArray(value)) return "array";
@@ -28,7 +34,15 @@ function validateJsonSchema(value, schema, location = "$") {
     const branchErrors = schema.oneOf.map((branch) => validateJsonSchema(value, branch, location));
     const matches = branchErrors.filter((issues) => issues.length === 0).length;
     if (matches !== 1) fail(`must match exactly one schema branch (matched ${matches})`);
-    return errors;
+  }
+  if (schema.anyOf) {
+    const matches = schema.anyOf.some(
+      (branch) => validateJsonSchema(value, branch, location).length === 0,
+    );
+    if (!matches) fail("must match at least one schema branch");
+  }
+  if (schema.not && validateJsonSchema(value, schema.not, location).length === 0) {
+    fail("must not match excluded schema");
   }
 
   if (schema.type) {
@@ -146,6 +160,20 @@ function validateWorkflowSemantics(workflow) {
   return errors;
 }
 
+function validateSemanticRuleContract(schema) {
+  const declared = schema["x-mist-semantic-rules"];
+  if (
+    !Array.isArray(declared) ||
+    declared.length !== REQUIRED_SEMANTIC_RULES.length ||
+    !REQUIRED_SEMANTIC_RULES.every((rule) => declared.includes(rule))
+  ) {
+    return [
+      `${schemaPath}: x-mist-semantic-rules must declare ${REQUIRED_SEMANTIC_RULES.join(", ")}`,
+    ];
+  }
+  return [];
+}
+
 async function readJson(filename) {
   return JSON.parse(await readFile(filename, "utf8"));
 }
@@ -162,7 +190,7 @@ async function validatePublishedCatalog() {
     .toSorted();
   const manifestPaths = new Set(workflowEntries.map((entry) => entry.path));
   const expectedPaths = new Set(files.map((filename) => `workflows/${filename}`));
-  const errors = [];
+  const errors = [...validateSemanticRuleContract(schema)];
 
   for (const entry of workflowEntries) {
     if (!expectedPaths.has(entry.path))
@@ -216,6 +244,8 @@ async function validateBrokenFixtures() {
   const schema = await readJson(schemaPath);
   const fixturesDirectory = path.join(repositoryRoot, "tests", "fixtures", "invalid");
   const expectations = {
+    "conflicting-predicate.workflow.json": "must match exactly one schema branch",
+    "conflicting-step-source.workflow.json": "must match exactly one schema branch",
     "dependency-cycle.workflow.json": "dependency graph must be acyclic",
     "invalid-final-gate.workflow.json": "must reference a workflow step",
     "missing-revision.workflow.json": "$.revision: required property is missing",

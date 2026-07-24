@@ -1,0 +1,19 @@
+{
+  "spec": 1,
+  "revision": "fixture-1",
+  "slug": "fixture-conflicting-step-source",
+  "name": "Conflicting step source fixture",
+  "steps": [
+    {
+      "id": "only-step",
+      "name": "Only step",
+      "skill": "fixture/skill",
+      "prompt": "Validate the fixture.",
+      "acceptance": ["The fixture was checked."]
+    }
+  ],
+  "finalGate": {
+    "stepId": "only-step",
+    "allowNeedsReview": false
+  }
+}
