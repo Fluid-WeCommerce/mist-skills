@@ -524,10 +524,10 @@ MCC is MEDIUM confidence unless Google Business Profile category maps directly �
 Read [references/brand-md.md](references/brand-md.md) before writing this. Two different
 artifacts, both required:
 
-**1. Structured brand fields** → `PATCH /api/settings/brand_guidelines` with the palette and
-logo you harvested in 3f, using the exact contract in
+**1. Structured brand fields** → `PATCH /api/settings/brand_guidelines` with the palette,
+logo, and licensed font files you harvested in 3f, using the exact contract in
 [references/api-endpoints.md](references/api-endpoints.md) (`color`, `secondary_color`,
-`logo_url`/`icon_url`/`favicon_url` — DAM-uploaded URLs only; there is no font field here).
+`logo_url`/`icon_url`/`favicon_url`, `fonts` — asset URLs must be Fluid-DAM hosted).
 
 **2. The brand guide itself** → `update_brand_voice({ content: <the whole document>,
 mode: "replace" })`.
@@ -537,8 +537,8 @@ block into **every future agent turn for this company** — every remaining work
 every QA reviewer, and every later theme/portal/widget/copy request. `STEP_OUTPUT` reaches
 only steps that declare a `dependsOn`, is invisible to QA reviewers, and dies with the run.
 A brand fact that exists only in `STEP_OUTPUT` is a brand fact the theme agent will never
-see — which is exactly how a €3,299 connected-e-bike brand shipped a homepage reading
-"Built different. Worn forever." and "NEW DROP".
+see. That silent context gap is how generic base-theme copy can survive into an otherwise
+technically successful launch.
 
 Write the complete document with the canonical headings (`Brand Overview`, `Mission &
 Values`, `Tone of Voice`, `Audience`, `Vocabulary & Naming`, `Visual Style`, `Do's and
