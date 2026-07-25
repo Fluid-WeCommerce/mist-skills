@@ -474,14 +474,14 @@ fluid_api("/api/companies/{company_id}/onboarding_info", "PUT", {
     "underwriting_info": {
       "company_description": "...",
       "company_is_mlm": false,
-      "sells_supplements": false,
+      "sells_health_supplements": false,
       "contains_kratom": false,
       "contains_cbd": false,
-      "makes_disease_claims": false,
+      "claims_no_diseases": true,
       "bbb_rating": "...",
       "trustpilot_rating": "...",
       "terms_and_conditions": { "link": "..." },
-      "refund_policy": { "link": "..." },
+      "refund_or_return_policy": { "link": "..." },
       "privacy_policy": { "link": "..." }
     },
     "countries_info": [
@@ -504,13 +504,20 @@ Set flags based on product pages, supplement facts panels, FDA disclaimers, prod
 
 ```json
 {
-  "sells_supplements": true,
+  "sells_health_supplements": true,
   "contains_kratom": false,
   "contains_cbd": false,
-  "makes_disease_claims": false,
-  "supplement_ingredients": "..."
+  "claims_no_diseases": true
 }
 ```
+
+These names match the live onboarding schema exactly. Do not send the obsolete
+aliases `sells_supplements`, `makes_disease_claims`, or `refund_policy`: the
+endpoint can return 200 while dropping unknown keys. When the source makes a
+listed disease claim, set `claims_no_diseases: false` and the applicable
+specific flag (`claims_cancer_treatment`, `claims_impotency_treatment`,
+`claims_alzheimers_treatment`, or `claims_memory_loss_treatment`) plus its
+matching `*_products` field.
 
 Also search `site:fda.gov "{company_name}"` for warnings or registrations.
 

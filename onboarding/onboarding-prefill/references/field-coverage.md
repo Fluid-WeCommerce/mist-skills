@@ -26,12 +26,12 @@ Every field from the onboarding form, mapped to research sources, API location, 
 | Countries of operation | Website shipping page, Shopify meta.json, press | `onboarding_info.countries_info` | HIGH — website/Shopify is canonical for where they ship |
 | Settlement currency | Inferred from operating countries | `countries_info[].settlement_currency` | MEDIUM — inference from country |
 | Terms & conditions URL | Website footer / policies page | `underwriting_info.terms_and_conditions.link` | HIGH — website is canonical |
-| Refund policy URL | Website footer / policies page | `underwriting_info.refund_policy.link` | HIGH only when the final same-domain page contains refund/return terms; redirects, labels, or unrelated policy text are not evidence |
+| Refund policy URL | Website footer / policies page | `underwriting_info.refund_or_return_policy.link` | HIGH only when the final same-domain page contains refund/return terms; redirects, labels, or unrelated policy text are not evidence |
 | Privacy policy URL | Website footer / policies page | `underwriting_info.privacy_policy.link` | HIGH only when the final same-domain page contains privacy-policy text |
-| Sells supplements | Product pages, product types, FDA | `underwriting_info.sells_supplements` | HIGH — website product catalog is canonical |
+| Sells supplements | Product pages, product types, FDA | `underwriting_info.sells_health_supplements` | HIGH — website product catalog is canonical |
 | Contains kratom | Product pages, ingredient lists | `underwriting_info.contains_kratom` | HIGH — website product catalog is canonical |
 | Contains CBD | Product pages, ingredient lists | `underwriting_info.contains_cbd` | HIGH — website product catalog is canonical |
-| Makes disease claims | Product pages, marketing copy, FDA | `underwriting_info.makes_disease_claims` | HIGH — their own marketing is canonical |
+| Makes disease claims | Product pages, marketing copy, FDA | `underwriting_info.claims_no_diseases` (inverse) plus the applicable `claims_*_treatment` and `*_products` fields | HIGH — their own marketing is canonical |
 | Supplement ingredients | Product pages, supplement facts panels | `underwriting_info.supplement_ingredients` | HIGH — website product catalog is canonical |
 | BBB rating | bbb.org | `underwriting_info.bbb_rating` | HIGH only after exact domain or legal-name + address/phone identity match; namesake profiles are discarded |
 | Trustpilot rating | trustpilot.com | `underwriting_info.trustpilot_rating` | HIGH only when the reviewed registrable domain matches the company (allow `www`) or equivalent legal-entity evidence proves identity |
