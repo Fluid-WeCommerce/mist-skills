@@ -2,11 +2,11 @@
 
 ## DO NOT Replace
 
-| Section | Why |
-|---------|-----|
-| `sections/main_product` | Wired to Fluid's product object (name, price, images, variants, add-to-cart). Clone styling AROUND it. |
-| Cart functionality | Fluid-controlled. Don't touch `cart_page` templates. |
-| Checkout | Fluid-controlled. Don't clone. |
+| Section                                                                                                                  | Why                                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scaffold's product-data section (`sections/product_hero` in current starters, `sections/main_product` in older starters) | Wired to Fluid's product object (name, price, images, variants, add-to-cart). Inspect the scaffold and build around its canonical implementation. |
+| Cart functionality                                                                                                       | Fluid-controlled. Don't touch `cart_page` templates.                                                                                              |
+| Checkout                                                                                                                 | Fluid-controlled. Don't clone.                                                                                                                    |
 
 ---
 
@@ -28,8 +28,8 @@ your-theme/
 ├── sections/
 │   ├── main_navbar/index.liquid  ← Global nav (in theme.liquid)
 │   ├── main_footer/index.liquid  ← Global footer (in theme.liquid)
-│   ├── main_product/index.liquid ← DO NOT REPLACE
-│   └── exact-*/index.liquid      ← Cloned sections
+│   ├── product_hero/index.liquid ← Canonical product data; name varies by starter
+│   └── <descriptive_name>/index.liquid ← Custom section only when the library has no fit
 ├── config/
 │   ├── settings_schema.json      ← Theme setting definitions
 │   └── settings_data.json        ← Current theme setting values
@@ -42,6 +42,7 @@ your-theme/
 ## Navigation & Footer
 
 The global nav and footer live in:
+
 - `sections/main_navbar/index.liquid`
 - `sections/main_footer/index.liquid`
 
@@ -51,11 +52,11 @@ These are rendered by `layouts/theme.liquid` and appear on every page. Only modi
 
 ## Video Handling
 
-| Type | Handling |
-|------|----------|
+| Type                          | Handling                                                                                                                    |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Self-hosted (`.mp4`, `.webm`) | Upload with the `dam_upload` tool (pass `create_media=true` for Media library visibility). Use `asset.default_variant_url`. |
-| YouTube/Vimeo embeds | Keep original embed URLs. Add a `video_url` text setting. |
-| Background videos | Use `autoplay`, `loop`, `muted`, `playsinline` attributes. Include poster image fallback. |
+| YouTube/Vimeo embeds          | Keep original embed URLs. Use a supported `url` setting or the canonical Fluid Media block.                                 |
+| Background videos             | Use `autoplay`, `loop`, `muted`, `playsinline` attributes. Include poster image fallback.                                   |
 
 ---
 
@@ -83,25 +84,30 @@ Use these instead of hardcoded values where applicable:
 ## Global Sections vs Template Sections
 
 ### Global Sections (in `theme.liquid`)
+
 - Appear on EVERY page
 - Defined once, shared data
 - Examples: `main_navbar`, `main_footer`
 
 ### Template Sections (in templates)
+
 - Page-specific
-- Each template stores its own section settings
-- Same section type can have different data per template
+- Each template stores section instances, order, and optional layout settings.
+- Visible content blocks come from each section's preset when Fluid expands the template.
+- Same section type can have different expanded block data per template after editor saves.
 
 ---
 
 ## Defensive Liquid Patterns
 
 Always provide fallbacks:
+
 ```liquid
 {{ company.name | default: 'Company' }}
 ```
 
 Guard optional structures:
+
 ```liquid
 {% if product and product.images %}
   <img src="{{ product.images[0].src }}" alt="{{ product.title | default: 'Product' }}">
@@ -109,6 +115,7 @@ Guard optional structures:
 ```
 
 Use `section.blocks.size` to check if blocks exist:
+
 ```liquid
 {% if section.blocks.size > 0 %}
   {% for block in section.blocks %}

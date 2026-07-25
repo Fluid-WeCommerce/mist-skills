@@ -62,7 +62,7 @@
       "category": "themes",
       "icon": "clipboard-check",
       "path": "themes/theme-review.md",
-      "updated_at": "2026-06-24T00:00:00Z"
+      "updated_at": "2026-07-25T18:00:00Z"
     },
     {
       "slug": "themes/languages",
@@ -107,7 +107,7 @@
       "category": "themes",
       "icon": "copy",
       "path": "themes/theme-clone/SKILL.md",
-      "updated_at": "2026-07-25T08:00:00Z",
+      "updated_at": "2026-07-25T18:00:00Z",
       "references": [
         "themes/theme-clone/references/batch-upload-script.md",
         "themes/theme-clone/references/css-js-patterns.md",
@@ -127,7 +127,7 @@
       "category": "themes",
       "icon": "sparkles",
       "path": "themes/theme-refine/SKILL.md",
-      "updated_at": "2026-06-29T00:00:00Z",
+      "updated_at": "2026-07-25T18:00:00Z",
       "references": [
         "themes/theme-refine/references/dev-preview-visual-diff.md",
         "themes/references/blocks-vs-sections.md",
@@ -149,7 +149,7 @@
       "category": "onboarding",
       "icon": "id-card",
       "path": "onboarding/onboarding-prefill/SKILL.md",
-      "updated_at": "2026-07-25T08:00:00Z",
+      "updated_at": "2026-07-25T18:00:00Z",
       "references": [
         "onboarding/onboarding-prefill/references/api-endpoints.md",
         "onboarding/onboarding-prefill/references/brand-md.md",
@@ -218,16 +218,16 @@
       "category": "onboarding",
       "icon": "rocket",
       "path": "onboarding/onboard-launch-company/SKILL.md",
-      "updated_at": "2026-07-25T08:00:00Z"
+      "updated_at": "2026-07-25T18:00:00Z"
     },
     {
       "slug": "themes/iterative-theme-refine",
       "name": "Iterative Theme Refine",
-      "description": "Screenshot-based iterative refinement loop that runs after theme-clone: each round captures paired screenshots (source vs cloned preview), fixes the top 1-3 discrepancies, and re-checks \u2014 capped at 5 iterations with a documented remaining-diff report if the cap is hit.",
+      "description": "Evidence-driven theme refinement after clone: each round compares semantic home/shop/PDP source landmarks against desktop and mobile previews, fixes the highest-impact root causes, and exits with a strict pass or itemized needs-review report.",
       "category": "themes",
       "icon": "refresh-cw",
       "path": "themes/iterative-theme-refine/SKILL.md",
-      "updated_at": "2026-07-25T08:00:00Z"
+      "updated_at": "2026-07-25T18:00:00Z"
     },
     {
       "slug": "mist/smart-dashboard",
@@ -276,7 +276,7 @@
     {
       "slug": "onboard-launch-company",
       "path": "workflows/onboard-launch-company.workflow.json",
-      "updated_at": "2026-07-25T08:00:00Z"
+      "updated_at": "2026-07-25T18:00:00Z"
     },
     {
       "slug": "open-country",

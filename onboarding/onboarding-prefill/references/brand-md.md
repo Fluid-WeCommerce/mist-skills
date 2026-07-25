@@ -14,7 +14,7 @@ only in `STEP_OUTPUT` are lost.** Write them to `brand.md`.
 A real run: a clone of `cowboy.com` — a Belgian maker of €2,399-3,999 connected e-bikes,
 with a near-black/paper palette, Suisse Intl type, and spec-driven headline copy
 ("Riding reinvented", "Super. Natural.") — shipped with generic apparel-template copy:
-*"Built different. Worn forever."*, *"NEW DROP"*, *"Trusted by thousands"*.
+_"Built different. Worn forever."_, _"NEW DROP"_, _"Trusted by thousands"_.
 
 Nothing was broken. The theme agent simply had no idea what the brand was, because the
 brand data lived in a `STEP_OUTPUT` blob it never saw. Every downstream agent fell back
@@ -57,13 +57,13 @@ Read back every line you wrote and ask that question. If a sentence would sit ju
 comfortably in a supplement brand's guide as in this one, **it is boilerplate — cut it or
 replace it with the specific fact.**
 
-| Boilerplate (reject) | Specific (keep) |
-|---|---|
-| "Friendly and approachable" | "Two beats and a full stop: 'Super. Natural.' No exclamation marks — there isn't one on the whole site." |
-| "Modern, clean design" | "~95% ink-on-paper (`#141414` on `#F8F8F5`); `#BF4800` is a punctuation mark, not a hero background." |
-| "Quality-focused customers" | "European city commuters, 28-45, replacing a car; will spend €2,399-3,999 and care whether it's serviceable in four years." |
-| "Use the brand font" | "Suisse Intl 400/500/600 — proprietary (Swiss Typefaces), not freely licensable. Substitute Inter at `-0.01em` tracking and say so." |
-| "Avoid off-brand language" | "Never 'drop', 'restock', 'game-changer', 'Built different'. Never an exclamation mark." |
+| Boilerplate (reject)        | Specific (keep)                                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| "Friendly and approachable" | "Two beats and a full stop: 'Super. Natural.' No exclamation marks — there isn't one on the whole site."                             |
+| "Modern, clean design"      | "~95% ink-on-paper (`#141414` on `#F8F8F5`); `#BF4800` is a punctuation mark, not a hero background."                                |
+| "Quality-focused customers" | "European city commuters, 28-45, replacing a car; will spend €2,399-3,999 and care whether it's serviceable in four years."          |
+| "Use the brand font"        | "Suisse Intl 400/500/600 — proprietary (Swiss Typefaces), not freely licensable. Substitute Inter at `-0.01em` tracking and say so." |
+| "Avoid off-brand language"  | "Never 'drop', 'restock', 'game-changer', 'Built different'. Never an exclamation mark."                                             |
 
 Two hard rules:
 
@@ -80,18 +80,18 @@ beats a long invented one — but a run that fills in only two sections has not 
 
 ## Where the content comes from (you already have it)
 
-| Section | Source you already fetched in Step 3 / Step 4 |
-|---|---|
-| Brand Overview | homepage hero + `og:description` + about page; product line-up with real prices; founding year; scale numbers the brand publishes (riders, units, years) |
-| Mission & Values | about / mission / manifesto page, sustainability or "our story" pages, careers page |
-| Tone of Voice | **verbatim headlines and body copy** harvested across ≥3 page types (home, PDP, a content page). Look for sentence shape, casing, punctuation habits, person/tense, whether exclamation marks or emoji appear at all |
-| Audience | who the copy addresses, price band, markets/locale (`html lang`, currency, shipping page), the secondary audiences the site has pages for (business, students, trade, refurb) |
-| Vocabulary & Naming | product/model naming pattern, trademarked feature names (`™`), the words the site uses for its customer ("rider", "member", "athlete"), the primary CTA verb, category terms, price formatting |
-| Visual Style | CSS custom properties and `@font-face` from the site's stylesheet (see below); imagery conventions read off real product shots |
-| Do's and Don'ts | invert everything above into concrete guardrails, plus anything the site conspicuously never does |
-| Brands & Sites We Admire | brands the site stocks/partners with, press outlets it quotes, explicit comparisons in press quotes |
-| Examples | 3-5 on-brand snippets quoted verbatim, **and 3 off-brand lines** written specifically to be rejected for this brand |
-| Sources | every URL you actually read, plus the stylesheet filename |
+| Section                  | Source you already fetched in Step 3 / Step 4                                                                                                                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Brand Overview           | homepage hero + `og:description` + about page; product line-up with real prices; founding year; scale numbers the brand publishes (riders, units, years)                                                             |
+| Mission & Values         | about / mission / manifesto page, sustainability or "our story" pages, careers page                                                                                                                                  |
+| Tone of Voice            | **verbatim headlines and body copy** harvested across ≥3 page types (home, PDP, a content page). Look for sentence shape, casing, punctuation habits, person/tense, whether exclamation marks or emoji appear at all |
+| Audience                 | who the copy addresses, price band, markets/locale (`html lang`, currency, shipping page), the secondary audiences the site has pages for (business, students, trade, refurb)                                        |
+| Vocabulary & Naming      | product/model naming pattern, trademarked feature names (`™`), the words the site uses for its customer ("rider", "member", "athlete"), the primary CTA verb, category terms, price formatting                       |
+| Visual Style             | CSS custom properties and `@font-face` from the site's stylesheet (see below); imagery conventions read off real product shots                                                                                       |
+| Do's and Don'ts          | invert everything above into concrete guardrails, plus anything the site conspicuously never does                                                                                                                    |
+| Brands & Sites We Admire | brands the site stocks/partners with, press outlets it quotes, explicit comparisons in press quotes                                                                                                                  |
+| Examples                 | 3-5 on-brand snippets quoted verbatim, **and 3 off-brand lines** written specifically to be rejected for this brand                                                                                                  |
+| Sources                  | every URL you actually read, plus the stylesheet filename                                                                                                                                                            |
 
 ### Harvesting the palette and typography from the source stylesheet
 
@@ -113,6 +113,20 @@ far more reliable than eyeballing a screenshot.
    Typefaces, Commercial Type, Klim, Lineto, most foundry faces) cannot be re-hosted.
    Name the face, name the closest free substitute, and record both — the theme step and
    the font-substitution QA step both read this.
+
+### Use three source layers, each for what it actually proves
+
+| Layer                                         | Good evidence for                                                         | Does not prove                                                      |
+| --------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| AI-friendly Markdown (`/.md`, `<page>.md`)    | exact copy, product facts, links, clean headings                          | rendered section order, media/crop, navigation, responsive behavior |
+| Rendered HTML + linked CSS                    | DOM structure, JSON-LD, CSS tokens, font files/weights, computed geometry | the final visual state when overlays or animation obscure it        |
+| Clean rendered screenshots (desktop + mobile) | hierarchy, imagery, crop/focal point, rhythm, responsive composition      | exact token names, font license, complete catalog data              |
+
+Use all three for home, the primary shop/collection page, and a representative PDP. If a
+Firecrawl screenshot contains a region prompt, cookie dialog, newsletter modal, or blank
+overlay, dismiss and recapture with managed crawl/browser tooling; never
+describe the obscured
+image as the site's intended visual style.
 
 ## Persistence contract (what "done" means)
 

@@ -182,22 +182,22 @@ A layout missing either one is broken. Missing `content_for_header` breaks edito
 
 ### Findings to surface
 
-| You see                                                                                      | Severity                                       | Fix                                                                                                                                               |
-| -------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Section file outside `sections/{name}/index.liquid`                                          | `blocker`                                      | Move it. The `{% section 'x' %}` resolver only looks in `sections/`.                                                                              |
-| Component file with a `{% schema %}` block                                                   | `blocker`                                      | Components don't have schemas. Move to `sections/`, or strip the schema.                                                                          |
-| Section file without `{% schema %}`                                                          | `blocker`                                      | A section without a schema is just markup — make it a component (move to `components/{name}/index.liquid`).                                       |
-| Page template at `{type}/index.liquid` (missing variant dir)                                 | `blocker`                                      | Wrap in a variant directory: `{type}/default/index.liquid`.                                                                                       |
-| Asset (`.css`, `.js`, image) outside `assets/` or `global_styles.css` / `cover.png` at root  | `blocker`                                      | Move to `assets/` and reference via `\| asset_url`.                                                                                               |
-| Sub-folder inside `assets/` (e.g. `assets/icons/`)                                           | `should`                                       | Flatten: rename file to `assets/icon-{whatever}.svg`.                                                                                             |
-| Sub-folder inside `sections/{name}/` or `components/{name}/` (e.g. `sections/hero/blocks/`)  | `blocker`                                      | Sections and components don't nest. A reusable block belongs in the top-level `blocks/{name}/` directory, not under a section.                    |
+| You see                                                                                      | Severity                                       | Fix                                                                                                                             |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Section file outside `sections/{name}/index.liquid`                                          | `blocker`                                      | Move it. The `{% section 'x' %}` resolver only looks in `sections/`.                                                            |
+| Component file with a `{% schema %}` block                                                   | `blocker`                                      | Components don't have schemas. Move to `sections/`, or strip the schema.                                                        |
+| Section file without `{% schema %}`                                                          | `blocker`                                      | A section without a schema is just markup — make it a component (move to `components/{name}/index.liquid`).                     |
+| Page template at `{type}/index.liquid` (missing variant dir)                                 | `blocker`                                      | Wrap in a variant directory: `{type}/default/index.liquid`.                                                                     |
+| Asset (`.css`, `.js`, image) outside `assets/` or `global_styles.css` / `cover.png` at root  | `blocker`                                      | Move to `assets/` and reference via `\| asset_url`.                                                                             |
+| Sub-folder inside `assets/` (e.g. `assets/icons/`)                                           | `should`                                       | Flatten: rename file to `assets/icon-{whatever}.svg`.                                                                           |
+| Sub-folder inside `sections/{name}/` or `components/{name}/` (e.g. `sections/hero/blocks/`)  | `blocker`                                      | Sections and components don't nest. A reusable block belongs in the top-level `blocks/{name}/` directory, not under a section.  |
 | Co-located `styles.css` / `style.css` next to a section, component, or page template variant | `blocker` for new files, `should` for existing | **Co-located stylesheets are deprecated** — all CSS lives under `assets/`. See [CSS hygiene §1a](references/css-js-hygiene.md). |
-| Hand-rolled `templates/sections/...` or `templates/components/...` paths                     | `blocker`                                      | The base-theme convention has no `templates/` wrapper. Move to root-level `sections/` / `components/`.                                            |
-| `config/settings_schema.json` missing                                                        | `blocker` for new themes                       | Create it. Start with `[]` if no global settings.                                                                                                 |
-| Filename casing mismatch (e.g. `ProductCard/index.liquid`)                                   | `should`                                       | Directory and filenames should be `snake_case`. The engine is case-sensitive on most filesystems.                                                 |
-| Two sections with the same directory name in different paths                                 | `blocker`                                      | Section types must be globally unique.                                                                                                            |
-| `{% section 'foo' %}` referencing a missing `sections/foo/index.liquid`                      | `blocker`                                      | Validator catches this — but flag it explicitly with the fix.                                                                                     |
-| Files committed under `assets/` but never referenced                                         | `nit` → `should`                               | Dead assets bloat downloads. Run the dead-asset grep in [Dead code](references/dead-code.md).                        |
+| Hand-rolled `templates/sections/...` or `templates/components/...` paths                     | `blocker`                                      | The base-theme convention has no `templates/` wrapper. Move to root-level `sections/` / `components/`.                          |
+| `config/settings_schema.json` missing                                                        | `blocker` for new themes                       | Create it. Start with `[]` if no global settings.                                                                               |
+| Filename casing mismatch (e.g. `ProductCard/index.liquid`)                                   | `should`                                       | Directory and filenames should be `snake_case`. The engine is case-sensitive on most filesystems.                               |
+| Two sections with the same directory name in different paths                                 | `blocker`                                      | Section types must be globally unique.                                                                                          |
+| `{% section 'foo' %}` referencing a missing `sections/foo/index.liquid`                      | `blocker`                                      | Validator catches this — but flag it explicitly with the fix.                                                                   |
+| Files committed under `assets/` but never referenced                                         | `nit` → `should`                               | Dead assets bloat downloads. Run the dead-asset grep in [Dead code](references/dead-code.md).                                   |
 
 ### Quick structural audit
 
@@ -238,14 +238,14 @@ If any line of output is unexpected, raise it as a finding before reading the di
 
 The `fluid theme` command group is how a theme repo syncs with the Fluid API. The reviewer references these commands so the author can reproduce checks locally — it never runs the mutating ones (`push`, `pull`) itself.
 
-| Command                | What it does                                                                                          | When the reviewer references it                                                        |
-| ---------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `fluid theme init`     | Clone the base theme as a new repo                                                                    | Suggest in comments when a PR is creating a new section from scratch with no structure |
-| `fluid theme dev`      | Local dev server on `:9292` with hot-reload, proxied to `{company}.fluid.app`                         | Suggest when debugging visual issues                                                   |
-| `fluid theme push`     | Validates the schema, then uploads changed files. **Validation runs automatically unless `--force`.** | Suggest before merge                                                                   |
-| `fluid theme pull`     | Download remote theme to disk                                                                         | Mention when local is stale                                                            |
-| `fluid theme lint --json`     | Read-only schema validator. **The agent should run/reference this in every review.**                  | Always reference: "this is what `fluid theme lint --json` would flag"                         |
-| `fluid theme navigate` | Opens browser to the dev theme editor                                                                 | Mention for visual verification                                                        |
+| Command                   | What it does                                                                                          | When the reviewer references it                                                        |
+| ------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `fluid theme init`        | Clone the base theme as a new repo                                                                    | Suggest in comments when a PR is creating a new section from scratch with no structure |
+| `fluid theme dev`         | Long-lived hot-reload server on an allocated local port, proxied to `{company}.fluid.app`             | Inside Mist, use `start_preview`; outside Mist, choose an explicit free port           |
+| `fluid theme push`        | Validates the schema, then uploads changed files. **Validation runs automatically unless `--force`.** | Suggest before merge                                                                   |
+| `fluid theme pull`        | Download remote theme to disk                                                                         | Mention when local is stale                                                            |
+| `fluid theme lint --json` | Read-only schema validator. **The agent should run/reference this in every review.**                  | Always reference: "this is what `fluid theme lint --json` would flag"                  |
+| `fluid theme navigate`    | Opens browser to the dev theme editor                                                                 | Mention for visual verification                                                        |
 
 **`fluid theme lint --json` is the official self-check.** Any finding the validator surfaces (see next section) maps directly to a `blocker` severity in your review — it would fail validation.
 
@@ -316,7 +316,6 @@ If you see the wrong shape, that's a `blocker`.
 
 ---
 
-
 ## Reference catalogs
 
 The deep check catalogs live in `references/` and load only when a review or fix
@@ -341,6 +340,7 @@ Every reference links directly from here (one level deep). "The validator" alway
 eyeballing the text.
 
 ---
+
 ## Selector heuristic — singular → list
 
 This is one of the most common smells.
@@ -404,7 +404,7 @@ The test: would a user reasonably want N+1 items in the same role? If yes, it's 
 | 2+ `enrollment` / `enrollment_pack` settings, same role | `enrollment_list` / `enrollment_packs_list` |
 | 2+ `blog` settings, same role                           | `blog_list`                                 |
 
-The benefit isn't just lines of code — a `*_list` setting lets the merchant **add or remove** items without a code change and drops the fixed per-slot count. It does **not** give per-item drag-and-drop reorder, though — that's a *blocks* feature. If the merchant needs to reorder items, model them as blocks instead.
+The benefit isn't just lines of code — a `*_list` setting lets the merchant **add or remove** items without a code change and drops the fixed per-slot count. It does **not** give per-item drag-and-drop reorder, though — that's a _blocks_ feature. If the merchant needs to reorder items, model them as blocks instead.
 
 ---
 
@@ -569,7 +569,7 @@ Validated locally with `fluid theme lint --json`.
 | def456 | should   | Collapse `product` × 6 into `product_list` |
 | ...    | ...      | ...                                        |
 
-````
+```
 
 6. **Never amend or force-push.** Each fix is a reversible commit.
 
@@ -706,3 +706,4 @@ When reviewing any theme file, run through this in order. Anything unchecked is 
 - [ ] Clickable elements use `<button>` (action) or `<a href>` (nav) — never `<div>`
 
 If every box checks, the file is healthy. Each unchecked box is a finding — tag it and report it per [Review workflow](#review-workflow--how-to-actually-output-findings).
+```

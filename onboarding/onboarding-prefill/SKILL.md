@@ -15,7 +15,7 @@ icon: id-card
 
 Scrapes a company's website AND researches public records to pre-fill the Fluid payments onboarding (KYC) form. The form is a 10-step wizard with 80+ fields. This skill automates gathering publicly available data, cross-verifies it across multiple sources, scores confidence, and only pushes verified data.
 
-The active Fluid company is already selected in Mist Desktop. All Fluid API calls go through the `fluid_api(path, method, body)` tool, which targets the active company's Fluid API with the token already injected — you never collect, validate, or store a Fluid API token or store URL. Website scraping uses the crawl tool (stored credentials in Mist Desktop). Public-records research uses Claude's native WebSearch and WebFetch.
+The active Fluid company is already selected in Mist Desktop. All Fluid API calls go through the `fluid_api(path, method, body)` tool, which targets the active company's Fluid API with the token already injected — you never collect, validate, or store a Fluid API token or store URL. Website scraping uses the managed `crawl` tool (stored credentials in Mist Desktop). Public-records research uses the web-search/research capability available to the active model and `crawl` for result pages; do not assume a provider-specific tool name.
 
 ## Critical Rules
 
@@ -52,6 +52,7 @@ The active Fluid company is already selected in Mist Desktop. All Fluid API call
 ## Reference Files
 
 Read these when you need detailed lookups during execution:
+
 - [references/state-registries.md](references/state-registries.md) — US state business registry domains for `site:` searches
 - [references/field-coverage.md](references/field-coverage.md) — complete field map with sources, API locations, and confidence models
 - [references/api-endpoints.md](references/api-endpoints.md) — all onboarding API endpoints
@@ -80,10 +81,10 @@ The active Fluid company is already selected in Mist Desktop, so there are no cr
 
 Run these two checks in parallel:
 
-| Check | Method | Success |
-|-------|--------|---------|
-| Source site reachable | `GET {company_url}` via the crawl tool (follow redirects) | reachable |
-| Active company identity | `fluid_api("/api/settings/company", "GET")` | returns company `id` and `name` |
+| Check                   | Method                                                    | Success                         |
+| ----------------------- | --------------------------------------------------------- | ------------------------------- |
+| Source site reachable   | `GET {company_url}` via the crawl tool (follow redirects) | reachable                       |
+| Active company identity | `fluid_api("/api/settings/company", "GET")`               | returns company `id` and `name` |
 
 The `company` call gives you the human-readable name and numeric company id used in later API paths. You'll also fetch country data later via `fluid_api("/api/settings/company_countries", "GET")` for Step 8.
 
@@ -119,6 +120,13 @@ company_url
 {company_url}/pages/contact*
 ```
 
+Some modern storefronts advertise an AI-friendly Markdown twin with a response header or
+page banner (for example, `/.md` or `<page>.md`). Use it for clean copy and catalog facts,
+but never treat it as a complete visual/structural source: it can omit navigation, section
+ordering, media, interactions, and most of the rendered homepage. Retain the normal
+rendered HTML (`onlyMainContent: false` on the homepage) for global chrome, linked
+stylesheets, JSON-LD, and source attribution.
+
 Extraction prompt:
 
 ```
@@ -140,16 +148,16 @@ Extract all business information:
 
 For each page type, try all URL patterns in parallel with the crawl tool. Skip 404s silently.
 
-| Page | URL patterns to try | Data to extract |
-|------|---------------------|-----------------|
-| **Homepage** | `/` | Company name, tagline, description, hero content, social links from footer |
-| **About** | `/about`, `/pages/about`, `/about-us`, `/pages/about-us` | Company story, leadership team, founding date |
-| **Contact** | `/contact`, `/pages/contact`, `/contact-us`, `/pages/contact-us` | Address, phone, email, hours |
-| **Terms of Service** | `/policies/terms-of-service`, `/terms`, `/pages/terms` | Full policy text, legal entity name from boilerplate |
-| **Privacy Policy** | `/policies/privacy-policy`, `/privacy`, `/pages/privacy` | Full policy text |
-| **Refund Policy** | `/policies/refund-policy`, `/refund`, `/pages/refund-policy` | Full policy text |
-| **Shipping Policy** | `/policies/shipping-policy`, `/shipping`, `/pages/shipping` | Shipping countries, zones |
-| **Team/Leadership** | `/team`, `/about/team`, `/leadership`, `/pages/team` | Owner/founder names, titles |
+| Page                 | URL patterns to try                                              | Data to extract                                                            |
+| -------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Homepage**         | `/`                                                              | Company name, tagline, description, hero content, social links from footer |
+| **About**            | `/about`, `/pages/about`, `/about-us`, `/pages/about-us`         | Company story, leadership team, founding date                              |
+| **Contact**          | `/contact`, `/pages/contact`, `/contact-us`, `/pages/contact-us` | Address, phone, email, hours                                               |
+| **Terms of Service** | `/policies/terms-of-service`, `/terms`, `/pages/terms`           | Full policy text, legal entity name from boilerplate                       |
+| **Privacy Policy**   | `/policies/privacy-policy`, `/privacy`, `/pages/privacy`         | Full policy text                                                           |
+| **Refund Policy**    | `/policies/refund-policy`, `/refund`, `/pages/refund-policy`     | Full policy text                                                           |
+| **Shipping Policy**  | `/policies/shipping-policy`, `/shipping`, `/pages/shipping`      | Shipping countries, zones                                                  |
+| **Team/Leadership**  | `/team`, `/about/team`, `/leadership`, `/pages/team`             | Owner/founder names, titles                                                |
 
 ### 3c. Shopify detection
 
@@ -186,6 +194,24 @@ This sub-step collects the raw material for `brand.md`. Read
    substitute, and that a substitution is required — the theme build and the
    font-substitution QA step both consume this.
 
+**Visual language — from a clean rendered capture, not Markdown.**
+
+For the homepage, primary shop/collection page, and one representative PDP, inspect a
+rendered desktop and mobile viewport after dismissing and recording geo/cookie/newsletter
+overlays. Record:
+
+- photography/product-render treatment, crop and focal-point conventions;
+- grid/container width, corner radius, and spacing rhythm;
+- heading hierarchy and approximate scale;
+- icon/line/stroke language;
+- motion/interaction conventions;
+- what changes on mobile.
+
+Firecrawl screenshots can contain consent/geo modals or opaque blank overlays. If one
+obscures meaningful content, do not infer the visual style from it; capture the rendered
+page cleanly with Mist's managed crawl/browser capture (or an already-available
+project-local browser outside Mist). Do not clone overlays into the brand guide.
+
 **Voice — verbatim, from at least three page types.**
 
 Collect the actual strings, not a description of them: 8-12 headlines, 2-3 product
@@ -201,7 +227,7 @@ Everything here is HIGH confidence — it comes from the company's own site.
 
 ## Step 4: Research Public Records
 
-Run all sub-steps in parallel after Step 3 completes. Use WebSearch and WebFetch.
+Run all sub-steps in parallel after Step 3 completes. Use the active model's available web-search/research capability and `crawl` for result pages. If search is unavailable, use known authoritative registry URLs and mark anything that cannot be verified as needs-review instead of inventing it.
 
 ### 4a. State business registry (US only)
 
@@ -210,51 +236,52 @@ Skip for non-US companies and note in report.
 Determine the state from Step 3 results. Look up the registry domain in [references/state-registries.md](references/state-registries.md).
 
 **Search strategy:**
-1. WebSearch: `"{legal_name}" site:{registry_domain}`
-2. WebSearch: `"{legal_name}" site:opencorporates.com`
+
+1. Search: `"{legal_name}" site:{registry_domain}`
+2. Search: `"{legal_name}" site:opencorporates.com`
 3. If HQ state is NOT Delaware, also search Delaware (many companies incorporate in DE)
-4. WebFetch any result pages found
+4. Fetch any result pages found with `crawl`
 
 **Extract:** entity type, registration/document number, date of incorporation, registered agent, principal office address, officer/director/member names and titles, entity status.
 
 ### 4b. Google Business Profile
 
-WebSearch: `"{trading_name}" "{city}" "{state}"`
+Search: `"{trading_name}" "{city}" "{state}"`
 
 Extract from Knowledge Panel: full street address, phone, business category, hours, rating and review count.
 
 ### 4c. LinkedIn company page
 
-If LinkedIn URL was harvested in 3e, WebFetch it directly. Otherwise WebSearch: `site:linkedin.com/company "{trading_name}"` and fetch the top result.
+If a LinkedIn URL was harvested in 3e, fetch it with `crawl`. Otherwise search `site:linkedin.com/company "{trading_name}"` and fetch the top result.
 
 **Extract:** headquarters location, industry, company size, founded year, description, key employees.
 
 ### 4d. Review and trust platforms
 
-**BBB:** WebSearch `site:bbb.org "{trading_name}"` → WebFetch profile. Extract rating (A+ through F), accreditation status, years accredited, complaint count. Canonical source — single source = HIGH confidence.
+**BBB:** Search `site:bbb.org "{trading_name}"` → fetch the profile with `crawl`. Extract rating (A+ through F), accreditation status, years accredited, complaint count. Canonical source — single source = HIGH confidence.
 
-**Trustpilot:** WebSearch `site:trustpilot.com "{trading_name}"` → WebFetch profile. Extract TrustScore (1-5), total review count. Canonical source — single source = HIGH confidence.
+**Trustpilot:** Search `site:trustpilot.com "{trading_name}"` → fetch the profile with `crawl`. Extract TrustScore (1-5), total review count. Canonical source — single source = HIGH confidence.
 
 ### 4e. Negative media and regulatory scan
 
 Run these 6 searches in parallel:
 
-| Search | Purpose |
-|--------|---------|
-| `"{company_name}" lawsuit OR sued OR litigation` | Civil litigation |
-| `"{company_name}" FTC OR "Federal Trade Commission"` | FTC enforcement |
-| `"{company_name}" FDA OR "Food and Drug" OR recall` | FDA actions |
-| `"{company_name}" "attorney general" OR "consumer complaint"` | State AG actions |
-| `"{company_name}" fraud OR scam OR pyramid` | General negative media |
-| `"{company_name}" "data breach" OR "security incident"` | Data/privacy incidents |
+| Search                                                        | Purpose                |
+| ------------------------------------------------------------- | ---------------------- |
+| `"{company_name}" lawsuit OR sued OR litigation`              | Civil litigation       |
+| `"{company_name}" FTC OR "Federal Trade Commission"`          | FTC enforcement        |
+| `"{company_name}" FDA OR "Food and Drug" OR recall`           | FDA actions            |
+| `"{company_name}" "attorney general" OR "consumer complaint"` | State AG actions       |
+| `"{company_name}" fraud OR scam OR pyramid`                   | General negative media |
+| `"{company_name}" "data breach" OR "security incident"`       | Data/privacy incidents |
 
 **This data is NEVER pushed to any API field.** Report-only for the human reviewer.
 
 ### 4f. Supplementary sources
 
 - **WHOIS:** `whois {domain}` → registrant organization, state/country, domain creation date
-- **Press/news:** WebSearch `"{company_name}" founded OR founder OR CEO` → founder names, funding mentions
-- **Amazon:** If "Buy With Prime" or Amazon links detected, WebSearch `site:amazon.com "{company_name}" store` → brand registry name, product categories
+- **Press/news:** Search `"{company_name}" founded OR founder OR CEO` → founder names, funding mentions
+- **Amazon:** If "Buy With Prime" or Amazon links are detected, search `site:amazon.com "{company_name}" store` → brand registry name, product categories
 
 ## Step 5: Cross-Verify and Score Confidence
 
@@ -262,17 +289,17 @@ Build a verification matrix for every collected data point.
 
 ### Confidence levels
 
-| Scenario | Confidence |
-|----------|-----------|
-| Data from the company's own website | **HIGH** — canonical for trading name, description, policies, email, products |
-| Data from official government registry | **HIGH** — canonical for legal name, entity type, registration #, officers |
-| Data from the platform that IS the data (Trustpilot for Trustpilot score, BBB for BBB rating) | **HIGH** — the source itself |
-| 2+ independent sources agree on same value | **HIGH** — cross-verified |
-| 1 non-authoritative source, data is specific and plausible | **MEDIUM** — plausible but unverified |
-| Inferred from other data (MCC from products, email from name pattern) | **MEDIUM** — inference |
-| Single secondary source with weak signal | **LOW** — unreliable |
-| Inference requiring assumptions (nationality from name, ownership % from role) | **LOW** — do not push |
-| Sources conflict | **CONFLICT** — resolve using hierarchy below |
+| Scenario                                                                                      | Confidence                                                                    |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Data from the company's own website                                                           | **HIGH** — canonical for trading name, description, policies, email, products |
+| Data from official government registry                                                        | **HIGH** — canonical for legal name, entity type, registration #, officers    |
+| Data from the platform that IS the data (Trustpilot for Trustpilot score, BBB for BBB rating) | **HIGH** — the source itself                                                  |
+| 2+ independent sources agree on same value                                                    | **HIGH** — cross-verified                                                     |
+| 1 non-authoritative source, data is specific and plausible                                    | **MEDIUM** — plausible but unverified                                         |
+| Inferred from other data (MCC from products, email from name pattern)                         | **MEDIUM** — inference                                                        |
+| Single secondary source with weak signal                                                      | **LOW** — unreliable                                                          |
+| Inference requiring assumptions (nationality from name, ownership % from role)                | **LOW** — do not push                                                         |
+| Sources conflict                                                                              | **CONFLICT** — resolve using hierarchy below                                  |
 
 ### Generic email filter
 
@@ -306,16 +333,17 @@ phone               | google                       | "(555) 123-4567"        | M
 
 For each MEDIUM field, run up to **2 targeted follow-up searches** to find a second source.
 
-| Field type | Promotion search |
-|------------|-----------------|
-| **Address** | WebSearch: `"{company_name}" "{street_address}"` — directories, press, job postings |
-| **Phone** | WebSearch: `"{company_name}" "{phone_number}"` — Yelp, Yellow Pages, social media |
-| **Owner name** | WebSearch: `"{person_name}" "{company_name}" CEO OR founder OR owner` — press, bios |
-| **Owner email** | WebSearch: `"{email_address}"` — press contacts, GitHub, speaker bios |
-| **MCC code** | Check if Google Business Profile category or Amazon store category aligns. Multiple signals = promote to HIGH |
-| **Company size** | WebSearch: `"{company_name}" employees OR team size` — press, Crunchbase, job listings |
+| Field type       | Promotion search                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Address**      | Search: `"{company_name}" "{street_address}"` — directories, press, job postings                              |
+| **Phone**        | Search: `"{company_name}" "{phone_number}"` — Yelp, Yellow Pages, social media                                |
+| **Owner name**   | Search: `"{person_name}" "{company_name}" CEO OR founder OR owner` — press, bios                              |
+| **Owner email**  | Search: `"{email_address}"` — press contacts, GitHub, speaker bios                                            |
+| **MCC code**     | Check if Google Business Profile category or Amazon store category aligns. Multiple signals = promote to HIGH |
+| **Company size** | Search: `"{company_name}" employees OR team size` — press, Crunchbase, job listings                           |
 
 **After promotion:**
+
 - Promoted to HIGH → update the verification matrix
 - Still MEDIUM → push it, but flag in report as "verify in admin"
 - Still LOW → do NOT push, report only
@@ -326,15 +354,15 @@ Note: "founded" (press) and "incorporated" (registry) may legitimately differ. R
 
 Gather evidence from these signals, then present findings and **wait for user confirmation** before setting `company_is_mlm`.
 
-| Signal | Search method | Weight |
-|--------|--------------|--------|
-| DSA membership | `site:dsa.org "{company_name}"` | Strong positive |
-| FTC actions | `site:ftc.gov "{company_name}"` + `"{company_name}" FTC multilevel` | Strong positive |
-| Recruiting language | Scraped pages: "become a distributor", "compensation plan", "downline", "upline", "income opportunity" | Moderate positive |
-| Income disclosure | `"{company_name}" income disclosure statement` | Strong positive |
-| Distributor pages | Check for `/pages/distributor*`, `/pages/join*`, `/pages/opportunity*`, `/pages/business-opportunity*` | Moderate positive |
-| Compensation plan | `"{company_name}" compensation plan` | Strong positive |
-| Product-only ecommerce | No recruitment, no multi-tier comp, direct-to-consumer | Strong negative |
+| Signal                 | Search method                                                                                          | Weight            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ | ----------------- |
+| DSA membership         | `site:dsa.org "{company_name}"`                                                                        | Strong positive   |
+| FTC actions            | `site:ftc.gov "{company_name}"` + `"{company_name}" FTC multilevel`                                    | Strong positive   |
+| Recruiting language    | Scraped pages: "become a distributor", "compensation plan", "downline", "upline", "income opportunity" | Moderate positive |
+| Income disclosure      | `"{company_name}" income disclosure statement`                                                         | Strong positive   |
+| Distributor pages      | Check for `/pages/distributor*`, `/pages/join*`, `/pages/opportunity*`, `/pages/business-opportunity*` | Moderate positive |
+| Compensation plan      | `"{company_name}" compensation plan`                                                                   | Strong positive   |
+| Product-only ecommerce | No recruitment, no multi-tier comp, direct-to-consumer                                                 | Strong negative   |
 
 ### Output format
 
@@ -471,7 +499,7 @@ Set flags based on product pages, supplement facts panels, FDA disclaimers, prod
 }
 ```
 
-Also WebSearch `site:fda.gov "{company_name}"` for warnings or registrations.
+Also search `site:fda.gov "{company_name}"` for warnings or registrations.
 
 ### 8f. MCC code selection
 
@@ -479,15 +507,15 @@ Fetch `fluid_api("/api/mcc_codes", "GET")` and `fluid_api("/api/business_types?c
 
 Match on: state registry classification, Google Business Profile category, product types, Amazon store category.
 
-| Business type | MCC | Code |
-|---------------|-----|------|
-| Pet supplies / pet food | Pet Shops, Pet Food, and Supplies | 5995 |
-| Health food / supplements | Miscellaneous Food Stores | 5499 |
-| Clothing / apparel | Family Clothing Stores | 5651 |
-| Cosmetics / beauty | Cosmetic Stores | 5977 |
-| General ecommerce | Miscellaneous Specialty Retail | 5999 |
-| Cleaning products | Specialty Cleaning | 2842 |
-| Direct selling / MLM | Direct Marketing — Combination Catalog and Retail | 5965 |
+| Business type             | MCC                                               | Code |
+| ------------------------- | ------------------------------------------------- | ---- |
+| Pet supplies / pet food   | Pet Shops, Pet Food, and Supplies                 | 5995 |
+| Health food / supplements | Miscellaneous Food Stores                         | 5499 |
+| Clothing / apparel        | Family Clothing Stores                            | 5651 |
+| Cosmetics / beauty        | Cosmetic Stores                                   | 5977 |
+| General ecommerce         | Miscellaneous Specialty Retail                    | 5999 |
+| Cleaning products         | Specialty Cleaning                                | 2842 |
+| Direct selling / MLM      | Direct Marketing — Combination Catalog and Retail | 5965 |
 
 MCC is MEDIUM confidence unless Google Business Profile category maps directly → promote to HIGH.
 

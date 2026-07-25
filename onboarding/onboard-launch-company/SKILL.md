@@ -17,8 +17,9 @@ icon: rocket
 # Onboard & Launch Company
 
 You are helping the active company go from "signed up" to "ready to launch" in one
-sitting. Your job in this chat is narrow: **collect the two inputs the workflow
-needs (website URL + product-import path), then fire `run_workflow`**. The
+sitting. Your job in this chat is narrow: **collect the scoped launch inputs
+(run scope, website URL, product-import path, theme target, and optional content),
+then fire `run_workflow`**. The
 workflow itself does the heavy lifting across dedicated agent chats.
 
 The active Fluid company is already selected in Mist Desktop — `fluid_api(path,
@@ -97,7 +98,6 @@ YOUR TURN and wait for answers:
 3. `products_source` — single_select "Where should we pull products from?"
    `show_if: { step_id: "run_scope", any_of: ["full"] }` (only when products are in
    scope). Options depend on Step 0's discovery. Always include at least the last two:
-
    - When a Connect droplet is `is_connected: true`, add ONE option with id
      `connect_<slug>` (e.g. `connect_shopify`), label
      `Connect: <Name> (already linked)`, description "Pull products +
@@ -132,9 +132,10 @@ YOUR TURN and wait for answers:
      TikTok for other people's content about the brand and pull the best picks into the
      DAM. Different from the brand's own content above."
 
-6. `confirm` — single_select "Ready to run? This spawns dedicated agent chats; a full run
-   takes ~20-40 minutes." Options: id `go` label `Yes, launch it`, id `cancel` label
-   `Not yet`.
+6. `confirm` — single_select "Ready to run? This spawns dedicated agent chats and continues
+   in the background. Runtime depends on catalog size, source-site speed, and visual QA
+   rounds; a large full run can take hours." Options: id `go` label `Yes, launch it`, id
+   `cancel` label `Not yet`.
 
 Keep this to these steps. Anything else (Connect credentials, brand info prompts, etc.)
 belongs INSIDE the workflow, not this picker.
@@ -170,22 +171,26 @@ explicitly-passed flag always wins over the derived value. Do NOT emit a bare `e
 without the flags — that was the shape that caused every gated step to skip.
 
 Derive `connect_provider` from the `products_source` answer:
+
 - id starts with `connect_` → provider is the slug after the prefix
 - id is `scrape` or `manual` → provider is `null`
 - `products_source` skipped (products out of scope) → `products_source: null`, provider `null`
 
 Derive `theme_target` + `theme_id` from the `theme_target` answer:
+
 - id `new` → `theme_target: "new"`, `theme_id: null`
 - id `existing_<theme_id>` → `theme_target: "existing"`, `theme_id: <that id>`
 - skipped (theme out of scope) → `theme_target: null`, `theme_id: null`
 
 Derive the track flags from `run_scope` (they gate which steps do work via the workflow's
 `runIf`):
+
 - `build_theme`: true for `full`, `data_theme`, `theme_only`; false for `data_only`
 - `import_products`: true for `full`; false otherwise
   (brand + country gathering always runs regardless of scope — it drives the theme)
 
 Derive the extras flags from the `extras` multi_select:
+
 - `import_brand_social`: true iff selected; `discover_ugc`: true iff selected (both default false)
 
 `run_workflow` returns immediately with a run plan; the progress card renders
@@ -197,8 +202,8 @@ do NOT narrate the plan or predict outcomes. The card does that live.
 Send one final short message: 1-2 lines confirming what got kicked off and
 that the run continues in the background. Example:
 
-> The onboarding run is live — 7 steps, ~15-30 min. Follow the progress card
-> above; I'll be here when it lands.
+> The onboarding run is live and will continue in the background. Follow the
+> progress card above; I'll be here when it lands.
 
 Do not poll `workflow_status` unsolicited. When the user asks, use it.
 
@@ -252,10 +257,10 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
     object. There is no repair path — a product imported flat must be re-created
     to gain its variants.
 - **DAM upload is multipart file bytes, not a URL.** `POST
-  https://upload.fluid.app/upload` with fields `fileName`, `file`, then
+https://upload.fluid.app/upload` with fields `fileName`, `file`, then
   `name`/`tags` (or use the `dam_upload` tool). There is no `external_asset_url`
   on this endpoint — a JSON body 400s with `Either b64_json or data_uri is
-  required`. Download the source image first, then upload, then use
+required`. Download the source image first, then upload, then use
   `asset.default_variant_url`.
 - **Source catalogs are often bot-walled.** `<site>/products.json` on a modern
   Shopify/Hydrogen storefront returns a Cloudflare 403 "Verifying your
