@@ -27,7 +27,10 @@ individually-QA'd steps and your step prompt names the ONLY phases you own
 push). Execute just those phases, read/write the shared `clone-manifest.json`
 at the theme project root instead of re-scraping, and record cosmetic
 deviations as notes for the refine pass rather than fixing everything in one
-step. The rules and gotchas below apply to whichever phase you're executing.
+step. `clone-manifest.json` and `baselines/` are local QA artifacts, not Fluid
+theme resources: preserve existing rules in the root `.fluidignore` and add
+exact entries for both before starting theme dev. The rules and gotchas below
+apply to whichever phase you're executing.
 
 ## Every run is a fresh run
 

@@ -66,6 +66,12 @@ convert a code review into a visual pass.
 
 Write `clone-manifest.json` before implementation:
 
+The manifest and any `baselines/` directory stay local. Preserve the theme's
+existing `.fluidignore` rules and add exact entries for `clone-manifest.json`
+and `baselines/` before starting theme dev. Without those entries, the live
+watcher treats QA files as theme resources and repeatedly reports rejected
+uploads.
+
 ```json
 {
   "visual_routes": {
