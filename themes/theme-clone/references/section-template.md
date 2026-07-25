@@ -1,317 +1,306 @@
-# Section Template Reference
+# Canonical Fluid section template
 
-## Complete Section File Structure
+Use a section already shipped by the current base theme whenever it fits. This template is
+only for a source section that has no canonical equivalent.
 
-Every section lives at `sections/<section-name>/index.liquid` and follows this three-part structure: Style, HTML+Liquid, Schema.
+The non-negotiable contract is:
 
-```liquid
-<style>
-  /* Scoped CSS using BEM naming — prefix with section abbreviation */
-  .eh-section-name {
-    padding: 64px 0;
-  }
-  .eh-section-name__element { ... }
-  .eh-section-name__element--modifier { ... }
+- Section settings describe layout, never visible copy.
+- The Section Shell has 6 controls and the Container has 9 controls.
+- Visible copy and content images are blocks.
+- Text blocks use `richtext`; content images use the canonical `image` block shape.
+- Every color and font choice resolves through the theme option groups.
+- Breakpoints are `max-width: 991px` and `max-width: 767px`.
+- The root emits `section.fluid_attributes`; block wrappers emit `block.fluid_attributes`.
+- Template schemas carry section types, order, and optional section settings only. They
+  never carry block instances.
 
-  /* Mobile-first: base styles are mobile, then scale up */
-  @media (min-width: 768px) { /* tablet */ }
-  @media (min-width: 1024px) { /* desktop */ }
-</style>
-
-<section class="eh-section-name" {{ section.fluid_attributes }}>
-  <div class="container">
-    <!-- Section-level content from section.settings -->
-    <h2 class="eh-section-name__heading">{{ section.settings.heading }}</h2>
-
-    <!-- Block-level repeating content -->
-    {% for block in section.blocks %}
-      <div class="eh-section-name__card" {{ block.fluid_attributes }}>
-        {{ block.settings.title }}
-      </div>
-    {% endfor %}
-  </div>
-</section>
-
-<script>
-  /* JavaScript if needed (carousels, accordions, scroll animations) */
-</script>
-
-{% schema %}
-{
-  "name": "Section Display Name",
-  "tag": "section",
-  "class": "eh-section-name-section",
-  "settings": [ ... ],
-  "blocks": [ ... ],
-  "presets": [ ... ]
-}
-{% endschema %}
-```
-
----
-
-## Critical Attributes
-
-| Attribute | Where | Purpose |
-|-----------|-------|---------|
-| `{{ section.fluid_attributes }}` | Outermost `<section>` element | Lets Fluid's visual editor identify and manage the section |
-| `{{ block.fluid_attributes }}` | Each block's outermost element | Same purpose for blocks |
-
-**Forgetting these will make the section invisible to the editor.**
-
----
-
-## Settings vs Blocks Decision Guide
-
-### Use Section Settings For:
-Content that appears **once** in the section — heading, subheading, background color, CTA button, layout toggle.
-
-```json
-"settings": [
-  { "type": "text", "id": "heading", "label": "Heading", "default": "Our Story" },
-  { "type": "textarea", "id": "subtext", "label": "Subtext", "default": "..." },
-  { "type": "text", "id": "bg_color", "label": "Background Color", "default": "#FFFFFF" },
-  { "type": "checkbox", "id": "reverse_layout", "label": "Reverse Layout", "default": false }
-]
-```
-
-### Use Blocks For:
-Content that **repeats** — cards, testimonials, features, FAQ items, team members.
-
-```json
-"blocks": [
-  {
-    "type": "card",
-    "name": "Feature Card",
-    "settings": [
-      { "type": "text", "id": "image_url", "label": "Image URL", "default": "" },
-      { "type": "text", "id": "title", "label": "Title", "default": "Feature" },
-      { "type": "textarea", "id": "description", "label": "Description", "default": "" }
-    ]
-  }
-]
-```
-
-### Multiple Block Types
-Sections can accept different block types for flexibility:
-
-```json
-"blocks": [
-  {
-    "type": "text_block",
-    "name": "Text Block",
-    "settings": [
-      { "type": "text", "id": "heading", "label": "Heading" },
-      { "type": "richtext", "id": "content", "label": "Content" }
-    ]
-  },
-  {
-    "type": "image_block",
-    "name": "Image Block",
-    "settings": [
-      { "type": "text", "id": "image_url", "label": "Image URL" },
-      { "type": "text", "id": "caption", "label": "Caption" }
-    ]
-  }
-]
-```
-
-In Liquid, check block type:
-```liquid
-{% for block in section.blocks %}
-  {% if block.type == 'text_block' %}
-    <div {{ block.fluid_attributes }}>{{ block.settings.heading }}</div>
-  {% elsif block.type == 'image_block' %}
-    <img {{ block.fluid_attributes }} src="{{ block.settings.image_url }}" />
-  {% endif %}
-{% endfor %}
-```
-
----
-
-## Image Handling
-
-For "exact clone" sections, store image URLs as `type: "text"` settings — NOT `type: "image"` which uses Fluid's native picker. This lets you paste DAM URLs directly:
-
-```json
-{
-  "type": "text",
-  "id": "image_url",
-  "label": "Image URL (DAM)",
-  "default": ""
-}
-```
-
-In the template:
-```liquid
-{% if section.settings.image_url != blank %}
-  <img src="{{ section.settings.image_url }}" alt="{{ section.settings.heading }}" loading="lazy">
-{% endif %}
-```
-
----
-
-## Presets — Always Pre-fill Content
-
-Presets define what the section looks like when first added in the editor. **Always include all cloned content** so the section is ready to use:
-
-```json
-"presets": [
-  {
-    "name": "Customer Stories",
-    "settings": {
-      "heading": "What Parents Are Saying",
-      "bg_color": "#FFFBE0"
-    },
-    "blocks": [
-      {
-        "type": "story",
-        "settings": {
-          "photo_url": "https://ik.imagekit.io/fluid/980243104/testimonial-1_abc.png",
-          "title": "Changed our mornings",
-          "quote": "My kids ask for their vitamins every day now!"
-        }
-      },
-      {
-        "type": "story",
-        "settings": {
-          "photo_url": "https://ik.imagekit.io/fluid/980243104/testimonial-2_def.png",
-          "title": "Finally found the right vitamin",
-          "quote": "No more fighting over gummy vitamins."
-        }
-      }
-    ]
-  }
-]
-```
-
----
-
-## Block Limits
-
-Control how many blocks can be added:
-
-```json
-"blocks": [
-  {
-    "type": "card",
-    "name": "Card",
-    "limit": 8,
-    "settings": [ ... ]
-  }
-]
-```
-
----
-
-## Complete Worked Example
-
-A centered expert quote section with photo, quote text, and expert credentials:
+## Minimal implementation
 
 ```liquid
-<style>
-  .eh-expert-quote {
-    background-color: {{ section.settings.bg_color | default: '#FFFBE0' }};
-    padding: 80px 0;
+{%- style -%}
+  .source-feature.section-{{ section.id }} {
+    {%- assign p = section.settings.section_padding -%}
+    {%- if p -%}
+      padding: {{ p.top | default: 80 }}px {{ p.right | default: 0 }}px {{ p.bottom | default: 80 }}px {{ p.left | default: 0 }}px;
+    {%- else -%}
+      padding: 80px 0;
+    {%- endif -%}
+    {%- assign r = section.settings.section_border_radius -%}
+    {%- if r -%}
+      border-radius: {{ r.tl }}px {{ r.tr }}px {{ r.br }}px {{ r.bl }}px;
+    {%- endif -%}
+    background-color: {{ section.settings.background_color | default: 'transparent' }};
+    {%- if section.settings.background_image != blank -%}
+      background-image: url({{ section.settings.background_image | img_url: 'w-2400,f-auto,q-80' }});
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+    {%- endif -%}
+    {% if section.settings.section_border_width > 0 %}
+      border: {{ section.settings.section_border_width }}px solid {{ section.settings.section_border_color }};
+    {% endif %}
   }
-  .eh-expert-quote__inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    max-width: 700px;
+
+  .source-feature.section-{{ section.id }} .source-feature__container {
+    position: relative;
+    max-width: {{ section.settings.container_max_width | default: '1280px' }};
     margin: 0 auto;
-    text-align: center;
+    {%- assign cp = section.settings.container_padding -%}
+    {%- if cp -%}
+      padding: {{ cp.top | default: 0 }}px {{ cp.right | default: 64 }}px {{ cp.bottom | default: 0 }}px {{ cp.left | default: 64 }}px;
+    {%- else -%}
+      padding: 0 64px;
+    {%- endif -%}
+    {%- assign cr = section.settings.container_border_radius -%}
+    {%- if cr -%}
+      border-radius: {{ cr.tl }}px {{ cr.tr }}px {{ cr.br }}px {{ cr.bl }}px;
+    {%- endif -%}
+    background-color: {{ section.settings.container_background_color | default: 'transparent' }};
+    {%- if section.settings.container_background_image != blank -%}
+      background-image: url({{ section.settings.container_background_image | img_url: 'w-2400,f-auto,q-80' }});
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+    {%- endif -%}
+    {% if section.settings.container_border_width > 0 %}
+      border: {{ section.settings.container_border_width }}px solid {{ section.settings.container_border_color }};
+    {% endif %}
   }
-  @media (min-width: 768px) {
-    .eh-expert-quote__inner {
-      flex-direction: row;
-      text-align: left;
-      gap: 40px;
-      max-width: 800px;
+
+  {%- if section.settings.container_overlay_color != blank and section.settings.container_overlay_opacity > 0 -%}
+    {%- assign overlay_opacity = section.settings.container_overlay_opacity | divided_by: 100.0 -%}
+    .source-feature.section-{{ section.id }} .source-feature__container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: {{ section.settings.container_overlay_color }};
+      opacity: {{ overlay_opacity }};
+      pointer-events: none;
+    }
+  {%- endif -%}
+
+  .source-feature.section-{{ section.id }} .source-feature__container > * {
+    position: relative;
+  }
+
+  .source-feature.section-{{ section.id }} .source-feature__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 48px;
+    align-items: center;
+  }
+
+  .source-feature.section-{{ section.id }} .rte h1,
+  .source-feature.section-{{ section.id }} .rte h2,
+  .source-feature.section-{{ section.id }} .rte h3 {
+    font-family: var(--ff-heading);
+  }
+
+  @media (max-width: 991px) {
+    .source-feature.section-{{ section.id }} .source-feature__container {
+      padding-right: 24px;
+      padding-left: 24px;
     }
   }
-  .eh-expert-quote__photo {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-  }
-  .eh-expert-quote__text {
-    font-size: 22px;
-    font-weight: 500;
-    color: #3B82C4;
-    margin: 0;
-    line-height: 1.4;
-  }
-  @media (min-width: 768px) {
-    .eh-expert-quote__text { font-size: 28px; }
-  }
-  .eh-expert-quote__name {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1B3A4B;
-    margin: 0;
-  }
-  .eh-expert-quote__title {
-    font-size: 14px;
-    color: #4A6572;
-    margin: 4px 0 0;
-  }
-</style>
 
-<section class="eh-expert-quote" {{ section.fluid_attributes }}>
-  <div class="container">
-    <div class="eh-expert-quote__inner">
-      {% if section.settings.photo_url != blank %}
-        <img class="eh-expert-quote__photo"
-             src="{{ section.settings.photo_url }}"
-             alt="{{ section.settings.name }}"
-             loading="lazy">
-      {% endif %}
-      <div class="eh-expert-quote__content">
-        {% if section.settings.quote != blank %}
-          <p class="eh-expert-quote__text">"{{ section.settings.quote }}"</p>
-        {% endif %}
-        {% if section.settings.name != blank %}
-          <div>
-            <p class="eh-expert-quote__name">{{ section.settings.name }}</p>
-            {% if section.settings.credential != blank %}
-              <p class="eh-expert-quote__title">{{ section.settings.credential }}</p>
-            {% endif %}
-          </div>
-        {% endif %}
-      </div>
+  @media (max-width: 767px) {
+    .source-feature.section-{{ section.id }} .source-feature__container {
+      padding-right: 16px;
+      padding-left: 16px;
+    }
+
+    .source-feature.section-{{ section.id }} .source-feature__content {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+  }
+{%- endstyle -%}
+
+<section
+  class="source-feature section-{{ section.id }}"
+  data-section-id="{{ section.id }}"
+  {{ section.fluid_attributes }}
+>
+  <div class="source-feature__container">
+    <div class="source-feature__content">
+      {% for block in section.blocks %}
+        {% case block.type %}
+          {% when 'copy' %}
+            <div class="source-feature__copy rte" {{ block.fluid_attributes }}>
+              {{ block.settings.heading }}
+              {{ block.settings.text }}
+            </div>
+          {% when 'image' %}
+            <div class="source-feature__image" {{ block.fluid_attributes }}>
+              {% if block.settings.image %}
+                <img
+                  src="{{ block.settings.image | img_url: 'w-1600,f-auto,q-80' }}"
+                  alt="{{ block.settings.alt_text | escape }}"
+                  loading="lazy"
+                  width="1600"
+                  height="1200"
+                >
+              {% else %}
+                <div class="source-feature__image-placeholder" aria-hidden="true"></div>
+              {% endif %}
+            </div>
+        {% endcase %}
+      {% endfor %}
     </div>
   </div>
 </section>
 
 {% schema %}
 {
-  "name": "Expert Quote",
-  "tag": "section",
-  "class": "eh-expert-quote-section",
+  "name": "Source feature",
   "settings": [
-    { "type": "text", "id": "bg_color", "label": "Background Color", "default": "#FFFBE0" },
-    { "type": "text", "id": "photo_url", "label": "Expert Photo URL", "default": "" },
-    { "type": "textarea", "id": "quote", "label": "Quote Text", "default": "So many vitamins are loaded with excess sugar and junk. Hiya is really clean." },
-    { "type": "text", "id": "name", "label": "Expert Name", "default": "Dr. Mark Hyman, M.D." },
-    { "type": "text", "id": "credential", "label": "Expert Credential", "default": "New York Times Best Selling Author" }
+    { "type": "header", "content": "Section Shell" },
+    { "type": "padding", "id": "section_padding", "label": "Section Padding" },
+    { "type": "corner_radius", "id": "section_border_radius", "label": "Section Border Radius" },
+    {
+      "type": "select",
+      "id": "background_color",
+      "label": "Background Color",
+      "options": "background_colors",
+      "default": "transparent"
+    },
+    {
+      "type": "image_picker",
+      "id": "background_image",
+      "label": "Background Image",
+      "info": "Decorative section background only."
+    },
+    {
+      "type": "range",
+      "id": "section_border_width",
+      "label": "Section Border Width",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "select",
+      "id": "section_border_color",
+      "label": "Section Border Color",
+      "options": "background_colors",
+      "default": "var(--clr-primary)"
+    },
+    { "type": "header", "content": "Container" },
+    {
+      "type": "select",
+      "id": "container_max_width",
+      "label": "Max Width",
+      "default": "1280px",
+      "options": [
+        { "value": "720px", "label": "Extra narrow (720px)" },
+        { "value": "960px", "label": "Narrow (960px)" },
+        { "value": "1080px", "label": "Comfy (1080px)" },
+        { "value": "1280px", "label": "Default (1280px)" },
+        { "value": "1440px", "label": "Wide (1440px)" },
+        { "value": "100%", "label": "Full (100%)" }
+      ]
+    },
+    { "type": "padding", "id": "container_padding", "label": "Container Padding" },
+    { "type": "corner_radius", "id": "container_border_radius", "label": "Container Border Radius" },
+    {
+      "type": "select",
+      "id": "container_background_color",
+      "label": "Container Background Color",
+      "options": "background_colors",
+      "default": "transparent"
+    },
+    { "type": "image_picker", "id": "container_background_image", "label": "Container Background Image" },
+    {
+      "type": "select",
+      "id": "container_overlay_color",
+      "label": "Container Overlay Color",
+      "options": "background_colors",
+      "default": "transparent"
+    },
+    {
+      "type": "range",
+      "id": "container_overlay_opacity",
+      "label": "Container Overlay Opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "default": 0,
+      "unit": "%"
+    },
+    {
+      "type": "range",
+      "id": "container_border_width",
+      "label": "Container Border Width",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "select",
+      "id": "container_border_color",
+      "label": "Container Border Color",
+      "options": "background_colors",
+      "default": "var(--clr-primary)"
+    }
   ],
-  "blocks": [],
+  "blocks": [
+    {
+      "type": "copy",
+      "name": "Copy",
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "heading",
+          "label": "Heading",
+          "default": "<h2>Source heading</h2>"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Text",
+          "default": "<p>Source body copy.</p>"
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "name": "Image",
+      "limit": 1,
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "text", "id": "alt_text", "label": "Alt Text" }
+      ]
+    }
+  ],
   "presets": [
     {
-      "name": "Expert Quote",
-      "settings": {
-        "bg_color": "#FFFBE0",
-        "photo_url": "https://ik.imagekit.io/fluid/980243104/dr-hyman_abc123.webp",
-        "quote": "So many vitamins are loaded with excess sugar and junk. Hiya is really clean.",
-        "name": "Dr. Mark Hyman, M.D.",
-        "credential": "New York Times Best Selling Author"
-      }
+      "name": "Source feature",
+      "blocks": [
+        { "type": "copy" },
+        { "type": "image" }
+      ]
     }
   ]
 }
 {% endschema %}
 ```
+
+The shortened image schema above demonstrates placement only. In a real section, copy the
+complete canonical image block settings from `blocks/image/index.liquid` in the scaffold so
+aspect ratio, fit, position, overlay, border, and radius controls remain available.
+
+## Before using the section
+
+Run:
+
+```bash
+python3 scripts/theme_audit.py sections/source_feature/index.liquid
+```
+
+Do not push until it exits zero. If the source pattern can be expressed by an existing base
+theme section, use that canonical section and delete this custom one.

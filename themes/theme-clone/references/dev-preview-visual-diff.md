@@ -1,331 +1,291 @@
-# Dev Preview & Visual-Diff Protocol
+# Dev preview and visual-parity protocol
 
-Canonical workflow for `fluid-theme-clone` and `fluid-theme-refine`: spin the theme up locally with the fluid CLI, capture matched screenshots of the **live source** and the **localhost build** at desktop / tablet / mobile, walk the page section-by-section, and let the agent classify findings as auto-fix vs flag-for-user.
+This is the visual gate shared by theme clone and theme refine. It compares the
+live source and the local Fluid preview at matched viewports using named
+semantic landmarks.
 
-This document is the single source of truth. Both clone and refine reference it.
+Equal-scroll-offset screenshots are invalid evidence. If the clone hero is
+180px too tall, every later equal-offset pair compares unrelated content.
 
----
+## Required route and viewport matrix
 
-## Prerequisites
+The flagship onboarding workflow must capture:
 
-Required before any visual-diff round:
+| Route | Source                                         | Local preview                   |
+| ----- | ---------------------------------------------- | ------------------------------- |
+| Home  | canonical homepage                             | `/`                             |
+| Shop  | primary collection/shop index                  | `/shop` or the real local index |
+| PDP   | flagship or most complex multi-variant product | `/home/products/<fluid-slug>`   |
 
-| Tool | Why | Install |
-|------|-----|---------|
-| Node.js ≥ 18 | Runtime for fluid CLI and Playwright | `brew install node` (macOS) or [nodejs.org](https://nodejs.org) |
-| `@fluid-app/fluid-cli` + `@fluid-app/fluid-cli-theme-dev` | The CLI and the `fluid theme *` plugin | `npm install -g @fluid-app/fluid-cli @fluid-app/fluid-cli-theme-dev` |
-| Playwright + Chromium | Headless browser for paired screenshots | `npm install -g playwright && npx playwright install chromium` |
-| Authenticated fluid profile | `fluid theme dev` proxies to the live company storefront — auth is mandatory | `fluid login` (then optionally `fluid switch <Company>`) |
-| A theme directory | `THEME_DIR` with at least one of `templates/`, `assets/`, `config/`, ideally `.fluid-theme.json` | `fluid theme pull` or `fluid theme init` |
+Capture every route at:
 
-See `~/.agents/skills/fluid-theme-cli/SKILL.md` for the full CLI reference (auth model, workspace mode, push/pull semantics).
+- desktop: `1440 × 900`
+- mobile: `390 × 844`
 
----
+Tablet is optional and never substitutes for desktop or mobile.
 
-## Preflight check
+## Capability contract
 
-Run this before each visual-diff round. If anything is missing, **warn the user with the exact install command and ask permission before installing.** Never install silently.
+### In Fluid Mist
 
-```bash
-# 1. Node
-node --version
+Use Mist's managed capabilities. They are available on a fresh computer and do
+not require a global Fluid CLI, Node package, browser binary, or user-owned
+Firecrawl key:
 
-# 2. fluid CLI core
-which fluid && fluid --version
+- `crawl` — source content, rendered HTML, exact-viewport full-page screenshot,
+  final URL, and HTTP status
+- `start_preview` — long-lived theme dev server with port management
+- `screenshot_preview` — local same-origin navigation plus exact-viewport
+  viewport/full-page capture
+- `preview_state` — exact local/prod URL awareness
+- `read_preview_console` — browser warnings, exceptions, and failed resources
+- `read_local_server_logs` — theme-dev stdout/stderr
+- `run_cli` — bounded one-shot commands such as `fluid --version`,
+  `fluid theme --help`, and `fluid theme push`
 
-# 3. theme-dev plugin (must list `theme` as a subcommand)
-fluid theme --help 2>&1 | head -3
+Use `start_preview`, not `run_cli fluid theme dev`. `run_cli` is intentionally
+bounded and a dev server is long-lived.
 
-# 4. Auth — should print active profile and company
-fluid whoami
+Do not use `command -v fluid` as Mist's health check. A stale ambient shim can
+be broken even while Mist's bundled CLI is healthy. Verify with:
 
-# 5. Playwright (resolved from any global or local install)
-node -e "console.log(require.resolve('playwright/package.json'))" 2>&1
-
-# 6. Chromium browser binary present
-node -e "const {chromium}=require('playwright'); chromium.executablePath() && console.log('OK')" 2>&1
+```text
+run_cli({ command: "fluid", args: ["--version"] })
+run_cli({ command: "fluid", args: ["theme", "--help"] })
 ```
 
-Print a tidy preflight summary:
+### Outside Fluid Mist
 
-```
-[Preflight] Node:        OK v22.5.0
-[Preflight] fluid CLI:   OK v0.4.2
-[Preflight] theme-dev:   OK plugin discovered
-[Preflight] auth:        OK Acme Co (chey@acme.co)
-[Preflight] Playwright:  MISSING
-[Preflight] Chromium:    MISSING
-```
+A project-local Playwright harness is an acceptable fallback when it is already
+locked in the project. Do not require a global Playwright or global Fluid CLI.
+If neither managed capture nor a project-local browser exists, report
+`STATUS: needs-review — visual capture capability unavailable`; do not silently
+convert a code review into a visual pass.
 
-If anything reports `MISSING`, surface the install plan and wait for explicit user approval:
+## Step 1 — Build the visual route manifest
 
-```
-The visual-diff workflow needs Playwright. To install:
+Write `clone-manifest.json` before implementation:
 
-  npm install -g playwright
-  npx playwright install chromium
-
-Run these now? (yes / no / let me handle it)
-```
-
-Only run installs when the user says yes. If the user opts out, fall back to a single full-page comparison via the existing browser-screenshot tooling and note the missing capability in the final report — never silently skip the visual check without telling the user.
-
-If `fluid whoami` errors, the fix is `fluid login` — not retrying. If `fluid theme --help` says "unknown command," the plugin isn't installed: `npm install -g @fluid-app/fluid-cli-theme-dev`.
-
----
-
-## Start the dev server
-
-In `THEME_DIR`:
-
-```bash
-fluid theme dev --port 9292 &
-```
-
-What happens:
-
-- CLI finds or creates a per-machine Development theme (cached as `plugins["theme-dev"].devThemeId` in `~/.fluid/config.json`)
-- Initial sync uploads every local file to that dev theme
-- Local Node HTTP server binds `127.0.0.1:9292` (override with `--port` if taken)
-- Storefront proxies `<company>.fluid.app` but renders local theme files
-- Filesystem watcher hot-reloads on save (full-page reload — no section hot-swap)
-
-**Do not pass `--navigate`.** That opens a real browser tab; Playwright drives its own browser.
-
-Wait for the "Server ready" message before moving on (or poll `curl -sS -o /dev/null -w "%{http_code}" http://127.0.0.1:9292/` until it returns `200`).
-
-For specific routes, mirror live-site paths: `/` → `/`, `/products/<handle>` → `/products/<handle>`, `/pages/<slug>` → `/pages/<slug>`. The proxy renders against real storefront data.
-
-When done: `Ctrl-C` (or `kill <pid>` if backgrounded — capture the PID when starting).
-
----
-
-## The diff script
-
-Save as `tools/visual-diff.mjs` next to `THEME_DIR`. ESM Node, requires Playwright resolvable from the current cwd:
-
-```javascript
-// node tools/visual-diff.mjs <SOURCE_URL> <LOCAL_URL> [--label=home] [--out=./diff/home]
-import { chromium } from 'playwright';
-import { mkdirSync } from 'node:fs';
-import { argv, exit } from 'node:process';
-
-const args = argv.slice(2);
-const [SOURCE_URL, LOCAL_URL] = args;
-if (!SOURCE_URL || !LOCAL_URL) {
-  console.error('Usage: node visual-diff.mjs <SOURCE_URL> <LOCAL_URL> [--label=...] [--out=...]');
-  exit(1);
-}
-const LABEL = (args.find(a => a.startsWith('--label=')) || '').split('=')[1] || 'page';
-const OUT   = (args.find(a => a.startsWith('--out=')) || '').split('=')[1] || `./diff/${LABEL}`;
-
-const BREAKPOINTS = [
-  { name: 'desktop', width: 1440, height: 900 },
-  { name: 'tablet',  width: 768,  height: 1024 },
-  { name: 'mobile',  width: 390,  height: 844 },
-];
-
-// Strip overlays, popups, cookie banners, and accessibility widgets that
-// would otherwise hide content. Add site-specific selectors here as discovered.
-const KILL_OVERLAYS = `(() => {
-  const sels = [
-    '[data-acsb-custom-trigger]','.acsb-trigger','.acsb-widget','.acsb-overlay',
-    '[class*="cookie"]','[id*="cookie"]',
-    '[class*="newsletter"][class*="popup"]','[id*="newsletter-popup"]',
-    '[class*="modal"]:not([class*="modal-content"])',
-    '[role="dialog"]'
-  ];
-  for (const s of sels) document.querySelectorAll(s).forEach(e => e.remove());
-  document.documentElement.style.scrollBehavior = 'auto';
-  // Pause CSS animations so screenshots are deterministic.
-  const css = document.createElement('style');
-  css.textContent = '*, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; }';
-  document.head.appendChild(css);
-})();`;
-
-mkdirSync(OUT, { recursive: true });
-const browser = await chromium.launch();
-
-for (const bp of BREAKPOINTS) {
-  const ctx = await browser.newContext({
-    viewport: { width: bp.width, height: bp.height },
-    deviceScaleFactor: 1,
-    reducedMotion: 'reduce',
-  });
-
-  for (const [side, url] of [['source', SOURCE_URL], ['built', LOCAL_URL]]) {
-    const page = await ctx.newPage();
-    try {
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-    } catch (e) {
-      console.warn(`[${bp.name}/${side}] networkidle timed out, continuing: ${e.message}`);
+```json
+{
+  "visual_routes": {
+    "home": {
+      "source_url": "https://source.example/",
+      "built_path": "/",
+      "landmarks": [
+        {
+          "id": "hero",
+          "source_selector": "main section:nth-of-type(1)",
+          "built_selector": "[data-section-id=\"home_hero\"]"
+        },
+        {
+          "id": "product-family",
+          "source_selector": "main section:nth-of-type(2)",
+          "built_selector": "[data-section-id=\"home_products\"]"
+        }
+      ]
     }
-    await page.evaluate(KILL_OVERLAYS);
-    // Trigger lazy-loaded images: scroll once to the bottom, then back up.
-    await page.evaluate(async () => {
-      await new Promise(r => {
-        let y = 0; const step = window.innerHeight;
-        const id = setInterval(() => {
-          window.scrollTo(0, y); y += step;
-          if (y >= document.documentElement.scrollHeight) { clearInterval(id); r(); }
-        }, 80);
-      });
-      window.scrollTo(0, 0);
-    });
-    await page.waitForTimeout(800);
-
-    // 1. Full-page reference shot
-    await page.screenshot({
-      path: `${OUT}/${LABEL}-${bp.name}-${side}-full.png`,
-      fullPage: true,
-    });
-
-    // 2. Section-by-section: scroll one viewport at a time
-    const total = await page.evaluate(() => document.documentElement.scrollHeight);
-    let y = 0; let i = 1;
-    while (y < total) {
-      await page.evaluate((v) => window.scrollTo(0, v), y);
-      await page.waitForTimeout(200);
-      const remaining = total - y;
-      await page.screenshot({
-        path: `${OUT}/${LABEL}-${bp.name}-${side}-sec${String(i).padStart(2,'0')}.png`,
-        clip: { x: 0, y: 0, width: bp.width, height: Math.min(bp.height, remaining) },
-      });
-      y += bp.height; i++;
-    }
-
-    await page.close();
   }
-  await ctx.close();
 }
-await browser.close();
-console.log(`Wrote ${OUT}/`);
 ```
 
-Run it:
+Create selectors from rendered HTML inspection, not guesses. Every visible
+source section gets one landmark in source order. Stable built selectors should
+use the template section instance ID.
 
-```bash
-node tools/visual-diff.mjs https://yellowbirdfoods.com http://127.0.0.1:9292/ --label=home
+Each route also records:
+
+- source page title and final URL
+- source HTTP status
+- ordered section headings
+- image/video URLs and focal/crop notes per landmark
+- overlay handling performed during capture
+- current source and built evidence paths/timestamps
+
+## Step 2 — Capture clean source baselines
+
+For each source route, call `crawl` twice. Keep global chrome:
+
+```json
+{
+  "url": "https://source.example/",
+  "formats": ["markdown", "html", "screenshot"],
+  "only_main_content": false,
+  "screenshot_options": {
+    "full_page": true,
+    "quality": 90,
+    "viewport": { "width": 1440, "height": 900 }
+  }
+}
 ```
 
-Output layout:
+Repeat with `{ "width": 390, "height": 844 }`.
 
-```
-diff/home/
-  home-desktop-source-full.png       home-desktop-built-full.png
-  home-desktop-source-sec01.png      home-desktop-built-sec01.png   ← hero
-  home-desktop-source-sec02.png      home-desktop-built-sec02.png   ← below hero
-  ... (continues until end of page)
-  home-tablet-source-full.png        home-tablet-built-full.png
-  home-tablet-source-sec01.png       ...
-  home-mobile-source-full.png        ...
-```
+If a geo, cookie, age, or newsletter dialog obscures the page:
 
-Same `sec##` index on both sides represents the same scroll position at that breakpoint, so pairs line up.
+1. inspect the returned HTML;
+2. identify a concrete close/decline/continue selector;
+3. repeat the capture with a constrained `click` action and a short `wait`;
+4. record the selector and action in the manifest.
 
----
+Example:
 
-## Reading the output (the agent loop)
-
-For every breakpoint, walk the section pairs in order. Use the `Read` tool on each PNG — Claude reads images directly, no diff library needed.
-
-**Read order (one breakpoint at a time):**
-
-1. `home-desktop-source-full.png` + `home-desktop-built-full.png` — overall layout + section count match
-2. Then each `sec01` / `sec02` / … pair in order
-3. After desktop is exhausted, advance to tablet, then mobile
-
-For each pair, classify findings:
-
-### Auto-fix (apply directly without prompting)
-
-| Finding | Why it's safe to auto-fix |
-|--------|---------------------------|
-| Background color off (theme token wrong, e.g. primary vs secondary) | Theme tokens are the source of truth; fix is a 1-line change |
-| Padding / margin / gap numerically off | Numeric spacing is unambiguous |
-| Font-size, line-height, letter-spacing wrong | Same — clear numeric mismatch |
-| Border-radius / border-width wrong | Numeric, low-risk |
-| Box-shadow missing or wrong | Pure visual property |
-| Wrong text content (heading copy, button label, eyebrow) | Source is the canonical content |
-| Missing or wrong icon size | Numeric or asset-swap with clear intent |
-| Image `object-fit` / `object-position` off | Numeric or enumerated |
-
-### Flag for user (do not fix without explicit confirmation)
-
-| Finding | Why it needs judgement |
-|--------|------------------------|
-| Different layout structure (rows vs columns, reordered sections) | Restructuring may not match the canonical Section Shell + block pattern; needs design call |
-| Image asset swap (source uses a different photo) | DAM upload may be needed; brand call on which asset to use |
-| Custom font unavailable in fluid `font_picker` | Substitution choice |
-| Whole section conceptually different / missing | May indicate a missing canonical section that needs to be added |
-| Animation / interaction behavior differs | Often involves JS — riskier; likely needs a different recipe |
-| Source uses a third-party widget (live chat, reviews) we don't replicate | Tradeoff call — substitute with native Fluid block or omit |
-| Layout tradeoff (text wraps differently, button stacks earlier) | Often a typographic call |
-
-### Findings table (print after each round)
-
-```
-DIFF — home / desktop                               round 2
-─────────────────────────────────────────────────────────────
-Section  Issue                Source         Built     Action
-hero     bg-color             #1B3A4B        #1C3B4C   auto-fix
-hero     heading font-size    56px           48px      auto-fix
-hero     hero photo           farm           placeholder  FLAG: image asset
-features card border          1px solid …    none      auto-fix
-testim.  layout               3-col          2-col     FLAG: layout choice
-─────────────────────────────────────────────────────────────
-Auto-fix queued: 3
-Flagged for confirmation: 2
+```json
+{
+  "actions": [
+    { "type": "wait", "milliseconds": 750 },
+    { "type": "click", "selector": "dialog button[aria-label=\"Close\"]" }
+  ]
+}
 ```
 
-Apply the auto-fix queue to the section files in `THEME_DIR`. The `fluid theme dev` watcher uploads on save and the localhost preview hot-reloads. Re-run `visual-diff.mjs` for the same `--label`. Loop until either:
+Never guess selectors and never delete all dialogs indiscriminately. A product
+drawer or mobile menu may be legitimate page content.
 
-- All findings resolved
-- Only flagged items remain — present the list to the user and wait
+A source baseline is invalid when:
 
-After 3 rounds with no convergence on a section, freeze that section, document remaining deltas in a comment in the section's Liquid file, and move on. Never silently abandon — log everything in the final report.
+- the final URL is not the requested route;
+- the status is not 200;
+- an overlay hides priority content;
+- the screenshot is blank or only a loading skeleton;
+- fonts or primary images did not finish loading;
+- the screenshot is stale from before the latest source crawl.
 
----
+AI-friendly Markdown is the copy/data layer, not the visual truth. It commonly
+omits navigation, responsive composition, media behavior, and exact spacing.
 
-## Common breakage and recovery
+## Step 3 — Start and diagnose the local preview
 
-| Symptom | Cause / fix |
-|--------|-------------|
-| `EADDRINUSE` on `fluid theme dev` | Port 9292 taken. `fluid theme dev --port 9393` |
-| `fluid theme: unknown command` | Plugin missing. `npm install -g @fluid-app/fluid-cli-theme-dev` |
-| `Auth required` | `fluid login` (and `fluid switch <Company>` if wrong account) |
-| Playwright "Executable doesn't exist" | `npx playwright install chromium` |
-| Localhost screenshots are blank | Watcher hasn't synced yet — wait for the initial upload to finish, or hard-refresh (`page.reload({ waitUntil: 'networkidle' })`) |
-| Source pages have a cookie banner that won't dismiss | Add the selector to `KILL_OVERLAYS` and rerun |
-| Fonts differ between source and built (web fonts vs system fallbacks) | Wait longer after `goto` (`waitForTimeout(2000)`); ensure `fluid theme dev` has loaded the merchant's font selections |
-| Section count differs between source and built | Don't auto-fix — that's a structural finding, flag for the user |
+Call `start_preview` from the theme project and wait for the ready result. Let
+Mist allocate the port.
 
----
+Before visual work:
 
-## When NOT to run the visual diff
+1. call `preview_state` and confirm the URL is local;
+2. call `read_local_server_logs`;
+3. call `read_preview_console`;
+4. fix Liquid/runtime errors before comparing pixels.
 
-- The user asked for a structural-only refine (Phase 0 audit) — visual diff comes later
-- The change is documentation / schema-only with no rendering impact
-- The user explicitly opted out of the visual check (note in the final report)
+Fluid detail routes require the credit segment:
 
----
+```text
+/home/products/<fluid-slug>
+/home/collections/<fluid-slug>
+/home/pages/<fluid-slug>
+/home/posts/<fluid-slug>
+```
 
-## Quick reference
+A bare `/products/<slug>` response can be a stale CDN artifact and is not route
+health evidence.
 
-```bash
-# Preflight
-node --version && fluid --version && fluid whoami
-node -e "console.log(require.resolve('playwright/package.json'))"
+## Step 4 — Capture the local matrix
 
-# Start dev preview
-cd <THEME_DIR> && fluid theme dev --port 9292 &
+For each route and viewport:
 
-# Wait for ready
-until curl -sf -o /dev/null http://127.0.0.1:9292/; do sleep 1; done
+```json
+{
+  "mode": "full",
+  "path": "/home/products/example-slug",
+  "width": 1440,
+  "height": 900
+}
+```
 
-# Run the diff
-node tools/visual-diff.mjs <SOURCE_URL> http://127.0.0.1:9292/<route> --label=<page>
+Repeat at `390 × 844`. The result must report:
 
-# Stop the dev server when done
-kill %1   # or Ctrl-C in the foreground
+- final local URL and HTTP status after navigation;
+- exact temporary viewport;
+- full document dimensions;
+- whether horizontal overflow exists;
+- saved evidence path(s).
+
+Capture a viewport-only image as well when a critical interaction or crop needs
+full-resolution inspection.
+
+If the installed Mist build does not yet accept `width` with `mode:"full"`,
+take an exact viewport image plus an un-sized full-page image and mark the
+width mismatch as a tooling limitation. It cannot satisfy the strict
+near-pixel-perfect gate.
+
+## Step 5 — Compare semantic landmarks
+
+For each named landmark compare:
+
+1. presence and order
+2. content and primary imagery
+3. background and foreground color
+4. width, height, padding, and gap
+5. heading family, size, weight, line-height, and tracking
+6. image aspect ratio, crop, and focal point
+7. controls, dividers, radii, shadows, and icon scale
+8. desktop-to-mobile composition change
+
+Use the source and built HTML inventories to pair landmarks. Do not pair by
+scroll position.
+
+Classification:
+
+- **major** — missing/reordered landmark; wrong main imagery/copy; broken route;
+  wrong page type; unusable mobile composition
+- **minor** — visible spacing/type/color/crop mismatch that does not change the
+  information architecture
+- **note** — browser rendering or source animation difference with no practical
+  fidelity impact
+
+Fix root causes in this order:
+
+1. missing/wrong data or template structure
+2. wrong assets or font files
+3. wrong theme tokens
+4. container/grid geometry
+5. component details
+6. micro-spacing
+
+Do not paper over a structural mismatch with arbitrary CSS offsets.
+
+## Passing gate
+
+The final evidence must be captured after the final code change and satisfy:
+
+- all six route/viewport combinations are present and current;
+- all routes are HTTP 200 and render the correct template;
+- zero priority landmarks are missing or reordered;
+- zero majors remain;
+- at most two itemized minors remain per priority route;
+- landmark width/height/padding/gap are within 5% of source where the same
+  responsive composition applies;
+- copy, primary imagery, price, and product options match source data;
+- no horizontal document overflow at 390px;
+- no Liquid/runtime errors in local logs or preview console;
+- every touched theme file passes `theme_audit.py`.
+
+If five refine rounds end without this gate, report `STATUS: cap-reached` and
+`needs-review`. Cap-reached is not a passing flagship launch result.
+
+## Performance and slow-network behavior
+
+- Capture source baselines once and reuse them until their recorded source
+  timestamp changes.
+- Keep no more than three remote captures in flight.
+- Retry transient 429/5xx/timeouts with bounded exponential backoff and jitter.
+- Persist each successful route/viewport result immediately.
+- Do not keep every full-resolution screenshot in model context. Save originals
+  on disk and attach only the current comparison pair.
+- On lower-end computers, run one local preview and one capture at a time.
+- If the network drops, resume missing matrix cells rather than recapturing all
+  successful cells.
+
+## Required STEP_OUTPUT
+
+```text
+STATUS: pass | needs-review | cap-reached
+SOURCE_MATRIX: 6/6 current | missing [...]
+LOCAL_MATRIX: 6/6 current | missing [...]
+ROUTES: home=..., shop=..., pdp=...
+MAJORS: [...]
+MINORS: [...]
+RUNTIME: preview/log status
+OVERFLOW: per-route mobile result
+EVIDENCE: source and local paths/timestamps
+NEXT: highest-impact unresolved root cause, or none
 ```

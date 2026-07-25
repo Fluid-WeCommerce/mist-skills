@@ -16,12 +16,12 @@ Any image the merchant can swap — a hero image, a card photo, an avatar, a log
 
 **ALLOWED uses of `image_picker`:**
 
-| Location | Id (convention) | Purpose |
-|----------|-----------------|---------|
-| Section Shell | `background_image` | Decorative full-section background |
-| Container | `container_background_image` | Decorative container background |
-| Canonical `blocks/image` only | `image` | The single image control inside the canonical image block |
-| Data-driven wrappers (`blocks/post_image`, etc.) | varies | Fallback when the resource's own image is blank |
+| Location                                         | Id (convention)              | Purpose                                                   |
+| ------------------------------------------------ | ---------------------------- | --------------------------------------------------------- |
+| Section Shell                                    | `background_image`           | Decorative full-section background                        |
+| Container                                        | `container_background_image` | Decorative container background                           |
+| Canonical `blocks/image` only                    | `image`                      | The single image control inside the canonical image block |
+| Data-driven wrappers (`blocks/post_image`, etc.) | varies                       | Fallback when the resource's own image is blank           |
 
 **FORBIDDEN uses of `image_picker`:**
 
@@ -48,6 +48,7 @@ Same reason as fonts. Section-level color choices are `select` pointed at `backg
 Canonical structure (6 + 9 = 15 settings that every section ships):
 
 **Section Shell (6 settings — always at the bottom of the settings array under a `{ "type": "header", "content": "Section Shell" }` header):**
+
 - `padding` — id `section_padding`
 - `corner_radius` — id `section_border_radius`
 - `select` (background_colors) — id `background_color`
@@ -56,6 +57,7 @@ Canonical structure (6 + 9 = 15 settings that every section ships):
 - `select` (background_colors) — id `section_border_color`
 
 **Container (9 settings — under a `{ "type": "header", "content": "Container" }` header, placed just before Section Shell):**
+
 - `select` — id `container_max_width` (options: 1080px / 1280px / 1440px / 100%)
 - `padding` — id `container_padding`
 - `corner_radius` — id `container_border_radius`
@@ -90,8 +92,12 @@ Every section with an intro (heading, eyebrow, subhead) exposes them as canonica
 **Default richtext** ships with inline `style=""` so first-paint looks intentional:
 
 ```json
-{ "type": "richtext", "id": "text", "label": "Text",
-  "default": "<h2 style=\"color: var(--clr-primary); font-size: clamp(32px, 4.5vw, 56px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05;\">Default heading</h2>" }
+{
+  "type": "richtext",
+  "id": "text",
+  "label": "Text",
+  "default": "<h2 style=\"color: var(--clr-primary); font-size: clamp(32px, 4.5vw, 56px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05;\">Default heading</h2>"
+}
 ```
 
 ### 6. `{% render %}` resolves ONLY from `components/` — never `blocks/`
@@ -104,73 +110,73 @@ Every section with an intro (heading, eyebrow, subhead) exposes them as canonica
 
 ### Input
 
-| Type | Returns | Use for |
-|------|---------|---------|
-| `text` | String | Short single-line text |
-| `textarea` | String | Multi-line plain text |
-| `richtext` / `rich_text` | HTML string | Formatted rich text (WYSIWYG) |
-| `html` / `html_textarea` | HTML string | Raw custom HTML |
-| `url` | String | Single URL |
+| Type                     | Returns     | Use for                                                                                      |
+| ------------------------ | ----------- | -------------------------------------------------------------------------------------------- |
+| `text`                   | String      | Non-styled metadata such as alt text or labels; visible authored copy uses `richtext` blocks |
+| `textarea`               | String      | Non-styled technical text; visible authored copy uses `richtext` blocks                      |
+| `richtext` / `rich_text` | HTML string | Formatted rich text (WYSIWYG)                                                                |
+| `html` / `html_textarea` | HTML string | Raw custom HTML                                                                              |
+| `url`                    | String      | Single URL                                                                                   |
 
 ### Number & Selection
 
-| Type | Returns | Use for |
-|------|---------|---------|
-| `range` | Number | Numeric slider — requires `min`, `max`, `step` |
-| `select` | String | Dropdown (5+ choices) — requires `options` |
-| `radio` | String | Tab buttons (2–4 choices) — requires `options` |
-| `checkbox` | Boolean | Toggle switch |
+| Type       | Returns | Use for                                        |
+| ---------- | ------- | ---------------------------------------------- |
+| `range`    | Number  | Numeric slider — requires `min`, `max`, `step` |
+| `select`   | String  | Dropdown (5+ choices) — requires `options`     |
+| `radio`    | String  | Tab buttons (2–4 choices) — requires `options` |
+| `checkbox` | Boolean | Toggle switch                                  |
 
 ### Visual & Media
 
-| Type | Returns | Use for |
-|------|---------|---------|
-| `color` | Hex string | Solid color picker |
-| `color_background` | Hex or gradient string | Solid color + gradient picker |
-| `font_picker` | String | Font family selector |
-| `image_picker` / `image` | Image object | Upload/select image — **only for section/container background or inside canonical `blocks/image`** (see rule 1 above) |
-| `video_picker` | Video object | Upload/select video |
-| `media_picker` | Media object | Image or video with embed settings |
-| `text_alignment` | String (`left` \| `center` \| `right`) | Alignment buttons |
+| Type                     | Returns                                | Use for                                                                                                               |
+| ------------------------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `color`                  | Hex string                             | Global config only; section colors use `select` → `background_colors`                                                 |
+| `color_background`       | Hex or gradient string                 | Global config only; section colors use `select` → `background_colors`                                                 |
+| `font_picker`            | String                                 | `config/settings_schema.json` only; sections use `select` → `font_families`                                           |
+| `image_picker` / `image` | Image object                           | Upload/select image — **only for section/container background or inside canonical `blocks/image`** (see rule 1 above) |
+| `video_picker`           | Video object                           | Upload/select video                                                                                                   |
+| `media_picker`           | Media object                           | Image or video with embed settings                                                                                    |
+| `text_alignment`         | String (`left` \| `center` \| `right`) | Alignment buttons                                                                                                     |
 
 ### Layout
 
-| Type | Returns | Use for |
-|------|---------|---------|
-| `padding` | `{ top, bottom, left, right }` | Four-sided padding |
-| `corner_radius` | `{ tl, tr, br, bl }` | Four-corner border radius |
-| `border` | `{ width, color }` | Border width + color |
-| `gradient_overlay` | `{ enabled, mode, colors, ... }` | Gradient / solid overlay |
-| `media_fit` | String | Width/height/fit image sizing |
+| Type               | Returns                          | Use for                                                                                                 |
+| ------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `padding`          | `{ top, bottom, left, right }`   | Four-sided padding                                                                                      |
+| `corner_radius`    | `{ tl, tr, br, bl }`             | Four-corner border radius                                                                               |
+| `border`           | `{ width, color }`               | Supported control, but do not use in theme-driven sections; split into range width + token color select |
+| `gradient_overlay` | `{ enabled, mode, colors, ... }` | Gradient / solid overlay                                                                                |
+| `media_fit`        | String                           | Width/height/fit image sizing                                                                           |
 
 ### Organization
 
-| Type | Returns | Use for |
-|------|---------|---------|
-| `header` | (none) | Visual divider label — uses `content`, not `label` |
+| Type     | Returns | Use for                                            |
+| -------- | ------- | -------------------------------------------------- |
+| `header` | (none)  | Visual divider label — uses `content`, not `label` |
 
 ### Resource (Single)
 
-| Type | Returns | Use for |
-|------|---------|---------|
-| `product` / `products` | Product object | Single product picker |
-| `collection` / `collections` | Collection object | Single collection picker |
-| `category` / `categories` | Category object | Single category picker |
-| `blog` / `posts` | Post object | Single post picker |
-| `enrollment_pack` / `enrollment` / `enrollments` | Enrollment object | Single enrollment picker |
-| `forms` | Form object | Single form picker |
-| `media` | Media object | Single media library resource |
-| `link_list` | Linklist object | Navigation menu picker |
+| Type                                             | Returns           | Use for                       |
+| ------------------------------------------------ | ----------------- | ----------------------------- |
+| `product` / `products`                           | Product object    | Single product picker         |
+| `collection` / `collections`                     | Collection object | Single collection picker      |
+| `category` / `categories`                        | Category object   | Single category picker        |
+| `blog` / `posts`                                 | Post object       | Single post picker            |
+| `enrollment_pack` / `enrollment` / `enrollments` | Enrollment object | Single enrollment picker      |
+| `forms`                                          | Form object       | Single form picker            |
+| `media`                                          | Media object      | Single media library resource |
+| `link_list`                                      | Linklist object   | Navigation menu picker        |
 
 ### Resource (List — max 24)
 
-| Type | Returns | Use for |
-|------|---------|---------|
-| `product_list` / `products_list` | Array | Multi-product picker |
-| `collection_list` / `collections_list` | Array | Multi-collection picker |
-| `category_list` / `categories_list` | Array | Multi-category picker |
-| `posts_list` | Array | Multi-post picker |
-| `enrollment_list` / `enrollments_list` | Array | Multi-enrollment picker |
+| Type                                   | Returns | Use for                 |
+| -------------------------------------- | ------- | ----------------------- |
+| `product_list` / `products_list`       | Array   | Multi-product picker    |
+| `collection_list` / `collections_list` | Array   | Multi-collection picker |
+| `category_list` / `categories_list`    | Array   | Multi-category picker   |
+| `posts_list`                           | Array   | Multi-post picker       |
+| `enrollment_list` / `enrollments_list` | Array   | Multi-enrollment picker |
 
 ---
 
@@ -187,6 +193,7 @@ Every section with an intro (heading, eyebrow, subhead) exposes them as canonica
 ```
 
 **Access:**
+
 ```liquid
 {{ section.settings.heading }}
 {{ section.settings.body }}   {# already HTML — do NOT escape #}
@@ -221,10 +228,17 @@ Every section with an intro (heading, eyebrow, subhead) exposes them as canonica
 
 ### Visual & Media
 
+The raw `color`, `color_background`, and `font_picker` controls below are recognized by
+Fluid but belong in global config, not section or block schemas. A cloned section uses the
+theme-aware selects shown here:
+
 ```json
-{ "type": "color", "id": "text_color", "label": "Text Color", "default": "#111" }
-{ "type": "color_background", "id": "bg", "label": "Background", "default": "#fff" }
-{ "type": "font_picker", "id": "heading_font", "label": "Heading Font", "default": "Inter" }
+{ "type": "select", "id": "text_color", "label": "Text Color",
+  "options": "background_colors", "default": "var(--clr-body)" }
+{ "type": "select", "id": "background_color", "label": "Background Color",
+  "options": "background_colors", "default": "transparent" }
+{ "type": "select", "id": "heading_font", "label": "Heading Font",
+  "options": "font_families", "default": "var(--ff-heading)" }
 
 { "type": "image_picker", "id": "background_image", "label": "Background Image" }   // ✅ decorative BG only
 // ❌ DO NOT use image_picker for content images — add a canonical `image` block instead
@@ -236,9 +250,10 @@ Every section with an intro (heading, eyebrow, subhead) exposes them as canonica
 ```
 
 **Access:**
+
 ```liquid
-{{ section.settings.hero_image.url }}     {# image/video/media return an object #}
-{{ section.settings.hero_image | img_url: 'w-1200,f-auto,q-80' }}
+{{ section.settings.background_image.url }}     {# background image object #}
+{{ section.settings.background_image | img_url: 'w-1200,f-auto,q-80' }}
 ```
 
 ### Background color — select with option group
@@ -246,8 +261,13 @@ Every section with an intro (heading, eyebrow, subhead) exposes them as canonica
 For theme-aware backgrounds, prefer a `select` pointed at the `background_colors` option group declared in `config/settings_schema.json`:
 
 ```json
-{ "type": "select", "id": "background_color", "label": "Background Color",
-  "options": "background_colors", "default": "transparent" }
+{
+  "type": "select",
+  "id": "background_color",
+  "label": "Background Color",
+  "options": "background_colors",
+  "default": "transparent"
+}
 ```
 
 ```liquid
@@ -261,12 +281,16 @@ The option group values are already CSS values (`var(--clr-primary)`, `transpare
 ```json
 { "type": "padding", "id": "section_padding", "label": "Section Padding" }
 { "type": "corner_radius", "id": "section_border_radius", "label": "Section Border Radius" }
-{ "type": "border", "id": "section_border", "label": "Section Border" }
+{ "type": "range", "id": "section_border_width", "label": "Section Border Width",
+  "min": 0, "max": 10, "step": 1, "default": 0, "unit": "px" }
+{ "type": "select", "id": "section_border_color", "label": "Section Border Color",
+  "options": "background_colors", "default": "var(--clr-primary)" }
 { "type": "gradient_overlay", "id": "overlay", "label": "Overlay" }
 { "type": "media_fit", "id": "image_fit", "label": "Image Fit" }
 ```
 
 **Wiring `padding` + `corner_radius` in `{%- style -%}`:**
+
 ```liquid
 {%- assign p = section.settings.section_padding -%}
 {%- if p -%}
@@ -303,6 +327,7 @@ The option group values are already CSS values (`var(--clr-primary)`, `transpare
 ```
 
 **Access:** single resource pickers return an object (or an ID, depending on type — check `| json` in dev).
+
 ```liquid
 {% for p in products %}
   {% if p.id == section.settings.featured_product %}
@@ -347,17 +372,17 @@ Works on any field. Value is a Liquid expression — typically a reference to an
 
 Using these types will error or silently fail in the editor:
 
-| Unsupported | Use instead |
-|-------------|-------------|
-| `number` | `range` |
-| `paragraph` | `header` (with `content`) |
-| `inline_richtext` | `text` or `richtext` |
-| `article` / `article_list` | `post` / `posts_list` |
-| `video` / `video_url` | `video_picker` or `url` |
-| `page` | — (not available) |
-| `liquid` | — (cannot inject raw Liquid) |
-| `color_scheme` / `color_scheme_group` | `color` (group manually) |
-| `metaobject` / `metaobject_list` | — (not available) |
+| Unsupported                           | Use instead                                  |
+| ------------------------------------- | -------------------------------------------- |
+| `number`                              | `range`                                      |
+| `paragraph`                           | `header` (with `content`)                    |
+| `inline_richtext`                     | `text` or `richtext`                         |
+| `article` / `article_list`            | `post` / `posts_list`                        |
+| `video` / `video_url`                 | `video_picker` or `url`                      |
+| `page`                                | — (not available)                            |
+| `liquid`                              | — (cannot inject raw Liquid)                 |
+| `color_scheme` / `color_scheme_group` | `select` with `options: "background_colors"` |
+| `metaobject` / `metaobject_list`      | — (not available)                            |
 
 ---
 

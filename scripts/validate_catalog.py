@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+"""Validate the published Mist skill and workflow catalog without dependencies."""
+
+from __future__ import annotations
+
+import json
+import sys
+from collections.abc import Iterable
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parent.parent
+MANIFEST_PATH = ROOT / "manifest.json"
+FLAGSHIP_WORKFLOW_PATH = ROOT / "workflows/onboard-launch-company.workflow.json"
+FLAGSHIP_CONTRACT_FILES = (
+    ROOT / "onboarding/fluid-product-admin-import/SKILL.md",
+    ROOT / "onboarding/onboard-launch-company/SKILL.md",
+    ROOT / "onboarding/onboarding-prefill/SKILL.md",
+    ROOT / "onboarding/onboarding-prefill/references/api-endpoints.md",
+    ROOT / "onboarding/onboarding-prefill/references/brand-md.md",
+    ROOT / "themes/theme-clone/SKILL.md",
+    FLAGSHIP_WORKFLOW_PATH,
+)
+
+
+class CatalogValidationError(Exception):
+    """A deterministic catalog validation failure."""
+
+
+def reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise CatalogValidationError(f"duplicate JSON key: {key!r}")
+        result[key] = value
+    return result
+
+
+def load_json(path: Path) -> Any:
+    try:
+        return json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=reject_duplicate_keys,
+        )
+    except (json.JSONDecodeError, CatalogValidationError) as error:
+        raise CatalogValidationError(f"{path.relative_to(ROOT)}: {error}") from error
+
+
+def require_string(entry: dict[str, Any], key: str, label: str) -> str:
+    value = entry.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise CatalogValidationError(f"{label}: {key!r} must be a non-empty string")
+    return value
+
+
+def validate_relative_file(raw_path: str, label: str) -> Path:
+    relative = Path(raw_path)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise CatalogValidationError(f"{label}: path must stay inside the repository")
+
+    resolved = ROOT / relative
+    if not resolved.is_file():
+        raise CatalogValidationError(f"{label}: missing file {raw_path!r}")
+    return resolved
+
+
+def validate_unique(values: Iterable[tuple[str, str]], noun: str) -> None:
+    seen: dict[str, str] = {}
+    for value, label in values:
+        previous = seen.get(value)
+        if previous is not None:
+            raise CatalogValidationError(
+                f"duplicate {noun} {value!r}: {previous} and {label}"
+            )
+        seen[value] = label
+
+
+def validate_manifest(manifest: Any) -> tuple[int, int]:
+    if not isinstance(manifest, dict):
+        raise CatalogValidationError("manifest root must be an object")
+    if manifest.get("version") != 1:
+        raise CatalogValidationError("manifest version must be 1")
+
+    skills = manifest.get("skills")
+    workflows = manifest.get("workflows")
+    if not isinstance(skills, list) or not isinstance(workflows, list):
+        raise CatalogValidationError("manifest skills and workflows must be arrays")
+
+    skill_identities: list[tuple[str, str]] = []
+    skill_paths: list[tuple[str, str]] = []
+    for index, entry in enumerate(skills):
+        label = f"skills[{index}]"
+        if not isinstance(entry, dict):
+            raise CatalogValidationError(f"{label}: entry must be an object")
+
+        slug = require_string(entry, "slug", label)
+        require_string(entry, "name", label)
+        require_string(entry, "description", label)
+        require_string(entry, "category", label)
+        require_string(entry, "icon", label)
+        path = require_string(entry, "path", label)
+        require_string(entry, "updated_at", label)
+        validate_relative_file(path, label)
+
+        references = entry.get("references", [])
+        if not isinstance(references, list) or not all(
+            isinstance(reference, str) for reference in references
+        ):
+            raise CatalogValidationError(f"{label}: references must be string paths")
+        for reference in references:
+            validate_relative_file(reference, label)
+
+        skill_identities.append((slug, label))
+        skill_paths.append((path, label))
+
+    workflow_identities: list[tuple[str, str]] = []
+    workflow_paths: list[tuple[str, str]] = []
+    for index, entry in enumerate(workflows):
+        label = f"workflows[{index}]"
+        if not isinstance(entry, dict):
+            raise CatalogValidationError(f"{label}: entry must be an object")
+
+        slug = require_string(entry, "slug", label)
+        path = require_string(entry, "path", label)
+        require_string(entry, "updated_at", label)
+        workflow_path = validate_relative_file(path, label)
+        load_json(workflow_path)
+
+        workflow_identities.append((slug, label))
+        workflow_paths.append((path, label))
+
+    validate_unique(skill_identities, "skill slug")
+    validate_unique(skill_paths, "skill path")
+    validate_unique(workflow_identities, "workflow slug")
+    validate_unique(workflow_paths, "workflow path")
+    return len(skills), len(workflows)
+
+
+def require_fragments(text: str, fragments: tuple[str, ...], label: str) -> None:
+    for fragment in fragments:
+        if fragment not in text:
+            raise CatalogValidationError(
+                f"{label}: required contract fragment is missing: {fragment!r}"
+            )
+
+
+def validate_flagship_contracts() -> None:
+    banned_fragments = (
+        "/api/company/v1/products",
+        "/api/company/v1/collections",
+        "POST /api/company/pages",
+        "POST /api/posts",
+        "brand_guidelines has NO font field",
+        "There is no `external_asset_url`",
+        "does not accept an `external_asset_url`",
+        "cowboy.com",
+        "Suisse Intl",
+    )
+
+    for path in FLAGSHIP_CONTRACT_FILES:
+        text = path.read_text(encoding="utf-8")
+        for fragment in banned_fragments:
+            if fragment in text:
+                raise CatalogValidationError(
+                    f"{path.relative_to(ROOT)}: stale or fixture-specific "
+                    f"contract fragment found: {fragment!r}"
+                )
+
+    product_skill = (
+        ROOT / "onboarding/fluid-product-admin-import/SKILL.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        product_skill,
+        (
+            "/openapi/api-reference/storefront-v2026-04.yaml",
+            "/api/v202604/company/products",
+            "meta.pagination.next_cursor",
+            'status: "published"',
+            "Do not send\n  `currency_code`",
+            "external_asset_url",
+        ),
+        "fluid-product-admin-import",
+    )
+
+    brand_reference = (
+        ROOT / "onboarding/onboarding-prefill/references/api-endpoints.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        brand_reference,
+        (
+            '"brand_md":',
+            '"fonts":',
+            '"name":',
+            '"file_url":',
+            "external_asset_url",
+            "update_brand_voice",
+        ),
+        "onboarding brand API reference",
+    )
+
+    workflow = load_json(FLAGSHIP_WORKFLOW_PATH)
+    if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
+        raise CatalogValidationError("flagship workflow steps must be an array")
+
+    steps = {
+        step.get("id"): step
+        for step in workflow["steps"]
+        if isinstance(step, dict) and isinstance(step.get("id"), str)
+    }
+    products_import = steps.get("products-import")
+    if not isinstance(products_import, dict):
+        raise CatalogValidationError("flagship workflow: products-import step is missing")
+    product_prompt = products_import.get("prompt")
+    if not isinstance(product_prompt, str):
+        raise CatalogValidationError(
+            "flagship workflow: products-import prompt must be a string"
+        )
+    require_fragments(
+        product_prompt,
+        (
+            'run_skill("fluid-product-admin-import")',
+            "/api/v202604/company/products",
+            "meta.pagination.next_cursor",
+            'status:"published"',
+            "external_asset_url",
+            "manifest_sha256",
+        ),
+        "flagship workflow products-import",
+    )
+
+    content_import = steps.get("content-import")
+    if not isinstance(content_import, dict):
+        raise CatalogValidationError("flagship workflow: content-import step is missing")
+    content_prompt = content_import.get("prompt")
+    if not isinstance(content_prompt, str):
+        raise CatalogValidationError(
+            "flagship workflow: content-import prompt must be a string"
+        )
+    require_fragments(
+        content_prompt,
+        (
+            'run_skill("fluid-product-admin-import")',
+            "/api/v202604/company/collections",
+            "create_page",
+            "meta.pagination.next_cursor",
+        ),
+        "flagship workflow content-import",
+    )
+
+
+def main() -> int:
+    try:
+        skill_count, workflow_count = validate_manifest(load_json(MANIFEST_PATH))
+        validate_flagship_contracts()
+    except CatalogValidationError as error:
+        print(f"catalog validation failed: {error}", file=sys.stderr)
+        return 1
+
+    print(
+        f"catalog validation passed: {skill_count} skills, "
+        f"{workflow_count} workflows"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
