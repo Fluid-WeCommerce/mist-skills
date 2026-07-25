@@ -115,7 +115,9 @@ For `N = 1..5`:
    source cell only when its URL/content changed or its durable evidence failed
    preflight; persist the replacement evidence object immediately.
 2. For each route, compare full-page pairs and every named landmark pair at desktop and
-   mobile.
+   mobile. The reviewer must actually open both images and inspect the source pixels; a
+   worker summary, DOM inventory, metrics file, or remembered earlier screenshot cannot
+   substitute for the source image in the same comparison.
 3. Read the metrics JSON for geometry, typography, colors, document overflow, route status,
    and headings.
 4. Score every finding:
@@ -129,6 +131,10 @@ For `N = 1..5`:
 | Color        | wrong theme role or visibly wrong palette        | small derived-tone drift     |
 | Spacing      | page rhythm or landmark height materially wrong  | local 4–8px drift            |
 | Interaction  | nav, selector, cart, or CTA broken               | non-blocking polish          |
+
+Content/data majors outrank form-only findings. Fix invented copy, wrong source strings,
+placeholder text, and incorrect product facts before spacing or decorative polish. A route
+with the right layout and the wrong words is a different company, not a close visual match.
 
 5. Select the top three **root causes**, not merely three CSS declarations. A bad
    `container_max_width` token that affects eight sections is one root cause; fix all its
