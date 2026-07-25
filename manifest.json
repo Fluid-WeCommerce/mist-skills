@@ -158,6 +158,15 @@
       ]
     },
     {
+      "slug": "fluid-product-admin-import",
+      "name": "Fluid Product & Admin Import",
+      "description": "Import a complete source catalog and related store resources into the active Fluid company with evidence-backed discovery, immutable product identity, resumable checkpoints, exact product fields, and strict one-to-one completion proof.",
+      "category": "onboarding",
+      "icon": "package-plus",
+      "path": "onboarding/fluid-product-admin-import/SKILL.md",
+      "updated_at": "2026-07-25T19:00:00Z"
+    },
+    {
       "slug": "marketing/ugc-discovery",
       "name": "UGC Discovery",
       "description": "Find the 20-30 most engaging, FTC/FDA-compliant UGC posts about a brand or product across TikTok, Instagram, YouTube, and Pinterest, let the user pick, and pull the picks into the DAM.",

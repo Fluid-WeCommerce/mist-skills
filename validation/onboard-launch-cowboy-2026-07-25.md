@@ -56,6 +56,12 @@ passed to the importer.
 Why: product import cannot prove completeness when it discovers and grades its
 own denominator in the same write step.
 
+The `fluid-product-admin-import` playbook is now published in this community
+repository under the exact slug the workflow calls. A fresh Mist installation
+therefore receives the same catalog and payload contract from the managed
+community-skill refresh; it no longer depends on an unrelated local skill
+checkout.
+
 ### 2. Product identity is source-based, never title-based
 
 Every live `source_id`/canonical source URL maps to one distinct Fluid product
