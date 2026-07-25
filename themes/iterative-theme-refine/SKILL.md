@@ -85,7 +85,17 @@ is at parity:
 3. **Lint + render health.** The theme lints clean (`fluid theme dev` output has no
    Liquid errors), and every template ROUTE renders without a 500/blank — check the dev
    server log tail and load each route in the preview.
-4. **Verdict.** Grade explicitly: `CODE_PARITY: pass` or a list of structural fixes.
+4. **Copy + voice parity.** Screenshots at thumbnail scale will not catch wrong *words* —
+   this is a code-review check, and it is the failure mode users notice first. Read the
+   `<brand_voice>` block in your context (that is the company's `brand.md`) and grep the
+   theme's templates/sections for authored strings. Every headline, subhead, button label
+   and alt text is either (a) the REAL string scraped from the source page, or (b) written
+   in the voice `brand.md` describes and consistent with its Do's and Don'ts. Surviving
+   base-theme placeholder copy — "NEW DROP", "Built different", "Trusted by thousands",
+   "Shop the drop", lorem — is a **major**, no matter how good the pixels look. If the
+   `<brand_voice>` block reports no brand guide is filled in, say so in STEP_OUTPUT rather
+   than inventing a voice.
+5. **Verdict.** Grade explicitly: `CODE_PARITY: pass` or a list of structural fixes.
    Fix and re-review (this inner loop is cheap — no screenshots). Only when code parity
    passes do you enter the screenshot rounds below.
 

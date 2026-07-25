@@ -4,10 +4,11 @@ description: >-
   Guided end-to-end company onboarding flow: collect the company website URL,
   auto-detect available Connect integrations (Shopify / Exigo / ByDesign / etc.
   droplets) or fall back to public scraping, then fire the flagship
-  onboard-launch-company workflow — which clones the site into a theme,
-  iteratively refines it against screenshots, imports products, ticks off the
-  Getting Started checklist, discovers UGC, and delivers a real launch-readiness
-  review. Runs against the ALREADY-SELECTED active company — it does NOT create a
+  onboard-launch-company workflow — which imports products FIRST (so the theme
+  renders a real catalog), clones the site into a theme through six small
+  individually-QA'd build steps, iteratively refines it against screenshots,
+  reconciles onboarding info, discovers UGC, and delivers a real
+  launch-readiness review. Runs against the ALREADY-SELECTED active company — it does NOT create a
   company; it populates the existing one from its website. Use when the user says
   "onboard from <url>", "onboard this company", or "launch this store".
 icon: rocket
@@ -152,13 +153,21 @@ context: {
   "theme_target": "new" | "existing" | null,
   "theme_id": <null | existing theme id>,
   "run_scope": "full" | "data_theme" | "theme_only" | "data_only",
+  "extras": <string[] — the `extras` multi_select ids, e.g. ["import_brand_social", "discover_ugc"]; [] if none>,
   "build_theme": <bool>,
   "import_products": <bool>,
-  "push_business_data": <bool>,
   "import_brand_social": <bool>,
   "discover_ugc": <bool>
 }
 ```
+
+`run_scope` and `extras` are the raw inputs the engine keys off to derive the run-gating
+flags at run start — ALWAYS include both. But you MUST STILL pass every boolean flag
+(`build_theme`, `import_products`, `import_brand_social`, `discover_ugc`) explicitly, set
+per the derivation rules below: treat them as REQUIRED, not optional. They are a mandatory
+belt-and-suspenders so the run gates correctly even where derivation is unavailable, and an
+explicitly-passed flag always wins over the derived value. Do NOT emit a bare `extras` array
+without the flags — that was the shape that caused every gated step to skip.
 
 Derive `connect_provider` from the `products_source` answer:
 - id starts with `connect_` → provider is the slug after the prefix
@@ -174,8 +183,7 @@ Derive the track flags from `run_scope` (they gate which steps do work via the w
 `runIf`):
 - `build_theme`: true for `full`, `data_theme`, `theme_only`; false for `data_only`
 - `import_products`: true for `full`; false otherwise
-- `push_business_data`: true for `full`, `data_only`; false for `data_theme`, `theme_only`
-  (brand + country gathering always runs regardless — it drives the theme)
+  (brand + country gathering always runs regardless of scope — it drives the theme)
 
 Derive the extras flags from the `extras` multi_select:
 - `import_brand_social`: true iff selected; `discover_ugc`: true iff selected (both default false)
@@ -221,10 +229,39 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
 - **Cloud Armor throttles page-create bursts.** A rapid run of POST-with-body
   requests gets persistently 403'd by the prod WAF (GET stays 200), and a
   short cooldown doesn't clear it. Space page creates out; don't hammer.
-- **Products create as `status:draft`** even with `active:true` → PATCH
-  `{product:{status:"active"}}` after each. Options only materialize via
-  `option_attrs` (product = names, variant = values). Collection membership is
+- **Product creates need the NESTED-attributes payload** — a flat
+  `{product:{title,price}}` silently creates $0 shells. Pricing lives on
+  `variants_attributes[].variant_countries_attributes`; exactly one variant
+  `is_master:true`; include `active:true` + `status:"active"` in the create body
+  so no draft→active pass is needed (if a product still lands draft, PATCH
+  `{product:{status:"active"}}`). Options only materialize via `option_attrs`
+  (product = names, variant = values). Collection membership is
   `PATCH product {collection_ids:[...]}` — `collections/{id}/add_product` 404s.
+- **Three product-payload keys that silently or noisily kill an import**
+  (live-verified 2026-07-25 against api.fluid.app):
+  - `variant_countries_attributes` needs **`country_id` (integer) + `active`**.
+    `country_iso` alone 422s `active is missing, country_id is missing`. Get the
+    integer from `GET /api/settings/company_countries` →
+    `company_countries[].country.id` (Belgium = 20). This is the classic cause of
+    a catalog with correct titles and no prices.
+  - `images_attributes` entries use **`image_url`**, not `url` — `{"url": …}`
+    422s `image_url is missing`, which is how a whole catalog ends up on Fluid's
+    grey placeholder.
+  - **Set options + every variant at CREATE time.** Adding an option axis to an
+    already-created single-variant product via PATCH 422s with an EMPTY errors
+    object. There is no repair path — a product imported flat must be re-created
+    to gain its variants.
+- **DAM upload is multipart file bytes, not a URL.** `POST
+  https://upload.fluid.app/upload` with fields `fileName`, `file`, then
+  `name`/`tags` (or use the `dam_upload` tool). There is no `external_asset_url`
+  on this endpoint — a JSON body 400s with `Either b64_json or data_uri is
+  required`. Download the source image first, then upload, then use
+  `asset.default_variant_url`.
+- **Source catalogs are often bot-walled.** `<site>/products.json` on a modern
+  Shopify/Hydrogen storefront returns a Cloudflare 403 "Verifying your
+  connection". Check for a `<url>.md` LLM-markdown twin (some storefronts
+  advertise one in a banner — it returns clean title/image/price/description),
+  otherwise crawl the collection pages and the PDPs.
 - **Storefront status checks MUST use a real headless browser.** Prod Cloud
   Armor returns 500/302 to curl/HTTP clients even with a browser UA, while a
   real browser gets 200. Never conclude a route is broken from a curl status.

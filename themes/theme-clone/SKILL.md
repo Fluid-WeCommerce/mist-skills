@@ -18,9 +18,43 @@ This skill supports two modes:
 - **Single page clone** — clone one specific URL
 - **Full site clone** — systematically clone all key pages of a website
 
+**Workflow mode (phased execution).** When you were launched by the
+`onboard-launch-company` workflow, the clone is split into six small,
+individually-QA'd steps and your step prompt names the ONLY phases you own
+(1: discovery/scrape/assets → 2: tokens/skeleton → 3: header/footer →
+4: homepage → 5: product/collection templates → 6: content pages + audit +
+push). Execute just those phases, read/write the shared `clone-manifest.json`
+at the theme project root instead of re-scraping, and record cosmetic
+deviations as notes for the refine pass rather than fixing everything in one
+step. The rules and gotchas below apply to whichever phase you're executing.
+
 ## Every run is a fresh run
 
 This skill is used across many different sites. **Never reuse data from a previous run.** Always start with a fresh working directory. The active Fluid company is already selected in Mist Desktop — you do not collect or validate a Fluid token or store URL.
+
+## Read `brand.md` before you write a single line of copy
+
+Mist injects the company's brand guide into your context as a **`<brand_voice>` block** —
+that block *is* `brand.md`. It is written by the onboarding run (skill
+`onboarding/onboarding-prefill`, Step 8g) and carries the brand's real palette, its real
+typeface and license status, its audience, the words it uses and the words it never uses,
+and verbatim examples of on-brand and off-brand copy.
+
+**Read it first. Every headline, subhead, button label, alt text, empty-state string and
+placeholder you author must obey it.**
+
+Why this is a rule and not a nicety: a clone of a €2,399-3,999 connected-e-bike brand once
+shipped with *"Built different. Worn forever."*, *"NEW DROP"* and *"Trusted by thousands"* —
+apparel-template defaults — because the agent building the sections had never been told what
+the brand was. Nothing errored. The theme was just wrong, in the most visible way possible.
+
+- Scraped source copy always wins. Use the real string from the source page.
+- When you MUST author a string the source doesn't provide, write it in the voice
+  `brand.md` describes, and check it against that file's Do's and Don'ts before you keep it.
+- If a base-theme placeholder string survives into a section you built ("Shop the drop",
+  "Trusted by thousands", "Lorem ipsum"), that is a defect, not filler.
+- If the `<brand_voice>` block says no brand guide has been filled in, say so in your
+  report — do not silently invent a voice.
 
 ## Prerequisites
 
@@ -553,7 +587,7 @@ Put `block.fluid_attributes` on the OUTER wrapper, swap the inner content (image
 {% if image_block %}
   <div class="media-wrap" {{ image_block.fluid_attributes }}>
     {% if image_block.settings.image %}
-      <img src="{{ image_block.settings.image | img_url: '1600x' }}" ...>
+      <img src="{{ image_block.settings.image | img_url: 'w-1600,f-auto,q-80' }}" ...>
     {% else %}
       <div class="placeholder">…</div>
     {% endif %}
@@ -562,11 +596,11 @@ Put `block.fluid_attributes` on the OUTER wrapper, swap the inner content (image
 ```
 
 **3. Image-picker return shape varies — resolve defensively.**
-`block.settings.image` can be: an object with `.url`, an object with `.src`, a Fluid media object that needs `| img_url:'Nx'`, or a raw URL string. Try each in order:
+`block.settings.image` can be: an object with `.url`, an object with `.src`, a Fluid media object that needs `| img_url:'w-N'`, or a raw URL string. Try each in order:
 ```liquid
 {%- if img.url != blank -%}{%- assign _u = img.url -%}
 {%- elsif img.src != blank -%}{%- assign _u = img.src -%}
-{%- else -%}{%- assign _u = img | img_url: '600x' -%}
+{%- else -%}{%- assign _u = img | img_url: 'w-600,f-auto,q-80' -%}
 {%- endif -%}
 {%- if _u == blank -%}{%- assign _u = img -%}{%- endif -%}
 ```
@@ -1055,7 +1089,7 @@ When you update [references/schema-settings-reference.md](references/schema-sett
 {{ company.name }}
 {{ company.logo_url }}
 {{ 'key' | t }}
-{{ image.url | img_url: '600x400' }}
+{{ image.url | img_url: 'w-600,h-400,f-auto,q-80' }}
 ```
 
 ---

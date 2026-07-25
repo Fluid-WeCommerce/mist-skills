@@ -279,7 +279,7 @@ retries start. Raise `maxParallel` only for steps that are genuinely independent
 
 A step may declare `"runIf": { "flag": "<contextKey>" }`. The step runs **only if that boolean flag is truthy in the run's start context** (the `context` object the fronting skill passes to `run_workflow`). If the flag is falsy or absent, the step is **condition-skipped**: marked `skipped`, but — unlike a step skipped because a dependency failed — it **satisfies its dependents**, so downstream steps still run. A run whose only non-passed steps are condition-skips still completes successfully.
 
-Use it to let **one** workflow cover scoped runs instead of maintaining separate workflow files. Example: `onboard-launch-company` sets `build_theme` / `import_products` / `push_business_data` flags from a `run_scope` picker, and tags the theme-track and product-track steps with `runIf` so a "data only" run skips the theme + product steps while still running data gathering, its QA, and the launch review.
+Use it to let **one** workflow cover scoped runs instead of maintaining separate workflow files. Example: `onboard-launch-company` derives `build_theme` / `import_products` flags from a `run_scope` picker, and tags the theme-track and product-track steps with `runIf` so a "data only" run skips the theme + product steps while still running data gathering, its QA, and the launch review.
 
 Guidance for implementers:
 - The fronting skill must put the boolean in the `run_workflow` `context` (e.g. derive `build_theme` from a `run_scope` answer). An absent flag reads as "don't run."

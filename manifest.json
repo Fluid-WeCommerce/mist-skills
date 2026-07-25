@@ -49,11 +49,11 @@
     {
       "slug": "themes/image-optimization",
       "name": "Optimize theme images",
-      "description": "Add responsive, lazy-loaded <img> markup with ImageKit transformation params to Fluid Liquid themes.",
+      "description": "Add responsive, lazy-loaded images and videos to Fluid Liquid themes with the media_tag filter (srcset/sizes/width/height/loading) and ImageKit transforms.",
       "category": "themes",
       "icon": "image",
       "path": "themes/image-optimization.md",
-      "updated_at": "2026-06-24T00:00:00Z"
+      "updated_at": "2026-07-09T00:00:00Z"
     },
     {
       "slug": "themes/theme-review",
@@ -107,7 +107,7 @@
       "category": "themes",
       "icon": "copy",
       "path": "themes/theme-clone/SKILL.md",
-      "updated_at": "2026-06-29T19:00:00Z",
+      "updated_at": "2026-07-25T08:00:00Z",
       "references": [
         "themes/theme-clone/references/batch-upload-script.md",
         "themes/theme-clone/references/css-js-patterns.md",
@@ -145,25 +145,26 @@
     {
       "slug": "onboarding/onboarding-prefill",
       "name": "Onboarding Pre-Fill",
-      "description": "Pre-fill the Fluid payments onboarding (KYC) form by scraping the company website and researching public records, with confidence scoring before pushing.",
+      "description": "Pre-fill the Fluid payments onboarding (KYC) form by scraping the company website and researching public records, with confidence scoring before pushing. Also harvests the brand palette, typography and voice from the source site and writes the company brand.md.",
       "category": "onboarding",
       "icon": "id-card",
       "path": "onboarding/onboarding-prefill/SKILL.md",
-      "updated_at": "2026-07-06T14:45:00Z",
+      "updated_at": "2026-07-25T08:00:00Z",
       "references": [
         "onboarding/onboarding-prefill/references/api-endpoints.md",
+        "onboarding/onboarding-prefill/references/brand-md.md",
         "onboarding/onboarding-prefill/references/field-coverage.md",
         "onboarding/onboarding-prefill/references/state-registries.md"
       ]
     },
     {
-      "slug": "marketing/tiktok-ugc-discovery",
-      "name": "TikTok UGC Discovery",
-      "description": "Find the 20-30 most engaging, FTC/FDA-compliant TikTok UGC videos about a brand or product, let the user pick, and pull the picks into the DAM.",
+      "slug": "marketing/ugc-discovery",
+      "name": "UGC Discovery",
+      "description": "Find the 20-30 most engaging, FTC/FDA-compliant UGC posts about a brand or product across TikTok, Instagram, YouTube, and Pinterest, let the user pick, and pull the picks into the DAM.",
       "category": "marketing",
       "icon": "video",
-      "path": "marketing/tiktok-ugc-discovery.md",
-      "updated_at": "2026-07-04T03:22:55Z"
+      "path": "marketing/ugc-discovery.md",
+      "updated_at": "2026-07-24T00:00:00Z"
     },
     {
       "slug": "marketing/brand-social-import",
@@ -173,6 +174,15 @@
       "icon": "video",
       "path": "marketing/brand-social-import.md",
       "updated_at": "2026-07-06T00:00:00Z"
+    },
+    {
+      "slug": "marketing/brand-setup",
+      "name": "Brand Setup",
+      "description": "Interview the company to build a living brand.md — a brand-voice document that Mist, themes, portals, and widgets read to match the company's tone and style. Prefills colors/name from brand guidelines and saves via the update_brand_voice tool. Also use to append a single brand decision later.",
+      "category": "marketing",
+      "icon": "palette",
+      "path": "marketing/brand-setup.md",
+      "updated_at": "2026-07-13T00:00:00Z"
     },
     {
       "slug": "optimize/suggested-changes",
@@ -208,7 +218,7 @@
       "category": "onboarding",
       "icon": "rocket",
       "path": "onboarding/onboard-launch-company/SKILL.md",
-      "updated_at": "2026-07-06T14:45:00Z"
+      "updated_at": "2026-07-25T08:00:00Z"
     },
     {
       "slug": "themes/iterative-theme-refine",
@@ -217,14 +227,56 @@
       "category": "themes",
       "icon": "refresh-cw",
       "path": "themes/iterative-theme-refine/SKILL.md",
-      "updated_at": "2026-07-06T09:05:00Z"
+      "updated_at": "2026-07-25T08:00:00Z"
+    },
+    {
+      "slug": "mist/smart-dashboard",
+      "name": "Smart Dashboard",
+      "description": "Self-fabricate a live business dashboard from real data \u2014 gather what every department cares about, render it with show_dashboard, then learn what the user wants front-and-center and remember it.",
+      "category": "mist",
+      "icon": "layout-dashboard",
+      "path": "mist/smart-dashboard/SKILL.md",
+      "slug": "sales/checkout-funnel-diagnosis",
+      "name": "Checkout funnel diagnosis",
+      "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
+      "category": "sales",
+      "icon": "filter",
+      "path": "sales/checkout-funnel-diagnosis.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "sales/stalled-order-recovery",
+      "name": "Stalled order revenue recovery",
+      "description": "Rank orders stuck in draft/pending/pending_review by recoverable revenue and win probability, and hand over a call list.",
+      "category": "sales",
+      "icon": "shopping-cart",
+      "path": "sales/stalled-order-recovery.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "sales/aov-lever-audit",
+      "name": "AOV lever audit",
+      "description": "Find which levers actually move average order value — item count, bundles, discount depth — with a dollar figure per lever.",
+      "category": "sales",
+      "icon": "trending-up",
+      "path": "sales/aov-lever-audit.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "sales/rep-momentum-scoreboard",
+      "name": "Rep signup momentum scoreboard",
+      "description": "Track rep/enrollment signup momentum by week and market, and surface the newest reps already active enough to be worth a personal spotlight.",
+      "category": "sales",
+      "icon": "users",
+      "path": "sales/rep-momentum-scoreboard.md",
+      "updated_at": "2026-07-23T00:00:00Z"
     }
   ],
   "workflows": [
     {
       "slug": "onboard-launch-company",
       "path": "workflows/onboard-launch-company.workflow.json",
-      "updated_at": "2026-07-06T14:45:00Z"
+      "updated_at": "2026-07-25T08:00:00Z"
     },
     {
       "slug": "open-country",
