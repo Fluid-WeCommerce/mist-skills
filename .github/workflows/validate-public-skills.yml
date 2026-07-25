@@ -1,0 +1,19 @@
+name: Validate public skills
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  fixture-leaks:
+    name: Reject validation fixture leaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check reusable skill context
+        run: python3 scripts/check_fixture_leaks.py

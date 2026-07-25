@@ -43,10 +43,9 @@ and verbatim examples of on-brand and off-brand copy.
 **Read it first. Every headline, subhead, button label, alt text, empty-state string and
 placeholder you author must obey it.**
 
-Why this is a rule and not a nicety: a clone of a €2,399-3,999 connected-e-bike brand once
-shipped with *"Built different. Worn forever."*, *"NEW DROP"* and *"Trusted by thousands"* —
-apparel-template defaults — because the agent building the sections had never been told what
-the brand was. Nothing errored. The theme was just wrong, in the most visible way possible.
+Why this is a rule and not a nicety: without the current company's brand context, a
+technically valid clone can silently ship generic template copy, palette, and type. Nothing
+errors, but the theme is still wrong in the most visible way possible.
 
 - Scraped source copy always wins. Use the real string from the source page.
 - When you MUST author a string the source doesn't provide, write it in the voice

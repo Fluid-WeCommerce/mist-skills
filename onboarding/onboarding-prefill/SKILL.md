@@ -176,7 +176,7 @@ This sub-step collects the raw material for `brand.md`. Read
 1. Pull `<link rel="stylesheet">` hrefs out of the homepage HTML you already fetched in 3d.
 2. Fetch the main bundle and extract:
    - `:root { --color-*: … }` — the brand's own token names and values. Space-separated
-     triples are RGB: `--color-primary: 20 20 20` → `#141414`.
+     triples are RGB: `--color-primary: 18 52 86` → `#123456`.
    - `@font-face` blocks — the real `font-family` names and the exact `font-weight`s shipped,
      plus the `.woff2` URLs.
    - Layout rhythm props (`--spacing-section-*`, `--font-size-display`) — the theme step wants these.
@@ -509,8 +509,8 @@ block into **every future agent turn for this company** — every remaining work
 every QA reviewer, and every later theme/portal/widget/copy request. `STEP_OUTPUT` reaches
 only steps that declare a `dependsOn`, is invisible to QA reviewers, and dies with the run.
 A brand fact that exists only in `STEP_OUTPUT` is a brand fact the theme agent will never
-see — which is exactly how a €3,299 connected-e-bike brand shipped a homepage reading
-"Built different. Worn forever." and "NEW DROP".
+see. That silent context loss is how a technically valid theme can ship generic template
+copy instead of the current company's voice.
 
 Write the complete document with the canonical headings (`Brand Overview`, `Mission &
 Values`, `Tone of Voice`, `Audience`, `Vocabulary & Naming`, `Visual Style`, `Do's and
