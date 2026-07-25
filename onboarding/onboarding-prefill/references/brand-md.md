@@ -132,9 +132,9 @@ image as the site's intended visual style.
    with `fluid_api("/api/settings/brand_guidelines", "GET")` and confirm `brand_md` is
    non-null and starts with `# Brand Guide`.
 3. Structured brand fields were pushed **separately** via
-   `PATCH /api/settings/brand_guidelines` (`color`, `secondary_color`, `logo_url`, …) —
-   see [api-endpoints.md](api-endpoints.md). `brand_md` is the prose layer; it does not
-   replace those fields, and those fields do not replace it.
+   `PATCH /api/settings/brand_guidelines` (`color`, `secondary_color`, `logo_url`,
+   licensed `fonts[]`, …) — see [api-endpoints.md](api-endpoints.md). `brand_md` is the
+   prose layer; it does not replace those fields, and those fields do not replace it.
 
 **If the API push fails, the step is not failed.** The local `brand.md` is what
 `<brand_voice>` reads, so every downstream agent is already served. Record the failure

@@ -11,6 +11,16 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = ROOT / "manifest.json"
+FLAGSHIP_WORKFLOW_PATH = ROOT / "workflows/onboard-launch-company.workflow.json"
+FLAGSHIP_CONTRACT_FILES = (
+    ROOT / "onboarding/fluid-product-admin-import/SKILL.md",
+    ROOT / "onboarding/onboard-launch-company/SKILL.md",
+    ROOT / "onboarding/onboarding-prefill/SKILL.md",
+    ROOT / "onboarding/onboarding-prefill/references/api-endpoints.md",
+    ROOT / "onboarding/onboarding-prefill/references/brand-md.md",
+    ROOT / "themes/theme-clone/SKILL.md",
+    FLAGSHIP_WORKFLOW_PATH,
+)
 
 
 class CatalogValidationError(Exception):
@@ -126,9 +136,122 @@ def validate_manifest(manifest: Any) -> tuple[int, int]:
     return len(skills), len(workflows)
 
 
+def require_fragments(text: str, fragments: tuple[str, ...], label: str) -> None:
+    for fragment in fragments:
+        if fragment not in text:
+            raise CatalogValidationError(
+                f"{label}: required contract fragment is missing: {fragment!r}"
+            )
+
+
+def validate_flagship_contracts() -> None:
+    banned_fragments = (
+        "/api/company/v1/products",
+        "/api/company/v1/collections",
+        "POST /api/company/pages",
+        "POST /api/posts",
+        "brand_guidelines has NO font field",
+        "There is no `external_asset_url`",
+        "does not accept an `external_asset_url`",
+        "cowboy.com",
+        "Suisse Intl",
+    )
+
+    for path in FLAGSHIP_CONTRACT_FILES:
+        text = path.read_text(encoding="utf-8")
+        for fragment in banned_fragments:
+            if fragment in text:
+                raise CatalogValidationError(
+                    f"{path.relative_to(ROOT)}: stale or fixture-specific "
+                    f"contract fragment found: {fragment!r}"
+                )
+
+    product_skill = (
+        ROOT / "onboarding/fluid-product-admin-import/SKILL.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        product_skill,
+        (
+            "/openapi/api-reference/storefront-v2026-04.yaml",
+            "/api/v202604/company/products",
+            "meta.pagination.next_cursor",
+            'status: "published"',
+            "Do not send\n  `currency_code`",
+            "external_asset_url",
+        ),
+        "fluid-product-admin-import",
+    )
+
+    brand_reference = (
+        ROOT / "onboarding/onboarding-prefill/references/api-endpoints.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        brand_reference,
+        (
+            '"brand_md":',
+            '"fonts":',
+            '"name":',
+            '"file_url":',
+            "external_asset_url",
+            "update_brand_voice",
+        ),
+        "onboarding brand API reference",
+    )
+
+    workflow = load_json(FLAGSHIP_WORKFLOW_PATH)
+    if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
+        raise CatalogValidationError("flagship workflow steps must be an array")
+
+    steps = {
+        step.get("id"): step
+        for step in workflow["steps"]
+        if isinstance(step, dict) and isinstance(step.get("id"), str)
+    }
+    products_import = steps.get("products-import")
+    if not isinstance(products_import, dict):
+        raise CatalogValidationError("flagship workflow: products-import step is missing")
+    product_prompt = products_import.get("prompt")
+    if not isinstance(product_prompt, str):
+        raise CatalogValidationError(
+            "flagship workflow: products-import prompt must be a string"
+        )
+    require_fragments(
+        product_prompt,
+        (
+            'run_skill("fluid-product-admin-import")',
+            "/api/v202604/company/products",
+            "meta.pagination.next_cursor",
+            'status:"published"',
+            "external_asset_url",
+            "manifest_sha256",
+        ),
+        "flagship workflow products-import",
+    )
+
+    content_import = steps.get("content-import")
+    if not isinstance(content_import, dict):
+        raise CatalogValidationError("flagship workflow: content-import step is missing")
+    content_prompt = content_import.get("prompt")
+    if not isinstance(content_prompt, str):
+        raise CatalogValidationError(
+            "flagship workflow: content-import prompt must be a string"
+        )
+    require_fragments(
+        content_prompt,
+        (
+            'run_skill("fluid-product-admin-import")',
+            "/api/v202604/company/collections",
+            "create_page",
+            "meta.pagination.next_cursor",
+        ),
+        "flagship workflow content-import",
+    )
+
+
 def main() -> int:
     try:
         skill_count, workflow_count = validate_manifest(load_json(MANIFEST_PATH))
+        validate_flagship_contracts()
     except CatalogValidationError as error:
         print(f"catalog validation failed: {error}", file=sys.stderr)
         return 1

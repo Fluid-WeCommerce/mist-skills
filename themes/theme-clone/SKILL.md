@@ -667,7 +667,9 @@ When rendering a merchant-picked menu (nav, footer columns): iterate `block.sett
 
 **5. The `collections` global in Liquid ≠ the REST API shape.**
 
-- REST `/api/company/v1/collections` returns `image_url`, `image_path`, `canonical_url`, `product_collections` etc.
+- REST `/api/v202604/company/collections` returns the documented company
+  collection shape; inspect it with `query_docs` rather than assuming Liquid
+  keys exist on the REST object.
 - Liquid `{% for c in collections %}` returns `{id, handle, title, description, image (often null), url, products (inlined), position}` — no `image_url`, no `product_collections`.
 
 Image fallback for collection cards: `c.image` → `c.image_url` (rare) → `c.image_path` (rare) → `c.products[0].image_url`. **Never** rely on `.product_collections` in the Liquid iteration context.

@@ -528,6 +528,9 @@ artifacts, both required:
 logo, and licensed font files you harvested in 3f, using the exact contract in
 [references/api-endpoints.md](references/api-endpoints.md) (`color`, `secondary_color`,
 `logo_url`/`icon_url`/`favicon_url`, `fonts` — asset URLs must be Fluid-DAM hosted).
+Each persisted font needs the current schema's required `name` + `file_url`; include
+`file_id`, `format`, `weight`, `style`, and `role` where known. Never re-host a source
+font without evidence that the company may do so.
 
 **2. The brand guide itself** → `update_brand_voice({ content: <the whole document>,
 mode: "replace" })`.
@@ -556,9 +559,12 @@ Quote real copy verbatim; prefer numbers to adjectives; list 3-5 on-brand exampl
 
 Then verify persistence: `update_brand_voice` returned ok, and
 `fluid_api("/api/settings/brand_guidelines", "GET")` shows a non-null `brand_md` starting
-with `# Brand Guide`. If only the API push failed, that is **not** a step failure — the
-local file is what `<brand_voice>` reads, so downstream agents are already served. Record
-the exact error in `remaining_for_human` and continue.
+with `# Brand Guide`; verify the same response's `fonts` array matches every licensed
+font you intended to persist. If only the `brand_md` API push failed, that is **not** a
+step failure — the local file is what `<brand_voice>` reads, so downstream agents are
+already served. A failed structured-font push is a visible remainder because the theme
+can still apply its own tokens, but it must not be misreported as persisted. Record the
+exact error in `remaining_for_human` and continue.
 
 Never invent brand content to fill a section. Leave the section's prompt comment in place,
 list it in `sections_left_as_prompts`, and say so in the report.

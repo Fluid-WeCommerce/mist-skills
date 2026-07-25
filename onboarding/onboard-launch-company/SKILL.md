@@ -218,14 +218,17 @@ Do not poll `workflow_status` unsolicited. When the user asks, use it.
 - If the user cancels in Step 1, respond with one line ("no worries — ping
   me when you're ready") and stop. Do not re-prompt.
 
-## API & sequencing gotchas (from live onboarding runs)
+## API & sequencing gotchas
 
 These are non-obvious and cost real time when rediscovered. Bake them in.
 
-- **Create pages via `POST /api/company/pages`.** The `/api/company/v1/pages`
-  variant 404s. `html_code` compiles async — re-GET (or re-PATCH) if the body
-  comes back empty. Deleting a page and reusing its slug tombstones the slug;
-  always use a fresh slug.
+- **Read the live schema before writes.** Use `query_docs` against
+  `/openapi/api-reference/storefront-v2026-04.yaml`. Catalog/content CRUD is
+  `/api/v202604/company/{products,categories,collections,posts,media,playlists,pages}`;
+  do not fall back to `/api/company/v1/*` from memory.
+- **Create visible pages through Mist's `create_page` tool.** It coordinates the
+  v202604 Page resource, theme template, local dev route, and preview pane.
+  Bypassing it with a raw page POST leaves those surfaces out of sync.
 - **Push theme edits BEFORE creating pages.** Creating a page auto-generates
   an `application_theme_template` in the active theme. A subsequent
   `theme push` then tries to delete those orphans and can fail or clobber. Do
@@ -234,16 +237,13 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
 - **Cloud Armor throttles page-create bursts.** A rapid run of POST-with-body
   requests gets persistently 403'd by the prod WAF (GET stays 200), and a
   short cooldown doesn't clear it. Space page creates out; don't hammer.
-- **Product creates need the NESTED-attributes payload** — a flat
-  `{product:{title,price}}` silently creates $0 shells. Pricing lives on
-  `variants_attributes[].variant_countries_attributes`; exactly one variant
-  `is_master:true`; include `active:true` + `status:"active"` in the create body
-  so no draft→active pass is needed (if a product still lands draft, PATCH
-  `{product:{status:"active"}}`). Options only materialize via `option_attrs`
-  (product = names, variant = values). Collection membership is
-  `PATCH product {collection_ids:[...]}` — `collections/{id}/add_product` 404s.
-- **Three product-payload keys that silently or noisily kill an import**
-  (live-verified 2026-07-25 against api.fluid.app):
+- **Product creates need the v202604 nested-attributes payload** — a flat
+  `{product:{title,price}}` cannot express country pricing. Pricing lives on
+  `variants_attributes[].variant_countries_attributes`; exactly one variant is
+  `is_master:true`; use canonical `status:"published"` + `public:true`. Options
+  use `option_attrs` (product = names, variant = values). Collection membership
+  is product `collection_ids` or the collection's full-replacement `product_ids`.
+- **Three product-payload details that silently or noisily kill an import:**
   - `variant_countries_attributes` needs **`country_id` (integer) + `active`**.
     `country_iso` alone 422s `active is missing, country_id is missing`. Get the
     integer from `GET /api/settings/company_countries` →
@@ -252,10 +252,10 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
   - `images_attributes` entries use **`image_url`**, not `url` — `{"url": …}`
     422s `image_url is missing`, which is how a whole catalog ends up on Fluid's
     grey placeholder.
-  - **Set options + every variant at CREATE time.** Adding an option axis to an
-    already-created single-variant product via PATCH 422s with an EMPTY errors
-    object. There is no repair path — a product imported flat must be re-created
-    to gain its variants.
+  - **Set options + every variant at CREATE time.** This preserves source
+    combinations and avoids a risky repair. If a repair is needed, re-read the
+    v202604 PATCH schema and existing nested IDs before writing; never assume a
+    legacy PATCH limitation still applies.
 - **DAM upload supports a local file or a remote URL.** Use `dam_upload` for a
   file already in the sandbox, or `fluid dam upload --url <SOURCE_URL>` for a
   remote source. The underlying `POST https://upload.fluid.app/upload` accepts

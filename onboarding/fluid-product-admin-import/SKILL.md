@@ -22,6 +22,22 @@ Inside Mist, the active company and credentials are already selected:
 
 This is an execution contract. A row count is not proof of a complete import.
 
+## Authoritative API contract
+
+The documented admin catalog surface is the April 2026 storefront API:
+
+- `GET/POST /api/v202604/company/products`
+- `GET/PATCH/DELETE /api/v202604/company/products/{id}`
+- the same `/api/v202604/company/{resource}` CRUD pattern for categories,
+  collections, enrollment packs, posts, media, playlists, and pages.
+
+Before the first write in a run, use `query_docs` against
+`/openapi/api-reference/storefront-v2026-04.yaml` and inspect the exact path
+and write schema you need. The docs beat copied examples in this skill if the
+contract changes. Do not fall back to `/api/company/v1/*` when a documented
+v202604 call fails; report the docs/runtime mismatch instead of silently using
+a legacy surface.
+
 ## Safety and scope
 
 Honor the caller's scope. A manifest/discovery step is read-only against Fluid.
@@ -70,24 +86,24 @@ Required shape:
   },
   "products": [
     {
-      "source_id": "https://example.com/products/front-wheel-c4",
-      "source_url": "https://example.com/products/front-wheel-c4",
-      "source_handle": "front-wheel-c4",
-      "final_url": "https://example.com/products/front-wheel-c4",
+      "source_id": "https://example.com/products/source-product-123",
+      "source_url": "https://example.com/products/source-product-123",
+      "source_handle": "source-product-123",
+      "final_url": "https://example.com/products/source-product-123",
       "http_status": 200,
       "content_type": "text/html",
-      "title": "Front Wheel",
+      "title": "Exact Source Product Title",
       "description": "Exact source description",
-      "price": 120,
+      "price": "29.99",
       "compare_price": null,
-      "currency": "EUR",
-      "image_urls": ["https://source.example/front-wheel.jpg"],
-      "option_axes": { "Compatibility": ["C4", "Cruiser"] },
+      "currency": "USD",
+      "image_urls": ["https://source.example/source-product-123.jpg"],
+      "option_axes": { "Size": ["Small", "Large"] },
       "variants": [
         {
-          "source_variant_id": "front-wheel-c4",
-          "options": ["C4"],
-          "price": 120
+          "source_variant_id": "source-variant-456",
+          "options": ["Small"],
+          "price": "29.99"
         }
       ],
       "evidence": ["sitemap", "rendered-html", "json-ld"]
@@ -131,10 +147,10 @@ never title.
 ```json
 {
   "products": {
-    "https://example.com/products/front-wheel-c4": {
+    "https://example.com/products/source-product-123": {
       "fluid_product_id": 123,
-      "fluid_slug": "front-wheel-2f91",
-      "source_handle": "front-wheel-c4"
+      "fluid_slug": "source-product-title-2f91",
+      "source_handle": "source-product-123"
     }
   }
 }
@@ -163,8 +179,10 @@ Before product creates:
 2. choose the intended active company country from caller/source context;
 3. use `company_countries[].country.id` as integer `country_id`;
 4. retain the source currency and confirm it agrees with the selected market;
-5. paginate `GET /api/company/v1/products` to understand existing destination
-   state.
+5. paginate `GET /api/v202604/company/products?page[limit]=100` to understand
+   existing destination state. Follow each opaque
+   `meta.pagination.next_cursor` via `page[cursor]` until it is `null`; this
+   surface does not promise a `total_count`.
 
 Do not substitute `country_iso` for `country_id`.
 
@@ -193,30 +211,29 @@ source has a real image.
 
 Create products with nested attributes:
 
-```json
+```jsonc
 {
   "product": {
     "title": "Exact Source Product Title",
     "description": "Exact source description",
-    "active": true,
-    "status": "active",
+    "status": "published",
+    "public": true,
     "images_attributes": [
       {
         "image_url": "https://ik.imagekit.io/fluid/...",
         "position": 1
       }
     ],
-    "option_attrs": ["Color", "Configuration"],
+    "option_attrs": ["Size"],
     "variants_attributes": [
       {
         "is_master": true,
-        "option_attrs": ["Black", "A (+ rear rack)"],
+        "option_attrs": ["Small"],
         "variant_countries_attributes": [
           {
-            "country_id": 20,
+            "country_id": 123, // example only; replace from company_countries
             "active": true,
-            "currency_code": "EUR",
-            "price": 3418,
+            "price": "29.99",
             "compare_price": null
           }
         ]
@@ -226,20 +243,31 @@ Create products with nested attributes:
 }
 ```
 
-Endpoint: `POST /api/company/v1/products`
+Endpoint: `POST /api/v202604/company/products`
 
 Contract:
 
+- Use canonical lifecycle vocabulary: `status: "published"` plus
+  `public: true` for a live product. `active` remains a read-side visibility
+  field; the undocumented raw `status: "active"` value is legacy
+  compatibility, not the current write contract.
 - `images_attributes` uses `image_url`, not `url`.
 - Exactly one variant has `is_master: true`.
 - Product `option_attrs` are option names.
 - Variant `option_attrs` are values in the same order.
 - Create every real axis and variant combination on the first POST.
-- Every variant country includes integer `country_id`, `active`, exact
-  `currency_code`, exact price, and compare price when present.
+- Every variant country includes integer `country_id`, `active`, exact decimal
+  string `price`, and `compare_price` when present. Do not send
+  `currency_code`: the selected country determines currency on this contract.
+  Verify the response's country-relative `pricing.currency_code` matches the
+  source currency.
 - Preserve source description, gallery order, option names/values, and exact
   prices.
 - Do not attach a subscription plan unless the source offers that plan.
+- Static bundle links use documented `product_bundles_attributes`. Dynamic
+  `product_bundle_groups_attributes` are not writable on v202604; if the source
+  requires that unsupported shape, stop and report the exact gap instead of
+  flattening or silently dropping bundle choices.
 - Use each returned Fluid slug/canonical URL for destination navigation; do not
   assume the source handle became the Fluid slug.
 
@@ -251,14 +279,15 @@ self-certifying.
 
 Use GET-before-write and persist source identity → Fluid ID mappings.
 
-| Resource           | Endpoint                              | Important rule                                                                         |
-| ------------------ | ------------------------------------- | -------------------------------------------------------------------------------------- |
-| Categories         | `POST /api/company/v1/categories`     | Create parents before children; resolve `parent_id` from the mapping.                  |
-| Collections        | `POST /api/company/v1/collections`    | Preserve source collection identity and membership.                                    |
-| Product membership | `PATCH /api/company/v1/products/{id}` | Send verified `collection_ids`; do not assume an `add_product` route exists.           |
-| Static pages       | `POST /api/company/pages`             | Space writes to avoid WAF bursts; do not use the currently-404ing `/v1/pages` variant. |
-| Blog posts         | `POST /api/posts`                     | Preserve title, body, date, slug, and DAM hero image.                                  |
-| Menus              | `POST /api/menus`                     | Use destination canonical routes and preserve nesting/order.                           |
+| Resource           | Endpoint                                                 | Important rule                                                                                                             |
+| ------------------ | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Categories         | `POST /api/v202604/company/categories`                   | Create parents before children; resolve `parent_id` from the mapping.                                                      |
+| Collections        | `POST /api/v202604/company/collections`                  | Preserve source identity. `product_ids` is a full replacement; omission leaves membership unchanged.                      |
+| Product membership | `PATCH /api/v202604/company/products/{id}`               | Send verified `collection_ids`; PATCH is partial and does not require resending `title`.                                   |
+| Static pages       | Mist `create_page`; underlying `/api/v202604/company/pages` | Use `create_page` so the page, theme template, preview route, and preview pane stay coordinated.                          |
+| Blog posts         | `POST /api/v202604/company/posts`                        | Preserve documented source fields, lifecycle, the response's canonical URL, and DAM hero/SEO image.                       |
+| Playlists          | `POST /api/v202604/company/playlists`                    | The route says playlists but the documented request wrapper is intentionally `library`.                                  |
+| Menus              | `POST /api/menus`                                        | Menus are the explicit legacy exception; use destination canonical routes and preserve nesting/order.                     |
 
 Theme pushes happen before page creates because page creation can auto-generate
 theme templates that a later push may try to remove.
@@ -294,7 +323,7 @@ The product import passes only when:
 - every discovered route is live or has an evidence-backed exclusion;
 - unresolved source and destination counts are zero;
 - coverage is exactly 100%;
-- destination products are active;
+- destination products resolve as `status: "published"` and `active: true`;
 - exact price and currency match;
 - source option axes and variant counts match;
 - every available source image is represented by a resolving Fluid DAM URL;

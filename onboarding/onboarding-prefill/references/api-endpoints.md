@@ -69,10 +69,10 @@ Authentication is injected automatically by the Mist runtime — call these endp
 | ------ | --------------------------------- | ------------------------------------------------------ |
 | GET    | `/api/settings/company`           | Company identity (id, name) for preflight confirmation |
 | GET    | `/api/settings/company_countries` | Token validation + country data                        |
-| GET    | `/api/settings/brand_guidelines`  | Read current brand (logo, colors) before pushing       |
-| PATCH  | `/api/settings/brand_guidelines`  | Set brand colors + logo/icon/favicon/OG images         |
+| GET    | `/api/settings/brand_guidelines`  | Read identity, colors, fonts, and `brand_md`            |
+| PATCH  | `/api/settings/brand_guidelines`  | Set identity, colors, fonts, images, and `brand_md`     |
 
-## Brand Guidelines (logo + colors) — exact contract
+## Brand Guidelines (identity + fonts + brand.md) — exact contract
 
 `PATCH /api/settings/brand_guidelines` accepts EXACTLY these fields (verified against the
 Rails `UpdateAction` params schema — anything else is dropped):
@@ -89,6 +89,18 @@ Rails `UpdateAction` params schema — anything else is dropped):
     "default_og_image": "https://…", // optional, string URL
     "default_og_description": "…", // optional, string
     "default_fallback_image": "https://…", // optional, string URL
+    "brand_md": "# Brand Guide\n…", // optional, string; normally write via update_brand_voice
+    "fonts": [
+      {
+        "name": "Licensed Font Family", // required
+        "file_url": "https://ik.imagekit.io/fluid/…/font.woff2", // required
+        "file_id": 123, // optional integer DAM asset id
+        "format": "woff2", // optional
+        "weight": "400", // optional string
+        "style": "normal", // optional string
+        "role": "body", // optional string, e.g. body or heading
+      },
+    ],
   },
 }
 ```
@@ -105,14 +117,28 @@ Rails `UpdateAction` params schema — anything else is dropped):
    `favicon_url`) set to that DAM URL. Never point these at the source site's CDN — those
    links rot and leak the source domain.
 
+**Font flow.** Only ingest a font when the company owns a webfont license that
+allows re-hosting:
+
+1. Record the exact family, weights, styles, file URLs, license source, and
+   verdict from the source stylesheet and supporting evidence.
+2. Ingest each licensed font through the DAM using a local file or multipart
+   `external_asset_url`, just like an image.
+3. Add one `fonts[]` entry per real font file. `name` and `file_url` are
+   required; populate `file_id`, `format`, `weight`, `style`, and `role` when
+   known.
+4. For a proprietary or unverified font, do not copy its bytes. Record the
+   original family and a legally usable substitute in `brand.md`, and only
+   persist the licensed substitute in `fonts`.
+
 Notes:
 
 - Wrap the payload in the `brand_guidelines` key — a flat body is ignored.
 - A successful update auto-re-evaluates the Getting Started "brand guidelines" step
   (`onboarding.check_brand_guidelines`) — no separate check_step call needed for it.
-- **Fonts are NOT part of brand_guidelines** — there is no font field in this schema.
-  Brand fonts live in the theme (theme tokens / settings_data), so set them via the
-  theme, and don't fail a brand-QA check for a "missing font" on this endpoint.
+- `brand_md` is part of this endpoint, but in Mist use `update_brand_voice`
+  rather than a direct PATCH so the local `<company>/brand.md` and API value
+  stay synchronized.
 - Verify after push: `GET /api/settings/brand_guidelines` and confirm the fields landed.
 
 ## Company profile (rename, support email, country) — exact contracts

@@ -133,6 +133,82 @@ blank/obscured captures, unresolved catalog routes, and partial batches also fai
 Why: the previous vocabulary allowed “we stopped trying” to be interpreted as
 “the result is acceptable.”
 
+### 7. Catalog writes use the documented v202604 surface
+
+The product and related-resource instructions now use:
+
+- `/api/v202604/company/products` with cursor pagination through
+  `meta.pagination.next_cursor`;
+- canonical `status: "published"` + `public: true`;
+- decimal-string prices inside `variant_countries_attributes`;
+- country-derived currency (no `currency_code` in the Product write object);
+- v202604 categories, collections, posts, media, playlists, and pages;
+- Mist `create_page` for visible pages so the resource, theme template, local
+  route, dev server, and preview pane remain synchronized.
+
+The authoritative evidence is
+`docs/openapi/storefront-v2026-04.yaml` and
+`config/routes/storefront/api_v2026_04.rb` in
+`fluid-commerce/fluid` at fetched `origin/master` commit
+`9bf92fdf21caa2b7e6646976b222b48dd79d553d`.
+
+Why: the earlier workflow had copied legacy `/api/company/v1/*` examples into
+multiple prompts. Those examples contradicted Mist Desktop's current API
+quick-reference and caused agents to bypass the documented current surface.
+The products-import and content-import workflow prompts now begin with an
+explicit `run_skill("fluid-product-admin-import")`, which loads the published
+skill and its references into that turn while preserving the step-specific
+workflow prompt. This reduces duplicated contract text.
+
+### 8. Brand guidelines persist fonts and brand.md
+
+`PATCH /api/settings/brand_guidelines` now documents and verifies both
+`brand_md` and `fonts[]`. Each font requires `name` and `file_url`; optional
+fields are `file_id`, `format`, `weight`, `style`, and `role`. Licensed source
+font files are DAM-hosted and persisted. Proprietary or unverified font bytes
+are not copied; `brand.md` records the original family, license verdict, and a
+legally usable substitute.
+
+The authoritative evidence is
+`docs/openapi/settings-v0.yaml` plus
+`app/services/api/settings/brand_guidelines/update_action.rb` at the same
+backend commit.
+
+Why: the earlier public reference incorrectly said the endpoint had no font
+field. That would make the strongest possible theme prompt unable to retrieve
+the actual configured fonts.
+
+### 9. Remote DAM ingestion does not require a local download
+
+The upload service accepts multipart `external_asset_url` (exact field name)
+as an alternative to multipart `file`; it fetches the remote bytes
+server-side and auto-detects `fileName` when omitted. JSON mode remains for
+`b64_json`/`data_uri`. The CLI exposes this as
+`fluid dam upload --url <SOURCE_URL>`.
+
+The authoritative evidence is
+`README.md` and `src/index.ts` in
+`fluid-commerce/file-upload-serverless` at commit `d14b039`.
+
+Why: the earlier skill confused the JSON error for an unsupported remote URL.
+That forced unnecessary downloads into the sandbox and increased slow-network
+I/O, disk use, and failure surface.
+
+### 10. Validation fixtures cannot leak into reusable agent context
+
+Cowboy-specific facts remain in this validation report only. The reusable
+`brand-md.md`, onboarding skill, theme skill, and flagship workflow use
+source-derived placeholders and requirements.
+
+The dependency-free catalog validator now also rejects legacy product/content
+paths, the false font/upload statements, and Cowboy-specific brand fragments
+inside the flagship published contract. It requires both relevant workflow
+steps to load the product-import skill and requires current v202604, cursor,
+lifecycle, remote-upload, fonts, and brand.md fragments.
+
+Why: Mist injects selected skill references into agent context. A real test
+brand used as a normative example can bias every future company's output.
+
 ## Performance and resilience choices
 
 - Workflow concurrency is capped at three live steps.
@@ -163,7 +239,8 @@ Why: the previous vocabulary allowed “we stopped trying” to be interpreted a
 - Product-import skill passes the Codex skill validator.
 - The published catalog now passes a dependency-free validator that rejects
   duplicate JSON keys, duplicate skill/workflow slugs or paths, missing files,
-  missing references, and malformed workflow JSON. This caught and fixed a
+  missing references, malformed workflow JSON, stale flagship API contracts,
+  missing brand/DAM fields, and test-fixture leakage. This caught and fixed a
   pre-existing merged manifest object that silently hid the Smart Dashboard
   entry behind Checkout Funnel Diagnosis.
 - All changed JSON files parse and `git diff --check` is clean.
