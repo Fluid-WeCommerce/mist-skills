@@ -4,7 +4,9 @@ description: >-
   Pre-fill the Fluid Commerce payments onboarding (KYC) form by scraping a
   company's website AND researching public records (state registries, Google
   Business Profile, LinkedIn, BBB, Trustpilot, negative media). Cross-verifies
-  data across sources with confidence scoring before pushing. Use when helping
+  data across sources with confidence scoring before pushing. Also harvests the
+  brand's real palette, typography and voice from the source site and writes the
+  company's brand.md — the brand guide every later agent reads. Use when helping
   a company get set up for payments processing on Fluid.
 icon: id-card
 ---
@@ -27,18 +29,24 @@ The active Fluid company is already selected in Mist Desktop. All Fluid API call
 
 > **NEVER fill PII fields** (DOB, nationality, government ID, ownership %). These cannot be reliably sourced from public records.
 
+> **ALWAYS write `brand.md`.** Brand facts recorded only in `STEP_OUTPUT` are invisible to
+> every later agent and die with the run. `brand.md` is injected into every future turn for
+> this company. Step 3f harvests it, Step 8g writes it — neither is optional.
+
 ## Flow Overview
 
 ```
 1. Collect inputs               — company website URL + optional primary contact
 2. Confirm active company       — verify the selected company is the one being onboarded
 3. Scrape company website       — crawl tool extract + page scrapes + Shopify + JSON-LD
+                                  + BRAND IDENTITY harvest (palette, type, verbatim voice)
 4. Research public records      — state registry, Google, LinkedIn, BBB, Trustpilot, negative media
 5. Cross-verify & score         — confidence matrix (HIGH / MEDIUM / LOW / CONFLICT)
 6. Promote MEDIUM fields        — targeted follow-up searches (max 2 per field)
 7. MLM assessment               — scored signals, user confirms before setting flag
 8. Map & push                   — GET existing state, merge, push HIGH + MEDIUM only
-9. Report                       — confidence matrix + gaps + negative media scan
+                                  + WRITE brand.md (the one artifact every later agent reads)
+9. Report                       — confidence matrix + brand block + gaps + negative media scan
 ```
 
 ## Reference Files
@@ -47,6 +55,8 @@ Read these when you need detailed lookups during execution:
 - [references/state-registries.md](references/state-registries.md) — US state business registry domains for `site:` searches
 - [references/field-coverage.md](references/field-coverage.md) — complete field map with sources, API locations, and confidence models
 - [references/api-endpoints.md](references/api-endpoints.md) — all onboarding API endpoints
+- [references/brand-md.md](references/brand-md.md) — **read before Step 3f and Step 8g.** How to
+  harvest a brand's real palette/type/voice and turn it into a `brand.md` that isn't boilerplate
 
 ---
 
@@ -155,6 +165,39 @@ Request the raw HTML of the homepage from the crawl tool. Parse `<script type="a
 ### 3e. Social media link harvesting
 
 Extract links to Facebook, LinkedIn, Instagram, TikTok, and Twitter/X from the homepage. Store URLs for use in Step 4 (LinkedIn company page gets fetched directly).
+
+### 3f. Brand identity harvest (do not skip — Step 8g depends on it)
+
+This sub-step collects the raw material for `brand.md`. Read
+[references/brand-md.md](references/brand-md.md) for the full method; the short version:
+
+**Palette + typography — from the stylesheet, not from a screenshot.**
+
+1. Pull `<link rel="stylesheet">` hrefs out of the homepage HTML you already fetched in 3d.
+2. Fetch the main bundle and extract:
+   - `:root { --color-*: … }` — the brand's own token names and values. Space-separated
+     triples are RGB: `--color-primary: 20 20 20` → `#141414`.
+   - `@font-face` blocks — the real `font-family` names and the exact `font-weight`s shipped,
+     plus the `.woff2` URLs.
+   - Layout rhythm props (`--spacing-section-*`, `--font-size-display`) — the theme step wants these.
+3. Rank raw hex frequency across the stylesheet as a cross-check on structural vs incidental colors.
+4. **License-check every font family.** Proprietary foundry faces (Swiss Typefaces, Klim,
+   Commercial Type, Lineto, …) can't be re-hosted. Record the real name, the closest free
+   substitute, and that a substitution is required — the theme build and the
+   font-substitution QA step both consume this.
+
+**Voice — verbatim, from at least three page types.**
+
+Collect the actual strings, not a description of them: 8-12 headlines, 2-3 product
+description sentences, the primary CTA label, and any recurring tagline. Sample across the
+homepage, a product page, and a content/about page. Note the mechanics you can only see in
+real copy: sentence case vs title case, whether exclamation marks or emoji appear **at all**,
+sentence length, person and tense, what the brand calls its customer, and its price format.
+
+**Also capture:** the logo asset URL, market/locale (`html lang`, currency, shipping page),
+the product price band, and the model/product naming pattern.
+
+Everything here is HIGH confidence — it comes from the company's own site.
 
 ## Step 4: Research Public Records
 
@@ -448,6 +491,50 @@ Match on: state registry classification, Google Business Profile category, produ
 
 MCC is MEDIUM confidence unless Google Business Profile category maps directly → promote to HIGH.
 
+### 8g. Brand guidelines + brand.md — the highest-leverage push of the whole skill
+
+Read [references/brand-md.md](references/brand-md.md) before writing this. Two different
+artifacts, both required:
+
+**1. Structured brand fields** → `PATCH /api/settings/brand_guidelines` with the palette and
+logo you harvested in 3f, using the exact contract in
+[references/api-endpoints.md](references/api-endpoints.md) (`color`, `secondary_color`,
+`logo_url`/`icon_url`/`favicon_url` — DAM-uploaded URLs only; there is no font field here).
+
+**2. The brand guide itself** → `update_brand_voice({ content: <the whole document>,
+mode: "replace" })`.
+
+This is the artifact that survives the run. Mist injects `brand.md` as a `<brand_voice>`
+block into **every future agent turn for this company** — every remaining workflow step,
+every QA reviewer, and every later theme/portal/widget/copy request. `STEP_OUTPUT` reaches
+only steps that declare a `dependsOn`, is invisible to QA reviewers, and dies with the run.
+A brand fact that exists only in `STEP_OUTPUT` is a brand fact the theme agent will never
+see — which is exactly how a €3,299 connected-e-bike brand shipped a homepage reading
+"Built different. Worn forever." and "NEW DROP".
+
+Write the complete document with the canonical headings (`Brand Overview`, `Mission &
+Values`, `Tone of Voice`, `Audience`, `Vocabulary & Naming`, `Visual Style`, `Do's and
+Don'ts`, `Brands & Sites We Admire`, `Examples`, `Sources`), then reread it against one
+question:
+
+> **Would any line of this be WRONG for a different company?**
+
+If a sentence ("friendly and approachable", "modern clean design", "quality-focused
+customers") would sit just as comfortably in an unrelated brand's guide, it is boilerplate
+— delete it and put the specific fact in its place: the hex value, the font name and its
+license status, the quoted headline, the price band, the words this brand never uses.
+Quote real copy verbatim; prefer numbers to adjectives; list 3-5 on-brand examples **and**
+3 off-brand lines written specifically to be rejected for this brand. Cite your sources.
+
+Then verify persistence: `update_brand_voice` returned ok, and
+`fluid_api("/api/settings/brand_guidelines", "GET")` shows a non-null `brand_md` starting
+with `# Brand Guide`. If only the API push failed, that is **not** a step failure — the
+local file is what `<brand_voice>` reads, so downstream agents are already served. Record
+the exact error in `remaining_for_human` and continue.
+
+Never invent brand content to fill a section. Leave the section's prompt comment in place,
+list it in `sections_left_as_prompts`, and say so in the report.
+
 ## Step 9: Report with Confidence Matrix
 
 Print this structured summary after pushing.
@@ -473,6 +560,15 @@ HIGH CONFIDENCE (auto-filled):
   MCC:                 {code} — {description}
   BBB:                 {rating} ({source})
   Trustpilot:          {score}/5, {count} reviews ({source})
+
+BRAND (from the source stylesheet + verbatim copy — see Step 3f/8g):
+  Palette:             primary {hex}  secondary {hex}  accent {hex}   (pushed: {yes/no})
+  Typography:          {family} {weights} — licensable: {yes/no}; substitute: {family}
+  Logo:                {DAM URL} (pushed: {yes/no})
+  Voice, in one line:  {the pattern, e.g. "short fragments + full stops, zero exclamation marks"}
+  brand.md:            {n}/10 sections filled, {n} verbatim quotes,
+                       local: {path}, synced to Fluid: {yes/no + reason}
+  Left as prompts:     {sections you could not source, or "none"}
 
 RELEVANT PERSONS FOUND:
   (These people were discovered during research but were NOT pushed as owners.

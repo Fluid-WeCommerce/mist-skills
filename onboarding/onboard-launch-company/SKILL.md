@@ -231,13 +231,37 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
   short cooldown doesn't clear it. Space page creates out; don't hammer.
 - **Product creates need the NESTED-attributes payload** — a flat
   `{product:{title,price}}` silently creates $0 shells. Pricing lives on
-  `variants_attributes[].variant_countries_attributes` (`country_iso`,
-  `currency_code`, `price`); exactly one variant `is_master:true`; include
-  `active:true` + `status:"active"` in the create body so no draft→active pass
-  is needed (if a product still lands draft, PATCH `{product:{status:"active"}}`).
-  Options only materialize via `option_attrs` (product = names, variant =
-  values). Collection membership is `PATCH product {collection_ids:[...]}` —
-  `collections/{id}/add_product` 404s.
+  `variants_attributes[].variant_countries_attributes`; exactly one variant
+  `is_master:true`; include `active:true` + `status:"active"` in the create body
+  so no draft→active pass is needed (if a product still lands draft, PATCH
+  `{product:{status:"active"}}`). Options only materialize via `option_attrs`
+  (product = names, variant = values). Collection membership is
+  `PATCH product {collection_ids:[...]}` — `collections/{id}/add_product` 404s.
+- **Three product-payload keys that silently or noisily kill an import**
+  (live-verified 2026-07-25 against api.fluid.app):
+  - `variant_countries_attributes` needs **`country_id` (integer) + `active`**.
+    `country_iso` alone 422s `active is missing, country_id is missing`. Get the
+    integer from `GET /api/settings/company_countries` →
+    `company_countries[].country.id` (Belgium = 20). This is the classic cause of
+    a catalog with correct titles and no prices.
+  - `images_attributes` entries use **`image_url`**, not `url` — `{"url": …}`
+    422s `image_url is missing`, which is how a whole catalog ends up on Fluid's
+    grey placeholder.
+  - **Set options + every variant at CREATE time.** Adding an option axis to an
+    already-created single-variant product via PATCH 422s with an EMPTY errors
+    object. There is no repair path — a product imported flat must be re-created
+    to gain its variants.
+- **DAM upload is multipart file bytes, not a URL.** `POST
+  https://upload.fluid.app/upload` with fields `fileName`, `file`, then
+  `name`/`tags` (or use the `dam_upload` tool). There is no `external_asset_url`
+  on this endpoint — a JSON body 400s with `Either b64_json or data_uri is
+  required`. Download the source image first, then upload, then use
+  `asset.default_variant_url`.
+- **Source catalogs are often bot-walled.** `<site>/products.json` on a modern
+  Shopify/Hydrogen storefront returns a Cloudflare 403 "Verifying your
+  connection". Check for a `<url>.md` LLM-markdown twin (some storefronts
+  advertise one in a banner — it returns clean title/image/price/description),
+  otherwise crawl the collection pages and the PDPs.
 - **Storefront status checks MUST use a real headless browser.** Prod Cloud
   Armor returns 500/302 to curl/HTTP clients even with a browser UA, while a
   real browser gets 200. Never conclude a route is broken from a curl status.

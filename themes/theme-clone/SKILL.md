@@ -32,6 +32,30 @@ step. The rules and gotchas below apply to whichever phase you're executing.
 
 This skill is used across many different sites. **Never reuse data from a previous run.** Always start with a fresh working directory. The active Fluid company is already selected in Mist Desktop — you do not collect or validate a Fluid token or store URL.
 
+## Read `brand.md` before you write a single line of copy
+
+Mist injects the company's brand guide into your context as a **`<brand_voice>` block** —
+that block *is* `brand.md`. It is written by the onboarding run (skill
+`onboarding/onboarding-prefill`, Step 8g) and carries the brand's real palette, its real
+typeface and license status, its audience, the words it uses and the words it never uses,
+and verbatim examples of on-brand and off-brand copy.
+
+**Read it first. Every headline, subhead, button label, alt text, empty-state string and
+placeholder you author must obey it.**
+
+Why this is a rule and not a nicety: a clone of a €2,399-3,999 connected-e-bike brand once
+shipped with *"Built different. Worn forever."*, *"NEW DROP"* and *"Trusted by thousands"* —
+apparel-template defaults — because the agent building the sections had never been told what
+the brand was. Nothing errored. The theme was just wrong, in the most visible way possible.
+
+- Scraped source copy always wins. Use the real string from the source page.
+- When you MUST author a string the source doesn't provide, write it in the voice
+  `brand.md` describes, and check it against that file's Do's and Don'ts before you keep it.
+- If a base-theme placeholder string survives into a section you built ("Shop the drop",
+  "Trusted by thousands", "Lorem ipsum"), that is a defect, not filler.
+- If the `<brand_voice>` block says no brand guide has been filled in, say so in your
+  report — do not silently invent a voice.
+
 ## Prerequisites
 
 This skill requires local tooling so the agent can spin up the theme on `localhost`, drive a headless browser, and visually verify each page against the live source. Before any clone work begins, run the preflight in [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#preflight-check) and warn the user (offering to install) if anything is missing:
