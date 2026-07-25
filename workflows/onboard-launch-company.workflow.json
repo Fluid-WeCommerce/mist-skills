@@ -3,10 +3,46 @@
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: gather brand + business info from the public site, import the product catalog FIRST (so the theme renders real products), then clone the site into a Fluid theme through small, individually-QA'd build steps (scrape/assets, tokens/skeleton, header/footer, homepage, product/collection templates, content pages + push), iteratively refine against paired screenshots, reconcile onboarding info, discover UGC, and deliver a live-verified launch-readiness review. QA on each step grades against explicit hard-fail bars — cosmetic gaps become notes for the refine pass, not run-killers.",
   "deriveContext": [
-    { "set": "build_theme",         "when": { "in":       { "key": "run_scope", "values": ["full", "data_theme", "theme_only"] } } },
-    { "set": "import_products",     "when": { "equals":   { "key": "run_scope", "value": "full" } } },
-    { "set": "discover_ugc",        "when": { "includes": { "key": "extras", "value": "discover_ugc" } } },
-    { "set": "import_brand_social", "when": { "includes": { "key": "extras", "value": "import_brand_social" } } }
+    {
+      "set": "build_theme",
+      "when": {
+        "in": {
+          "key": "run_scope",
+          "values": [
+            "full",
+            "data_theme",
+            "theme_only"
+          ]
+        }
+      }
+    },
+    {
+      "set": "import_products",
+      "when": {
+        "equals": {
+          "key": "run_scope",
+          "value": "full"
+        }
+      }
+    },
+    {
+      "set": "discover_ugc",
+      "when": {
+        "includes": {
+          "key": "extras",
+          "value": "discover_ugc"
+        }
+      }
+    },
+    {
+      "set": "import_brand_social",
+      "when": {
+        "includes": {
+          "key": "extras",
+          "value": "import_brand_social"
+        }
+      }
+    }
   ],
   "steps": [
     {
@@ -77,10 +113,12 @@
       },
       "maxReworkRounds": 1,
       "acceptance": [
-        "`clone-manifest.json` exists at the theme project root and contains a page manifest, a homepage + header/footer section inventory with concrete style values, brand tokens (colors + fonts with licensing notes), and a source-URL → DAM-URL asset map — verify by READING the file, not the worker's claim.",
+        "`clone-manifest.json` exists at the theme project root and contains a page manifest, a homepage + header/footer section inventory with concrete style values, brand tokens (colors/fonts), and a `hero_copy` block recording the source homepage's headline, subheadline and primary CTA label VERBATIM, each with the capture method that produced it.",
+        "The source homepage was captured BOTH ways — markdown AND a rendered screenshot — and the manifest says which one each hero string came from. Markdown alone is not sufficient: it silently omits JS-rendered/video-overlay hero copy (measured: cowboy.com's H1 is absent from markdown at every onlyMainContent setting but plainly visible in the screenshot). Screenshot alone is not sufficient either: it captures one carousel slide where markdown carries all of them.",
+        "If the headline cannot be established from either capture, the manifest records `hero_copy.headline: null` with the reason. It must NOT be filled with an invented or base-theme string — a recorded gap is a handoff to the next step; an invented headline is a silent defect that survives to production.",
         "Spot-check 2-3 DAM URLs from the manifest: they resolve to real images (HTTP 200).",
         "The section inventory covers every visible homepage section (compare against the live source homepage).",
-        "HARD-FAIL BAR: fail only when the source site could not be scraped at all, the manifest file is missing/empty, or zero images landed on the DAM despite the source clearly having images. Missing individual pages, sections noted as 'could not capture', or a partial asset map are NOTES for later steps — not failures."
+        "HARD-FAIL BAR: fail only when the source site could not be scraped at all, the manifest file is missing/empty, zero images landed on the DAM despite the source clearly having them, or hero copy was INVENTED rather than captured-or-recorded-as-missing."
       ],
       "dependsOn": [
         "gather-context-qa"
@@ -144,11 +182,12 @@
       },
       "maxReworkRounds": 2,
       "acceptance": [
+        "The reviewer captured the SOURCE page itself this turn (a rendered screenshot, not the worker's description) and compared it against the clone side by side. A review conducted without the source image in hand does not satisfy this criterion: measured across 13 models, withholding the source collapses drift detection from 8.3/9 to 1.8/9 and makes 6 of 13 certify a wrong clone as matching.",
         "The homepage renders in the dev preview without server/Liquid errors and contains a section for every entry in the manifest's homepage inventory, in source order (verify against the manifest, not the worker's claim).",
-        "Sections use real scraped copy + DAM images — spot-check: no lorem/placeholder text in hero/features, no <img> pointing at the source site's CDN.",
+        "The homepage's hero headline, subheadline and primary CTA label match `clone-manifest.json`'s `hero_copy` VERBATIM — quote all three in STEP_OUTPUT beside the manifest's values. Where the manifest recorded a null, the step must say what it used instead and why. Sections otherwise use real scraped copy + DAM images: no base-theme boilerplate anywhere on the page (\"Your Logo\", \"Built different\", \"NEW DROP\", \"Trusted by thousands\", \"Shop the drop\" and friends), and no <img> pointing at the source site's CDN.",
         "`python3 scripts/theme_audit.py` passes on the homepage template and every new/modified section file.",
         "Desktop + mobile screenshots were taken this turn and the page is structurally coherent at both widths (no blank page, no stacked garbage).",
-        "HARD-FAIL BAR: fail only for a broken/blank homepage, a missing majority of sections, placeholder content standing in for real copy, or unfixed audit violations. Spacing/size/color deltas vs the source are refine-pass NOTES."
+        "HARD-FAIL BAR: fail for a broken/blank homepage, a missing majority of sections, ANY base-theme placeholder copy surviving in a visible section, hero copy that does not match the manifest, or unfixed audit violations. Spacing/size/color drift vs the source are NOTES for the refine step, not failures."
       ],
       "dependsOn": [
         "theme-header-footer"
@@ -167,6 +206,7 @@
       },
       "maxReworkRounds": 2,
       "acceptance": [
+        "The reviewer captured the SOURCE page itself this turn (a rendered screenshot, not the worker's description) and compared it against the clone side by side. A review conducted without the source image in hand does not satisfy this criterion: measured across 13 models, withholding the source collapses drift detection from 8.3/9 to 1.8/9 and makes 6 of 13 certify a wrong clone as matching.",
         "product/default/index.liquid leads with the scaffold's canonical product-data section (product_hero or main_product — unmodified, not a hand-rolled replacement) and adds source-matching sections after it; collection/default exists and renders.",
         "At least one REAL product PDP and one collection route were loaded in the dev preview this turn without server/Liquid errors, with screenshots (or, when the catalog is legitimately empty for this run scope, the empty state renders cleanly and is noted).",
         "`python3 scripts/theme_audit.py` passes on the touched files.",
@@ -213,11 +253,12 @@
       },
       "maxReworkRounds": 2,
       "acceptance": [
+        "The reviewer captured the SOURCE page itself this turn (a rendered screenshot, not the worker's description) and compared it against the clone side by side. A review conducted without the source image in hand does not satisfy this criterion: measured across 13 models, withholding the source collapses drift detection from 8.3/9 to 1.8/9 and makes 6 of 13 certify a wrong clone as matching.",
         "Phase A CODE-parity gate ran FIRST and reported CODE_PARITY: pass before any screenshot round: per-template structural comparison vs the source (sections present + ordered), brand tokens (no hardcoded hex/fonts), lint clean (no Liquid errors in the dev server log), and every template route renders. Screenshots are the granular FINAL pass — a run that started pixel-diffing before code parity does not satisfy this step.",
-        "The skill ran the source-vs-clone screenshot loop and reported STATUS: pass OR STATUS: cap-reached — either is acceptable; a silent loop is not.",
+        "The skill ran the source-vs-clone screenshot loop and reported STATUS: pass OR STATUS: cap-reached. cap-reached is acceptable ONLY when every remaining item is a form issue (layout/color/type/spacing/polish). Any remaining CONTENT major — copy on the clone that does not appear on the source — makes cap-reached a failure of this step: shipping the wrong words is worse than shipping the wrong padding.",
         "The STEP_OUTPUT names the pages verified this run and, if not passing, lists remaining majors and minors so the launch-readiness review can pick them up.",
         "The theme's dev preview is still healthy — verify with a final screenshot_preview after refinement completes.",
-        "HARD-FAIL BAR: fail only when the refine loop never ran, the preview is left broken, or the report is a silent/fabricated pass. cap-reached with an honest majors/minors list is a PASSING outcome."
+        "HARD-FAIL BAR: fail when the refine loop never ran, the preview is left broken, the report is a silent/fabricated pass, or cap-reached was reported with unresolved CONTENT majors. cap-reached with an honest list of FORM majors/minors is a legitimate outcome for the launch-readiness review."
       ],
       "dependsOn": [
         "theme-content-pages-push"

@@ -145,6 +145,7 @@ Look at both images side by side. Score each dimension **major / minor / ok**:
 
 | Dimension        | major example                                       | minor example                             |
 |------------------|-----------------------------------------------------|-------------------------------------------|
+| **Content**      | clone shows copy that isn't on the source — base-theme boilerplate ("Your Logo", "Built different", "NEW DROP"), an invented headline, a wrong CTA label, wrong nav items | punctuation/casing drift, a trailing period |
 | **Layout**       | hero is 1-column on source, 2-column on clone       | slight offset in gutter width             |
 | **Color**        | clone brand color visibly wrong hue                 | 2-3% saturation drift                     |
 | **Typography**   | wrong font family, wrong weight                     | 1-2px size drift on body copy             |
@@ -154,6 +155,17 @@ Look at both images side by side. Score each dimension **major / minor / ok**:
 
 **Close enough** = zero majors AND ≤ 2 minors per page you screenshotted this run.
 Don't set the bar lower — the point is a real match, not "shipped it."
+
+**Content outranks everything else.** Fix content majors first and never trade one
+away for a form fix. A page with perfect spacing and the wrong words is a worse
+outcome than the reverse: wrong padding reads as unfinished, wrong copy reads as
+a different company. If you run out of rounds with a content major open, that is
+NOT a pass — report it as such (see §7).
+
+Read the words in both screenshots. The other six dimensions all describe form, so
+a clone can score `ok` across the whole table while saying something the source
+never said — which is exactly how a generic apparel template shipped as a clone of
+an e-bike brand.
 
 ### 3. If close enough → DONE
 
@@ -204,6 +216,10 @@ Round N: fixed [issue1, issue2]. Still remaining: [issue3, issue4].
 Keep it terse — the workflow QA step reads this.
 
 ### 7. Cap reached
+
+If any **content** major is still open, the loop did not succeed. Report
+`STATUS: cap-reached-content` and list the offending strings — the workflow treats
+that as a failure of this step rather than an honest stopping point.
 
 If `N > 5` without a pass, emit a CAP report:
 
