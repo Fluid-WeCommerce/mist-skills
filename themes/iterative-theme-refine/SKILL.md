@@ -45,6 +45,15 @@ gate must not present it as near-pixel-perfect success.
    managed-browser semantic landmark protocol. Source evidence is valid only
    when its requested/final route, status, viewport, and overlay handling are
    recorded.
+6. Validate all six `source_evidence` objects before spending a visual round.
+   Each must reference a real `.mist-desktop/source-baselines/` file and carry
+   `captured_at`, `sha256`, positive `bytes`, decoded `width`/`height`,
+   `requested_viewport`, `final_url`, `status`, and `overlay_handling`. Run
+   `git hash-object -- <relative-path>` through `run_cli` and compare the
+   returned digest. A hosted URL, `crawl:1440x900`, chat attachment ID, missing
+   file, or digest mismatch is not a baseline. Recapture only invalid cells
+   with managed `crawl`, persist its returned evidence object, and re-read the
+   manifest before continuing.
 
 ## Phase A — code and data parity gate
 
@@ -101,8 +110,10 @@ rounds actual refinement rounds rather than a page-coverage lottery.
 
 For `N = 1..5`:
 
-1. Run the matched managed `crawl` source + `screenshot_preview` local capture
-   matrix for home, shop, and PDP.
+1. Reuse the validated source files from the manifest and run the matched
+   `screenshot_preview` local capture matrix for home, shop, and PDP. Recrawl a
+   source cell only when its URL/content changed or its durable evidence failed
+   preflight; persist the replacement evidence object immediately.
 2. For each route, compare full-page pairs and every named landmark pair at desktop and
    mobile.
 3. Read the metrics JSON for geometry, typography, colors, document overflow, route status,
