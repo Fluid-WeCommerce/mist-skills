@@ -161,6 +161,11 @@ Why: the previous vocabulary allowed “we stopped trying” to be interpreted a
   Jest suites pass (1,776 tests), including resolver tests proving an ambient
   stale `fluid` executable is ignored.
 - Product-import skill passes the Codex skill validator.
+- The published catalog now passes a dependency-free validator that rejects
+  duplicate JSON keys, duplicate skill/workflow slugs or paths, missing files,
+  missing references, and malformed workflow JSON. This caught and fixed a
+  pre-existing merged manifest object that silently hid the Smart Dashboard
+  entry behind Checkout Funnel Diagnosis.
 - All changed JSON files parse and `git diff --check` is clean.
 
 ## Deliberately unresolved before production

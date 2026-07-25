@@ -245,6 +245,9 @@
       "category": "mist",
       "icon": "layout-dashboard",
       "path": "mist/smart-dashboard/SKILL.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
