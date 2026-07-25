@@ -183,26 +183,97 @@ So a workflow shipped in the app can be **hot-fixed from this repo without an ap
 
 ### Workflow file shape
 
+Every field below is shown together for reference; in practice most steps
+set only `id`, `name`, one of `prompt`/`skill`, and `acceptance`.
+
 ```jsonc
 {
-  "slug": "open-country",                      // matches the manifest entry; overrides a built-in of the same slug
+  "revision": "2026-07-25",                    // bump on every edit — recovery refuses a run whose stored definition no longer matches
+  "slug": "open-country",                      // matches the manifest entry; a user file of the same slug overrides this one
   "name": "Open a Country",
   "description": "…",
+  "maxParallel": 5,                            // 1-10, default 5. How many dependency-satisfied steps may run at once
   "steps": [
     {
       "id": "create-country",
       "name": "Create the company country",
+
+      // Exactly ONE of prompt / skill:
       "prompt": "…",                           // inline instructions for this step's agent turn
-      // OR: "skill": "countries/compliance-manager"  ← delegate the step to a skill by slug
-      "target": { "type": "manager" },         // which project runs it (manager = the chat you're in)
-      "acceptance": ["…"],                      // criteria the QA turn verifies before the step passes
-      "dependsOn": [],                          // step ids that must pass first (enables parallelism)
-      "maxReworkRounds": 2,                     // bounded auto-rework on QA failure
-      "runIf": { "flag": "build_theme" }        // optional: only run when this run-context flag is truthy (see below)
+      // "skill": "countries/compliance-manager",  ← or delegate to a skill by slug
+
+      "target": { "type": "manager" },         // where it runs. "manager" = the project the run was started from
+      // "target": { "type": "kind", "kind": "theme", "fallbackToManager": true }
+      //   kind ∈ theme | portal | mist | widget — first sibling project of that kind with a local checkout.
+      //   fallbackToManager:true degrades to the manager project instead of failing when none exists.
+
+      "model": "anthropic/claude-opus-5",      // optional gateway slug for this step. Omit to use the run's model
+
+      "dependsOn": [],                         // step ids that must be satisfied first. Steps with satisfied deps run in parallel
+      "acceptance": ["…"],                     // what QA verifies against real state. Required when qa.enabled
+
+      "qa": {
+        "enabled": true,                       // default true. false = the work turn IS the step; nothing verifies it
+        "strictness": "standard",              // strict | standard | lenient (default standard)
+        "onFail": "continue",                  // what happens after the rework budget is spent — see below
+        "model": "openai/gpt-5.6-sol"          // optional: reviewer model. Omit to use the step's, then the run's
+      },
+      "maxReworkRounds": 2,                    // 0-5, default 2. Fix-and-recheck rounds before onFail applies
+
+      "runIf": { "flag": "build_theme" },      // optional: only run when this run-context flag is truthy (see below)
+      "recovery": { "mode": "manual" }         // optional: opt in to retrying THIS step after a failure. Absent = no recovery
     }
-  ]
+  ],
+
+  // Optional. Derive boolean flags from the caller's context before the first
+  // dispatch, so runIf can gate on them. Fill-only: an explicitly-passed key wins.
+  "deriveContext": [
+    { "set": "build_theme", "when": { "in": { "key": "run_scope", "values": ["full", "theme_only"] } } }
+    // predicates: { "equals": { key, value } } | { "in": { key, values } } | { "includes": { key, value } }
+  ],
+
+  // Optional. Names the step whose QA verdict IS the business outcome.
+  "finalGate": { "stepId": "launch-readiness-review", "allowNeedsReview": true }
 }
 ```
+
+#### QA — `qa` (optional, on by default)
+
+A QA step is a **second full model turn in a fresh chat**, with an independent
+reviewer that never sees the worker's transcript. It verifies `acceptance`
+against actual state using tools, and returns PASS/FAIL.
+
+- `enabled: false` — no reviewer. The step passes as soon as its agent says it's
+  done. Right for steps that fail loudly on their own (a scaffold either produced
+  files or threw); wrong for anything whose failure mode is "the agent believes it
+  worked". A step with `enabled: true` and no `acceptance` is **rejected** — a
+  reviewer with nothing to check against manufactures a PASS the run then trusts.
+- `strictness` — moves the bar for *unverifiable* criteria and cosmetic
+  shortfalls only. A genuine violation fails at every level.
+  - `strict` — anything unverifiable fails; ambiguity resolves against passing.
+  - `standard` — unverifiable fails, but criteria that explicitly allow a
+    pass-with-notes outcome are honored.
+  - `lenient` — fails what would actually break the store; cosmetic gaps pass
+    with a note.
+- `onFail` — what happens once `maxReworkRounds` is spent:
+  - `continue` (default, and the historical behaviour) — the step is marked
+    **needs-review**, its findings are carried into dependents' prompts, and the
+    run finishes `completed-with-issues`. The work landed; a human should check it.
+  - `stop` — treated as a failure: dependents are **skipped** and the run fails.
+    For steps where continuing on unverified work does damage rather than just
+    leaving a mess.
+
+#### Parallelism — order, `dependsOn` and `maxParallel`
+
+The orchestrator dispatches **every** step whose dependencies are satisfied, up
+to `maxParallel` (itself capped by the desktop's hard ceiling). Two steps with
+the same `dependsOn` therefore start together. The desktop's builder writes this
+shape by giving a step the *same* dependencies as its predecessor rather than
+depending on it.
+
+Each concurrent step is a live, billed model turn, and providers rate-limit well
+before the app does — past a point a wider fan-out finishes **slower** once
+retries start. Raise `maxParallel` only for steps that are genuinely independent.
 
 #### Conditional steps — `runIf` (optional)
 
@@ -215,6 +286,18 @@ Guidance for implementers:
 - `runIf` gates a **whole step**. For finer-grained skips inside a step, branch in the step's `prompt` instead (a prompt step can self-skip and emit `STEP_OUTPUT { skipped: true }`).
 - Prefer `runIf` over per-scope workflow copies — it keeps one source of truth and the progress card shows the skip explicitly.
 - Requires desktop engine support (fluid-mono `mist-desktop` ≥ the runIf release). Older builds ignore the unknown key and simply run the step, so tagging is backward-safe — but don't rely on skipping until the engine ships it.
+
+#### Version gating — read before publishing
+
+Unknown keys are **dropped silently** by older desktop builds, so a workflow
+using a newer field still loads there — it just quietly loses that behaviour
+(`qa.onFail: "stop"` becomes "continue", a per-step `model` reverts to the run's).
+
+`maxParallel` is the exception and the one that actually breaks: it is
+**range-validated**, and the ceiling has moved 3 → 5 → 10. A build on an older
+ceiling **rejects the whole file** — the loader logs a warning and skips it, so
+the workflow simply doesn't appear. Keep `maxParallel` within the oldest ceiling
+still in the field, or hold the workflow until the raise ships.
 
 Manifest entry (in the top-level `workflows` array):
 
