@@ -172,18 +172,22 @@ Do not substitute `country_iso` for `country_id`.
 
 For every real product/gallery/variant image:
 
-1. download the source bytes;
-2. call `dam_upload`;
-3. take `asset.default_variant_url` from the result;
-4. store source URL → DAM URL in `id-mapping.json`;
-5. use only the Fluid DAM URL in product payloads.
+1. ingest the source asset with `dam_upload` when it is already in the sandbox,
+   or use `fluid dam upload --url <SOURCE_URL>` for a remote URL;
+2. take `asset.default_variant_url` from the result;
+3. store source URL → DAM URL in `id-mapping.json`;
+4. use only the Fluid DAM URL in product payloads.
 
-If operating outside Mist, the equivalent upload is multipart file bytes to
-`https://upload.fluid.app/upload` with fields in this order: `fileName`, `file`,
-then `name`/`tags`.
+The underlying `POST https://upload.fluid.app/upload` service accepts either:
 
-There is no `external_asset_url` JSON shortcut. A placeholder image is an
-unfinished import when the source has a real image.
+- multipart file bytes (`fileName`, then `file` for large streaming uploads); or
+- multipart `external_asset_url`, which the service fetches server-side and
+  auto-detects `fileName` from when it is omitted.
+
+The exact remote field is `external_asset_url`, not `external_url`, and it is a
+multipart field rather than a JSON payload. JSON mode is reserved for
+`b64_json`/`data_uri`. A placeholder image is an unfinished import when the
+source has a real image.
 
 ## 5. Create or update products
 
@@ -192,7 +196,7 @@ Create products with nested attributes:
 ```json
 {
   "product": {
-    "title": "Cruiser",
+    "title": "Exact Source Product Title",
     "description": "Exact source description",
     "active": true,
     "status": "active",

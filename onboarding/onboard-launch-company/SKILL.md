@@ -247,8 +247,8 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
   - `variant_countries_attributes` needs **`country_id` (integer) + `active`**.
     `country_iso` alone 422s `active is missing, country_id is missing`. Get the
     integer from `GET /api/settings/company_countries` →
-    `company_countries[].country.id` (Belgium = 20). This is the classic cause of
-    a catalog with correct titles and no prices.
+    `company_countries[].country.id`; never hard-code an example country's ID.
+    This is the classic cause of a catalog with correct titles and no prices.
   - `images_attributes` entries use **`image_url`**, not `url` — `{"url": …}`
     422s `image_url is missing`, which is how a whole catalog ends up on Fluid's
     grey placeholder.
@@ -256,12 +256,12 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
     already-created single-variant product via PATCH 422s with an EMPTY errors
     object. There is no repair path — a product imported flat must be re-created
     to gain its variants.
-- **DAM upload is multipart file bytes, not a URL.** `POST
-https://upload.fluid.app/upload` with fields `fileName`, `file`, then
-  `name`/`tags` (or use the `dam_upload` tool). There is no `external_asset_url`
-  on this endpoint — a JSON body 400s with `Either b64_json or data_uri is
-required`. Download the source image first, then upload, then use
-  `asset.default_variant_url`.
+- **DAM upload supports a local file or a remote URL.** Use `dam_upload` for a
+  file already in the sandbox, or `fluid dam upload --url <SOURCE_URL>` for a
+  remote source. The underlying `POST https://upload.fluid.app/upload` accepts
+  multipart `file` or multipart `external_asset_url` (exact field name; not
+  `external_url`) and returns `asset.default_variant_url`. JSON mode is only for
+  `b64_json`/`data_uri`. Never keep a source-CDN URL in destination product data.
 - **Source catalogs are often bot-walled.** `<site>/products.json` on a modern
   Shopify/Hydrogen storefront returns a Cloudflare 403 "Verifying your
   connection". Check for a `<url>.md` LLM-markdown twin (some storefronts

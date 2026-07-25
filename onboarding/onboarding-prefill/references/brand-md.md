@@ -11,14 +11,10 @@ only in `STEP_OUTPUT` are lost.** Write them to `brand.md`.
 
 ## What goes wrong when you skip it
 
-A real run: a clone of `cowboy.com` — a Belgian maker of €2,399-3,999 connected e-bikes,
-with a near-black/paper palette, Suisse Intl type, and spec-driven headline copy
-("Riding reinvented", "Super. Natural.") — shipped with generic apparel-template copy:
-_"Built different. Worn forever."_, _"NEW DROP"_, _"Trusted by thousands"_.
-
-Nothing was broken. The theme agent simply had no idea what the brand was, because the
-brand data lived in a `STEP_OUTPUT` blob it never saw. Every downstream agent fell back
-on template defaults. That is the failure this file exists to prevent.
+When brand facts live only in a `STEP_OUTPUT` blob, downstream theme agents cannot see
+them and fall back to generic template copy, colors, and type. Nothing appears broken,
+but the result no longer resembles the source company. That silent cross-step context
+loss is the failure this file exists to prevent.
 
 ## How to write it
 
@@ -57,13 +53,13 @@ Read back every line you wrote and ask that question. If a sentence would sit ju
 comfortably in a supplement brand's guide as in this one, **it is boilerplate — cut it or
 replace it with the specific fact.**
 
-| Boilerplate (reject)        | Specific (keep)                                                                                                                      |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| "Friendly and approachable" | "Two beats and a full stop: 'Super. Natural.' No exclamation marks — there isn't one on the whole site."                             |
-| "Modern, clean design"      | "~95% ink-on-paper (`#141414` on `#F8F8F5`); `#BF4800` is a punctuation mark, not a hero background."                                |
-| "Quality-focused customers" | "European city commuters, 28-45, replacing a car; will spend €2,399-3,999 and care whether it's serviceable in four years."          |
-| "Use the brand font"        | "Suisse Intl 400/500/600 — proprietary (Swiss Typefaces), not freely licensable. Substitute Inter at `-0.01em` tracking and say so." |
-| "Avoid off-brand language"  | "Never 'drop', 'restock', 'game-changer', 'Built different'. Never an exclamation mark."                                             |
+| Boilerplate (reject)        | Specific pattern to fill from the current source                                                                                                             |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Friendly and approachable" | "Uses `<sentence pattern>`; source example: `'<verified source quote>'`; `<punctuation rule>` appears across `<pages checked>`."                               |
+| "Modern, clean design"      | "`<foreground hex>` on `<background hex>` from `<CSS token>`; `<accent hex>` is reserved for `<observed use>`, not `<unobserved use>`."                       |
+| "Quality-focused customers" | "`<specific audience>` in `<market>`, buying within `<observed price band>` and repeatedly addressed around `<verified concern>`."                            |
+| "Use the brand font"        | "`<font family>` `<observed weights>` — `<license verdict + evidence>`. Use `<licensed substitute>` at `<tracking/line-height>` when re-hosting is not allowed." |
+| "Avoid off-brand language"  | "Never `<words absent or contradicted by the source>`. Follow the source's observed `<casing/punctuation>` rule."                                             |
 
 Two hard rules:
 
@@ -102,7 +98,7 @@ far more reliable than eyeballing a screenshot.
    themes usually have one main bundle).
 2. Fetch that stylesheet and read:
    - `:root { --color-*: … }` — the brand's own names for its own colors. Values may be
-     space-separated RGB triples (`--color-primary: 20 20 20` → `#141414`).
+     space-separated RGB triples (`--color-primary: 18 52 86` → `#123456`).
    - `@font-face { font-family: …; src: url(….woff2) }` — the **real** family names and
      the exact weights shipped. Three weights means three weights; don't invent an italic.
    - Spacing/size custom properties (`--spacing-section-y`, `--font-size-display`) —
@@ -165,9 +161,17 @@ The Step 9 report gets a Brand block, and `STEP_OUTPUT` gets a `brand_md` object
                       "Vocabulary & Naming","Visual Style","Do's and Don'ts",
                       "Brands & Sites We Admire","Examples","Sources"],
   "sections_left_as_prompts": [],
-  "palette": { "primary": "#141414", "contrast": "#F8F8F5", "accent": "#BF4800" },
-  "fonts": [{ "name": "Suisse Intl", "weights": [400,500,600],
-              "licensable": false, "substitute": "Inter" }],
+  "palette": {
+    "primary": "<hex from source CSS>",
+    "contrast": "<hex from source CSS>",
+    "accent": "<hex from source CSS>"
+  },
+  "fonts": [{
+    "name": "<family from @font-face>",
+    "weights": ["<observed weights>"],
+    "licensable": "<true|false + evidence>",
+    "substitute": "<licensed substitute when needed>"
+  }],
   "verbatim_quotes": 8,           // how many real source lines you quoted
   "source_urls": ["https://…", "…"]
 }

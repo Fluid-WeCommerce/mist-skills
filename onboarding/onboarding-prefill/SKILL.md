@@ -184,7 +184,7 @@ This sub-step collects the raw material for `brand.md`. Read
 1. Pull `<link rel="stylesheet">` hrefs out of the homepage HTML you already fetched in 3d.
 2. Fetch the main bundle and extract:
    - `:root { --color-*: … }` — the brand's own token names and values. Space-separated
-     triples are RGB: `--color-primary: 20 20 20` → `#141414`.
+     triples are RGB: `--color-primary: 18 52 86` → `#123456`.
    - `@font-face` blocks — the real `font-family` names and the exact `font-weight`s shipped,
      plus the `.woff2` URLs.
    - Layout rhythm props (`--spacing-section-*`, `--font-size-display`) — the theme step wants these.

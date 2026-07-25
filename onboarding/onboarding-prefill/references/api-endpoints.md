@@ -95,10 +95,13 @@ Rails `UpdateAction` params schema — anything else is dropped):
 
 **Logo/image flow — two steps, in order.** The endpoint takes a **URL**, not a file:
 
-1. Download the source image into the project sandbox, then upload the actual file with
-   Mist's `dam_upload` tool. It returns `asset.default_variant_url`. The upload service
-   does not accept an `external_asset_url`; a remote URL must be downloaded first.
-2. `PATCH /api/settings/brand_guidelines` with `logo_url` (and/or `icon_url`,
+1. In Mist, use `dam_upload` for files already in the project sandbox. It returns
+   `asset.default_variant_url`.
+2. For a remote source URL, the upload service also accepts multipart
+   `external_asset_url` and fetches the bytes server-side; `fileName` is auto-detected
+   unless supplied. The exact field name is `external_asset_url`, not `external_url`.
+   The Fluid CLI exposes this as `fluid dam upload --url <SOURCE_URL>`.
+3. `PATCH /api/settings/brand_guidelines` with `logo_url` (and/or `icon_url`,
    `favicon_url`) set to that DAM URL. Never point these at the source site's CDN — those
    links rot and leak the source domain.
 
