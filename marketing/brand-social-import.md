@@ -14,7 +14,7 @@ Pull a company's **own** published social video content into Fluid: find their o
 YouTube + TikTok accounts, register those handles in Fluid's social-media settings, and
 rip each account's videos into the DAM + Media library.
 
-> **This is NOT `marketing/tiktok-ugc-discovery`.** UGC discovery searches all of TikTok
+> **This is NOT `marketing/ugc-discovery`.** UGC discovery searches all of TikTok
 > for *other people's* content about the brand and lets the user pick a handful. THIS skill
 > ingests the *brand's own* channel content — the company is the creator. Tag accordingly
 > (`brand-content`, never `ugc`) so the two libraries stay distinct.
@@ -33,7 +33,7 @@ Do NOT guess handles — a wrong account imports someone else's videos. Resolve 
    the header/footer. Official accounts are linked from the brand's own site — trust those
    over search.
 3. **Confirm ambiguous ones.** Only if a platform has no link on the site AND you must find
-   it: for TikTok, `tiktok_search` mode `user` / `keyword` on the brand name and match on a
+   it: for TikTok, `social_search` (platform `tiktok`) mode `user` / `keyword` on the brand name and match on a
    verified handle + follower count + bio that clearly belongs to the brand. For YouTube,
    resolve the channel from the brand's linked handle. If you can't confirm an account is
    the brand's own with high confidence, SKIP it and report — do not import a maybe.
@@ -50,7 +50,7 @@ Report which fields you set.
 
 ## Step 3 — Enumerate each account's videos
 
-- **TikTok:** `tiktok_search` mode `user` with the handle → the account's video list (id,
+- **TikTok:** `social_search` platform `tiktok` mode `user` with the handle → the account's video list (id,
   canonical URL, caption, stats, created_at). Paginate with the returned `cursor` up to a
   sensible `count` (default the most recent 20–30; the caller may raise it). Dedupe by `id`.
 - **YouTube:** fetch the channel's uploads feed
@@ -88,7 +88,7 @@ the brand's own, say so explicitly rather than importing a guess.
 ## Rules
 
 - **Brand's own content only.** If you're searching for *other people's* videos about the
-  brand, you're in the wrong skill — that's `marketing/tiktok-ugc-discovery`.
+  brand, you're in the wrong skill — that's `marketing/ugc-discovery`.
 - Tag every asset `brand-content` (+ platform + brand). Never tag these `ugc`.
 - Confirm an account belongs to the brand before importing from it; a wrong account is worse
   than a missing one.
