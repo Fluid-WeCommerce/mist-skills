@@ -159,6 +159,12 @@ For each page type, try all URL patterns in parallel with the crawl tool. Skip 4
 | **Shipping Policy**  | `/policies/shipping-policy`, `/shipping`, `/pages/shipping`      | Shipping countries, zones                                                  |
 | **Team/Leadership**  | `/team`, `/about/team`, `/leadership`, `/pages/team`             | Owner/founder names, titles                                                |
 
+Do not infer a policy from a URL, link label, or HTTP 200 alone. Record a
+policy only when the final URL remains on the source company's domain and the
+body contains the matching policy text. A redirect to the homepage, a generic
+FAQ, or one Terms page with no refund language is `not found`, not an acceptable
+refund policy.
+
 ### 3c. Shopify detection
 
 If the site is Shopify (check for `cdn.shopify.com` in page source or try `/meta.json`):
@@ -258,9 +264,12 @@ If a LinkedIn URL was harvested in 3e, fetch it with `crawl`. Otherwise search `
 
 ### 4d. Review and trust platforms
 
-**BBB:** Search `site:bbb.org "{trading_name}"` → fetch the profile with `crawl`. Extract rating (A+ through F), accreditation status, years accredited, complaint count. Canonical source — single source = HIGH confidence.
+**BBB:** Search `site:bbb.org "{trading_name}"` → fetch the profile with `crawl`. Before extracting anything, prove the profile belongs to this company using the exact website domain or at least two independent identifiers (legal/trading name plus address or phone). A name-only match is insufficient. Extract rating (A+ through F), accreditation status, years accredited, complaint count. The matched profile is canonical and HIGH confidence; otherwise report `not found`.
 
-**Trustpilot:** Search `site:trustpilot.com "{trading_name}"` → fetch the profile with `crawl`. Extract TrustScore (1-5), total review count. Canonical source — single source = HIGH confidence.
+**Trustpilot:** Search `site:trustpilot.com/review "{exact_domain}"` first, then the trading name. Accept a profile only when its reviewed domain exactly matches the source company's registrable domain (allowing `www`) or the page independently proves the same legal entity and website. Similar names are not evidence. Extract TrustScore (1-5), total review count. The matched profile is canonical and HIGH confidence; otherwise report `not found`.
+
+For every trust-platform value, retain the exact profile URL and the identity
+evidence used to match it. Never transfer a rating from a namesake company.
 
 ### 4e. Negative media and regulatory scan
 
@@ -293,13 +302,17 @@ Build a verification matrix for every collected data point.
 | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | Data from the company's own website                                                           | **HIGH** — canonical for trading name, description, policies, email, products |
 | Data from official government registry                                                        | **HIGH** — canonical for legal name, entity type, registration #, officers    |
-| Data from the platform that IS the data (Trustpilot for Trustpilot score, BBB for BBB rating) | **HIGH** — the source itself                                                  |
+| Data from an identity-matched platform profile (exact domain or legal name + address/phone)   | **HIGH** — the source itself after entity matching                            |
 | 2+ independent sources agree on same value                                                    | **HIGH** — cross-verified                                                     |
 | 1 non-authoritative source, data is specific and plausible                                    | **MEDIUM** — plausible but unverified                                         |
 | Inferred from other data (MCC from products, email from name pattern)                         | **MEDIUM** — inference                                                        |
 | Single secondary source with weak signal                                                      | **LOW** — unreliable                                                          |
 | Inference requiring assumptions (nationality from name, ownership % from role)                | **LOW** — do not push                                                         |
 | Sources conflict                                                                              | **CONFLICT** — resolve using hierarchy below                                  |
+
+Canonical-source confidence applies only after entity matching. A real
+Trustpilot or BBB page for the wrong company is not LOW confidence; it is
+irrelevant and must be discarded.
 
 ### Generic email filter
 
@@ -461,14 +474,14 @@ fluid_api("/api/companies/{company_id}/onboarding_info", "PUT", {
     "underwriting_info": {
       "company_description": "...",
       "company_is_mlm": false,
-      "sells_supplements": false,
+      "sells_health_supplements": false,
       "contains_kratom": false,
       "contains_cbd": false,
-      "makes_disease_claims": false,
+      "claims_no_diseases": true,
       "bbb_rating": "...",
       "trustpilot_rating": "...",
       "terms_and_conditions": { "link": "..." },
-      "refund_policy": { "link": "..." },
+      "refund_or_return_policy": { "link": "..." },
       "privacy_policy": { "link": "..." }
     },
     "countries_info": [
@@ -491,13 +504,20 @@ Set flags based on product pages, supplement facts panels, FDA disclaimers, prod
 
 ```json
 {
-  "sells_supplements": true,
+  "sells_health_supplements": true,
   "contains_kratom": false,
   "contains_cbd": false,
-  "makes_disease_claims": false,
-  "supplement_ingredients": "..."
+  "claims_no_diseases": true
 }
 ```
+
+These names match the live onboarding schema exactly. Do not send the obsolete
+aliases `sells_supplements`, `makes_disease_claims`, or `refund_policy`: the
+endpoint can return 200 while dropping unknown keys. When the source makes a
+listed disease claim, set `claims_no_diseases: false` and the applicable
+specific flag (`claims_cancer_treatment`, `claims_impotency_treatment`,
+`claims_alzheimers_treatment`, or `claims_memory_loss_treatment`) plus its
+matching `*_products` field.
 
 Also search `site:fda.gov "{company_name}"` for warnings or registrations.
 

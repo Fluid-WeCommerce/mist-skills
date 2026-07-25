@@ -64,7 +64,13 @@ convert a code review into a visual pass.
 
 ## Step 1 — Build the visual route manifest
 
-Write `clone-manifest.json` before implementation:
+Write `clone-manifest.json` before implementation.
+
+The manifest, source captures, built captures, and diff artifacts stay local.
+Preserve the theme's existing `.fluidignore` rules and add exact entries for
+`clone-manifest.json`, `.mist-desktop/source-baselines/`, and `baselines/`
+before starting theme dev. Without those entries, the live watcher treats QA
+files as theme resources and repeatedly reports rejected uploads.
 
 ```json
 {
@@ -72,6 +78,32 @@ Write `clone-manifest.json` before implementation:
     "home": {
       "source_url": "https://source.example/",
       "built_path": "/",
+      "source_evidence": {
+        "desktop": {
+          "path": ".mist-desktop/source-baselines/source-source-example-home-abc123-1440x900-full-2026-07-25_18-00-00.png",
+          "captured_at": "2026-07-25T18:00:00.000Z",
+          "sha256": "<64 lowercase hex characters>",
+          "bytes": 1234567,
+          "width": 1440,
+          "height": 4820,
+          "requested_viewport": { "width": 1440, "height": 900 },
+          "final_url": "https://source.example/",
+          "status": 200,
+          "overlay_handling": "none"
+        },
+        "mobile": {
+          "path": ".mist-desktop/source-baselines/source-source-example-home-def456-390x844-full-2026-07-25_18-01-00.png",
+          "captured_at": "2026-07-25T18:01:00.000Z",
+          "sha256": "<64 lowercase hex characters>",
+          "bytes": 456789,
+          "width": 390,
+          "height": 7040,
+          "requested_viewport": { "width": 390, "height": 844 },
+          "final_url": "https://source.example/",
+          "status": 200,
+          "overlay_handling": "dismissed cookie dialog with button#decline"
+        }
+      },
       "landmarks": [
         {
           "id": "hero",
@@ -102,6 +134,11 @@ Each route also records:
 - overlay handling performed during capture
 - current source and built evidence paths/timestamps
 
+`source_evidence.desktop` and `source_evidence.mobile` are required objects, not
+free-form labels. The path must be the real local path returned by `crawl` under
+`.mist-desktop/source-baselines/`. A hosted URL, `crawl:1440x900`, prose claim,
+or chat attachment ID is not durable source evidence.
+
 ## Step 2 — Capture clean source baselines
 
 For each source route, call `crawl` twice. Keep global chrome:
@@ -120,6 +157,27 @@ For each source route, call `crawl` twice. Keep global chrome:
 ```
 
 Repeat with `{ "width": 390, "height": 844 }`.
+
+For every successful capture, copy the `<!-- screenshot baseline -->` evidence
+object returned by `crawl` into the matching manifest cell, then add the crawl
+metadata's final URL/status and the overlay action used. Do not shorten or
+replace the returned path.
+
+Before declaring the 6/6 source matrix complete:
+
+1. Confirm every evidence object has a path, capture timestamp, 64-character
+   SHA-256, positive byte count, decoded width/height, requested viewport,
+   final URL, status, and overlay handling.
+2. Verify the file still exists and matches the recorded digest with Mist's
+   bounded command tool:
+
+   ```text
+   run_cli({ command: "git", args: ["hash-object", "--no-filters", "--", "<relative-path>"] })
+   ```
+
+3. Compare the returned hash to the manifest. Missing files, hash mismatches,
+   zero-byte evidence, and undecodable dimensions invalidate that cell; recrawl
+   only the failed cell.
 
 If a geo, cookie, age, or newsletter dialog obscures the page:
 
@@ -144,6 +202,9 @@ drawer or mobile menu may be legitimate page content.
 
 A source baseline is invalid when:
 
+- its evidence is only a hosted URL, opaque label, or prose claim;
+- its local file is missing, empty, undecodable, or fails the SHA-256 check;
+- its recorded viewport differs from the requested matrix cell;
 - the final URL is not the requested route;
 - the status is not 200;
 - an overlay hides priority content;
