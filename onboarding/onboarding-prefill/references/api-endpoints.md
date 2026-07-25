@@ -10,102 +10,135 @@ Authentication is injected automatically by the Mist runtime — call these endp
 
 ## Onboarding Info
 
-| Method | Endpoint |
-|--------|----------|
-| GET | `/api/companies/{id}/onboarding_info` |
-| PUT | `/api/companies/{id}/onboarding_info` |
+| Method | Endpoint                              |
+| ------ | ------------------------------------- |
+| GET    | `/api/companies/{id}/onboarding_info` |
+| PUT    | `/api/companies/{id}/onboarding_info` |
 
 **Critical:** `PUT` overwrites the ENTIRE `onboarding_info` blob. Always `GET` first, deep-merge new data into the existing blob, then `PUT` back.
 
 ## Legal Entities
 
-| Method | Endpoint |
-|--------|----------|
-| GET | `/api/companies/{id}/entities` |
-| POST | `/api/companies/{id}/entities` |
-| PUT | `/api/companies/{id}/entities/{eid}` |
+| Method | Endpoint                             |
+| ------ | ------------------------------------ |
+| GET    | `/api/companies/{id}/entities`       |
+| POST   | `/api/companies/{id}/entities`       |
+| PUT    | `/api/companies/{id}/entities/{eid}` |
 | DELETE | `/api/companies/{id}/entities/{eid}` |
 
 ## Bank Accounts
 
-| Method | Endpoint |
-|--------|----------|
-| GET | `/api/companies/{id}/bank_accounts` |
-| POST | `/api/companies/{id}/bank_accounts` |
-| PUT | `/api/companies/{id}/bank_accounts/{bid}` |
+| Method | Endpoint                                  |
+| ------ | ----------------------------------------- |
+| GET    | `/api/companies/{id}/bank_accounts`       |
+| POST   | `/api/companies/{id}/bank_accounts`       |
+| PUT    | `/api/companies/{id}/bank_accounts/{bid}` |
 | DELETE | `/api/companies/{id}/bank_accounts/{bid}` |
 
 ## Owners
 
-| Method | Endpoint |
-|--------|----------|
-| GET | `/api/companies/{id}/owners` |
-| POST | `/api/companies/{id}/owners` |
-| PUT | `/api/companies/{id}/owners/{oid}` |
+| Method | Endpoint                           |
+| ------ | ---------------------------------- |
+| GET    | `/api/companies/{id}/owners`       |
+| POST   | `/api/companies/{id}/owners`       |
+| PUT    | `/api/companies/{id}/owners/{oid}` |
 | DELETE | `/api/companies/{id}/owners/{oid}` |
 
 ## Document Upload
 
-| Method | Endpoint |
-|--------|----------|
-| POST | `/api/companies/{id}/onboarding_info/upload_document` (multipart, 10MB max) |
+| Method | Endpoint                                                                    |
+| ------ | --------------------------------------------------------------------------- |
+| POST   | `/api/companies/{id}/onboarding_info/upload_document` (multipart, 10MB max) |
 
 ## Lookups
 
-| Method | Endpoint |
-|--------|----------|
-| GET | `/api/mcc_codes` |
-| GET | `/api/business_types?country_code={iso}` |
+| Method | Endpoint                                 |
+| ------ | ---------------------------------------- |
+| GET    | `/api/mcc_codes`                         |
+| GET    | `/api/business_types?country_code={iso}` |
 
 ## Payments Status
 
-| Method | Endpoint |
-|--------|----------|
-| GET | `/api/companies/{id}/payments_status` |
+| Method | Endpoint                              |
+| ------ | ------------------------------------- |
+| GET    | `/api/companies/{id}/payments_status` |
 
 ## Settings
 
-| Method | Endpoint | Used for |
-|--------|----------|----------|
-| GET | `/api/settings/company` | Company identity (id, name) for preflight confirmation |
-| GET | `/api/settings/company_countries` | Token validation + country data |
-| GET | `/api/settings/brand_guidelines` | Read current brand (logo, colors) before pushing |
-| PATCH | `/api/settings/brand_guidelines` | Set brand colors + logo/icon/favicon/OG images |
+| Method | Endpoint                          | Used for                                               |
+| ------ | --------------------------------- | ------------------------------------------------------ |
+| GET    | `/api/settings/company`           | Company identity (id, name) for preflight confirmation |
+| GET    | `/api/settings/company_countries` | Token validation + country data                        |
+| GET    | `/api/settings/brand_guidelines`  | Read identity, colors, fonts, and `brand_md`            |
+| PATCH  | `/api/settings/brand_guidelines`  | Set identity, colors, fonts, images, and `brand_md`     |
 
-## Brand Guidelines (logo + colors) — exact contract
+## Brand Guidelines (identity + fonts + brand.md) — exact contract
 
 `PATCH /api/settings/brand_guidelines` accepts EXACTLY these fields (verified against the
 Rails `UpdateAction` params schema — anything else is dropped):
 
 ```jsonc
-{ "brand_guidelines": {
-  "name": "Brand Name",                 // optional, string
-  "logo_url": "https://…",              // optional, string URL — see logo flow below
-  "icon_url": "https://…",              // optional, string URL
-  "favicon_url": "https://…",           // optional, string URL
-  "color": "#1A2B3C",                   // optional — PRIMARY brand color
-  "secondary_color": "#DDEEFF",         // optional
-  "default_og_image": "https://…",      // optional, string URL
-  "default_og_description": "…",        // optional, string
-  "default_fallback_image": "https://…" // optional, string URL
-}}
+{
+  "brand_guidelines": {
+    "name": "Brand Name", // optional, string
+    "logo_url": "https://…", // optional, string URL — see logo flow below
+    "icon_url": "https://…", // optional, string URL
+    "favicon_url": "https://…", // optional, string URL
+    "color": "#1A2B3C", // optional — PRIMARY brand color
+    "secondary_color": "#DDEEFF", // optional
+    "default_og_image": "https://…", // optional, string URL
+    "default_og_description": "…", // optional, string
+    "default_fallback_image": "https://…", // optional, string URL
+    "brand_md": "# Brand Guide\n…", // optional, string; normally write via update_brand_voice
+    "fonts": [
+      {
+        "name": "Licensed Font Family", // required
+        "file_url": "https://ik.imagekit.io/fluid/…/font.woff2", // required
+        "file_id": 123, // optional integer DAM asset id
+        "format": "woff2", // optional
+        "weight": "400", // optional string
+        "style": "normal", // optional string
+        "role": "body", // optional string, e.g. body or heading
+      },
+    ],
+  },
+}
 ```
 
 **Logo/image flow — two steps, in order.** The endpoint takes a **URL**, not a file:
-1. Upload the image to the Fluid DAM first. In Mist, use the `dam_upload` tool (or the
-   upload service with `external_asset_url: <source image URL>` so it fetches the remote
-   file server-side). It returns `asset.default_variant_url`.
-2. `PATCH /api/settings/brand_guidelines` with `logo_url` (and/or `icon_url`,
+
+1. In Mist, use `dam_upload` for files already in the project sandbox. It returns
+   `asset.default_variant_url`.
+2. For a remote source URL, the upload service also accepts multipart
+   `external_asset_url` and fetches the bytes server-side; `fileName` is auto-detected
+   unless supplied. The exact field name is `external_asset_url`, not `external_url`.
+   The Fluid CLI exposes this as `fluid dam upload --url <SOURCE_URL>`.
+3. `PATCH /api/settings/brand_guidelines` with `logo_url` (and/or `icon_url`,
    `favicon_url`) set to that DAM URL. Never point these at the source site's CDN — those
    links rot and leak the source domain.
 
+**Font flow.** Only ingest a font when the company owns a webfont license that
+allows re-hosting:
+
+1. Record the exact family, weights, styles, file URLs, license source, and
+   verdict from the source stylesheet and supporting evidence.
+2. Ingest each licensed font through the DAM using a local file or multipart
+   `external_asset_url`, just like an image.
+3. Add one `fonts[]` entry per real font file. `name` and `file_url` are
+   required; populate `file_id`, `format`, `weight`, `style`, and `role` when
+   known.
+4. For a proprietary or unverified font, do not copy its bytes. Record the
+   original family and a legally usable substitute in `brand.md`, and only
+   persist the licensed substitute in `fonts`.
+
 Notes:
+
 - Wrap the payload in the `brand_guidelines` key — a flat body is ignored.
 - A successful update auto-re-evaluates the Getting Started "brand guidelines" step
   (`onboarding.check_brand_guidelines`) — no separate check_step call needed for it.
-- **Fonts are NOT part of brand_guidelines** — there is no font field in this schema.
-  Brand fonts live in the theme (theme tokens / settings_data), so set them via the
-  theme, and don't fail a brand-QA check for a "missing font" on this endpoint.
+- `brand_md` is part of this endpoint, but in Mist use `update_brand_voice`
+  rather than a direct PATCH so the local `<company>/brand.md` and API value
+  stay synchronized.
 - Verify after push: `GET /api/settings/brand_guidelines` and confirm the fields landed.
 
 ## Company profile (rename, support email, country) — exact contracts
@@ -116,12 +149,15 @@ company id from `GET /api/settings/company`); PATCHing `/api/settings/company` (
 sending a flat body 400s. Body wrapped in the `company` key:
 
 ```jsonc
-{ "company": {
-  "name": "Bucked Up",              // rename
-  "support_email": "cs@brand.com",  // support/customer-service email
-  "country_code": "US"              // company-level country code
-}}
+{
+  "company": {
+    "name": "Bucked Up", // rename
+    "support_email": "cs@brand.com", // support/customer-service email
+    "country_code": "US", // company-level country code
+  },
+}
 ```
+
 (Other permitted fields: appstore_url, playstore_url, active, allow_signup, sandbox,
 mobile_app_identifier, … — anything not in the schema is dropped.)
 
@@ -131,5 +167,6 @@ mobile_app_identifier, … — anything not in the schema is dropped.)
 ```jsonc
 { "company_country": { "country_id": 214, "currency": "USD", "default": true } }
 ```
+
 (`country_id` integer required — 214 = US. `GET /api/settings/company_countries` first to
 check what exists; note `company_country_id` ≠ `country_id`.)

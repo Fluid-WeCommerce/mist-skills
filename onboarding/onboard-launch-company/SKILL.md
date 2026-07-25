@@ -17,8 +17,9 @@ icon: rocket
 # Onboard & Launch Company
 
 You are helping the active company go from "signed up" to "ready to launch" in one
-sitting. Your job in this chat is narrow: **collect the two inputs the workflow
-needs (website URL + product-import path), then fire `run_workflow`**. The
+sitting. Your job in this chat is narrow: **collect the scoped launch inputs
+(run scope, website URL, product-import path, theme target, and optional content),
+then fire `run_workflow`**. The
 workflow itself does the heavy lifting across dedicated agent chats.
 
 The active Fluid company is already selected in Mist Desktop — `fluid_api(path,
@@ -97,7 +98,6 @@ YOUR TURN and wait for answers:
 3. `products_source` — single_select "Where should we pull products from?"
    `show_if: { step_id: "run_scope", any_of: ["full"] }` (only when products are in
    scope). Options depend on Step 0's discovery. Always include at least the last two:
-
    - When a Connect droplet is `is_connected: true`, add ONE option with id
      `connect_<slug>` (e.g. `connect_shopify`), label
      `Connect: <Name> (already linked)`, description "Pull products +
@@ -132,9 +132,10 @@ YOUR TURN and wait for answers:
      TikTok for other people's content about the brand and pull the best picks into the
      DAM. Different from the brand's own content above."
 
-6. `confirm` — single_select "Ready to run? This spawns dedicated agent chats; a full run
-   takes ~20-40 minutes." Options: id `go` label `Yes, launch it`, id `cancel` label
-   `Not yet`.
+6. `confirm` — single_select "Ready to run? This spawns dedicated agent chats and continues
+   in the background. Runtime depends on catalog size, source-site speed, and visual QA
+   rounds; a large full run can take hours." Options: id `go` label `Yes, launch it`, id
+   `cancel` label `Not yet`.
 
 Keep this to these steps. Anything else (Connect credentials, brand info prompts, etc.)
 belongs INSIDE the workflow, not this picker.
@@ -156,6 +157,7 @@ context: {
   "extras": <string[] — the `extras` multi_select ids, e.g. ["import_brand_social", "discover_ugc"]; [] if none>,
   "build_theme": <bool>,
   "import_products": <bool>,
+  "push_business_data": <bool>,
   "import_brand_social": <bool>,
   "discover_ugc": <bool>
 }
@@ -163,29 +165,37 @@ context: {
 
 `run_scope` and `extras` are the raw inputs the engine keys off to derive the run-gating
 flags at run start — ALWAYS include both. But you MUST STILL pass every boolean flag
-(`build_theme`, `import_products`, `import_brand_social`, `discover_ugc`) explicitly, set
+(`build_theme`, `import_products`, `push_business_data`, `import_brand_social`, `discover_ugc`) explicitly, set
 per the derivation rules below: treat them as REQUIRED, not optional. They are a mandatory
 belt-and-suspenders so the run gates correctly even where derivation is unavailable, and an
 explicitly-passed flag always wins over the derived value. Do NOT emit a bare `extras` array
 without the flags — that was the shape that caused every gated step to skip.
 
 Derive `connect_provider` from the `products_source` answer:
+
 - id starts with `connect_` → provider is the slug after the prefix
 - id is `scrape` or `manual` → provider is `null`
 - `products_source` skipped (products out of scope) → `products_source: null`, provider `null`
 
 Derive `theme_target` + `theme_id` from the `theme_target` answer:
+
 - id `new` → `theme_target: "new"`, `theme_id: null`
 - id `existing_<theme_id>` → `theme_target: "existing"`, `theme_id: <that id>`
 - skipped (theme out of scope) → `theme_target: null`, `theme_id: null`
 
 Derive the track flags from `run_scope` (they gate which steps do work via the workflow's
 `runIf`):
+
 - `build_theme`: true for `full`, `data_theme`, `theme_only`; false for `data_only`
 - `import_products`: true for `full`; false otherwise
+- `push_business_data`: false for `theme_only`; true for `full`, `data_theme`, and
+  `data_only`. Brand colors, fonts, `brand.md`, and country/locale discovery still run for
+  every scope because the theme consumes them. When false, agents must not mutate company,
+  onboarding, or KYC fields, and the later onboarding-reconciliation step is skipped.
   (brand + country gathering always runs regardless of scope — it drives the theme)
 
 Derive the extras flags from the `extras` multi_select:
+
 - `import_brand_social`: true iff selected; `discover_ugc`: true iff selected (both default false)
 
 `run_workflow` returns immediately with a run plan; the progress card renders
@@ -197,8 +207,8 @@ do NOT narrate the plan or predict outcomes. The card does that live.
 Send one final short message: 1-2 lines confirming what got kicked off and
 that the run continues in the background. Example:
 
-> The onboarding run is live — 7 steps, ~15-30 min. Follow the progress card
-> above; I'll be here when it lands.
+> The onboarding run is live and will continue in the background. Follow the
+> progress card above; I'll be here when it lands.
 
 Do not poll `workflow_status` unsolicited. When the user asks, use it.
 
@@ -213,14 +223,17 @@ Do not poll `workflow_status` unsolicited. When the user asks, use it.
 - If the user cancels in Step 1, respond with one line ("no worries — ping
   me when you're ready") and stop. Do not re-prompt.
 
-## API & sequencing gotchas (from live onboarding runs)
+## API & sequencing gotchas
 
 These are non-obvious and cost real time when rediscovered. Bake them in.
 
-- **Create pages via `POST /api/company/pages`.** The `/api/company/v1/pages`
-  variant 404s. `html_code` compiles async — re-GET (or re-PATCH) if the body
-  comes back empty. Deleting a page and reusing its slug tombstones the slug;
-  always use a fresh slug.
+- **Read the live schema before writes.** Use `query_docs` against
+  `/openapi/api-reference/storefront-v2026-04.yaml`. Catalog/content CRUD is
+  `/api/v202604/company/{products,categories,collections,posts,media,playlists,pages}`;
+  do not fall back to `/api/company/v1/*` from memory.
+- **Create visible pages through Mist's `create_page` tool.** It coordinates the
+  v202604 Page resource, theme template, local dev route, and preview pane.
+  Bypassing it with a raw page POST leaves those surfaces out of sync.
 - **Push theme edits BEFORE creating pages.** Creating a page auto-generates
   an `application_theme_template` in the active theme. A subsequent
   `theme push` then tries to delete those orphans and can fail or clobber. Do
@@ -229,15 +242,36 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
 - **Cloud Armor throttles page-create bursts.** A rapid run of POST-with-body
   requests gets persistently 403'd by the prod WAF (GET stays 200), and a
   short cooldown doesn't clear it. Space page creates out; don't hammer.
-- **Product creates need the NESTED-attributes payload** — a flat
-  `{product:{title,price}}` silently creates $0 shells. Pricing lives on
-  `variants_attributes[].variant_countries_attributes` (`country_iso`,
-  `currency_code`, `price`); exactly one variant `is_master:true`; include
-  `active:true` + `status:"active"` in the create body so no draft→active pass
-  is needed (if a product still lands draft, PATCH `{product:{status:"active"}}`).
-  Options only materialize via `option_attrs` (product = names, variant =
-  values). Collection membership is `PATCH product {collection_ids:[...]}` —
-  `collections/{id}/add_product` 404s.
+- **Product creates need the v202604 nested-attributes payload** — a flat
+  `{product:{title,price}}` cannot express country pricing. Pricing lives on
+  `variants_attributes[].variant_countries_attributes`; exactly one variant is
+  `is_master:true`; use canonical `status:"published"` + `public:true`. Options
+  use `option_attrs` (product = names, variant = values). Collection membership
+  is product `collection_ids` or the collection's full-replacement `product_ids`.
+- **Three product-payload details that silently or noisily kill an import:**
+  - `variant_countries_attributes` needs **`country_id` (integer) + `active`**.
+    `country_iso` alone 422s `active is missing, country_id is missing`. Get the
+    integer from `GET /api/settings/company_countries` →
+    `company_countries[].country.id`; never hard-code an example country's ID.
+    This is the classic cause of a catalog with correct titles and no prices.
+  - `images_attributes` entries use **`image_url`**, not `url` — `{"url": …}`
+    422s `image_url is missing`, which is how a whole catalog ends up on Fluid's
+    grey placeholder.
+  - **Set options + every variant at CREATE time.** This preserves source
+    combinations and avoids a risky repair. If a repair is needed, re-read the
+    v202604 PATCH schema and existing nested IDs before writing; never assume a
+    legacy PATCH limitation still applies.
+- **DAM upload supports a local file or a remote URL.** Use `dam_upload` for a
+  file already in the sandbox, or `fluid dam upload --url <SOURCE_URL>` for a
+  remote source. The underlying `POST https://upload.fluid.app/upload` accepts
+  multipart `file` or multipart `external_asset_url` (exact field name; not
+  `external_url`) and returns `asset.default_variant_url`. JSON mode is only for
+  `b64_json`/`data_uri`. Never keep a source-CDN URL in destination product data.
+- **Source catalogs are often bot-walled.** `<site>/products.json` on a modern
+  Shopify/Hydrogen storefront returns a Cloudflare 403 "Verifying your
+  connection". Check for a `<url>.md` LLM-markdown twin (some storefronts
+  advertise one in a banner — it returns clean title/image/price/description),
+  otherwise crawl the collection pages and the PDPs.
 - **Storefront status checks MUST use a real headless browser.** Prod Cloud
   Armor returns 500/302 to curl/HTTP clients even with a browser UA, while a
   real browser gets 200. Never conclude a route is broken from a curl status.

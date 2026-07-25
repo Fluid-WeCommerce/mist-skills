@@ -28,21 +28,27 @@ You are an expert Fluid theme developer. This skill covers **two complementary w
 
 Both workflows share the same loops + rules — just different starting conditions. Both also require a working **local dev preview** so the agent can visually verify each change against the source site before declaring it done.
 
-The active Fluid company is already selected in Mist Desktop — this skill never collects or validates a Fluid API token or store URL. Use the `fluid_api(path, method, body)` tool for any Fluid API call (the user's token is injected automatically) and the `fluid` CLI (already authenticated against the active company) for theme pull/push/dev.
+The active Fluid company is already selected in Mist Desktop — this skill never
+collects or validates a Fluid API token or store URL. Use managed `fluid_api`
+for API calls, `start_preview` for the long-lived dev process, and bounded
+`run_cli` only for one-shot CLI commands.
 
 ## Prerequisites
 
-This skill drives `fluid theme dev` (local preview) and Playwright (paired source/localhost screenshots) to do every visual comparison. Before any refinement round, run the preflight in [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#preflight-check) and warn the user (offering to install) if anything is missing:
+Inside Mist, use the fresh-machine capability contract in
+[the canonical visual-parity protocol](../theme-clone/references/dev-preview-visual-diff.md#capability-contract):
 
-| Tool | Purpose |
-|------|---------|
-| Node.js ≥ 18 | Runtime for `fluid` CLI and Playwright |
-| `@fluid-app/fluid-cli` + `@fluid-app/fluid-cli-theme-dev` | `fluid theme dev` for the localhost preview |
-| Playwright + Chromium | Paired screenshots at desktop / tablet / mobile |
+| Tool                 | Purpose                                                       |
+| -------------------- | ------------------------------------------------------------- |
+| `crawl`              | Managed source HTML plus exact-viewport full-page screenshots |
+| `start_preview`      | Bundled CLI, dependency setup, port allocation, dev lifecycle |
+| `screenshot_preview` | Matched local route/viewports plus overflow evidence          |
+| `interact_preview`   | Constrained local menu/accordion/tab state verification       |
+| preview/log tools    | Exact URL, browser console, and server output                 |
 
-The `fluid` CLI is already authenticated against the active Mist Desktop company — no `fluid login` / `fluid switch` step is required.
-
-Never install silently — surface the exact install commands and wait for explicit user approval. If the user opts out, do a single full-page screenshot pass and note the missing capability in the final report.
+Do not require global Node, Fluid CLI, Playwright, or a browser install. Outside
+Mist, an already-locked project-local browser harness is a fallback. Without a
+valid capture path, report needs-review rather than a visual pass.
 
 **Which workflow is cheaper than a full clone?** If the existing theme's content + brand tokens are already in place and the goal is structural + visual polish, refining is faster than a full clone. If the existing theme's architecture is fundamentally broken (e.g. every section uses hardcoded hex, every image is an `image_picker` inline, Splide is everywhere), a clone might be cleaner — but Phase 0 below tells you exactly which.
 
@@ -54,17 +60,16 @@ Never install silently — surface the exact install commands and wait for expli
 │                                                               │
 │  ┌──────────┐    ┌─────────────────┐                         │
 │  │ SOURCE   │    │ BUILT (localhost)│                        │
-│  │ (live    │    │ fluid theme dev  │                        │
-│  │  site)   │    │ :9292 + watcher  │                        │
+│  │ managed  │    │ start_preview + │                        │
+│  │ crawl    │    │ port manager     │                        │
 │  └────┬─────┘    └────────┬─────────┘                        │
 │       │                   │                                   │
 │       ▼                   ▼                                   │
 │  ┌────────────────────────────────────┐                      │
-│  │  PLAYWRIGHT VISUAL DIFF             │                     │
-│  │  same viewport on both browsers     │                     │
-│  │  desktop + tablet + mobile          │                     │
-│  │  scroll section-by-section          │                     │
-│  │  → matched source/built PNG pairs   │                     │
+│  │  MANAGED VISUAL-PARITY MATRIX       │                     │
+│  │  same exact viewport on both sides  │                     │
+│  │  home + shop + PDP, desktop/mobile  │                     │
+│  │  → semantic landmark pairs          │                     │
 │  └────────────┬───────────────────────┘                      │
 │               ▼                                               │
 │  ┌────────────────────────────────────┐                      │
@@ -85,11 +90,12 @@ Never install silently — surface the exact install commands and wait for expli
 │  │  FLAGGED → surface to user, wait   │                      │
 │  └────────────┬───────────────────────┘                      │
 │               ▼                                               │
-│       (loop back to playwright capture)                       │
+│       (loop back to managed matrix capture)                   │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-Every round: playwright capture → read pairs → classify → auto-fix on save → watcher uploads → localhost reloads → re-capture. Repeat until findings = 0 or remaining are all flagged.
+Every round: matched managed capture → read semantic pairs → classify → fix →
+audit → verify logs → recapture the complete priority matrix.
 
 ---
 
@@ -121,21 +127,21 @@ Exit codes: `0` = clean, `1` = violations found, `2` = invocation error. Treat e
 
 Pull the theme with `fluid_api("/api/application_themes/{id}/resources?key=...", "GET")` for each path below, OR work from a local `THEME_DIR` if provided.
 
-| File | What to verify |
-|------|---------------|
-| `config/settings_schema.json` | Has **5 font slots** (`font_family_body`, `font_family_heading`, `font_family_accent`, `font_family_italic`, `font_family_handwriting`) and **12 color slots** (`color_primary`, `color_secondary`, `color_accent`, `color_white`, `color_light`, `color_gray`, `color_muted`, `color_dark`, `color_black`, `color_body`, `color_success`, `color_warning`). Every font slot has `option_group: { id: "font_families", label, value: "var(--ff-*)" }`. Every color slot has the same for `background_colors`. |
-| `config/settings_data.json` | Every schema setting with a default has a seeded value here. Especially the 5 font slots — missing keys mean the `font_family` Liquid filter falls back to Roboto for all of them. |
-| `assets/config.css` | Does NOT hardcode `--ff-body`, `--ff-heading`, `--ff-accent`, `--ff-italic`, `--ff-handwriting` in `:root`. Those must come dynamically from `layouts/theme.liquid`. Hardcoded values shadow merchant selections. |
-| `assets/reset.css` | `body` uses `overflow-x: clip` (NOT `overflow-x: hidden`). Hidden creates a scroll container and breaks `position: sticky` for the navbar. |
-| `assets/global.css` (or `global_styles.css`) | Pagination rules use modern pill styles (circular buttons, 6px gap, active=primary bg) — not the legacy square-bordered paginator. |
-| `layouts/theme.liquid` | Inline `{% style %}` outputs `--ff-*` CSS variables from `settings.font_family_*` with proper `| font_family | default:` fallback chain. Same for `--clr-*` variables from `settings.color_*`. |
-| `components/pagination/index.liquid` | Uses `paginate.current_offset \| plus: 1` for the "from" value (NOT raw `current_offset` which is 0-indexed). Caps "to" with `paginate.items`. Renders modern pill-button layout. |
-| `components/navbar_primary_nav/index.liquid` | Outputs `<ul class="primary-menu" id="primary-nav-menu">` with canonical block wrapper. Iterates `menu.menu_items` (NOT `menu.links`). |
-| `components/navbar_locale_dropdown/index.liquid` | Preserves Fluid's locale JS hooks: `#show-language-country-dropdown`, `#mobile-country-language`, `.saveLocaleBtn`, `.country-selector`, `.language-selector`, `.locale-selector`. Never rewrite these. |
-| `components/navbar_mobile_menu/index.liquid` | Drawer structure with feature_buttons + primary nav baked in. |
-| `blocks/image/` + `blocks/button/` + `blocks/cart_button/` + `blocks/fluid_media/` | These are **canonical REFERENCE files** — they document the schema you inline into sections. They are NOT render targets. `{% render 'cart_button' %}` WILL NOT resolve (Fluid renders only from `components/`). |
-| Every `sections/*/index.liquid` | Checked by per-section audit in Step 4b (existing). |
-| Every page-template file (`home_page/default/index.liquid`, `product/default/index.liquid`, etc.) | Composition only — no `blocks` in the template schema (blocks come from section presets). Uses `{% section 'name', id: 'unique_id' %}` pattern. |
+| File                                                                                              | What to verify                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------- |
+| `config/settings_schema.json`                                                                     | Has **5 font slots** (`font_family_body`, `font_family_heading`, `font_family_accent`, `font_family_italic`, `font_family_handwriting`) and **12 color slots** (`color_primary`, `color_secondary`, `color_accent`, `color_white`, `color_light`, `color_gray`, `color_muted`, `color_dark`, `color_black`, `color_body`, `color_success`, `color_warning`). Every font slot has `option_group: { id: "font_families", label, value: "var(--ff-*)" }`. Every color slot has the same for `background_colors`. |
+| `config/settings_data.json`                                                                       | Every schema setting with a default has a seeded value here. Especially the 5 font slots — missing keys mean the `font_family` Liquid filter falls back to Roboto for all of them.                                                                                                                                                                                                                                                                                                                            |
+| `assets/config.css`                                                                               | Does NOT hardcode `--ff-body`, `--ff-heading`, `--ff-accent`, `--ff-italic`, `--ff-handwriting` in `:root`. Those must come dynamically from `layouts/theme.liquid`. Hardcoded values shadow merchant selections.                                                                                                                                                                                                                                                                                             |
+| `assets/reset.css`                                                                                | `body` uses `overflow-x: clip` (NOT `overflow-x: hidden`). Hidden creates a scroll container and breaks `position: sticky` for the navbar.                                                                                                                                                                                                                                                                                                                                                                    |
+| `assets/global.css` (or `global_styles.css`)                                                      | Pagination rules use modern pill styles (circular buttons, 6px gap, active=primary bg) — not the legacy square-bordered paginator.                                                                                                                                                                                                                                                                                                                                                                            |
+| `layouts/theme.liquid`                                                                            | Inline `{% style %}` outputs `--ff-*` CSS variables from `settings.font_family_*` with proper `                                                                                                                                                                                                                                                                                                                                                                                                               | font_family | default:`fallback chain. Same for`--clr-_`variables from`settings.color\__`. |
+| `components/pagination/index.liquid`                                                              | Uses `paginate.current_offset \| plus: 1` for the "from" value (NOT raw `current_offset` which is 0-indexed). Caps "to" with `paginate.items`. Renders modern pill-button layout.                                                                                                                                                                                                                                                                                                                             |
+| `components/navbar_primary_nav/index.liquid`                                                      | Outputs `<ul class="primary-menu" id="primary-nav-menu">` with canonical block wrapper. Iterates `menu.menu_items` (NOT `menu.links`).                                                                                                                                                                                                                                                                                                                                                                        |
+| `components/navbar_locale_dropdown/index.liquid`                                                  | Preserves Fluid's locale JS hooks: `#show-language-country-dropdown`, `#mobile-country-language`, `.saveLocaleBtn`, `.country-selector`, `.language-selector`, `.locale-selector`. Never rewrite these.                                                                                                                                                                                                                                                                                                       |
+| `components/navbar_mobile_menu/index.liquid`                                                      | Drawer structure with feature_buttons + primary nav baked in.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `blocks/image/` + `blocks/button/` + `blocks/cart_button/` + `blocks/fluid_media/`                | These are **canonical REFERENCE files** — they document the schema you inline into sections. They are NOT render targets. `{% render 'cart_button' %}` WILL NOT resolve (Fluid renders only from `components/`).                                                                                                                                                                                                                                                                                              |
+| Every `sections/*/index.liquid`                                                                   | Checked by per-section audit in Step 4b (existing).                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Every page-template file (`home_page/default/index.liquid`, `product/default/index.liquid`, etc.) | Composition only — no `blocks` in the template schema (blocks come from section presets). Uses `{% section 'name', id: 'unique_id' %}` pattern.                                                                                                                                                                                                                                                                                                                                                               |
 
 ### 0b: Theme-wide grep audits (supplements `theme_audit.py`)
 
@@ -160,13 +166,13 @@ grep -rn "show-cart\|fluid-cart-count\|show-language-country-dropdown\|saveLocal
 
 **Already covered by `theme_audit.py` (no need to grep separately):**
 
-| Old grep | Audit rule(s) |
-|---------|---------------|
-| `{% render 'cart_button' \| 'image' \| 'button' \| 'fluid_media' %}` | GS006 |
-| `"type": "font_picker"` in a section | GS003 |
-| Raw hex defaults in a section schema | GS002 |
-| `image_picker` on content fields | GS004 |
-| `body { overflow-x: hidden }` | (still grep — cross-file CSS rule) |
+| Old grep                                                             | Audit rule(s)                      |
+| -------------------------------------------------------------------- | ---------------------------------- |
+| `{% render 'cart_button' \| 'image' \| 'button' \| 'fluid_media' %}` | GS006                              |
+| `"type": "font_picker"` in a section                                 | GS003                              |
+| Raw hex defaults in a section schema                                 | GS002                              |
+| `image_picker` on content fields                                     | GS004                              |
+| `body { overflow-x: hidden }`                                        | (still grep — cross-file CSS rule) |
 
 Any non-empty result is a finding. Table them up with `file:line:issue` and fix before moving on.
 
@@ -174,11 +180,11 @@ Any non-empty result is a finding. Table them up with `file:line:issue` and fix 
 
 After Phase 0, you have two numbers: `theme_audit.py`'s violation count and the count from the supplemental greps in 0b. Use this rubric:
 
-| `theme_audit.py` total | Supplemental findings | Recommend |
-|---|---|---|
-| < 25 | A handful (a Splide bundle, one body-overflow fix) | **Refine** — fix in place, proceed to Steps 1–10. The audit count tells you exactly how many fixes |
-| 25–100 | Some theme-wide (reset, config) | **Refine aggressively** — allocate extra time; many Recipe Book patterns apply. Capture a baseline (`theme_audit.py --json`) so you can track progress |
-| > 100, GS001 (Section Shell) failing on most sections, Splide everywhere, GS002 (raw hex) above 30, no canonical blocks | n/a | **Re-clone** — run `/theme-clone` against the existing site; faster than rebuilding section by section |
+| `theme_audit.py` total                                                                                                  | Supplemental findings                              | Recommend                                                                                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| < 25                                                                                                                    | A handful (a Splide bundle, one body-overflow fix) | **Refine** — fix in place, proceed to Steps 1–10. The audit count tells you exactly how many fixes                                                     |
+| 25–100                                                                                                                  | Some theme-wide (reset, config)                    | **Refine aggressively** — allocate extra time; many Recipe Book patterns apply. Capture a baseline (`theme_audit.py --json`) so you can track progress |
+| > 100, GS001 (Section Shell) failing on most sections, Splide everywhere, GS002 (raw hex) above 30, no canonical blocks | n/a                                                | **Re-clone** — run `/theme-clone` against the existing site; faster than rebuilding section by section                                                 |
 
 Whichever path you pick, Steps 1–10 below drive the visual polish — and Step 8 re-runs `theme_audit.py` to confirm violation count drops to zero before declaring the refine complete.
 
@@ -186,27 +192,27 @@ Whichever path you pick, Steps 1–10 below drive the visual polish — and Step
 
 When refining, use this table to map each legacy section to its modern equivalent from the **v4 base theme** library (40 gold-standard sections shipped in the base theme, cloned from https://github.com/Fluid-WeCommerce/base-theme). Steal the shipped section verbatim; don't recreate.
 
-| Legacy (old Fluid boilerplate) | Gold standard (v4 base theme) |
-|---|---|
-| `main_product` (Splide PDP) | `product_hero` (full-featured) OR `product_hero_2` (Seed-style grid gallery) + `product_benefits` + `product_ingredients` + `product_how_to_use` + `product_compare` + `product_press` + `product_reviews_showcase` + `related_products` |
-| `main_collection` / `main_collection_list` | `collection_showcase` (single) + `collection_index` (all collections) |
-| `main_category` / `main_category_list` | `category_showcase` + `category_index` |
-| `main_shop` | `shop_showcase` |
-| `main_post` / `main_post_list` | `blog_showcase` (single post) + `blog_index` (listing) |
-| `main_enrollment` | `enrollment_pack_hero` + `enrollment_whats_included` + `enrollment_compensation` + `enrollment_success_stories` + `enrollment_showcase` |
-| Old homepage hero (hardcoded content) | `hero_centered`, `hero_split_stats`, or `hero_editorial` — block-based, theme-tokened |
-| Old featured products | `featured_products` (auto-fills from collection picker + fallback chain) |
-| Old reviews carousel | `testimonial_grid` (masonry or grid with divider block pattern) |
-| Old FAQ accordion | `faq_accordion` (native `<details>` / `<summary>`, bordered or card style) |
-| Old press logos | `logo_bar` (canonical image blocks) |
-| Old CTA banner | `cta_banner_v2` |
-| Old image + text split | `image_text_split` (canonical block pattern) |
-| Old stats row | `stats_bar` (prefix/value/suffix/label per stat block) |
-| Old process/timeline | `process_steps` (divider + number + image + heading + text blocks) |
-| Old UGC carousel (Splide) | `ugc_carousel` (CSS scroll-snap — Splide-free) |
-| Old before/after slider | `before_after` (drag slider with configurable labels) |
-| Old navbar | `main_navbar` (3-col grid, hamburger overflow, scrolled-bg dropdown, Fluid JS hooks preserved) |
-| Old footer | `main_footer` (multi-column with link_list pickers, newsletter, socials, bottom bar) |
+| Legacy (old Fluid boilerplate)             | Gold standard (v4 base theme)                                                                                                                                                                                                            |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main_product` (Splide PDP)                | `product_hero` (full-featured) OR `product_hero_2` (Seed-style grid gallery) + `product_benefits` + `product_ingredients` + `product_how_to_use` + `product_compare` + `product_press` + `product_reviews_showcase` + `related_products` |
+| `main_collection` / `main_collection_list` | `collection_showcase` (single) + `collection_index` (all collections)                                                                                                                                                                    |
+| `main_category` / `main_category_list`     | `category_showcase` + `category_index`                                                                                                                                                                                                   |
+| `main_shop`                                | `shop_showcase`                                                                                                                                                                                                                          |
+| `main_post` / `main_post_list`             | `blog_showcase` (single post) + `blog_index` (listing)                                                                                                                                                                                   |
+| `main_enrollment`                          | `enrollment_pack_hero` + `enrollment_whats_included` + `enrollment_compensation` + `enrollment_success_stories` + `enrollment_showcase`                                                                                                  |
+| Old homepage hero (hardcoded content)      | `hero_centered`, `hero_split_stats`, or `hero_editorial` — block-based, theme-tokened                                                                                                                                                    |
+| Old featured products                      | `featured_products` (auto-fills from collection picker + fallback chain)                                                                                                                                                                 |
+| Old reviews carousel                       | `testimonial_grid` (masonry or grid with divider block pattern)                                                                                                                                                                          |
+| Old FAQ accordion                          | `faq_accordion` (native `<details>` / `<summary>`, bordered or card style)                                                                                                                                                               |
+| Old press logos                            | `logo_bar` (canonical image blocks)                                                                                                                                                                                                      |
+| Old CTA banner                             | `cta_banner_v2`                                                                                                                                                                                                                          |
+| Old image + text split                     | `image_text_split` (canonical block pattern)                                                                                                                                                                                             |
+| Old stats row                              | `stats_bar` (prefix/value/suffix/label per stat block)                                                                                                                                                                                   |
+| Old process/timeline                       | `process_steps` (divider + number + image + heading + text blocks)                                                                                                                                                                       |
+| Old UGC carousel (Splide)                  | `ugc_carousel` (CSS scroll-snap — Splide-free)                                                                                                                                                                                           |
+| Old before/after slider                    | `before_after` (drag slider with configurable labels)                                                                                                                                                                                    |
+| Old navbar                                 | `main_navbar` (3-col grid, hamburger overflow, scrolled-bg dropdown, Fluid JS hooks preserved)                                                                                                                                           |
+| Old footer                                 | `main_footer` (multi-column with link_list pickers, newsletter, socials, bottom bar)                                                                                                                                                     |
 
 **How to use this table:** open the v4 base-theme file (from the base theme cloned from https://github.com/Fluid-WeCommerce/base-theme), copy its full contents, paste into the legacy theme's section file (matching the file path), adjust only the theme-specific class prefix if collision risk, push. The section comes with Section Shell + Container + theme tokens + canonical blocks + preset + fluid_attributes already.
 
@@ -215,13 +221,22 @@ When refining, use this table to map each legacy section to its modern equivalen
 For the theme-wide files flagged in 0a, use this cheat sheet:
 
 **`assets/reset.css` body overflow fix**
+
 ```css
-/* old */ body { overflow-x: hidden; }
-/* new */ body { overflow-x: clip; }
+/* old */
+body {
+  overflow-x: hidden;
+}
+/* new */
+body {
+  overflow-x: clip;
+}
 ```
+
 `overflow: clip` is identical visually but does NOT create a scroll container — so `position: sticky` keeps working.
 
 **`assets/config.css` — remove hardcoded font vars**
+
 ```css
 /* REMOVE these lines: */
 --ff-body: "Roboto", sans-serif;
@@ -232,6 +247,7 @@ For the theme-wide files flagged in 0a, use this cheat sheet:
 ```
 
 **`config/settings_data.json` — seed all 5 font slots**
+
 ```json
 "current": {
   "font_family_body":        "Roboto",
@@ -242,9 +258,11 @@ For the theme-wide files flagged in 0a, use this cheat sheet:
   // ...
 }
 ```
+
 Missing slots make `{{ settings.font_family_italic | font_family }}` silently fall back to Roboto for all 5.
 
 **`layouts/theme.liquid` — dynamic font variables**
+
 ```liquid
 {% style %}
   {{ settings.font_family_body | font_face: font_display: 'swap' }}
@@ -273,13 +291,14 @@ Missing slots make `{{ settings.font_family_italic | font_family }}` silently fa
 
 ## Step 1: Collect Inputs
 
-| Input | Required | Description |
-|-------|----------|-------------|
-| `SOURCE_URL` | Yes | The original page to match (e.g. `https://yellowbirdfoods.com`) |
-| `THEME_ID` | Yes* | The application theme ID to update. If not provided, fetch via `fluid_api("/api/application_themes", "GET")` and ask the user to confirm which one. |
-| `THEME_DIR` | No | Local working directory with theme files. If not provided, work directly against the Fluid API. |
+| Input        | Required | Description                                                                                                                                         |
+| ------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SOURCE_URL` | Yes      | The original page to match (e.g. `https://yellowbirdfoods.com`)                                                                                     |
+| `THEME_ID`   | Yes\*    | The application theme ID to update. If not provided, fetch via `fluid_api("/api/application_themes", "GET")` and ask the user to confirm which one. |
+| `THEME_DIR`  | No       | Local working directory with theme files. If not provided, work directly against the Fluid API.                                                     |
 
 Also ask:
+
 - **Which page?** Homepage, a specific page, or "all pages"?
 - **Which breakpoints?** Desktop only, or also tablet/mobile?
 - **Specific sections?** Or full page sweep?
@@ -291,23 +310,28 @@ Also ask:
 The active Fluid company is already selected in Mist Desktop — no token, store URL, or company confirmation step is needed. Verify the source site is reachable and pick the theme:
 
 ```python
-# 1. Source site reachable (use the crawl tool or WebFetch)
-#    crawl(SOURCE_URL)  — or  WebFetch(SOURCE_URL)
+# 1. Source site reachable (use managed crawl in Mist)
+#    crawl(SOURCE_URL)
 
 # 2. List themes and confirm THEME_ID
 fluid_api("/api/application_themes", "GET")
 # Find the theme, confirm theme_id
 ```
 
-Also verify the local toolchain — see [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#preflight-check) for the full preflight commands. Required: `node --version` (≥ 18), `fluid --version`, `fluid theme --help` (theme-dev plugin), and Playwright + Chromium present. If any are missing, surface the install commands and ask the user before installing.
+Verify the managed path from
+[the canonical visual-parity protocol](../theme-clone/references/dev-preview-visual-diff.md#capability-contract).
+Use `run_cli fluid --version` and `run_cli fluid theme --help` for bounded CLI
+health, then `start_preview`. Do not probe an ambient executable or require
+Playwright.
 
 Print:
+
 ```
 [Refine] Source:        OK yellowbirdfoods.com
 [Refine] Fluid theme:   OK (Theme ID: 55697)
-[Refine] Node:          OK v22.5.0
-[Refine] fluid CLI:     OK v0.4.2 (theme-dev plugin discovered)
-[Refine] Playwright:    OK chromium installed
+[Refine] Fluid CLI:     OK bundled theme commands available
+[Refine] Source crawl:  OK exact viewport/full page available
+[Refine] Preview:       OK start_preview + screenshot_preview available
 ```
 
 ```
@@ -318,7 +342,9 @@ Print:
 
 ## Step 3: Spin Up the Dev Preview and Capture Paired Screenshots
 
-Visual comparison happens against a **localhost preview** of the theme served by `fluid theme dev`. Never compare against the published Fluid store URL — the watcher-driven dev server gives instant hot-reload after every fix, while a published store would need a full push between rounds.
+Visual comparison happens against the local preview owned by `start_preview`.
+Never substitute the published Fluid store for local refinement; it cannot
+provide the same edit/save/recapture loop.
 
 ### 3a: Pull the theme locally (if not already)
 
@@ -333,37 +359,34 @@ If `THEME_DIR` was provided, run `fluid theme pull -t <THEME_ID>` from inside it
 
 ### 3b: Start the dev server
 
-```bash
-cd <THEME_DIR>
-fluid theme dev --port 9292 &
-# Wait for "Server ready" — or poll: until curl -sf -o /dev/null http://127.0.0.1:9292/; do sleep 1; done
-```
+Call `start_preview` and let Mist resolve dependencies, bundled CLI, and the
+first free port. Wait for the ready result, confirm the exact URL with
+`preview_state`, then read server and browser logs. Do not use bounded
+`run_cli` for the long-lived process.
 
-The CLI proxies `{{company.subdomain}}.fluid.app` rendering against your local files. Filesystem writes hot-reload the localhost page, so the loop tightens to: edit file → save → page reloads.
+### 3c: Capture matched source / localhost evidence
 
-Capture the PID so you can stop it later (`kill %1` or `Ctrl-C`).
+For home, shop, and PDP at `1440×900` and `390×844`:
 
-### 3c: Capture paired source / localhost screenshots
+- source: managed `crawl` with rendered HTML/global chrome and an exact
+  full-page screenshot;
+- local: `screenshot_preview` with the matched path/width/height and
+  `mode:"full"`;
+- interactions: `interact_preview`, then a fresh screenshot.
 
-Run the Playwright script — same viewport on both browsers, walking the page section-by-section at desktop (1440×900), tablet (768×1024), and mobile (390×844):
-
-```bash
-node tools/visual-diff.mjs <SOURCE_URL> http://127.0.0.1:9292/<route> --label=<page>
-```
-
-Output: `diff/<page>/<page>-{desktop,tablet,mobile}-{source,built}-{full,sec01,sec02,...}.png` — matched scroll positions on both sides. The script also strips overlays/popups and disables CSS animations for deterministic shots.
-
-See [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#the-diff-script) for the script body and the full breakpoint matrix.
+Pair sections by `clone-manifest.json` landmarks, not scroll offsets. See
+[the canonical protocol](../theme-clone/references/dev-preview-visual-diff.md).
 
 ---
 
 ## Step 4: Read the Pairs and Classify Findings
 
-Walk the captured pairs in order — desktop first, then tablet, then mobile. For each breakpoint, read the `source` and `built` PNG pair with the Read tool (Claude reads images directly), starting with `*-full.png` for layout overview, then `*-sec01.png`, `*-sec02.png`, … in order down the page.
+Walk the captured pairs in order — desktop first, then any optional tablet evidence, then mobile. For each breakpoint, inspect the `source` and `built` image pair returned by the managed capture tools, starting with the full-page view for layout overview and then the ordered section images. This is model-neutral: use the multimodal image blocks in the tool result rather than assuming a provider-specific file-reading capability.
 
 For every difference, classify into one of two buckets:
 
 **Auto-fix (apply directly without prompting)** — clear, mechanical mismatches:
+
 - Background / text / button colors that should pull from the theme palette
 - Padding, margin, gap (numeric mismatch)
 - Font size, line-height, letter-spacing
@@ -373,6 +396,7 @@ For every difference, classify into one of two buckets:
 - Icon size / object-fit / object-position
 
 **Flag for user (do not fix without confirmation)** — judgement calls:
+
 - Different layout structure (rows vs columns, reordered sections)
 - Image asset swap (source uses a different photo)
 - Custom font unavailable in fluid `font_picker`
@@ -443,12 +467,14 @@ STATUS: 2 differences found
 For EVERY section, check all of these:
 
 **Layout**
+
 - [ ] Same column count and arrangement
 - [ ] Same max-width / container width
 - [ ] Same alignment (left, center, right)
 - [ ] Same content order
 
 **Colors**
+
 - [ ] Background color (section level)
 - [ ] Background color (card/element level)
 - [ ] Heading text color
@@ -458,6 +484,7 @@ For EVERY section, check all of these:
 - [ ] Hover state colors
 
 **Typography**
+
 - [ ] Font family
 - [ ] Font size (heading, subheading, body, caption)
 - [ ] Font weight
@@ -466,23 +493,27 @@ For EVERY section, check all of these:
 - [ ] Text transform (uppercase, capitalize)
 
 **Spacing**
+
 - [ ] Section padding (top and bottom)
 - [ ] Element margins
 - [ ] Grid/flex gap
 - [ ] Content padding inside cards
 
 **Borders & Shapes**
+
 - [ ] Border radius on cards, buttons, images
 - [ ] Border width and style
 - [ ] Box shadow
 
 **Images**
+
 - [ ] Correct image displayed
 - [ ] Same aspect ratio / object-fit
 - [ ] Same size
 - [ ] Same border radius
 
 **Interactive**
+
 - [ ] Hover effects match
 - [ ] Scroll animations match (timing, easing, direction)
 - [ ] Carousel behavior matches
@@ -505,27 +536,32 @@ Exit code 0 = clean. Exit code 1 = fix every violation before moving on. The ful
 The checklist below covers items the script can't catch (data shape, runtime contracts, editor draft state) plus visual cross-references for the rules it does. Walk through each one for the section you just edited:
 
 **Block editability**
+
 - [ ] Every block (image, text, trust item, etc.) selectable in the Layers panel AND directly clickable in the visual preview — this requires `{{ block.fluid_attributes }}` on the rendered element
 - [ ] Canonical image blocks are ALWAYS wrapped (not hidden by empty-image `{% else %}` branch) so the editor can select the slot before uploading
 - [ ] Logo / canonical image blocks have `min-width` + `min-height` so empty slots remain clickable
 - [ ] Placeholder rendered (dashed-border, striped bg, "Your image" label) when no image AND no data-fallback is set
 
 **Theme tokens (must use, never hardcode)**
+
 - [ ] Every color control is `select` pointed at `background_colors` option group — no raw hex defaults
 - [ ] Every font-family control is `select` pointed at `font_families` — no `font_picker` in section settings
 - [ ] Values like `var(--clr-primary)`, `var(--ff-heading)` ship as defaults (not literal hex or font names)
 
 **Section Shell + Container pattern**
+
 - [ ] Shell has `section_padding` (padding control), `section_border_radius` (corner_radius), `background_color`, `background_image`, `section_border_width` + `section_border_color`
 - [ ] Container has `container_max_width` (select), `container_padding`, `container_border_radius`, `container_background_color`, `container_background_image`, `container_overlay_color` + `container_overlay_opacity`, `container_border_width` + `container_border_color`
 - [ ] Vertical padding only on the shell (`padding: Npx 0`) so the background bleeds edge-to-edge
 - [ ] Content lives inside the container (`max-width: 1080-1440px; margin: 0 auto; padding: 0 64px`)
 
 **Hero text pattern**
+
 - [ ] Eyebrow / heading / subhead are richtext BLOCKS (editable in editor), not hard-coded section settings
 - [ ] Richtext defaults include inline `style="color: var(--clr-primary); font-size: …;"` so the first-paint looks intentional
 
 **Forbidden patterns — grep to detect**
+
 - [ ] `"type": "image_picker"` — only allowed on `background_image` / `container_background_image` / `blocks/image.image` / data-driven fallback wrappers. If it appears on a content image, refactor to a canonical `image` block.
 - [ ] `"type": "font_picker"` — only allowed in `config/settings_schema.json`. Never in a section schema.
 - [ ] `splide` — forbidden. CSS scroll-snap + vanilla JS instead.
@@ -533,20 +569,24 @@ The checklist below covers items the script can't catch (data shape, runtime con
 - [ ] `{% render 'cart_button' %}` / any render targeting `blocks/*` — Fluid only resolves from `components/*`. Inline the markup instead.
 
 **Fluid-specific data access**
+
 - [ ] `block.settings.menu.menu_items` (NOT `.links`) when iterating a `link_list` picker
 - [ ] Collection-list image fallback: `c.image` → `c.image_url` → `c.image_path` → `c.products[0].image_url` (NOT `c.product_collections` — that field doesn't exist on the Liquid `collections` global)
 - [ ] Pagination summary: `{{ paginate.current_offset | plus: 1 }}` (not raw `current_offset` — that's 0-indexed)
 - [ ] For sticky navbars / headers: confirm no ancestor has `overflow: hidden` on either axis. If reset.css has `body { overflow-x: hidden }`, change it to `overflow-x: clip`.
 
 **Preset expansion**
+
 - [ ] Presets only fire on FRESH template creation. After editing a section's preset, `fluid_api("/api/application_theme_templates/{id}", "DELETE")` then re-`PUT` the template file to trigger re-expansion.
 - [ ] Template schema does NOT contain `blocks` — blocks come from section presets only. Including blocks in a template schema breaks `fluid_attributes` bindings.
 
 **Navbar overflow**
+
 - [ ] Long nav menus collapse cleanly. Default to hamburger collapse (`is-hamburger` class → hide primary-menu, show mobile-toggle even on desktop) vs a "More ▾" dropdown fallback.
 - [ ] Never clip nav items mid-word (`overflow: hidden` on `.primary-menu` is forbidden; rely on JS `display: none` via `.is-hidden` class instead).
 
 **Image uploads not rendering**
+
 - [ ] Check block state: image upload often sits in editor draft state. Fetch the live page and grep for the image URL — if it's not there, tell the user to click **Save** in the editor. The draft doesn't persist on its own.
 
 Anything that fails the above → not gold standard → must be fixed before marking the section complete.
@@ -559,43 +599,59 @@ For every difference found, go to the source site and extract the exact computed
 
 ```javascript
 // Target the specific element
-var el = document.querySelector('.hero-section h1');
+var el = document.querySelector(".hero-section h1");
 var s = getComputedStyle(el);
 
 // Extract everything relevant
-JSON.stringify({
-  color: s.color,
-  fontSize: s.fontSize,
-  fontWeight: s.fontWeight,
-  fontFamily: s.fontFamily,
-  lineHeight: s.lineHeight,
-  letterSpacing: s.letterSpacing,
-  textTransform: s.textTransform,
-  margin: s.margin,
-  padding: s.padding
-}, null, 2);
+JSON.stringify(
+  {
+    color: s.color,
+    fontSize: s.fontSize,
+    fontWeight: s.fontWeight,
+    fontFamily: s.fontFamily,
+    lineHeight: s.lineHeight,
+    letterSpacing: s.letterSpacing,
+    textTransform: s.textTransform,
+    margin: s.margin,
+    padding: s.padding,
+  },
+  null,
+  2,
+);
 ```
 
 For backgrounds and containers:
+
 ```javascript
-var el = document.querySelector('.hero-section');
+var el = document.querySelector(".hero-section");
 var s = getComputedStyle(el);
 
-JSON.stringify({
-  backgroundColor: s.backgroundColor,
-  padding: s.padding,
-  maxWidth: s.maxWidth,
-  borderRadius: s.borderRadius,
-  boxShadow: s.boxShadow,
-  gap: s.gap
-}, null, 2);
+JSON.stringify(
+  {
+    backgroundColor: s.backgroundColor,
+    padding: s.padding,
+    maxWidth: s.maxWidth,
+    borderRadius: s.borderRadius,
+    boxShadow: s.boxShadow,
+    gap: s.gap,
+  },
+  null,
+  2,
+);
 ```
 
 **Convert `rgb()` values to hex** for cleaner CSS:
+
 ```javascript
 function rgbToHex(rgb) {
   var m = rgb.match(/\d+/g);
-  return '#' + m.slice(0,3).map(x => parseInt(x).toString(16).padStart(2,'0')).join('');
+  return (
+    "#" +
+    m
+      .slice(0, 3)
+      .map((x) => parseInt(x).toString(16).padStart(2, "0"))
+      .join("")
+  );
 }
 ```
 
@@ -606,6 +662,7 @@ function rgbToHex(rgb) {
 Update the section's `index.liquid` file with the corrected values. Be surgical — only change what's wrong.
 
 **Common fixes:**
+
 - Color off by a shade → update hex value in `<style>` block
 - Spacing wrong → update padding/margin/gap values
 - Font size wrong at a breakpoint → update the `@media` query
@@ -620,9 +677,12 @@ Update the section's `index.liquid` file with the corrected values. Be surgical 
 
 ## Step 7: Save the File — the Watcher Handles the Rest
 
-`fluid theme dev` watches `THEME_DIR`. On save, it uploads the changed file to the dev theme via `Syncer.uploadFile`, runs schema validation on `.liquid` files (warn-only), and broadcasts an SSE `{"modified": [...]}` event on `/hot-reload`. The Playwright-driven localhost preview reloads automatically.
+The dev process owned by `start_preview` watches `THEME_DIR`. On save it
+uploads the changed file to the dev theme, validates Liquid, and hot-reloads
+the mounted preview.
 
 You only need a manual API push when:
+
 - The dev server isn't running (don't run a refine round without the dev server)
 - You're updating a binary asset (DAM uploads still go through the upload endpoint)
 - You're deleting a template to force preset re-expansion (see Step 4b → "Section preset blocks don't populate")
@@ -633,17 +693,17 @@ For everything else, save the file and let the watcher do its job.
 
 ## Step 8: Re-Run the Diff Script and the Audit, Then Verify
 
-After the fix has hot-reloaded, run **both gates**: the visual diff (pixels) and the deterministic audit (structure). A section is verified only when both pass.
+After the fix has hot-reloaded, run both gates: the managed visual matrix and
+the deterministic audit. A section is verified only when both pass.
 
 ```bash
-# Visual gate — catches pixel-level deltas
-node tools/visual-diff.mjs <SOURCE_URL> http://127.0.0.1:9292/<route> --label=<page>
-
 # Structural gate — catches schema/Liquid bugs no screenshot can see
 python3 ../theme-clone/scripts/theme_audit.py "$THEME_DIR/sections/<section_name>/index.liquid"
 ```
 
-Re-read the relevant section pairs (the ones that had findings) plus a quick sanity check on the surrounding sections in case the fix had unintended side effects. Loop:
+Recapture the complete home/shop/PDP desktop/mobile matrix through `crawl` +
+`screenshot_preview`, read the relevant semantic pairs plus surrounding
+landmarks, and loop:
 
 - Visual findings = 0 AND audit exit code 0 → section complete, move on
 - Visual findings remain, all auto-fix → fix and re-run both gates
@@ -664,9 +724,13 @@ Compare to the baseline captured in Phase 0 (if you saved one). The violation co
 
 ## Step 9: Responsive Pass
 
-The Playwright diff script already captures **desktop, tablet, and mobile** in a single run, so each round of Step 4 covers all three breakpoints natively. Walk pairs in this order: desktop first (catches structural / typographic issues), then tablet, then mobile (often surfaces hamburger-menu, padding-collapse, and image-fit issues).
+Every round captures required desktop and mobile evidence for all three
+priority routes. Walk desktop first, then mobile. Tablet is optional and cannot
+replace either required viewport. Use `interact_preview` to exercise the real
+mobile menu and disclosure controls before claiming behavior works.
 
 Common responsive issues to watch for:
+
 - Grid columns don't collapse at the right breakpoint
 - Font sizes don't scale down enough
 - Padding is too large on mobile
@@ -737,6 +801,7 @@ If the user says "fix the hero section" or "the testimonials don't match," skip 
 ## Running on All Pages
 
 If refining a full site clone, work through pages in this order:
+
 1. Homepage (establishes the design language)
 2. Product pages
 3. Collection/shop pages
@@ -774,6 +839,7 @@ These are non-obvious behaviors discovered while refining themes. If you hit any
 The formatting toolbar on every `text` / `textarea` / `richtext` field has two dropdowns at the top: **Text Presets** and **Primary Color**. These draw from theme-level `option_group`s in `config/settings_schema.json`.
 
 **Fix — colors:** every color setting needs an `option_group` with a distinct `label` and a `value` that's a CSS value:
+
 ```json
 {
   "type": "color_background",
@@ -792,10 +858,16 @@ The formatting toolbar on every `text` / `textarea` / `richtext` field has two d
 ```
 
 **Fix — text presets:** every heading font-size range needs an `option_group` pointing at `text_presets`:
+
 ```json
 {
-  "type": "range", "id": "font_size_h1", "label": "H1 Font Size",
-  "min": 32, "max": 72, "step": 1, "default": 42,
+  "type": "range",
+  "id": "font_size_h1",
+  "label": "H1 Font Size",
+  "min": 32,
+  "max": 72,
+  "step": 1,
+  "default": 42,
   "option_group": { "id": "text_presets", "label": "H1 · Heading", "value": "text-h1" }
 }
 ```
@@ -807,6 +879,7 @@ Without these option_groups, the dropdowns render empty and editors have nothing
 Same root cause as above. The `select + option_group` pattern is how Fluid gets a theme-aware color dropdown inside a section. If the dropdown is empty, the theme has no colors with `option_group: { id: "background_colors", ... }`.
 
 **Critical bug to avoid:** never write `background-color: var(--clr-{{ section.settings.background_color }});`. When the setting is empty this renders `var(--clr-)` — invalid CSS that silently breaks the entire rule block. The option_group's `value` is already a CSS value, so:
+
 ```liquid
 background-color: {{ section.settings.background_color | default: 'transparent' }};
 ```
@@ -818,6 +891,7 @@ background-color: {{ section.settings.background_color | default: 'transparent' 
 **Root cause:** Fluid only applies section presets when a section is **first added** to a template. An existing template that already has the section (even with zero blocks) never retroactively gets the preset. API `PUT` on resources doesn't trigger preset expansion.
 
 **Fix:** delete the template via API, then re-push the page template. That forces Fluid to create a fresh template record, and fresh-creation runs preset expansion.
+
 ```python
 # 1. Delete the resource (this deletes the template record)
 fluid_api(f"/api/application_themes/{THEME_ID}/resources", "DELETE",
@@ -831,6 +905,7 @@ fluid_api(f"/api/application_themes/{THEME_ID}/resources", "PUT",
 ```
 
 **Additional requirement for preset expansion to fire:** the section's `"blocks"` array in its schema must declare blocks with **inline settings**, not as a standalone reference:
+
 ```json
 /* WRONG — Fluid won't run preset expansion on this shape */
 "blocks": [
@@ -860,10 +935,11 @@ Note: even if you have a standalone `blocks/schema_entry/index.liquid` file with
 
 ```javascript
 // In the preview iframe
-document.querySelector('.your-block-class').outerHTML.substring(0, 300)
+document.querySelector(".your-block-class").outerHTML.substring(0, 300);
 ```
 
 A **registered** block has attributes like:
+
 ```
 data-fluid-section-block-id="02b31fac"
 data-fluid-section-block-type="schema_entry"
@@ -912,6 +988,7 @@ Dashes ARE safe inside `{%- style -%}` blocks (CSS generation), just not inside 
 **Symptom:** You can't click the section itself in the editor to open its settings.
 
 **Fix:** the outermost element in the section's markup needs `{{ section.fluid_attributes }}`:
+
 ```liquid
 <section class="my-section section-{{ section.id }}" {{ section.fluid_attributes }}>
   …
@@ -923,19 +1000,21 @@ Without this, Fluid doesn't know where the section starts/ends in the DOM, so it
 ### Binary theme assets (images) fail to upload via API
 
 The old `dam_asset: "<https-url-string>"` shape on `PUT /api/application_themes/{id}/resources` now returns 422 ("must be a hash"). Tested shapes that still error:
+
 - `dam_asset: { id }` → 500 RecordInvalid
 - `dam_asset: { url }` → 500 RecordInvalid
 - `dam_asset: { id, url }` → 500 RecordInvalid
 - `dam_asset: { id, default_variant_id, default_variant_url }` → 500 UnknownAttributeError
 - Full asset hash → 500 UnknownAttributeError
 
-**Current workaround:** skip binary theme assets in API pushes. Images for sections belong in the DAM and should be referenced from Liquid with their DAM URLs in `settings_data.json` or block defaults, not pushed as theme resources. The 8-10 placeholder images in a base theme (logo, footer-logo, brand-*, placeholder-*) are rarely used — most themes override them via settings.
+**Current workaround:** skip binary theme assets in API pushes. Images for sections belong in the DAM and should be referenced from Liquid with their DAM URLs in `settings_data.json` or block defaults, not pushed as theme resources. The 8-10 placeholder images in a base theme (logo, footer-logo, brand-_, placeholder-_) are rarely used — most themes override them via settings.
 
 ### Saved block state does NOT update when you change section defaults
 
 Updating a block's `"default"` in the section schema and pushing does not retroactively change blocks that already exist on pages. The saved template state keeps the old content.
 
 To update live content after changing defaults:
+
 - **Quick:** edit each affected block manually in the editor.
 - **Bulk:** patch the template's saved JSON directly via API — GET the template content, find the `blocks` object under the section, update the settings there, PUT it back.
 - **Nuclear:** delete + recreate the template (see preset-expansion fix above). Loses any editor customizations.
@@ -943,6 +1022,7 @@ To update live content after changing defaults:
 ### API push → editor Save workflow
 
 After pushing section code via `fluid_api("/api/application_themes/{id}/resources", "PUT", {...})`:
+
 1. Open the visual editor for a template that uses the section
 2. Click **Save** (even with no visible changes)
 3. This triggers Fluid's block registration system for any blocks already on the canvas
@@ -965,6 +1045,7 @@ Each lives at `{template}/default/index.liquid`. A commonly missed one is `libra
 Every custom (non-Fluid-built-in) section MUST ship with these three groups in its `{% schema %}` settings:
 
 **Section Shell** (outer box):
+
 ```json
 { "type": "padding",        "id": "section_padding",       "label": "Section Padding" },
 { "type": "corner_radius",  "id": "section_border_radius", "label": "Section Border Radius" },
@@ -979,6 +1060,7 @@ Every custom (non-Fluid-built-in) section MUST ship with these three groups in i
 ```
 
 **Container** (inner content frame — 9 settings):
+
 ```json
 { "type": "select", "id": "container_max_width", "label": "Max Width", "default": "1280px",
   "options": [
@@ -1064,6 +1146,7 @@ Standardized responsive breakpoints: `991px` (tablet), `767px` (mobile). Never u
 **Why two `border_*` settings instead of `"type": "border"`?** Fluid's native `border` control uses a hex color picker internally, breaking theme-driven color rules. Splitting into `border_width` (range) + `border_color` (select → background_colors) keeps every color theme-aware.
 
 Audit script (run before refinement to flag sections missing the pattern):
+
 ```python
 import re, json, os
 BASE = "base-theme/sections"
@@ -1087,39 +1170,50 @@ for name in sorted(os.listdir(BASE)):
     if missing:
         print(f"{name}: missing {missing}")
 ```
+
 (`base-theme/sections` here means the theme working directory's `sections/` — substitute `$THEME_DIR/sections`.)
 
 ---
 
 ## Prefer theme color dropdowns over raw hex pickers
 
-**User principle:** *never* use raw hex color pickers in section/block settings. Always pull from the theme's named colors via a `select` + `options: "background_colors"` dropdown.
+**User principle:** _never_ use raw hex color pickers in section/block settings. Always pull from the theme's named colors via a `select` + `options: "background_colors"` dropdown.
 
 **Bad:**
+
 ```json
 { "type": "color", "id": "text_color", "label": "Text Color", "default": "#000000" }
 { "type": "color_background", "id": "bg", "label": "Background", "default": "#ffffff" }
 ```
 
 **Good:**
+
 ```json
-{ "type": "select", "id": "text_color", "label": "Text Color",
-  "options": "background_colors", "default": "var(--clr-primary)" }
+{
+  "type": "select",
+  "id": "text_color",
+  "label": "Text Color",
+  "options": "background_colors",
+  "default": "var(--clr-primary)"
+}
 ```
 
 Why: raw `color` / `color_background` let editors pick any random hex, disconnected from the theme palette. The `select + background_colors` pattern restricts choices to theme colors, so palette changes propagate site-wide.
 
 **Where raw `color_background` is still OK:**
+
 - `config/settings_schema.json` — theme-level color token DEFINITIONS (with `option_group: { id: "background_colors", ... }`)
 - **Nowhere else.** Section and block settings should always use the dropdown.
 
 Default value mapping when migrating:
+
 - `#000000` / `#000` → `var(--clr-primary)` (or `var(--clr-black)`)
 - `#ffffff` / `#fff` → `var(--clr-white)`
 - `#f8f8f8` / `#f2f2f2` / `#f5f5f5` → `var(--clr-gray)`
 - Any other hex → `transparent` (safe default, editor picks from dropdown)
 
 Audit script to find raw color pickers in section/block settings:
+
 ```python
 import re, os
 BASE = "base-theme/sections"
@@ -1138,6 +1232,7 @@ for name in sorted(os.listdir(BASE)):
 ## Phantom block defaults — remove hardcoded fallbacks in section markup
 
 **The anti-pattern:**
+
 ```liquid
 <p class="rte">{{ description_block.settings.text | default: "<p>Lorem ipsum dolor sit amet...</p>" }}</p>
 <h2>{{ heading_block.settings.text | default: "<h2>Medium length heading</h2>" }}</h2>
@@ -1147,6 +1242,7 @@ for name in sorted(os.listdir(BASE)):
 **Why it's bad:** when no block of that type is present, the Liquid still renders the hardcoded fallback text. The user sees "Lorem ipsum" on the page but can't click or edit it because there's no block bound. To remove the text they'd have to add the block and manually clear it — terrible UX.
 
 **The right pattern:** conditionally render the wrapping element only when the block exists. Never use a non-empty string `| default:` on a block's content field.
+
 ```liquid
 {% if description_block %}
   <p class="rte" {{ description_block.fluid_attributes }}>
@@ -1163,6 +1259,7 @@ for name in sorted(os.listdir(BASE)):
 The block's `"default"` in the schema is the right place for initial content — that only renders when the block is actually added.
 
 Audit:
+
 ```python
 import re, os
 BASE = "base-theme/sections"
@@ -1184,22 +1281,23 @@ Every base theme's `config/settings_schema.json` exposes a standard palette of *
 
 **12 colors** — grouped Brand / Neutrals / Text / Status:
 
-| ID | Default | Group label |
-|---|---|---|
-| `color_primary`   | `#000000` | Primary   |
-| `color_secondary` | `#1F2937` | Secondary |
-| `color_accent`    | `#FF5722` | Accent    |
-| `color_white`     | `#FFFFFF` | White     |
-| `color_light`     | `#FAFAFA` | Light     |
-| `color_gray`      | `#F2F2F2` | Gray      |
-| `color_muted`     | `#9CA3AF` | Muted     |
-| `color_dark`      | `#111827` | Dark      |
-| `color_black`     | `#000000` | Black     |
-| `color_body`      | `#1F2937` | Body      |
-| `color_success`   | `#10B981` | Success   |
-| `color_warning`   | `#F59E0B` | Warning   |
+| ID                | Default   | Group label |
+| ----------------- | --------- | ----------- |
+| `color_primary`   | `#000000` | Primary     |
+| `color_secondary` | `#1F2937` | Secondary   |
+| `color_accent`    | `#FF5722` | Accent      |
+| `color_white`     | `#FFFFFF` | White       |
+| `color_light`     | `#FAFAFA` | Light       |
+| `color_gray`      | `#F2F2F2` | Gray        |
+| `color_muted`     | `#9CA3AF` | Muted       |
+| `color_dark`      | `#111827` | Dark        |
+| `color_black`     | `#000000` | Black       |
+| `color_body`      | `#1F2937` | Body        |
+| `color_success`   | `#10B981` | Success     |
+| `color_warning`   | `#F59E0B` | Warning     |
 
 Each uses:
+
 ```json
 {
   "type": "color_background",
@@ -1211,21 +1309,23 @@ Each uses:
 ```
 
 And is wired in `layouts/theme.liquid`:
+
 ```liquid
 --clr-accent: {{ settings.color_accent | default: '#FF5722' }};
 ```
 
 **5 fonts** — Body / Heading / Accent / Italic / Handwriting:
 
-| ID | Default | Group label |
-|---|---|---|
-| `font_family_body`        | `Roboto`          | Body        |
-| `font_family_heading`     | `Roboto`          | Heading     |
-| `font_family_accent`      | `Roboto`          | Accent      |
-| `font_family_italic`      | `Playfair Display`| Italic      |
-| `font_family_handwriting` | `Caveat`          | Handwriting |
+| ID                        | Default            | Group label |
+| ------------------------- | ------------------ | ----------- |
+| `font_family_body`        | `Roboto`           | Body        |
+| `font_family_heading`     | `Roboto`           | Heading     |
+| `font_family_accent`      | `Roboto`           | Accent      |
+| `font_family_italic`      | `Playfair Display` | Italic      |
+| `font_family_handwriting` | `Caveat`           | Handwriting |
 
 Each uses:
+
 ```json
 {
   "type": "font_picker",
@@ -1237,20 +1337,29 @@ Each uses:
 ```
 
 Wired in `layouts/theme.liquid`:
+
 ```liquid
 --ff-italic: {{ settings.font_family_italic | font_family | default: "'Playfair Display', Georgia, serif" }};
 ```
 
 **Never use `font_picker` in section or block settings.** Always pull from the theme via select + `font_families` option group:
+
 ```json
-{ "type": "select", "id": "font_family", "label": "Font Family",
-  "options": "font_families", "default": "var(--ff-body)" }
+{
+  "type": "select",
+  "id": "font_family",
+  "label": "Font Family",
+  "options": "font_families",
+  "default": "var(--ff-body)"
+}
 ```
 
 Liquid output:
+
 ```liquid
 {% if block.settings.font_family != blank %}font-family: {{ block.settings.font_family }};{% endif %}
 ```
+
 (No `| font_family` filter — the value is already a `var(--ff-…)` reference.)
 
 ---
@@ -1258,6 +1367,7 @@ Liquid output:
 ## Canonical block primacy — break composites into reusable blocks
 
 There are a small number of **canonical blocks** in `base-theme/blocks/`:
+
 - `blocks/image` — any time a user-uploaded image appears anywhere in the theme
 - `blocks/button` — any time a button appears (10 settings: text, link, font, open_new_tab, style, font_size, padding, background_color, text_color, border, border_radius)
 - `blocks/fluid_media` — any time a Fluid Media widget (video / UGC) appears
@@ -1265,6 +1375,7 @@ There are a small number of **canonical blocks** in `base-theme/blocks/`:
 - `blocks/schema_entry` — reference card used by the schema-reference page
 
 Reusable theme components (rendered via `{% render %}`, not added as block instances):
+
 - `components/navbar_locale_dropdown` — single component for desktop popover + mobile sheet, preserves Fluid's existing `header.js` locale-switch hooks
 
 **Rule:** anywhere a section needs one of these things, it must accept the canonical block, not define its own local variant.
@@ -1302,6 +1413,7 @@ Why bad: the author block defines its own image handling — no aspect ratio, no
 ```
 
 Editor composes a testimonial card by adding blocks in order:
+
 1. `testimonial_item` (empty divider block — marks start of a card)
 2. `image` (company logo)
 3. `testimonial_text` (quote)
@@ -1343,16 +1455,19 @@ The section Liquid walks blocks statelessly. At each divider it opens a new card
 ```
 
 Pros:
+
 - Every image renders through canonical image settings — aspect ratio, fit, object position, overlay, border, radius all consistent
 - Composition is explicit (editors see cards build up block-by-block)
 - Reorder/delete individual parts without complex wrapper state
 - Sections don't duplicate image handling logic
 
 Cons:
+
 - More blocks in the editor list per card
 - Editors must maintain correct order (divider → parts → divider → parts)
 
 Migration checklist when refactoring a composite block:
+
 1. Identify composite blocks that embed an `image_picker` — candidates for flatten
 2. If the image is a user upload (not data-driven like `post.image`), extract it
 3. Strip the image settings from the composite; keep only text/metadata
@@ -1361,6 +1476,7 @@ Migration checklist when refactoring a composite block:
 6. Rewrite section Liquid to render blocks statelessly (use divider pattern if grouping)
 
 **When NOT to flatten:**
+
 - The image is DATA-DRIVEN (e.g., `post.image`, `product.featured_image`). Keep a legacy wrapper that styles the data-driven image — not an editor-uploaded image.
 - The composite's image is truly inseparable (no case-by-case variation needed). Rare.
 
@@ -1371,6 +1487,7 @@ Migration checklist when refactoring a composite block:
 `{ "type": "media_picker" }` returns a Fluid Media object with `fluid_media_id` when the editor picks a Fluid video / UGC asset — but it returns a plain image object (no `fluid_media_id`) when the editor uploads a JPG/PNG. Rendering only the `<fluid-media-widget>` branch loses every plain-image pick.
 
 Right pattern:
+
 ```liquid
 {%- assign _m = block.settings.media -%}
 {%- assign _fmid = _m.fluid_media_id -%}
@@ -1396,10 +1513,12 @@ Right pattern:
 Setting fields with `type: "html"` or `type: "richtext"` **re-evaluate Liquid** in the stored value. If you ever store text that demonstrates Liquid syntax (a docs page, a code-snippet field), Fluid's parser tries to execute the inline `{% for %}` / `{% comment %}` / `{{ x }}` and crashes with confusing errors like "Liquid syntax error: 'comment' tag was never closed" or "Syntax Error in 'for loop'" — even though the surrounding template is fine.
 
 **Symptoms:**
+
 - Page renders the navbar + footer but the section content is replaced with a Liquid error message
 - Error references a tag inside a value that's clearly meant to be inert documentation text
 
 **Fix — escape the brace delimiters as HTML entities in the stored value:**
+
 ```
 {%  →  &#123;%
 %}  →  %&#125;
@@ -1410,6 +1529,7 @@ Setting fields with `type: "html"` or `type: "richtext"` **re-evaluate Liquid** 
 ```
 
 Output the field directly, **without** `| escape` — the browser decodes the entities back for display:
+
 ```liquid
 <pre><code>{{ block.settings.snippet }}</code></pre>
 ```
@@ -1417,6 +1537,7 @@ Output the field directly, **without** `| escape` — the browser decodes the en
 (Adding `| escape` would double-encode the `&` in `&#123;` → `&amp;#123;` and the user would see the literal entity reference.)
 
 **Bulk-escape audit script** for an existing reference page:
+
 ```python
 import json, re
 
@@ -1439,16 +1560,24 @@ for b in schema['presets'][0]['blocks']:
 When the canonical `blocks/image` is used inside a hero or split section, the image needs to FILL its column instead of using its own aspect ratio. The canonical image block ships with an `aspect_ratio` control (e.g., `4/5`, `16/9`); for hero columns, override it via section CSS:
 
 ```css
-.hero__image-slot { align-self: stretch; position: relative; min-height: 360px; }
+.hero__image-slot {
+  align-self: stretch;
+  position: relative;
+  min-height: 360px;
+}
 
 .hero__image-slot .media-wrap {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  aspect-ratio: unset !important;   /* override canonical block's aspect_ratio */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: unset !important; /* override canonical block's aspect_ratio */
   margin: 0 !important;
 }
 .hero__image-slot .media-wrap img {
-  width: 100%; height: 100%; object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 ```
 
@@ -1497,25 +1626,27 @@ Then walk this list for anything the audit doesn't catch (file structure, settin
 
 **Already covered by `theme_audit.py` — don't re-check manually:**
 
-| Manual check | Audit rule(s) |
-|---|---|
-| Section root has `{{ section.fluid_attributes }}` | GS015 |
-| Block root has `{{ block.fluid_attributes }}` (and only on `<div>`) | GS007, GS016 |
-| Block loops use `{% %}` not `{%- -%}` | GS013 |
-| No unsupported types (`number`, `article`, `video`, `video_url`, `inline_richtext`) | GS011 |
-| Every custom section has Section Shell + Container | GS001 |
-| No `"type": "color"` / `"type": "color_background"` in section settings | GS002 |
-| No `"type": "font_picker"` in section settings | GS003 |
-| `image_picker` placement | GS004 |
-| `var(--clr-{{ ... }})` footgun | GS014 |
-| Template schemas free of `blocks` data | GS019 |
-| `fluid_attribute` (singular) typo | GS026 |
+| Manual check                                                                        | Audit rule(s) |
+| ----------------------------------------------------------------------------------- | ------------- |
+| Section root has `{{ section.fluid_attributes }}`                                   | GS015         |
+| Block root has `{{ block.fluid_attributes }}` (and only on `<div>`)                 | GS007, GS016  |
+| Block loops use `{% %}` not `{%- -%}`                                               | GS013         |
+| No unsupported types (`number`, `article`, `video`, `video_url`, `inline_richtext`) | GS011         |
+| Every custom section has Section Shell + Container                                  | GS001         |
+| No `"type": "color"` / `"type": "color_background"` in section settings             | GS002         |
+| No `"type": "font_picker"` in section settings                                      | GS003         |
+| `image_picker` placement                                                            | GS004         |
+| `var(--clr-{{ ... }})` footgun                                                      | GS014         |
+| Template schemas free of `blocks` data                                              | GS019         |
+| `fluid_attribute` (singular) typo                                                   | GS026         |
+
 - [ ] **Images come from canonical `blocks/image`** — no section-specific `image_picker` fields except on the canonical block itself
 - [ ] **Buttons come from canonical `blocks/button`** — 10-setting pattern (text, link, font_family via select:font_families, open_new_tab, style, font_size, padding, background_color, text_color, border, border_radius)
 - [ ] **Fluid Media embeds come from canonical `blocks/fluid_media`** with the `media_picker` → `fluid_media_id` / `| image_url` fallback pattern
 - [ ] **Grouped cards (testimonials, features, steps) use the divider-block pattern** — empty divider block opens a new card, subsequent canonical/sub-blocks render inside it until the next divider
 
 For block/preset issues specifically:
+
 - [ ] Section's `"blocks"` array in schema has blocks with **inline settings** (not standalone references)
 - [ ] Section has a `"presets"` array with initial block instances if the page should ship pre-populated
 - [ ] To apply presets to a template: delete + re-push the template resource
@@ -1529,11 +1660,13 @@ Drop-in fixes for every pattern that shows up in legacy themes. Each recipe: (1)
 ### Recipe 1: Legacy section-level `image_picker` → canonical `image` block
 
 **Legacy:**
+
 ```json
 "settings": [
   { "type": "image_picker", "id": "hero_image", "label": "Hero Image" }
 ]
 ```
+
 ```liquid
 <img src="{{ section.settings.hero_image | img_url: '1600x' }}" alt="">
 ```
@@ -1541,6 +1674,7 @@ Drop-in fixes for every pattern that shows up in legacy themes. Each recipe: (1)
 **Why wrong:** merchant loses all the controls the canonical image block ships (aspect_ratio, fit, object_position, border_radius, border, overlay). Can't duplicate independently. The slot isn't editor-selectable as an image block.
 
 **Replace with:**
+
 ```json
 "blocks": [
   { "type": "image", "name": "Image", "limit": 1,
@@ -1561,6 +1695,7 @@ Drop-in fixes for every pattern that shows up in legacy themes. Each recipe: (1)
   }
 ]
 ```
+
 ```liquid
 {%- assign image_block = section.blocks | where: 'type', 'image' | first -%}
 {% if image_block %}
@@ -1590,6 +1725,7 @@ Drop-in fixes for every pattern that shows up in legacy themes. Each recipe: (1)
 ### Recipe 2: Hardcoded `"type": "color"` → theme-token dropdown
 
 **Legacy:**
+
 ```json
 { "type": "color", "id": "heading_color", "label": "Heading color", "default": "#111827" }
 ```
@@ -1597,9 +1733,15 @@ Drop-in fixes for every pattern that shows up in legacy themes. Each recipe: (1)
 **Why wrong:** merchant picks a one-off hex, disconnected from the theme's brand palette. Changing brand colors requires editing every section's picker.
 
 **Replace with:**
+
 ```json
-{ "type": "select", "id": "heading_color", "label": "Heading color",
-  "options": "background_colors", "default": "var(--clr-primary)" }
+{
+  "type": "select",
+  "id": "heading_color",
+  "label": "Heading color",
+  "options": "background_colors",
+  "default": "var(--clr-primary)"
+}
 ```
 
 The `background_colors` option group is defined in `config/settings_schema.json` with all 12 theme colors. Every color setting in every section references it, so one edit to the palette flows everywhere.
@@ -1609,14 +1751,21 @@ The `background_colors` option group is defined in `config/settings_schema.json`
 ### Recipe 3: `font_picker` in section → theme-token dropdown
 
 **Legacy:**
+
 ```json
 { "type": "font_picker", "id": "heading_font", "label": "Heading font", "default": "Inter" }
 ```
 
 **Replace with:**
+
 ```json
-{ "type": "select", "id": "heading_font", "label": "Heading font",
-  "options": "font_families", "default": "var(--ff-heading)" }
+{
+  "type": "select",
+  "id": "heading_font",
+  "label": "Heading font",
+  "options": "font_families",
+  "default": "var(--ff-heading)"
+}
 ```
 
 `font_picker` belongs in `config/settings_schema.json` only. Section-level font choices must reference the `font_families` option group (which ships 5 slots: body, heading, accent, italic, handwriting).
@@ -1626,6 +1775,7 @@ The `background_colors` option group is defined in `config/settings_schema.json`
 ### Recipe 4: Section-level heading/eyebrow text → richtext BLOCKS
 
 **Legacy:**
+
 ```json
 "settings": [
   { "type": "text",     "id": "eyebrow",  "label": "Eyebrow",  "default": "Featured" },
@@ -1637,6 +1787,7 @@ The `background_colors` option group is defined in `config/settings_schema.json`
 **Why wrong:** merchant can't style inline (color, weight, italic emphasis), can't reorder, can't omit one without awkward "leave blank to hide" UX.
 
 **Replace with** canonical eyebrow/heading/subhead blocks:
+
 ```json
 "blocks": [
   { "type": "eyebrow", "name": "Eyebrow",
@@ -1662,6 +1813,7 @@ The `background_colors` option group is defined in `config/settings_schema.json`
   { "name": "...", "blocks": [ { "type": "eyebrow" }, { "type": "heading" }, { "type": "subhead" } ] }
 ]
 ```
+
 ```liquid
 {%- assign eyebrow_blocks = section.blocks | where: 'type', 'eyebrow' -%}
 {%- assign heading_blocks = section.blocks | where: 'type', 'heading' -%}
@@ -1679,6 +1831,7 @@ Inline `style=""` on the richtext default gives a proper-looking first paint. Me
 ### Recipe 5: Section with no Section Shell / Container → canonical shell
 
 **Legacy:**
+
 ```liquid
 <section class="legacy-section">
   <div style="max-width: 1280px; margin: 0 auto; padding: 60px 20px;">
@@ -1686,9 +1839,11 @@ Inline `style=""` on the richtext default gives a proper-looking first paint. Me
   </div>
 </section>
 ```
+
 Hardcoded dimensions, no merchant control over padding / background / border / container.
 
 **Replace with** the canonical 6 + 9 pattern. Add to the section schema:
+
 ```json
 "settings": [
   // ... other section settings ...
@@ -1720,6 +1875,7 @@ Hardcoded dimensions, no merchant control over padding / background / border / c
   { "type": "select",        "id": "section_border_color",   "label": "Section Border Color", "options": "background_colors", "default": "var(--clr-primary)" }
 ]
 ```
+
 ```liquid
 {%- style -%}
   .sec.section-{{ section.id }} {
@@ -1758,6 +1914,7 @@ Hardcoded dimensions, no merchant control over padding / background / border / c
 ### Recipe 6: Splide carousel → CSS scroll-snap
 
 **Legacy:**
+
 ```html
 <div class="splide">
   <div class="splide__track">
@@ -1766,12 +1923,15 @@ Hardcoded dimensions, no merchant control over padding / background / border / c
     </ul>
   </div>
 </div>
-<script>new Splide('.splide').mount();</script>
+<script>
+  new Splide(".splide").mount();
+</script>
 ```
 
 **Why wrong:** Fluid's editor mutates the DOM on every save; Splide re-mounts on each mutation, double-binds events, loses scroll position. Documented incompatibility.
 
 **Replace with** CSS scroll-snap:
+
 ```html
 <div class="rail" data-carousel-rail>
   <article class="rail__slide">...</article>
@@ -1780,6 +1940,7 @@ Hardcoded dimensions, no merchant control over padding / background / border / c
 <button data-carousel-prev>‹</button>
 <button data-carousel-next>›</button>
 ```
+
 ```css
 .rail {
   display: grid;
@@ -1791,14 +1952,23 @@ Hardcoded dimensions, no merchant control over padding / background / border / c
   scroll-behavior: smooth;
   scrollbar-width: none;
 }
-.rail::-webkit-scrollbar { display: none; }
-.rail__slide { scroll-snap-align: start; }
+.rail::-webkit-scrollbar {
+  display: none;
+}
+.rail__slide {
+  scroll-snap-align: start;
+}
 ```
+
 ```js
-const rail = document.querySelector('[data-carousel-rail]');
-const slideWidth = rail.querySelector('.rail__slide').getBoundingClientRect().width + 20;
-document.querySelector('[data-carousel-prev]').addEventListener('click', () => rail.scrollBy({ left: -slideWidth, behavior: 'smooth' }));
-document.querySelector('[data-carousel-next]').addEventListener('click', () => rail.scrollBy({ left:  slideWidth, behavior: 'smooth' }));
+const rail = document.querySelector("[data-carousel-rail]");
+const slideWidth = rail.querySelector(".rail__slide").getBoundingClientRect().width + 20;
+document
+  .querySelector("[data-carousel-prev]")
+  .addEventListener("click", () => rail.scrollBy({ left: -slideWidth, behavior: "smooth" }));
+document
+  .querySelector("[data-carousel-next]")
+  .addEventListener("click", () => rail.scrollBy({ left: slideWidth, behavior: "smooth" }));
 ```
 
 Zero dependencies, Fluid-DOM-safe, works natively with trackpad / touch / keyboard / arrow-button controls.
@@ -1808,6 +1978,7 @@ Zero dependencies, Fluid-DOM-safe, works natively with trackpad / touch / keyboa
 ### Recipe 7: `{% render 'cart_button' %}` → inline markup
 
 **Legacy navbar:**
+
 ```liquid
 {%- for block in section.blocks -%}
   {%- when 'cart_button' -%}
@@ -1824,6 +1995,7 @@ Zero dependencies, Fluid-DOM-safe, works natively with trackpad / touch / keyboa
 ### Recipe 8: Legacy pagination → modern pill pagination
 
 **Legacy component:**
+
 ```liquid
 Showing <span>{{ paginate.current_offset }}</span> to <span>{{ paginate.end_offset }}</span> of <span>{{ pagination.total_count }}</span> results
 ```
@@ -1837,6 +2009,7 @@ Showing <span>{{ paginate.current_offset }}</span> to <span>{{ paginate.end_offs
 ### Recipe 9: `body { overflow-x: hidden }` → `clip`
 
 **Legacy reset.css:**
+
 ```css
 body {
   overflow-x: hidden;
@@ -1846,6 +2019,7 @@ body {
 **Why wrong:** `overflow: hidden` on either axis creates a new scroll container, which breaks `position: sticky` relative to the viewport. Every sticky navbar / tab bar / side rail silently fails.
 
 **Replace with:**
+
 ```css
 body {
   /* overflow-x: clip keeps the visual effect but doesn't create a
@@ -1863,6 +2037,7 @@ Browser support: Chrome 90+, Safari 16+, Firefox 102+ (95%+ of users).
 **Legacy:** navbar with a fixed horizontal menu. 10+ links either clip off-screen or push the logo / actions off.
 
 **Replace with** the v4 main_navbar overflow pattern:
+
 1. 3-column grid: `auto minmax(0, 1fr) auto` (logo / nav / actions — middle column has `minmax(0, 1fr)` so it shrinks rather than pushing)
 2. JS measures on paint + resize; if any link would overflow the nav column, adds `.is-hamburger` to the header → CSS hides primary-menu + surfaces the mobile toggle on desktop too
 3. Mobile drawer (existing `navbar_mobile_menu` component) contains the full menu
@@ -1874,6 +2049,7 @@ Copy the full Liquid + CSS + JS from the base theme (cloned from https://github.
 ### Recipe 11: Old footer with hardcoded links → block-based with Fluid link_list pickers
 
 **Legacy:**
+
 ```liquid
 <footer>
   <div class="footer-col">
@@ -1886,15 +2062,22 @@ Copy the full Liquid + CSS + JS from the base theme (cloned from https://github.
 **Replace with** the v4 main_footer pattern. Each column is a block with a `link_list` picker pointing at a Fluid menu:
 
 ```json
-{ "type": "column", "name": "Link column",
+{
+  "type": "column",
+  "name": "Link column",
   "settings": [
-    { "type": "text",      "id": "heading", "label": "Heading", "default": "Shop" },
-    { "type": "link_list", "id": "menu",    "label": "Menu (Fluid link list)",
-      "info": "Pick a Fluid menu. Or leave blank and use Manual links below." },
-    { "type": "textarea",  "id": "manual_links", "label": "Manual links (Label | /url per line)" }
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Shop" },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu (Fluid link list)",
+      "info": "Pick a Fluid menu. Or leave blank and use Manual links below."
+    },
+    { "type": "textarea", "id": "manual_links", "label": "Manual links (Label | /url per line)" }
   ]
 }
 ```
+
 ```liquid
 {%- assign menu_items = block.settings.menu.menu_items -%}
 {% if menu_items and menu_items.size > 0 %}
@@ -1921,6 +2104,7 @@ Copy the full Liquid + CSS + JS from the base theme (cloned from https://github.
 **Why:** the visual editor maintains unsaved state in the iframe only. The theme-resource API doesn't receive the change until the merchant clicks **Save** / **Publish** at the top of the editor.
 
 **Fix workflow:**
+
 1. Confirm the block setting with a debug echo: `<!-- {{ block.settings.image | json }} -->`
 2. If it shows `null`, tell the user to hit Save in the editor
 3. After they save, hard-refresh the preview page (Cmd+Shift+R)
@@ -1935,6 +2119,7 @@ This is a USER-FLOW issue, not a code bug. But it's the most common "my upload i
 When the Phase 0 audit or Step 4b structural QA surfaces a finding, search this book for the matching pattern and apply. Most legacy themes hit 3–5 of these recipes. After applying, re-run Phase 0 — findings should drop to zero before moving to Steps 1–10 visual diff.
 
 **Shortcuts:**
+
 - Migration table (Phase 0d) → which v4 base-theme section replaces which legacy `main_*` section
 - Asset cheat sheet (Phase 0e) → theme-wide file fixes (reset.css, config.css, settings_data.json, theme.liquid, pagination component)
 - Recipe Book (this section) → in-section transformations with before/after code
