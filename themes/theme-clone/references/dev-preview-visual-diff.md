@@ -172,7 +172,7 @@ Before declaring the 6/6 source matrix complete:
    bounded command tool:
 
    ```text
-   run_cli({ command: "git", args: ["hash-object", "--", "<relative-path>"] })
+   run_cli({ command: "git", args: ["hash-object", "--no-filters", "--", "<relative-path>"] })
    ```
 
 3. Compare the returned hash to the manifest. Missing files, hash mismatches,
