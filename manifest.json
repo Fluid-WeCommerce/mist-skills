@@ -194,6 +194,42 @@
       "updated_at": "2026-07-13T00:00:00Z"
     },
     {
+      "slug": "marketing/promo-margin-exposure",
+      "name": "Promo margin exposure audit",
+      "description": "Rank active promo codes by usage and discount depth to flag margin-eroding codes and dead codes before the next planning cycle.",
+      "category": "marketing",
+      "icon": "percent",
+      "path": "marketing/promo-margin-exposure.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "marketing/shareable-content-leaderboard",
+      "name": "Shareable content leaderboard",
+      "description": "Rank media and enrollment-pack shareables by shares, unique sharers, and visits-per-share to find what's actually converting, not just getting shared.",
+      "category": "marketing",
+      "icon": "share-2",
+      "path": "marketing/shareable-content-leaderboard.md",
+      "updated_at": "2026-07-23T09:00:00Z"
+    },
+    {
+      "slug": "marketing/ugc-product-gap-analysis",
+      "name": "UGC product gap analysis",
+      "description": "Cross-reference best-selling products against the existing media/UGC library to find best-sellers with no social proof — the highest-leverage gaps to fill next.",
+      "category": "marketing",
+      "icon": "puzzle",
+      "path": "marketing/ugc-product-gap-analysis.md",
+      "updated_at": "2026-07-23T09:00:00Z"
+    },
+    {
+      "slug": "marketing/order-attribution-mix",
+      "name": "Order attribution mix",
+      "description": "See which touch model (first-touch rep, last-touch rep, enrollment rep) is actually driving completed orders, to know which channel/relationship investment to double down on.",
+      "category": "marketing",
+      "icon": "git-branch",
+      "path": "marketing/order-attribution-mix.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
       "slug": "optimize/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
