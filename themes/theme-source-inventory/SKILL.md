@@ -97,11 +97,15 @@ the retained HTML/CSS—not from a visual sample. Include every visible:
 - CSS background/content media URL;
 - product-grid card, gallery item, rail/cross-sell item, logo, and icon.
 
-Each item records `source_url`, route, landmark, viewport role, media kind, and
-source product identity when applicable. Video items also record `autoplay`,
-`loop`, `muted`, `playsinline`, `controls`, type, and poster. Preserve distinct
-desktop/mobile sources. Do not collapse an entire rail or responsive srcset into
-one representative URL.
+Create one item per rendered media element and viewport role. Each item records
+its actual `source_url`, a complete `source_candidates` URL array, route,
+landmark, viewport role, media kind, and source product identity when
+applicable. Video items also record `autoplay`, `loop`, `muted`, `playsinline`,
+`controls`, type, and poster. Preserve distinct desktop/mobile elements when
+their selected source differs. Do not collapse an entire rail into one item or
+discard responsive candidates; keep candidates on their owning item so later
+DAM delivery can select one high-quality source without uploading every
+transform as a separate asset.
 
 ## 5. Protect local evidence
 

@@ -54,8 +54,10 @@ font substitution pixel-perfect without naming the deviation.
 
 Enumerate media from rendered DOM/sidecars and retained HTML/CSS. Do not sample
 grids, galleries, rails, `<source>` candidates, responsive variants, posters,
-or videos. Preserve video autoplay, loop, muted, playsinline, controls, type,
-poster, and desktop/mobile source behavior.
+or videos. Keep responsive URLs as candidates on the owning semantic media item
+so completeness does not force duplicate DAM uploads. Preserve video autoplay,
+loop, muted, playsinline, controls, type, poster, and desktop/mobile source
+behavior.
 
 Use Fluid DAM delivery for the clone. If a video is too large, use Mist's
 compression capability and retain the original source-to-delivery receipt;

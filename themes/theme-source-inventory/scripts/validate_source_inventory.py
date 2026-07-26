@@ -195,6 +195,19 @@ def manifest_media_urls(manifest: dict[str, Any], errors: list[str]) -> set[str]
             errors.append(f"{label}: source_url must be an absolute HTTP(S) URL")
         else:
             urls.add(normalized)
+        candidates = item.get("source_candidates", [])
+        if not isinstance(candidates, list):
+            errors.append(f"{label}: source_candidates must be an array")
+        else:
+            for candidate_index, candidate in enumerate(candidates):
+                normalized_candidate = canonical_url(candidate)
+                if normalized_candidate is None:
+                    errors.append(
+                        f"{label}.source_candidates[{candidate_index}]: "
+                        "must be an absolute HTTP(S) URL"
+                    )
+                else:
+                    urls.add(normalized_candidate)
         for key in ("route", "landmark", "viewport_role", "media_kind"):
             if not isinstance(item.get(key), str) or not item[key].strip():
                 errors.append(f"{label}: missing {key}")
