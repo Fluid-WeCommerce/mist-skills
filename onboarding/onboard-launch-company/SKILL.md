@@ -253,8 +253,11 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
   non-empty v202604 skip sentinel
   `product_subscription_plans_attributes:[{"_destroy":true}]`. An omitted key or
   empty array triggers the default. Re-read the product and require
-  `has_subscription_plans:false` with no active/default join; repair historical
-  joins by returned join ID, never by disabling the company-wide plan.
+  `has_subscription_plans:false` with no active/default join. On the current
+  production update path, repair historical joins by returned join ID with
+  `active:false,default:false`; its delegated validator drops `_destroy`, so
+  physical deletion must not be claimed unless a re-read proves it. Never
+  disable the company-wide plan.
 - **Three product-payload details that silently or noisily kill an import:**
   - `variant_countries_attributes` needs **`country_id` (integer) + `active`**.
     `country_iso` alone 422s `active is missing, country_id is missing`. Get the

@@ -313,9 +313,12 @@ Contract:
   non-empty array as an instruction to skip its default and creates no join.
   An empty array is not equivalent. Re-read every created product and require
   `has_subscription_plans:false` plus zero active/default subscription joins.
-  Repair a pre-existing join through the documented v202604 nested update using
-  its returned join `id` and `_destroy:true`; never disable the company-wide plan
-  to repair one import.
+  For a pre-existing join on the current production contract, PATCH the
+  returned join `id` with `active:false` and `default:false`, then re-read it;
+  never disable the company-wide plan to repair one import. Although the
+  v202604 update schema advertises `_destroy`, its delegated product-update
+  validator currently drops `_destroy` for this nested association, so do not
+  claim physical deletion unless the re-read proves the join is gone.
 - Static bundle links use documented `product_bundles_attributes`. Dynamic
   `product_bundle_groups_attributes` are not writable on v202604; if the source
   requires that unsupported shape, stop and report the exact gap instead of

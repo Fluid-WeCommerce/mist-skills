@@ -137,10 +137,18 @@ source-non-subscription product, a complete destination re-read of
 `has_subscription_plans`, and repair by returned join ID rather than disabling
 the company-wide plan.
 
+The update side has a separate implementation mismatch: v202604 validates
+`_destroy`, but the delegated product update contract omits that key for
+`product_subscription_plans_attributes`, so the attempted delete was silently
+dropped. The live-safe repair is `active:false, default:false` by returned join
+ID followed by a re-read proving `has_subscription_plans:false`; an inactive
+audit row remains. Revision `2026-07-25.21` documents that truth while the
+backend contract fix is developed separately.
+
 The same import found a smaller schema contradiction: SKIMS Gift Box has a
 genuinely empty source description. Coercing that empty string to `null`
 returned `422 product.description must be a string`; the retry-safe importer
-now preserves `""` instead. Revision `2026-07-25.20` records that live behavior
+now preserves `""` instead. Revision `2026-07-25.21` records that live behavior
 instead of trusting the nullable-looking generated contract.
 
 ### Restart and UI recovery
