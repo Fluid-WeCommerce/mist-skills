@@ -601,6 +601,15 @@ font weights must not all point to one duplicated regular file. Persist the exac
 URLs plus the color-token and `@font-face` declarations you relied on in `brand.md` Sources
 and STEP_OUTPUT.
 
+Make asset persistence retry-safe. GET the current brand guidelines before any DAM upload.
+When an existing logo/icon/favicon/font already points to Fluid DAM, resolves successfully,
+and the current `brand.md` Sources prove it came from the same canonical source asset, reuse
+that DAM URL instead of uploading another copy. A missing distinct source icon may reuse the
+one already-verified canonical logo asset; do not create a second DAM object solely to give
+`icon_url` a different record. Upload only a missing, broken, changed, or incorrectly sourced
+asset, then persist and re-fetch it. Report reused vs newly uploaded asset counts so a retry
+that changed no source identity has zero new DAM uploads.
+
 **2. The brand guide itself** → `update_brand_voice({ content: <the whole document>,
 mode: "replace" })`.
 
