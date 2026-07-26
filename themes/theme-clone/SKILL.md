@@ -325,10 +325,12 @@ For every required source asset:
 
 1. Call `dam_upload` with its public `url`. Parallel calls may batch assets.
 2. If the service rejects the asset for size, call `compress_media` with the
-   same public `url`, then call `dam_upload` with the returned compressed
-   `output_path`. Mist streams the remote source into a bounded temporary
-   sandbox file and removes it after compression; no manual download is
-   needed. Do not treat a size error as permission to omit the media.
+   same public `url`, then **immediately** call `dam_upload(path=<output_path>)`
+   with the returned compressed path. Mist streams the remote source into a
+   bounded temporary sandbox file and removes it after compression; the
+   default compressed handoff expires after one hour so hidden cache files do
+   not accumulate. No manual download is needed. Do not treat a size error as
+   permission to omit the media.
 3. Record source URL, viewport/role, media kind, byte size when known, DAM URL,
    upload status, and any compression result in `priority_media`.
 
@@ -997,7 +999,7 @@ for root, dirs, files in os.walk(WORK_DIR):
         else:
             # Binary: call the dam_upload tool with the file path; it returns
             # the asset record. Register asset.default_variant_url as the resource.
-            dam_url = dam_upload(file=filepath, name=fname)["asset"]["default_variant_url"]
+            dam_url = dam_upload(path=filepath, name=fname)["asset"]["default_variant_url"]
             if dam_url:
                 fluid_api(f"/api/application_themes/{theme_id}/resources", "PUT",
                     {"key": key, "dam_asset": dam_url})
