@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-25.8",
+  "revision": "2026-07-25.9",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog before theme work, clone the home/shop/PDP experience through independently reviewed build stages, and finish with rendered-route and launch-readiness gates. Worker and reviewer models are deliberately cross-vendor so evidence, not one model's self-assessment, decides whether the run passes.",
@@ -154,7 +154,20 @@
         "enabled": true,
         "model": "openai/gpt-5.6-sol",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "clone-manifest.json"
+            }
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 6,
+            "distinctBy": ["path"]
+          }
+        ]
       },
       "prompt": "First theme step. You are in a scaffolded Fluid base-theme project. Call run_skill(\"themes/theme-clone\") and execute its discovery phases only: page discovery, content scraping, rendered visual audit, source CSS/token extraction, and DAM asset upload. Do not build sections or templates yet.\n\nBuild three evidence layers instead of treating one crawl payload as truth:\n1. CONTENT/DATA — use AI-friendly Markdown when advertised plus sitemap/collection/PDP content for exact copy and catalog facts. Markdown is not visual truth.\n2. DOM/TOKENS — retain rendered HTML with global chrome (`only_main_content:false`) and inspect linked stylesheets, CSS custom properties, @font-face declarations, and layout geometry.\n3. VISUAL — follow themes/theme-clone/references/dev-preview-visual-diff.md. In Mist, use managed `crawl` with `screenshot_options:{full_page:true,quality:90,viewport:{width,height}}`; capture home, shop, and PDP at 1440x900 and 390x844. This must work without local/global Playwright. Inspect HTML before using a constrained click action to dismiss a geo/cookie/newsletter overlay, then record the selector/action. A redirected, blank, loading, or obscured screenshot is invalid. For every capture, copy the crawl result's `<!-- screenshot baseline -->` object into the matching manifest cell. It must be the real `.mist-desktop/source-baselines/` file plus captured_at, sha256, positive bytes, decoded width/height, requested_viewport, final_url, status, and overlay_handling. A hosted URL, chat attachment id, prose claim, or label such as `crawl:1440x900` is NOT evidence. Verify each file with `run_cli({command:\"git\",args:[\"hash-object\",\"--no-filters\",\"--\",\"<relative-path>\"]})` and compare the raw-byte digest before claiming 6/6.\n\nPriority routes are the homepage, the source's primary shop/collection index, and the flagship or most complex multi-variant PDP. Inventory EVERY visible section on all three in source order, plus global header/footer. Inspect up to two more PDPs and four key static pages for content/structure coverage. Download and dam_upload every asset required by the priority routes; record asset.default_variant_url. Extract real font families/weights and a license/substitution decision. The source wins any disagreement with gather-context, but record the conflict.\n\nWrite `clone-manifest.json` at the theme root with: source_url, page_manifest, section_inventory for home/shop/PDP/header/footer, brand_tokens, dam_assets, and `visual_routes` entries for home/shop/pdp. Each visual route contains source_url, future built_path, ordered landmarks `{id,source_selector,built_selector}` for every visible priority section, and `source_evidence.desktop` + `source_evidence.mobile` objects with the required durable fields above. Also record `hero_copy.headline`, `hero_copy.subheadline`, and `hero_copy.primary_cta` verbatim, each with its evidence source (`markdown`, `rendered_html`, or `screenshot`). Markdown and a rendered screenshot are complementary: dynamic overlay text can be absent from Markdown, while a screenshot may show only one carousel state. If no evidence establishes a field, store null with the reason; never substitute invented or base-theme copy. Built selectors use stable template section ids chosen now so later build steps implement the manifest rather than inventing mappings afterward.\n\nThese are local QA artifacts, not Fluid theme resources. Create or update `.fluidignore` at the theme root so it includes exact entries for `clone-manifest.json`, `.mist-desktop/source-baselines/`, and `baselines/` while preserving every existing rule. Verify the ignore file before starting the dev watcher; otherwise theme dev will repeatedly send invalid resource uploads and flood the user with 404 errors.\n\nEnd with STEP_OUTPUT: manifest path, priority route URLs, per-route landmark counts, 6/6 verified local source baseline paths + hashes, verbatim hero copy + evidence sources, page count, uploaded asset count, brand tokens, and non-priority gaps.",
       "target": {
@@ -185,7 +198,15 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "screenshot_preview"
+          },
+          {
+            "tool": "read_preview_dom"
+          }
+        ]
       },
       "prompt": "Wire the source site's design tokens into the theme so every later section references them. Call run_skill(\"themes/theme-clone\") and execute ONLY Phase 4b (Theme Config Setup) using `clone-manifest.json`'s brand_tokens:\n\n1. `config/settings_data.json`: set the 12-color palette + 5-font palette + heading sizes from the manifest (every font slot seeded — defaults in settings_schema.json do NOT auto-apply to missing keys).\n2. `config/settings_schema.json`: confirm every color/font setting carries its `option_group` (background_colors / font_families) — sections' dropdowns are empty without them.\n3. `layouts/theme.liquid`: all 12 `--clr-*` and 5 `--ff-*` CSS variables wired in :root with `| default:` fallbacks. If the source font is importable, add the @font-face (note the licensing disclaimer in a comment); otherwise use the manifest's chosen substitute and note it.\n4. Honor the caller context's `theme_target`: `new` → this scaffolded project is the target; `existing` with `theme_id` → record that id as the push target for later steps. Record the decision in clone-manifest.json under `theme_target_resolved`.\n5. Call `start_preview` to boot the long-lived dev server with Mist's bundled CLI and port manager; never run a dev server through bounded `run_cli`. Call `preview_state`, `read_local_server_logs`, `read_preview_console`, and `screenshot_preview` to confirm the skeleton renders (base-theme placeholder content is fine at this point).\n\nEnd with STEP_OUTPUT: tokens set (colors/fonts), font licensing decision, theme_target_resolved, local URL/port, and preview/log status.",
       "target": {
@@ -212,7 +233,20 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "screenshot_preview",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["width"]
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_dom"
+          }
+        ]
       },
       "prompt": "Build the global chrome: `sections/main_navbar` and `sections/main_footer` matched to the source site's header/footer using clone-manifest.json (inventory + DAM assets). Call run_skill(\"themes/theme-clone\") for the section architecture rules (Section Shell + Container, blocks for content, tokens not hex, canonical blocks/components).\n\nRequirements:\n- Navbar: source's logo (DAM URL), nav items mirroring the source's top-level navigation but pointing at FLUID routes (/home, /home/collections/<slug>, /home/pages/<slug> …); working mobile hamburger; PRESERVE Fluid's JS hooks verbatim (#show-cart, #fluid-cart-count, #show-language-country-dropdown, .saveLocaleBtn, .country-selector, .language-selector — the canonical navbar components own these; render them, never rewrite).\n- Footer: source's column structure, social links, legal links, newsletter block if the source has one.\n- Scope boundary: edit ONLY `sections/main_navbar`, `sections/main_footer`, and directly required navbar/footer blocks/components/assets. Do not purge or rewrite placeholder content in unrelated homepage/PDP/collection sections; those surfaces deliberately remain a skeleton until their later workflow steps own them. Placeholder copy inside the navbar/footer you touched is still a defect.\n- Audit gate: run `python3 scripts/theme_audit.py` on both section files and fix EVERY violation before finishing. Do not modify the audit script in this step.\n- Verify in the dev preview with screenshot_preview at desktop AND mobile widths. Interact with the real hamburger and capture the open state; a CSS-only fake state does not prove the JS interaction.\n\nEnd with STEP_OUTPUT: sections written, audit result, nav items mapped (label → route), and any deviations from the source recorded as notes for the refine pass.",
       "target": {
@@ -242,7 +276,22 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"]
+          },
+          {
+            "tool": "screenshot_preview",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["width"]
+          },
+          {
+            "tool": "read_preview_dom"
+          }
+        ]
       },
       "prompt": "Build the homepage. Using clone-manifest.json's homepage section inventory, compose `home_page/default/index.liquid` from the base theme's canonical section library (heroes, image_text_split, feature_grid, featured_products, testimonial_grid, faq_accordion, cta_banner_v2 …) — call run_skill(\"themes/theme-clone\") for the library list and section rules. Prefer canonical sections; only write a custom section when nothing in the library fits, following the full Section Shell + Container pattern.\n\nRequirements:\n- If a homepage section needs a collection to render, inspect the current schema with query_docs and use `/api/v202604/company/collections`. GET-before-create; persist the returned ID/canonical URL. Set complete membership with the collection's `product_ids` full-replacement field, or patch a product's `collection_ids` through `/api/v202604/company/products/{id}`. v202604 PATCH is partial and does NOT require resending title. The later content-import step reconciles the full source set; do not wait for it.\n- Every source homepage section is represented, in source order, with REAL scraped copy and DAM image URLs from the manifest — no lorem ipsum, no hotlinked source-CDN images.\n- Content lives in blocks (richtext for text, canonical image blocks for images); template schema carries sections + order + settings ONLY (never blocks data).\n- Tokens, not hex: colors via the background_colors option group, fonts via font_families.\n- Audit gate: `python3 scripts/theme_audit.py` on every touched file — fix every violation.\n- Verify with screenshot_preview at desktop and mobile; compare against the manifest's source notes and record deviations as refine notes.\n\nEnd with STEP_OUTPUT: sections used (canonical vs custom), audit result, and the deviation notes list for the refine pass.",
       "target": {
@@ -272,7 +321,24 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 4,
+            "distinctBy": ["path"]
+          },
+          {
+            "tool": "screenshot_preview",
+            "minSuccessfulCalls": 4,
+            "distinctBy": ["path", "width"]
+          },
+          {
+            "tool": "read_preview_dom",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"]
+          }
+        ]
       },
       "prompt": "Build the product and collection surfaces — the catalog was imported BEFORE the theme track, so verify against REAL products. Call run_skill(\"themes/theme-clone\") for template rules (Phase 5) and the canonical PDP/collection section list.\n\nRequirements:\n- `product/default/index.liquid`: lead with the canonical product-data section that wires Fluid's product object + add-to-cart (`product_hero` in the current base theme; `main_product` in older scaffolds — use whichever the scaffold ships, NEVER a hand-rolled replacement and never modify `sections/main_product`), then match the SOURCE PDP's section structure from the manifest (benefits, ingredients, how-to-use, reviews, related — whatever the source uses) with canonical product_* sections. This one default template drives every PDP.\n- `collection/default/index.liquid` (+ `collection_index` if the source has a collections/shop index) using canonical collection sections. Remember: Liquid's `collections` global has a different shape than the REST API (see the skill's gotchas).\n- Verify in the dev preview with REAL data: cursor-paginate `GET /api/v202604/company/products?page[limit]=100` through `meta.pagination.next_cursor`, then open the flagship or most complex real product's local PDP route plus the primary collection route and screenshot both at desktop and mobile. Use canonical URLs/paths returned by the API and mapped into the local preview—never compose a slug. If the run has no real products, verify the placeholder/empty state and report that the flagship launch gate remains unmet.\n- Audit gate: `python3 scripts/theme_audit.py` on all touched files.\n\nEnd with STEP_OUTPUT: templates written, which real product/collection routes were verified with screenshots, audit result, refine notes.",
       "target": {
@@ -301,7 +367,25 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "screenshot_preview",
+            "minSuccessfulCalls": 3,
+            "distinctBy": ["path"]
+          },
+          {
+            "tool": "read_preview_dom",
+            "minSuccessfulCalls": 3,
+            "distinctBy": ["path"]
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
       },
       "prompt": "Finish and ship the theme. Call run_skill(\"themes/theme-clone\") for Phases 5-7.\n\n1. Content page templates: from clone-manifest.json's page manifest (max 4 key static pages — about/faq/contact/policies), build `page/<slug>/index.liquid` templates with the scraped copy + DAM images. (Page RESOURCE records are created later by the content-import step — templates only here.)\n2. Audit gate: `python3 scripts/theme_audit.py` on every file this clone TOUCHED (new or modified — check `git status`/your step notes) — fix every violation there. Then run it across the whole theme for visibility: the stock base-theme scaffold currently ships with ~100+ pre-existing violations in canonical sections you never touched; do NOT try to fix those (that's upstream base-theme work) — count them and record the per-rule rollup as a note in remaining_for_refine.\n3. Push: `fluid theme push` from the theme dir. API fallback gotchas (from live runs): a fresh company ships a provisioned active 'Base' theme; POST /api/application_themes with status:\"active\" 500s (RecordNotUnique) while another active theme exists — create WITHOUT status, upload resources, then PATCH {application_theme:{status:\"active\"}} to activate (honoring `theme_target_resolved` from clone-manifest.json — `existing` pushes to that theme_id). If the CLI push fails, fall back to the resource API per the skill.\n4. Verify after push: dev preview still healthy (screenshot_preview), and GET /api/application_themes confirms the landing theme exists; record its id. Then verify EVERY route type on the LIVE storefront in a real browser: home, one collection, one real product PDP (follow a link the storefront renders — do NOT trust the API's canonical_url, its slug goes stale after title PATCHes), and each content page. STALE-TEMPLATE GOTCHA (hit on every live run): a route whose MAIN region renders empty, or that falls through to the home template, has a stale application_theme_template record — resource PUTs around theme creation do not reliably re-expand them. Fix deterministically: find the record in GET /api/application_themes/{id} (match themeable_type + name), DELETE /api/application_theme_templates/{tpl_id}, re-PUT the matching template resource, wait ~10s, re-check. Applies to home_page, product, collection, and page templates alike.\n5. Aggregate every 'refine note' recorded by theme steps 1-5 plus your own into a single `remaining_for_refine` list.\n\nEnd with STEP_OUTPUT: theme id, pages/templates shipped, audit summary (0 violations), push result, and the aggregated remaining_for_refine list the refine step will consume.",
       "target": {
@@ -330,7 +414,30 @@
         "enabled": true,
         "model": "openai/gpt-5.6-sol",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 6,
+            "distinctBy": ["path"]
+          },
+          {
+            "tool": "screenshot_preview",
+            "minSuccessfulCalls": 6,
+            "distinctBy": ["path", "width"]
+          },
+          {
+            "tool": "read_preview_dom",
+            "minSuccessfulCalls": 3,
+            "distinctBy": ["path"]
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
       },
       "skill": "themes/iterative-theme-refine",
       "target": {

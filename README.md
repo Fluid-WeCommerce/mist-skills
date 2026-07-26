@@ -216,7 +216,18 @@ set only `id`, `name`, one of `prompt`/`skill`, and `acceptance`.
         "enabled": true,                       // default true. false = the work turn IS the step; nothing verifies it
         "strictness": "standard",              // strict | standard | lenient (default standard)
         "onFail": "continue",                  // what happens after the rework budget is spent — see below
-        "model": "openai/gpt-5.6-sol"          // optional: reviewer model. Omit to use the step's, then the run's
+        "model": "openai/gpt-5.6-sol",         // optional: reviewer model. Omit to use the step's, then the run's
+        "requiredTools": [                     // optional machine-enforced evidence floor
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 6,
+            "distinctBy": ["path"]             // reopening one file six times still counts as one
+          },
+          {
+            "tool": "read_preview_dom",
+            "input": { "mode": "all" }         // input is a recursive partial match
+          }
+        ]
       },
       "maxReworkRounds": 2,                    // 0-5, default 2. Fix-and-recheck rounds before onFail applies
 
@@ -262,6 +273,16 @@ against actual state using tools, and returns PASS/FAIL.
   - `stop` — treated as a failure: dependents are **skipped** and the run fails.
     For steps where continuing on unverified work does damage rather than just
     leaving a mess.
+- `requiredTools` — optional machine-enforced evidence. A prose PASS is
+  overridden to FAIL unless the fresh QA chat's persisted trace contains the
+  required number of successful calls.
+  - `input` recursively matches a subset of the call input. Arrays are also
+    subset-matched.
+  - `distinctBy` lists dotted input fields whose values must differ across
+    calls. Use it for multi-route and multi-artifact matrices, such as
+    `["path", "width"]`.
+  - This proves that evidence was gathered; `acceptance` still defines whether
+    the evidence is good enough.
 
 #### Parallelism — order, `dependsOn` and `maxParallel`
 
@@ -291,7 +312,8 @@ Guidance for implementers:
 
 Unknown keys are **dropped silently** by older desktop builds, so a workflow
 using a newer field still loads there — it just quietly loses that behaviour
-(`qa.onFail: "stop"` becomes "continue", a per-step `model` reverts to the run's).
+(`qa.onFail: "stop"` becomes "continue", a per-step `model` reverts to the run's,
+or `qa.requiredTools` is not enforced).
 
 `maxParallel` is the exception and the one that actually breaks: it is
 **range-validated**, and the ceiling has moved 3 → 5 → 10. A build on an older
