@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-26.32",
+  "revision": "2026-07-26.33",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog, prove the home golden route, prove the canonical shop/list route, then build dependent detail/content surfaces and finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so source HTML, rendered DOM, durable pixels, and interaction evidence—not one model's self-assessment—decide whether the run passes.",
@@ -238,12 +238,15 @@
             }
           },
           {
-            "tool": "fluid_api",
-            "minSuccessfulCalls": 2
+            "tool": "fluid_catalog_index",
+            "input": {
+              "output_path": "fluid-catalog-index.json",
+              "verify_only": true
+            }
           }
         ]
       },
-      "prompt": "Create the exact Fluid runtime catalog index used by theme media reconciliation. This is a bounded data step: do not crawl source pages, upload media, or edit theme code.\n\nCall `query_docs` for the Product list/detail schemas in `/openapi/api-reference/storefront-v2026-04.yaml`. Cursor-paginate `/api/v202604/company/products?page[limit]=100` to `meta.pagination.next_cursor:null`, using the returned cursor on the next request. Mist may replace an oversized product response with a complete compact projection; it is complete for that page and preserves the real pagination metadata. Never use page-number pagination, a public storefront proxy, or inferred continuation. De-duplicate by API-returned product id and detect a repeated cursor/page as a hard error.\n\nWrite `fluid-catalog-index.json` with `{source_endpoint,page_limit,page_count,product_count,complete,next_cursor,products}` where every product contains only API-returned `id`, exact `title`, `sku`, `canonical_url`, and `image_url`. Set `complete:true` only after the server returns `next_cursor:null`. Do not infer or repair any field. Re-read the first, middle, and last product IDs via the documented detail endpoint and require the exact title/SKU/image identity to match the index. Keep the file in `.fluidignore`.\n\nEnd with STEP_OUTPUT: path, page_count, product_count, final cursor, duplicate count, three spot-check receipts, and status.",
+      "prompt": "Create the exact Fluid runtime catalog index used by theme media reconciliation. This is a bounded data step: do not crawl source pages, upload media, or edit theme code.\n\nCall `query_docs` for the Product list/detail schemas in `/openapi/api-reference/storefront-v2026-04.yaml`, then call `fluid_catalog_index({output_path:\"fluid-catalog-index.json\",verify_only:false})` exactly once. That capability uses only `/api/v202604/company/products`, follows every server-returned `meta.pagination.next_cursor` internally at `page[limit]=100`, rejects duplicate ids/repeated cursors, writes only exact API-returned `id`, `title`, `sku`, `canonical_url`, and `image_url` identities, and re-reads first/middle/last through the documented detail endpoint. Do not manually issue every page through `fluid_api`, write temporary credential/env scripts, use page-number pagination, query a public storefront proxy, or infer continuation; those approaches waste model context and cannot prove a large export is complete.\n\nRead the tool's compact receipt and re-read `fluid-catalog-index.json` with targeted ranges or `run_cli` JSON queries rather than loading a large file into model context. Require `complete:true`, `next_cursor:null`, matching page/product counts, zero duplicates, three exact spot-check receipts (fewer only when the entire catalog has fewer than three unique products), and a file SHA-256. Keep the file in `.fluidignore`; remove any obsolete catalog-debug helper left by an interrupted older run.\n\nEnd with STEP_OUTPUT: path, file SHA-256, identity SHA-256, page_count, product_count, final cursor, duplicate count, spot-check receipts, and status.",
       "target": {
         "type": "kind",
         "kind": "theme"
@@ -252,8 +255,8 @@
       "recovery": { "mode": "manual" },
       "acceptance": [
         "`fluid-catalog-index.json` exists, parses, records the documented v202604 endpoint, contains only API-returned product identities, and has `complete:true` with `next_cursor:null`.",
-        "Pagination followed every server-returned `meta.pagination.next_cursor` from a page limit of 100 until null; page_count and product_count agree with the written array after de-duplication, with no repeated cursor/page.",
-        "The reviewer independently re-reads first, middle, and last IDs and confirms exact title/SKU/image identity. No product id or continuation was inferred.",
+        "The worker used one `fluid_catalog_index` call so v202604 pagination stayed outside model context; the receipt proves every server-returned cursor was followed from a page limit of 100 until null, page_count and product_count agree with the written array, and no duplicate id/repeated cursor was accepted.",
+        "The reviewer independently calls `fluid_catalog_index` with `verify_only:true`; it re-enumerates the full live v202604 catalog, compares every stored identity, and re-reads first, middle, and last details without modifying the file. No product id or continuation was inferred.",
         "HARD-FAIL BAR: fail for an incomplete/non-cursor export, duplicate/repeated page, inferred identity, count mismatch, missing index, or any failed independent spot-check."
       ],
       "dependsOn": ["theme-scrape-inventory"],
