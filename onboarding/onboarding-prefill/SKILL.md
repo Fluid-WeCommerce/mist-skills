@@ -188,6 +188,12 @@ This sub-step collects the raw material for `brand.md`. Read
 **Palette + typography — from the stylesheet, not from a screenshot.**
 
 1. Pull `<link rel="stylesheet">` hrefs out of the homepage HTML you already fetched in 3d.
+   If managed crawl/rendered HTML omitted `<head>`, immediately call `web_fetch` on the
+   canonical homepage and inspect the raw response body; Hydrogen/Oxygen storefronts expose
+   their hashed Shopify CSS bundles there even when Firecrawl strips the head. Resolve
+   relative hrefs against the final page URL. Never search Google/Bing for a guessed CDN
+   prefix and never claim there is no stylesheet until both rendered HTML and raw HTML were
+   checked.
 2. Fetch the main bundle and extract:
    - `:root { --color-*: … }` — the brand's own token names and values. Space-separated
      triples are RGB: `--color-primary: 18 52 86` → `#123456`.
@@ -226,8 +232,13 @@ homepage, a product page, and a content/about page. Note the mechanics you can o
 real copy: sentence case vs title case, whether exclamation marks or emoji appear **at all**,
 sentence length, person and tense, what the brand calls its customer, and its price format.
 
-**Also capture:** the logo asset URL, market/locale (`html lang`, currency, shipping page),
-the product price band, and the model/product naming pattern.
+**Also capture:** the canonical standalone logo asset, the source favicon/icon, market/locale
+(`html lang`, currency, shipping page), the product price band, and the model/product naming
+pattern. Prove logo identity from the rendered global header plus source metadata/structured
+data. A collaboration lockup, campaign mark, retailer badge, or generic Fluid default is not
+the company's canonical logo. Retain the exact stylesheet URLs and the token/font
+declarations used; a later reviewer must be able to reproduce the palette and typography
+without relying on this turn's prose.
 
 Everything here is HIGH confidence — it comes from the company's own site.
 
@@ -264,12 +275,33 @@ If a LinkedIn URL was harvested in 3e, fetch it with `crawl`. Otherwise search `
 
 ### 4d. Review and trust platforms
 
-**BBB:** Search `site:bbb.org "{trading_name}"` → fetch the profile with `crawl`. Before extracting anything, prove the profile belongs to this company using the exact website domain or at least two independent identifiers (legal/trading name plus address or phone). A name-only match is insufficient. Extract rating (A+ through F), accreditation status, years accredited, complaint count. The matched profile is canonical and HIGH confidence; otherwise report `not found`.
+**BBB:** Search `site:bbb.org "{trading_name}"`, then repeat with the exact legal name and
+known phone/address → fetch each candidate profile with `crawl`. Before extracting anything,
+prove the profile belongs to this company using the exact website domain or at least two
+independent identifiers (legal/trading name plus address or phone). A name-only match is
+insufficient. Extract rating (A+ through F), accreditation status, years accredited,
+complaint count. The matched profile is canonical and HIGH confidence; a completed search
+with no identity match is `not found`.
 
-**Trustpilot:** Search `site:trustpilot.com/review "{exact_domain}"` first, then the trading name. Accept a profile only when its reviewed domain exactly matches the source company's registrable domain (allowing `www`) or the page independently proves the same legal entity and website. Similar names are not evidence. Extract TrustScore (1-5), total review count. The matched profile is canonical and HIGH confidence; otherwise report `not found`.
+**Trustpilot:** Search `site:trustpilot.com/review "{exact_domain}"` first, then the trading
+name. Accept a profile only when its reviewed domain exactly matches the source company's
+registrable domain (allowing `www`) or the page independently proves the same legal entity
+and website. Similar names are not evidence. Extract TrustScore (1-5), total review count.
+The matched profile is canonical and HIGH confidence; a completed search with no candidate
+is `not found`.
 
 For every trust-platform value, retain the exact profile URL and the identity
 evidence used to match it. Never transfer a rating from a namesake company.
+If a candidate profile is blocked by a bot wall, 403, login, or challenge page, record
+`unverified` with the attempted profile URL and exact error in `remaining_for_human`.
+Inaccessible is not `not found`. Never persist status prose (`N/A`, `Not Found`,
+`Unverified`, `Cloudflare Protected`) into a rating field; leave/clear that field and keep
+the status only in the report. When a stale sentinel predates this run, try the documented
+full-blob update with `null` and then with the field omitted. If the API rejects `null` and
+omission preserves the stale value, do not probe guessed endpoints or substitute another
+string. Record the exact endpoint/status/body as a platform limitation, mark the field
+unusable for downstream consumers, and keep the verified trust status in
+`remaining_for_human`.
 
 ### 4e. Negative media and regulatory scan
 
@@ -413,9 +445,15 @@ fluid_api("/api/companies/{company_id}/owners", "GET")
 ### 8b. Create or update legal entity
 
 Only include fields with HIGH or MEDIUM confidence. Omit LOW or missing fields.
+Match the GET result from 8a by registration number first, then normalized legal name +
+country. If one existing entity matches, `PUT
+/api/companies/{company_id}/entities/{entity_id}` with the documented wrapper instead of
+creating another. `POST` only when no entity matches. If several records match ambiguously,
+do not guess: keep the records unchanged and add the ambiguity to `remaining_for_human`.
+After either write, GET the entities again and require exactly one matching record.
 
 ```
-fluid_api("/api/companies/{company_id}/entities", "POST", {
+fluid_api("/api/companies/{company_id}/entities/{existing_entity_id}", "PUT", {
   "entity": {
     "legal_name": "...",
     "trading_name": "...",
@@ -435,6 +473,9 @@ fluid_api("/api/companies/{company_id}/entities", "POST", {
   }
 })
 ```
+
+Use the same wrapped body with `POST /api/companies/{company_id}/entities` only for the
+no-match branch.
 
 ### 8c. Create owner (only if primary contact was identified)
 
@@ -545,12 +586,20 @@ Read [references/brand-md.md](references/brand-md.md) before writing this. Two d
 artifacts, both required:
 
 **1. Structured brand fields** → `PATCH /api/settings/brand_guidelines` with the palette,
-logo, and licensed font files you harvested in 3f, using the exact contract in
+canonical standalone logo, source icon/favicon, and licensed font files you harvested in 3f,
+using the exact contract in
 [references/api-endpoints.md](references/api-endpoints.md) (`color`, `secondary_color`,
 `logo_url`/`icon_url`/`favicon_url`, `fonts` — asset URLs must be Fluid-DAM hosted).
 Each persisted font needs the current schema's required `name` + `file_url`; include
 `file_id`, `format`, `weight`, `style`, and `role` where known. Never re-host a source
 font without evidence that the company may do so.
+
+Before PATCHing, reject collaboration/campaign marks and generic Fluid defaults. After
+PATCHing, GET the settings and re-fetch every saved logo/icon/favicon/font URL. Require a
+successful response with non-empty bytes and the expected media/font type. Distinct declared
+font weights must not all point to one duplicated regular file. Persist the exact stylesheet
+URLs plus the color-token and `@font-face` declarations you relied on in `brand.md` Sources
+and STEP_OUTPUT.
 
 **2. The brand guide itself** → `update_brand_voice({ content: <the whole document>,
 mode: "replace" })`.
@@ -618,7 +667,9 @@ HIGH CONFIDENCE (auto-filled):
 BRAND (from the source stylesheet + verbatim copy — see Step 3f/8g):
   Palette:             primary {hex}  secondary {hex}  accent {hex}   (pushed: {yes/no})
   Typography:          {family} {weights} — licensable: {yes/no}; substitute: {family}
-  Logo:                {DAM URL} (pushed: {yes/no})
+  Logo:                {canonical standalone DAM URL} (pushed + re-fetched: {yes/no})
+  Icon / favicon:      {source identity DAM URLs or documented same-brand fallback}
+  Stylesheet evidence: {URLs + token/font declarations retained: yes/no}
   Voice, in one line:  {the pattern, e.g. "short fragments + full stops, zero exclamation marks"}
   brand.md:            {n}/10 sections filled, {n} verbatim quotes,
                        local: {path}, synced to Fluid: {yes/no + reason}

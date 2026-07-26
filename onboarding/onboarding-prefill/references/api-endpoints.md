@@ -116,6 +116,11 @@ Rails `UpdateAction` params schema — anything else is dropped):
 3. `PATCH /api/settings/brand_guidelines` with `logo_url` (and/or `icon_url`,
    `favicon_url`) set to that DAM URL. Never point these at the source site's CDN — those
    links rot and leak the source domain.
+4. Re-GET the settings and re-fetch each saved asset URL. Require a successful response,
+   non-empty bytes, and the expected media type. Confirm `logo_url` is the canonical
+   standalone brand mark from the rendered global header/source metadata—not a collaboration
+   lockup, campaign graphic, or generic Fluid default. Use a verified same-brand fallback for
+   icon/favicon only when the source exposes no distinct icon, and record that decision.
 
 **Font flow.** Only ingest a font when the company owns a webfont license that
 allows re-hosting:
@@ -130,6 +135,8 @@ allows re-hosting:
 4. For a proprietary or unverified font, do not copy its bytes. Record the
    original family and a legally usable substitute in `brand.md`, and only
    persist the licensed substitute in `fonts`.
+5. Re-fetch every persisted `file_url`. Reject 404/empty responses and reject several
+   declared weights that all resolve to one duplicated regular-font file.
 
 Notes:
 
