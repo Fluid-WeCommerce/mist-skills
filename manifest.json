@@ -158,8 +158,7 @@
         "themes/theme-clone/references/schema-settings-reference.md",
         "themes/theme-clone/references/section-template.md",
         "themes/theme-clone/references/template-variables.md"
-      ],
-      "assets": ["themes/theme-clone/scripts/theme_audit.py"]
+      ]
     },
     {
       "slug": "themes/clone-shop-page",
@@ -176,8 +175,7 @@
         "themes/theme-clone/references/schema-settings-reference.md",
         "themes/theme-clone/references/section-template.md",
         "themes/theme-clone/references/template-variables.md"
-      ],
-      "assets": ["themes/theme-clone/scripts/theme_audit.py"]
+      ]
     },
     {
       "slug": "onboarding/onboarding-prefill",
