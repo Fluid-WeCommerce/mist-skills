@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-26.33",
+  "revision": "2026-07-26.34",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog, prove the home golden route, prove the canonical shop/list route, then build dependent detail/content surfaces and finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so source HTML, rendered DOM, durable pixels, and interaction evidence—not one model's self-assessment—decide whether the run passes.",
@@ -285,10 +285,19 @@
             "input": {
               "path": "fluid-catalog-index.json"
             }
+          },
+          {
+            "tool": "theme_media_reconcile",
+            "input": {
+              "manifest_path": "clone-manifest.json",
+              "catalog_index_path": "fluid-catalog-index.json",
+              "mode": "theme_only",
+              "verify_only": true
+            }
           }
         ]
       },
-      "prompt": "Reconcile and deliver every `priority_media.items` entry in `clone-manifest.json`. This is a bounded media step: consume the already-captured source evidence and complete catalog index; do not recrawl pages or build theme sections.\n\nFor product-owned media, use `catalog_runtime` only when `fluid-catalog-index.json` supplies an exact normalized title/SKU/source-identity match. Re-read that exact product id with `fluid_api`, then HTTP-verify the API-returned image URL. Record the product id, exact identity fields, verification, and `upload_attempt:\"not_applicable_catalog_runtime\"`. Never infer an id from position, fuzzy title, URL, or neighboring cards.\n\nEditorial/campaign/static media use `theme_dam`. Call `dam_upload(url=<exact public source>,create_media=true)` so the service uses `external_asset_url`; use `path` only for an existing sandbox file. Record a complete receipt for every attempt: tool, attempted_at, source URL, requested name, compression result, returned asset id, `asset.default_variant_url`, and HTTP verification. If a direct video upload returns a size rejection, call `compress_media(url=...)` and immediately retry `dam_upload(path=<output_path>,create_media=true)` before the temporary result expires. Never omit or replace a video because it is large.\n\nWhen a theme-only run has no exact Fluid product for a visible source product, upload the exact source media as `theme_dam_fidelity_fallback`, record `catalog_match:null`, the missing source identity, complete upload receipt, and a catalog-dynamism remainder. Full/data-theme runs leave unmatched product media for product-import reconciliation rather than fabricating a match. Preserve every source media entry and add delivery fields in place; do not sample. Verify all delivered URLs, and spot-check every video for HTTP 200 plus video content type.\n\nEnd with STEP_OUTPUT: total media count, catalog-runtime exact matches, theme-DAM assets, fidelity fallbacks, unresolved full/data-theme items, video compression/upload results, and verification failures.",
+      "prompt": "Reconcile and deliver every `priority_media.items` entry in `clone-manifest.json`. This is a bounded media step: consume the already-captured source evidence and complete catalog index; do not recrawl pages, manually page APIs, or build theme sections.\n\nCall `theme_media_reconcile` exactly once with `manifest_path:\"clone-manifest.json\"`, `catalog_index_path:\"fluid-catalog-index.json\"`, `verify_only:false`, and `mode:\"theme_only\"` when context `run_scope` is `theme_only`; use `mode:\"catalog_strict\"` for full/data-theme runs. The capability keeps the complete media list outside model context, reuses only exact-source receipts, exact-matches catalog identities, performs the equivalent of `dam_upload(url=<exact public source>,create_media=true)` through the upload service's `external_asset_url` for missing theme-only assets four at a time, compresses a video when direct DAM ingestion fails, HEAD-verifies every delivery, and atomically checkpoints the company-local manifest after each batch. If the call is interrupted or reports a transient upload failure, call it again with identical input: it resumes from verified receipts and does not re-upload completed sources. Do not replace it with hundreds of manual `dam_upload`, `fluid_api`, or `web_fetch` calls.\n\nRead the compact receipt plus targeted manifest fields. For product-owned media, accept `catalog_runtime` only when the tool recorded one exact normalized title/SKU/source-identity match from `fluid-catalog-index.json`; never infer an id from position, fuzzy title, URL, or neighboring cards. Editorial/campaign/static media use `theme_dam`. When a theme-only run has no exact Fluid product for visible source product media, require `theme_dam_fidelity_fallback`, `catalog_match:null`, the missing source identity, an exact-source upload receipt, and a catalog-dynamism remainder. Full/data-theme runs fail on such an unmatched product instead of fabricating a match. An exact-source DAM delivery from an interrupted earlier attempt may be reused only when its URL is independently HEAD-verified and the tool adds `reused_existing_delivery:true`; lack of a recoverable asset id is then explicit rather than hidden.\n\nPreserve every source media entry and source playback attribute. Require the receipt to report every item delivered, zero unresolved, the final manifest SHA-256, catalog-runtime count, theme-DAM count, fidelity-fallback count, and unique delivered-URL count.\n\nEnd with STEP_OUTPUT: total media count, catalog-runtime exact matches, theme-DAM assets, fidelity fallbacks, unresolved full/data-theme items, video compression/upload results, final manifest SHA-256, and verification failures.",
       "target": {
         "type": "kind",
         "kind": "theme"
@@ -298,9 +307,10 @@
       "acceptance": [
         "Every source `priority_media.items` entry remains present and has exactly one auditable delivery outcome: verified catalog_runtime, verified theme_dam, verified theme_dam_fidelity_fallback for theme-only, or an explicit unresolved product-import reconciliation for full/data-theme.",
         "Every catalog_runtime mapping exact-matches title/SKU/source identity against the complete index, was re-read by returned id, and has an HTTP-verified API image URL. No id was inferred.",
-        "Every editorial/static asset and theme-only fallback has a complete `dam_upload` receipt with returned asset id/default_variant_url and successful verification.",
+        "Every editorial/static asset and theme-only fallback has a complete exact-source `dam_upload` receipt with default_variant_url and successful verification. A pre-existing exact-source delivery is accepted only with `reused_existing_delivery:true`, a fresh HEAD verification, and an explicit null asset id when the prior response cannot be recovered.",
         "Every required video was attempted. A size rejection was followed by `compress_media` and immediate path upload; every successful video DAM URL returns HTTP 200 with a video content type and retains source playback attributes.",
-        "HARD-FAIL BAR: fail for sampled/omitted media, inferred runtime mappings, missing upload receipts, an unattempted priority video, an unverified delivered URL, or an unhandled theme-only product-media gap."
+        "The worker called `theme_media_reconcile` in the run-scope-appropriate mode and reached zero unresolved items; the independent reviewer called the same capability with `verify_only:true`, which made no writes and HEAD-verified every unique recorded delivery URL.",
+        "HARD-FAIL BAR: fail for sampled/omitted media, inferred runtime mappings, missing upload receipts, an unattempted priority video, an unverified delivered URL, an unhandled theme-only product-media gap, or a reviewer that accepted prose without the verify-only tool receipt."
       ],
       "dependsOn": ["theme-catalog-index"],
       "runIf": {
