@@ -17,6 +17,12 @@ Authentication is injected automatically by the Mist runtime — call these endp
 
 **Critical:** `PUT` overwrites the ENTIRE `onboarding_info` blob. Always `GET` first, deep-merge new data into the existing blob, then `PUT` back.
 
+The GET response can contain empty optional nested objects such as
+`terms_and_conditions_info: {}`. Do **not** echo an empty optional object into the PUT:
+the write contract validates any object that is present and will reject it when its required
+human-consent fields are absent. Omit an empty optional object. Preserve a non-empty
+human-entered object verbatim; never invent or alter consent fields.
+
 ## Legal Entities
 
 | Method | Endpoint                             |
@@ -177,3 +183,23 @@ mobile_app_identifier, … — anything not in the schema is dropped.)
 
 (`country_id` integer required — 214 = US. `GET /api/settings/company_countries` first to
 check what exists; note `company_country_id` ≠ `country_id`.)
+
+**`PATCH /api/settings/company_countries/{company_country_id}`** — attach the matched
+legal entity to an existing selling country and record settlement details. The id in this
+path is the company-country record id returned by `GET /api/settings/company_countries`,
+not the country id and not the entity id:
+
+```jsonc
+{
+  "company_country": {
+    "entity_id": 126,
+    "entity_legally_registered": true,
+    "settlement_currency": "USD",
+  },
+}
+```
+
+After the PATCH, GET the company countries again and require the intended country row to
+return that entity, `entity_legally_registered: true`, and the expected settlement
+currency. Writing the same values only to `onboarding_info.countries_info` does not attach
+the entity to the live market.

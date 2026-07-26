@@ -434,12 +434,13 @@ If confirmed MLM, also fill: compensation plan URL, income disclosure URL, distr
 
 ### 8a. GET existing state first
 
-Run these 3 calls in parallel:
+Run these 4 calls in parallel:
 
 ```
 fluid_api("/api/companies/{company_id}/onboarding_info", "GET")
 fluid_api("/api/companies/{company_id}/entities", "GET")
 fluid_api("/api/companies/{company_id}/owners", "GET")
+fluid_api("/api/settings/company_countries", "GET")
 ```
 
 ### 8b. Create or update legal entity
@@ -477,6 +478,29 @@ fluid_api("/api/companies/{company_id}/entities/{existing_entity_id}", "PUT", {
 Use the same wrapped body with `POST /api/companies/{company_id}/entities` only for the
 no-match branch.
 
+### 8b.1. Attach the entity to the live country record
+
+The onboarding worksheet and the live selling-country record are separate. After the
+entity write, find the matching country row from the Step 8a
+`GET /api/settings/company_countries` result and PATCH that row using its
+`company_country.id`:
+
+```
+fluid_api("/api/settings/company_countries/{company_country_id}", "PATCH", {
+  "company_country": {
+    "entity_id": "{entity_id}",
+    "entity_legally_registered": true,
+    "settlement_currency": "USD"
+  }
+})
+```
+
+Use the market's actual settlement currency instead of assuming USD outside a US run.
+GET the company countries again and require the intended row to return the matched entity,
+`entity_legally_registered: true`, and the expected settlement currency. Populating only
+`onboarding_info.countries_info[].entity_id` is incomplete and must not be reported as a
+linked legal entity.
+
 ### 8c. Create owner (only if primary contact was identified)
 
 **If the user provided a primary contact name in Step 1:**
@@ -508,6 +532,10 @@ Do NOT create any owner records. All discovered people go into the report under 
 ### 8d. Update onboarding info
 
 > **⚠️ MERGE BEFORE PUT — `PUT /onboarding_info` overwrites the entire blob.** GET first, deep-merge new data into existing, then PUT. Skipping the merge WILL destroy data.
+> Before PUT, omit any empty optional nested object returned by GET (for example
+> `terms_and_conditions_info: {}`). Presence activates that object's validation and an
+> empty object 422s on missing human-consent fields. Preserve non-empty human-entered
+> consent objects verbatim; never fabricate or change their values.
 
 ```
 fluid_api("/api/companies/{company_id}/onboarding_info", "PUT", {
