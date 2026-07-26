@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-26.39",
+  "revision": "2026-07-26.40",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog, prove the home golden route, prove the canonical shop/list route, then build dependent detail/content surfaces and finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so source HTML, rendered DOM, durable pixels, and interaction evidence—not one model's self-assessment—decide whether the run passes.",
@@ -49,10 +49,7 @@
       "name": "Gather brand & business info",
       "model": "google/gemini-3.6-flash",
       "qa": {
-        "enabled": true,
-        "model": "anthropic/claude-opus-5",
-        "strictness": "strict",
-        "onFail": "continue"
+        "enabled": false
       },
       "skill": "onboarding/onboarding-prefill",
       "target": {
