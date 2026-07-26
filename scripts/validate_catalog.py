@@ -253,6 +253,11 @@ def validate_flagship_contracts() -> None:
     theme_discovery_acceptance = json.dumps(
         theme_discovery.get("acceptance", [])
     )
+    if theme_discovery.get("model") != "openai/gpt-5.6-sol":
+        raise CatalogValidationError(
+            "flagship workflow: theme discovery must use openai/gpt-5.6-sol "
+            "after the Gemini inventory benchmark produced inferred product ids"
+        )
     require_fragments(
         theme_discovery_acceptance,
         (
@@ -260,6 +265,10 @@ def validate_flagship_contracts() -> None:
             "dam_upload(url=..., create_media=true)",
             "compress_media",
             "video content type",
+            "fluid-catalog-index.json",
+            "theme_dam_fidelity_fallback",
+            "Never infer a product id",
+            "all 12 fresh files",
         ),
         "flagship workflow theme discovery",
     )
