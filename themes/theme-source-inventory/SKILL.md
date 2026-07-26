@@ -124,17 +124,19 @@ scripts/
 ## 6. Validate before reporting
 
 Hash all 24 files in one `file_sha256` call and store the exact raw-byte digests
-and byte counts. Then run the materialized validator returned with this skill:
+and byte counts. Then call Mist's first-class, project-scoped validator:
 
 ```text
-node <SOURCE_INVENTORY_VALIDATOR_PATH> --manifest clone-manifest.json
+validate_theme_source_inventory({ manifest_path: "clone-manifest.json" })
 ```
 
-Use Mist's bundled Node runtime; do not require Python or a global package
-install. The validator checks freshness, file/path/hash/size/dimension consistency,
-sidecar receipts, real HTML, all six viewports, required video attributes, and
-coverage of every URL exposed by the rendered sidecars. Fix every error and run
-it again. `SOURCE_INVENTORY_VALIDATION: pass` is required.
+Do not execute a downloaded validator or require Node, Python, packages, or
+other global tooling. The Mist capability reads only project-scoped,
+descriptor-held bytes and checks freshness, bounded file sizes,
+file/path/hash/size/dimension consistency, sidecar receipts, real HTML, all six
+viewports, required video attributes, and coverage of every URL exposed by the
+rendered sidecars. Fix every error and call it again.
+`SOURCE_INVENTORY_VALIDATION: pass` is required.
 
 The read-only QA reviewer must independently:
 
@@ -142,7 +144,7 @@ The read-only QA reviewer must independently:
 2. hash all 24 files in one call;
 3. open all six HTML files;
 4. view all six screenshots;
-5. run the same validator.
+5. independently call `validate_theme_source_inventory` against the manifest.
 
 ## Output
 

@@ -128,11 +128,8 @@
       "category": "themes",
       "icon": "scan-search",
       "path": "themes/theme-source-inventory/SKILL.md",
-      "updated_at": "2026-07-26T22:06:54Z",
-      "references": ["themes/references/pixel-fidelity-core.md"],
-      "assets": [
-        "themes/theme-source-inventory/scripts/validate-source-inventory.mjs"
-      ]
+      "updated_at": "2026-07-26T22:30:00Z",
+      "references": ["themes/references/pixel-fidelity-core.md"]
     },
     {
       "slug": "themes/theme-refine",

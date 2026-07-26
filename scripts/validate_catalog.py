@@ -230,7 +230,7 @@ def validate_flagship_contracts() -> None:
             "30 minutes after it",
             "union of all six rendered sidecars",
             "`SOURCE_INVENTORY_VALIDATION: pass`",
-            "<SOURCE_INVENTORY_VALIDATOR_PATH>",
+            "validate_theme_source_inventory",
         ),
         "theme source-inventory contract",
     )
@@ -291,7 +291,7 @@ def validate_flagship_contracts() -> None:
         str(theme_discovery.get("prompt", "")),
         (
             'run_skill("themes/theme-source-inventory")',
-            "<SOURCE_INVENTORY_VALIDATOR_PATH>",
+            "validate_theme_source_inventory",
             "Do not load the all-phases theme-clone skill",
         ),
         "flagship workflow source discovery skill boundary",
