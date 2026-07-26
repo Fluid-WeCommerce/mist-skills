@@ -107,6 +107,8 @@ proof.
 
 In addition to the shared gate:
 
+- signed `compare_preview_to_source` receipts prove the selected shop
+  source/local pair at 1440 × 900 and 390 × 844 after the final shop code change
 - the selected source route is truly the canonical shop/all-products list
 - exact source wording and visible card fields match
 - the complete expected Fluid product set is reachable through the page's

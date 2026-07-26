@@ -151,12 +151,27 @@ Before comparison:
 
 For the route under test:
 
-1. `screenshot_preview(mode:"full", path:<built_path>, width:1440, height:900)`
+1. `compare_preview_to_source(source_path:<desktop_source_path>, mode:"full", path:<built_path>, width:1440, height:900)`
 2. `read_preview_dom(path:<built_path>, mode:"all")`
-3. repeat the screenshot at `390 × 844`
-4. inspect critical crops with viewport captures when needed
+3. `compare_preview_to_source(source_path:<mobile_source_path>, mode:"full", path:<built_path>, width:390, height:844)`
+4. inspect critical crops with `screenshot_preview(mode:"viewport", ...)` when
+   needed
 5. exercise inspected disclosure/tab/menu selectors with `interact_preview`
-6. recapture the changed state
+6. recapture the changed state and rerun the affected signed comparison
+
+`compare_preview_to_source` is the final source/local image capture for the
+route. It must return a **signed successful Agent Surface receipt** for each
+viewport. A screenshot path, worker-authored metric, or prose comparison is not
+an equivalent substitute. The tool refuses a source screenshot with the wrong
+width rather than silently resizing it, and it machine-fails unresolved media,
+HTTP errors, capture truncation, horizontal overflow, and full-page height drift
+above 5%.
+
+Treat its pixel metrics as diagnostics, not a universal pass threshold.
+Antialiasing, dynamic video frames, and source personalization can move raw
+pixel scores. Inspect the attached source and local images, reconcile rendered
+DOM/copy and landmarks, and itemize the cause of every material delta. A signed
+receipt proves what was compared; it does not excuse a visually poor result.
 
 Exact viewport tools make manually collapsing Mist sidebars unnecessary.
 Interactive work may visibly drive the user’s pane; background workflow work
@@ -182,6 +197,8 @@ final proof must be newer than the final code change.
 The page passes only when all are true:
 
 - source and local desktop/mobile evidence is current and durable
+- both required `compare_preview_to_source` calls have signed successful
+  receipts for the exact route and 1440 × 900 / 390 × 844 viewports
 - requested and final routes match and local HTTP status is 200
 - every source landmark exists once, in order
 - exact source wording is present, with every allowed dynamic difference listed
@@ -225,6 +242,7 @@ PAGE_OUTPUT: {
   allowed_copy_differences:[],
   source_evidence:{desktop,mobile},
   local_evidence:{desktop,mobile},
+  comparison_receipts:{desktop,mobile},
   landmarks_total,
   landmarks_matched,
   priority_media:{expected,ready,failed,pending},

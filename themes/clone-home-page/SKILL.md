@@ -97,6 +97,8 @@ Static screenshots cannot prove these states.
 
 In addition to the shared gate:
 
+- signed `compare_preview_to_source` receipts prove the exact `/` source/local
+  pair at 1440 × 900 and 390 × 844 after the final home code change
 - every homepage section is present once and ordered correctly
 - hero and all below-the-fold priority media match at both widths
 - all exact homepage wording is reconciled from source HTML to local DOM

@@ -159,13 +159,18 @@ the required evidence is not a benchmark result.
 - Serve responsive DAM media so mobile does not download desktop video when a
   mobile source exists.
 
-## Known product gap
+## Evidence implementation
 
-Mist can require signed receipts proving that a reviewer opened source images,
-captured the local route, read rendered DOM, exercised controls, and inspected
-logs. It still lacks a first-class source-vs-preview comparison receipt that
-computes exact copy reconciliation and quantitative visual difference itself.
+Mist Desktop PR #7323 adds the first enforceable source-vs-preview comparison
+surface. `compare_preview_to_source` captures the exact local route at the
+source width and returns a signed receipt with source/local hashes, geometry,
+coverage, bounded pixel diagnostics, HTTP status, horizontal overflow, capture
+truncation, and media readiness. The Home and Shop QA gates require successful
+receipts at 1440 × 900 and 390 × 844 after the final code change.
 
-Until that exists, the new contract is materially harder to bluff, but it is
-not the final Surface API. The next SDK increment should produce a signed
-comparison receipt rather than accepting model-authored “pixel perfect” prose.
+The receipt is necessary evidence, not a universal visual oracle. Raw pixel
+scores vary with antialiasing, dynamic video frames, and source
+personalization. Review must still reconcile exact copy, rendered DOM,
+landmarks, interactions, and the attached source/local images. The next Surface
+API increment should add structured landmark and exact-copy reconciliation so
+those remaining judgments are machine-associated with the same evidence.

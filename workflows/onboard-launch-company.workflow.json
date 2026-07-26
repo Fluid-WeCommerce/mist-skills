@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-26.25",
+  "revision": "2026-07-26.26",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog, prove the home golden route, prove the canonical shop/list route, then build dependent detail/content surfaces and finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so source HTML, rendered DOM, durable pixels, and interaction evidence—not one model's self-assessment—decide whether the run passes.",
@@ -319,14 +319,20 @@
             "distinctBy": ["screenshot_options.viewport.width"]
           },
           {
-            "tool": "view_project_image",
-            "minSuccessfulCalls": 2,
-            "distinctBy": ["path"]
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 1440,
+              "height": 900,
+              "mode": "full"
+            }
           },
           {
-            "tool": "screenshot_preview",
-            "minSuccessfulCalls": 2,
-            "distinctBy": ["width"]
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full"
+            }
           },
           {
             "tool": "read_preview_dom"
@@ -351,7 +357,7 @@
       "recovery": { "mode": "manual" },
       "acceptance": [
         "The QA reviewer independently crawled the exact source home route as rendered HTML plus a durable full-page screenshot at 1440x900 and 390x844, then read the local rendered DOM. QA reconciled the ordered normalized visible strings landmark-by-landmark; source wording, punctuation, capitalization, CTA labels, and link labels match exactly except for an itemized allowed dynamic-value list. A screenshot-only or worker-summary review fails.",
-        "The reviewer opened both durable SOURCE images and both current local images. Every source landmark exists once in the same order; no priority landmark is missing, duplicated, or replaced by unrelated starter content. Comparable landmark width/height/padding/gap is within 5%, zero majors remain, and at most two named minors remain.",
+        "The reviewer produced signed successful compare_preview_to_source receipts for the exact home route at 1440x900 and 390x844 after the final code change, and inspected both attached durable SOURCE images and both current local images. Every source landmark exists once in the same order; no priority landmark is missing, duplicated, or replaced by unrelated starter content. Comparable landmark width/height/padding/gap is within 5%, zero majors remain, and at most two named minors remain. Pixel metrics are diagnostic and do not replace landmark, copy, DOM, or interaction review.",
         "Every homepage priority image and video is DAM-backed and ready in the rendered page. Responsive videos use the manifest's exact desktop/mobile sources, and QA verified currentSrc, decoded dimensions/orientation, playback attributes, and zero failed/pending media at both viewports. A poster-only or static substitution fails.",
         "The mobile navigation and each homepage disclosure/tab/carousel state were exercised from inspected rendered selectors. Primary CTA targets resolve to the source-equivalent Fluid route.",
         "The homepage and shared shell render without Liquid/server errors, console exceptions, failed priority resources, horizontal overflow at 390px, or visible base-theme placeholder copy. The materialized theme audit passes on every touched file.",
@@ -383,14 +389,20 @@
             "distinctBy": ["screenshot_options.viewport.width"]
           },
           {
-            "tool": "view_project_image",
-            "minSuccessfulCalls": 2,
-            "distinctBy": ["path"]
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 1440,
+              "height": 900,
+              "mode": "full"
+            }
           },
           {
-            "tool": "screenshot_preview",
-            "minSuccessfulCalls": 2,
-            "distinctBy": ["width"]
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full"
+            }
           },
           {
             "tool": "read_preview_dom"
@@ -418,7 +430,7 @@
         "Ordered normalized visible source wording, product-card fields, badges, price formatting, filter/sort labels, result counts, pagination copy, and empty-state copy were reconciled against the local DOM. No unrelated starter copy or hard-coded fake product cards remain.",
         "The shop uses actual Fluid product resources and canonical returned PDP routes. QA verified representative normal, discounted/badged, and multi-option/unavailable card states where the source exposes them, plus the complete expected catalog through the page's real pagination model.",
         "Filtering, sorting, search, pagination/load-more, and mobile disclosures were exercised from inspected rendered selectors and their resulting DOM/state was verified. A decorative nonfunctional source-equivalent control is a major failure.",
-        "Both durable SOURCE images and current local desktop/mobile images were compared landmark-by-landmark. Geometry is within 5% where compositions match, zero majors remain, at most two named minors remain, and 390px has no horizontal overflow.",
+        "The reviewer produced signed successful compare_preview_to_source receipts proving the exact selected shop source/local route at 1440x900 and 390x844 after the final code change. The reviewer inspected both attached durable SOURCE images and current local images landmark-by-landmark. Geometry is within 5% where compositions match, zero majors remain, at most two named minors remain, and 390px has no horizontal overflow. Pixel metrics are diagnostic and do not replace landmark, copy, DOM, data, or interaction review.",
         "All priority shop media is DAM-backed and ready, and server logs/console contain no unresolved route, runtime, or asset errors. The materialized theme audit passes on touched files.",
         "PAGE_OUTPUT includes the route/copy/evidence/media/interaction proof plus a reusable list_contract naming product-card, grid, filter/sort, pagination, search, and empty/loading/error implementations. Any `needs-review` or `cap-reached` status fails this gate."
       ],
