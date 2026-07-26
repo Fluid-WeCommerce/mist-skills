@@ -5,8 +5,8 @@ description: >-
   auto-detect available Connect integrations (Shopify / Exigo / ByDesign / etc.
   droplets) or fall back to public scraping, then fire the flagship
   onboard-launch-company workflow — which imports products FIRST (so the theme
-  renders a real catalog), clones the site into a theme through six small
-  individually-QA'd build steps, iteratively refines it against screenshots,
+  renders a real catalog), clones the site into a theme through page-scoped
+  hard gates beginning with home and shop, iteratively refines it against screenshots,
   reconciles onboarding info, discovers UGC, and delivers a real
   launch-readiness review. Runs against the ALREADY-SELECTED active company — it does NOT create a
   company; it populates the existing one from its website. Use when the user says
