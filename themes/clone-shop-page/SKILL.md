@@ -103,6 +103,16 @@ Using inspected rendered selectors:
 Read the DOM again after state changes. A click with no observed result is not
 proof.
 
+## Materialize the shared audit
+
+This page skill intentionally does not declare another skill's script as its
+own asset. Mist sandboxes assets to their owning skill directory.
+
+Before the final audit, call `run_skill("themes/theme-clone")` to materialize
+that skill's bundled `theme_audit.py`. Use the exact materialized script path
+returned by the tool and run it only against the touched theme files. Do not
+restart the broad theme-clone workflow or weaken this page's narrower gate.
+
 ## Shop pass
 
 In addition to the shared gate:

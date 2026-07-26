@@ -49,8 +49,8 @@ gate must not present it as near-pixel-perfect success.
    Each must reference a real `.mist-desktop/source-baselines/` file and carry
    `captured_at`, `sha256`, positive `bytes`, decoded `width`/`height`,
    `requested_viewport`, `final_url`, `status`, and `overlay_handling`. Run
-   `git hash-object --no-filters -- <relative-path>` through `run_cli` and
-   compare the raw-byte digest. A hosted URL, `crawl:1440x900`, chat attachment
+   `file_sha256({paths:["<relative-path>"]})` and compare the returned raw-byte
+   SHA-256. A hosted URL, `crawl:1440x900`, chat attachment
    ID, missing file, or digest mismatch is not a baseline. Recapture only
    invalid cells with managed `crawl`, persist its returned evidence object,
    and re-read the manifest before continuing.

@@ -158,8 +158,7 @@
         "themes/theme-clone/references/schema-settings-reference.md",
         "themes/theme-clone/references/section-template.md",
         "themes/theme-clone/references/template-variables.md"
-      ],
-      "assets": ["themes/theme-clone/scripts/theme_audit.py"]
+      ]
     },
     {
       "slug": "themes/clone-shop-page",
@@ -176,8 +175,7 @@
         "themes/theme-clone/references/schema-settings-reference.md",
         "themes/theme-clone/references/section-template.md",
         "themes/theme-clone/references/template-variables.md"
-      ],
-      "assets": ["themes/theme-clone/scripts/theme_audit.py"]
+      ]
     },
     {
       "slug": "onboarding/onboarding-prefill",
@@ -273,7 +271,7 @@
       "category": "themes",
       "icon": "refresh-cw",
       "path": "themes/iterative-theme-refine/SKILL.md",
-      "updated_at": "2026-07-25T23:20:00Z"
+      "updated_at": "2026-07-26T17:34:00Z"
     },
     {
       "slug": "mist/smart-dashboard",
@@ -325,7 +323,7 @@
     {
       "slug": "onboard-launch-company",
       "path": "workflows/onboard-launch-company.workflow.json",
-      "updated_at": "2026-07-26T07:30:00Z"
+      "updated_at": "2026-07-26T17:34:00Z"
     },
     {
       "slug": "open-country",

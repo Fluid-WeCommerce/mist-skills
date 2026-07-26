@@ -93,6 +93,16 @@ At minimum:
 
 Static screenshots cannot prove these states.
 
+## Materialize the shared audit
+
+This page skill intentionally does not declare another skill's script as its
+own asset. Mist sandboxes assets to their owning skill directory.
+
+Before the final audit, call `run_skill("themes/theme-clone")` to materialize
+that skill's bundled `theme_audit.py`. Use the exact materialized script path
+returned by the tool and run it only against the touched theme files. Do not
+restart the broad theme-clone workflow or weaken this page's narrower gate.
+
 ## Homepage pass
 
 In addition to the shared gate:
