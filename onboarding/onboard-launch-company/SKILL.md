@@ -271,8 +271,9 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
     combinations and avoids a risky repair. If a repair is needed, re-read the
     v202604 PATCH schema and existing nested IDs before writing; never assume a
     legacy PATCH limitation still applies.
-  - Preserve an empty source description as `""` or omit it; do not turn it
-    into `null`. The live create contract rejects `null` with
+  - Omit `description` entirely when the source description is empty. Do not
+    send `null` or `""`: the outer validator normalizes the empty string to
+    null, then the delegated live create rejects it with
     `422 product.description must be a string` despite nullable-looking
     generated/docs-side shapes.
 - **DAM upload supports a local file or a remote URL.** Use `dam_upload` for a

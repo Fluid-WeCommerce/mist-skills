@@ -146,10 +146,13 @@ audit row remains. Revision `2026-07-25.21` documents that truth while the
 backend contract fix is developed separately.
 
 The same import found a smaller schema contradiction: SKIMS Gift Box has a
-genuinely empty source description. Coercing that empty string to `null`
-returned `422 product.description must be a string`; the retry-safe importer
-now preserves `""` instead. Revision `2026-07-25.21` records that live behavior
-instead of trusting the nullable-looking generated contract.
+genuinely empty source description. Both `null` and `""` returned
+`422 product.description must be a string` because the outer validator
+normalizes the empty string to null before delegation. Omitting the key
+entirely succeeded: Fluid product `81517` re-read as active, USD `$8`, one real
+DAM image, one variant, and `has_subscription_plans:false` with no plan joins.
+Revision `2026-07-25.22` records that live behavior instead of trusting the
+nullable-looking generated contract.
 
 ### Restart and UI recovery
 

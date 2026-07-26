@@ -300,10 +300,11 @@ Contract:
   source currency.
 - Preserve source description, gallery order, option names/values, and exact
   prices.
-- Preserve a genuinely blank source description as `""` (or omit it on an
-  update). Do not coerce an empty string to `null`: the live v202604 create
-  returns `422 product.description must be a string` for `null`, even though
-  some generated/docs-side schemas describe the field as nullable.
+- Omit `description` entirely when the source description is genuinely blank.
+  Do not send `null` or `""`: the outer v202604 validator normalizes the empty
+  string to null, then the delegated create returns
+  `422 product.description must be a string`, even though some generated and
+  docs-side schemas describe the field as nullable.
 - Do not attach a subscription plan unless the source offers that plan. Fluid
   companies can have a company-default plan that the product create action
   attaches when `product_subscription_plans_attributes` is omitted or empty.
