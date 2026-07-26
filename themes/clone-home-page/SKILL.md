@@ -1,0 +1,111 @@
+---
+name: clone-home-page
+description: >-
+  Reconstruct one storefront home page in a Fluid theme with exact copy,
+  responsive media, navigation states, and desktop/mobile evidence. Use
+  standalone or as the home-page hard gate in onboarding.
+---
+
+# Clone Home Page
+
+Own exactly one golden route: the canonical source homepage mapped to the
+Fluid theme home route.
+
+Follow
+[`../page-clone/references/pixel-perfect-page.md`](../page-clone/references/pixel-perfect-page.md)
+in full. This file adds homepage-specific requirements.
+
+## Resolve scope
+
+In workflow mode, read `context.website_url`,
+`clone-manifest.json.visual_routes.home`, prior shell-step output, and the
+current local theme. Use `/` as the built path unless the manifest proves a
+different canonical home path.
+
+Standalone, ask for the source URL only if it is absent. Confirm the active
+theme before editing an existing project.
+
+## Homepage discovery
+
+The homepage establishes the shared storefront shell, but it is not permission
+to invent the rest of the site.
+
+Inventory:
+
+- announcement/utility bars
+- desktop and mobile header/navigation
+- logo/icon treatment
+- every homepage section in exact order
+- every exact heading, paragraph, CTA, badge, and link
+- image, picture, video, poster, and responsive source variants
+- carousels, tabs, accordions, drawers, hover states, and auto-rotation
+- newsletter/social/footer content visible on home
+
+The route manifest must contain one landmark for every visible section. A
+hero-only or above-the-fold reconstruction is a failure.
+
+If rendered crawl HTML omits `<head>`, fetch the raw canonical page and its real
+stylesheet links. Reconcile fonts/colors with `brand.md` and the prior shell
+step. Source stylesheet evidence wins over eyeballing.
+
+## Shell contract
+
+Verify the existing shell rather than duplicating it inside home sections:
+
+- typography tokens and licensed/substituted font decision
+- page-width and spacing scale
+- announcement/header/nav/footer sections
+- desktop menu behavior
+- mobile disclosure/drawer behavior
+- logo, icon, utility controls, and exact link labels/targets
+
+Fix shell defects that block homepage fidelity and report them in
+`PAGE_OUTPUT.shell_changes`. Do not clone the header or footer into each page
+template.
+
+Record a reusable `shell_contract` for later page skills: token names, shared
+section/component paths, menu source, breakpoints, container widths, and
+interaction selectors.
+
+## Homepage implementation
+
+- Preserve exact source section order and copy.
+- Use the source's real home-specific media; do not replace motion with a poster.
+- Keep product/collection/editor data dynamic when a section represents live
+  Fluid resources.
+- Reuse a section only where its schema can express the source at both widths.
+- Give every template section instance a stable unique ID.
+- Remove unrelated starter sections and filler copy.
+- Match desktop and mobile crops independently.
+
+The home page may introduce reusable product cards or editorial cards, but
+record their contract. The following shop step will test whether they actually
+work with a full catalog.
+
+## Required interaction proof
+
+At minimum:
+
+- open and close the mobile navigation from an inspected selector
+- exercise every homepage disclosure/tab control
+- verify carousel controls where present
+- verify every primary CTA points to the source-equivalent Fluid route
+
+Static screenshots cannot prove these states.
+
+## Homepage pass
+
+In addition to the shared gate:
+
+- signed `compare_preview_to_source` receipts prove the exact `/` source/local
+  pair at 1440 × 900 and 390 × 844 after the final home code change, bind each
+  source screenshot to its rendered-evidence sidecar, and report exact,
+  non-truncated ordered copy
+- every homepage section is present once and ordered correctly
+- hero and all below-the-fold priority media match at both widths
+- all exact homepage wording is reconciled from source HTML to local DOM
+- header/navigation/footer are visually and interactively valid
+- no base-theme marketing filler remains
+- `PAGE_OUTPUT.shell_contract` is complete enough for later page workers
+
+Do not proceed to shop or fan-out page work until this page passes.

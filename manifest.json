@@ -107,7 +107,7 @@
       "category": "themes",
       "icon": "copy",
       "path": "themes/theme-clone/SKILL.md",
-      "updated_at": "2026-07-25T18:00:00Z",
+      "updated_at": "2026-07-26T06:05:00Z",
       "references": [
         "themes/theme-clone/references/batch-upload-script.md",
         "themes/theme-clone/references/css-js-patterns.md",
@@ -142,6 +142,42 @@
         "themes/references/liquid-correctness.md",
         "themes/references/navigation.md"
       ]
+    },
+    {
+      "slug": "themes/clone-home-page",
+      "name": "Clone Home Page",
+      "description": "Reconstruct one storefront homepage in a Fluid theme with exact copy, responsive images and video, navigation states, and independently verifiable desktop/mobile evidence.",
+      "category": "themes",
+      "icon": "house",
+      "path": "themes/clone-home-page/SKILL.md",
+      "updated_at": "2026-07-26T08:45:00Z",
+      "references": [
+        "themes/page-clone/references/pixel-perfect-page.md",
+        "themes/theme-clone/references/fluid-rules.md",
+        "themes/theme-clone/references/page-templates.md",
+        "themes/theme-clone/references/schema-settings-reference.md",
+        "themes/theme-clone/references/section-template.md",
+        "themes/theme-clone/references/template-variables.md"
+      ],
+      "assets": ["themes/theme-clone/scripts/theme_audit.py"]
+    },
+    {
+      "slug": "themes/clone-shop-page",
+      "name": "Clone Shop Page",
+      "description": "Reconstruct a storefront's canonical shop/all-products listing in Fluid with real product cards, filtering, sorting, search, pagination, responsive behavior, and exact source evidence.",
+      "category": "themes",
+      "icon": "shopping-bag",
+      "path": "themes/clone-shop-page/SKILL.md",
+      "updated_at": "2026-07-26T08:45:00Z",
+      "references": [
+        "themes/page-clone/references/pixel-perfect-page.md",
+        "themes/theme-clone/references/fluid-rules.md",
+        "themes/theme-clone/references/page-templates.md",
+        "themes/theme-clone/references/schema-settings-reference.md",
+        "themes/theme-clone/references/section-template.md",
+        "themes/theme-clone/references/template-variables.md"
+      ],
+      "assets": ["themes/theme-clone/scripts/theme_audit.py"]
     },
     {
       "slug": "onboarding/onboarding-prefill",
@@ -289,7 +325,7 @@
     {
       "slug": "onboard-launch-company",
       "path": "workflows/onboard-launch-company.workflow.json",
-      "updated_at": "2026-07-26T00:37:00Z"
+      "updated_at": "2026-07-26T07:30:00Z"
     },
     {
       "slug": "open-country",

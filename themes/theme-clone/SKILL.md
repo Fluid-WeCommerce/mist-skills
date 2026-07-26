@@ -20,11 +20,11 @@ This skill supports two modes:
 - **Full site clone** — systematically clone all key pages of a website
 
 **Workflow mode (phased execution).** When you were launched by the
-`onboard-launch-company` workflow, the clone is split into six small,
-individually-QA'd steps and your step prompt names the ONLY phases you own
-(1: discovery/scrape/assets → 2: tokens/skeleton → 3: header/footer →
-4: homepage → 5: product/collection templates → 6: content pages + audit +
-push). Execute just those phases, read/write the shared `clone-manifest.json`
+`onboard-launch-company` workflow, the clone is split into individually-QA'd
+discovery, shell, page-archetype, and final-integration gates. The home golden
+route must pass before shop; the shop golden list route must pass before the
+remaining catalog/detail pages. Your step prompt or page skill names the ONLY
+surface you own. Execute just that scope, read/write the shared `clone-manifest.json`
 at the theme project root instead of re-scraping, and record cosmetic
 deviations as notes for the refine pass rather than fixing everything in one
 step. `clone-manifest.json`, `.mist-desktop/source-baselines/`, and `baselines/`
@@ -213,7 +213,13 @@ TOTAL: X pages
 
 ### 4d: Identify shared sections (CTA banners, testimonials, newsletter signup) — build once, reuse
 
-### 4e: Clone order — nav/footer first, homepage, products, collections, static pages
+### 4e: Clone order
+
+Build the global shell first, then prove the homepage, then prove the canonical
+shop/all-products list. Only after both golden routes pass should the workflow
+continue through collection/category/blog/search list archetypes, their detail
+archetypes (PDP, post, content), cart/system states, and final cross-route
+linking/regression.
 
 ---
 
@@ -252,9 +258,15 @@ document
 ```javascript
 var el = document.querySelector(".hero-section");
 var s = getComputedStyle(el);
-[s.backgroundColor, s.color, s.fontFamily, s.fontSize, s.fontWeight, s.padding, s.margin].join(
-  " | ",
-);
+[
+  s.backgroundColor,
+  s.color,
+  s.fontFamily,
+  s.fontSize,
+  s.fontWeight,
+  s.padding,
+  s.margin,
+].join(" | ");
 ```
 
 ### 2d: Note animations (scroll, hover, carousel, parallax)
@@ -286,34 +298,60 @@ TOTAL SECTIONS: X
 
 ---
 
-## Phase 3: Image Extraction & DAM Upload
+## Phase 3: Media Extraction & DAM Upload
 
-### Extract all image URLs from the browser:
+### Extract every image and video URL from the rendered DOM
 
 ```javascript
-var imgs = [];
-document.querySelectorAll("img").forEach(function (i) {
-  var s = (i.src || i.currentSrc || "").split("?")[0];
-  if (s && s.indexOf("http") === 0 && imgs.indexOf(s) === -1) imgs.push(s);
+var media = [];
+document.querySelectorAll("img,video,video source").forEach(function (el) {
+  var src = el.currentSrc || el.src || el.getAttribute("src") || el.dataset.src;
+  if (src && src.indexOf("http") === 0 && media.indexOf(src) === -1) {
+    media.push(src);
+  }
 });
-document.title = imgs.length + " images: " + imgs.join(" | ");
+document.title = media.length + " media: " + media.join(" | ");
 ```
 
-Also check: background images in CSS, lazy-loaded (`data-src`), inline SVGs (copy markup directly).
+Repeat this at every required viewport because responsive sites often return
+different desktop/mobile video sources. Also inspect background images in CSS,
+lazy-loaded `data-src`, `<picture>/<source>`, inline SVGs, poster URLs, and
+embedded media. A section identified as video in rendered HTML or the visual
+baseline MUST keep its exact source URL, viewport, playback attributes, and
+poster in the manifest; recording only `"media": "video"` is incomplete.
 
 ### Upload to Fluid DAM
 
-**All images must go to the DAM. Never hotlink to source CDNs.**
+**All source images and self-hosted videos used by priority routes must go to
+the DAM. Never hotlink to source CDNs or silently replace a video with an image
+or flat color.**
 
-Use the **`dam_upload` tool** — never `curl`/POST to `upload.fluid.app` yourself (auth, ImageKit registration, and the company-scoped folder are all handled for you). It takes a file inside the project sandbox plus optional `name` / `description` / `tags` / `create_media`, and returns the asset record — use `asset.default_variant_url` as the image URL in your sections and `settings_data.json`.
+Use the **`dam_upload` tool** — never `curl`/POST to `upload.fluid.app`
+yourself. Pass either `url` for a public source URL or `path` for a sandbox
+file, never both. Remote uploads are fetched server-side through the upload
+service's `external_asset_url` field; do not download a normal-sized remote
+asset first. Pass `create_media: true` for video so it is also visible in the
+Fluid Media library. Use the returned `asset.default_variant_url` in the theme.
 
-Source-site images live on a remote CDN, and `dam_upload` uploads a **local file**, so for each image:
+For every required source asset:
 
-1. Fetch it into the project sandbox (the `crawl` tool can pull page assets, or download the URL directly).
-2. Call `dam_upload` with the saved path. Run one call per file — **parallel tool calls in a single turn batch-upload many images at once**.
-3. If an asset is too large for the upload service, chain `compress_media` → `dam_upload`.
+1. Call `dam_upload` with its public `url`. Parallel calls may batch assets.
+2. If the service rejects the asset for size, call `compress_media` with the
+   same public `url`, then **immediately** call `dam_upload(path=<output_path>)`
+   with the returned compressed path. Mist streams the remote source into a
+   bounded temporary sandbox file and removes it after compression; the
+   default compressed handoff expires after one hour so hidden cache files do
+   not accumulate. No manual download is needed. Do not treat a size error as
+   permission to omit the media.
+3. Record source URL, viewport/role, media kind, byte size when known, DAM URL,
+   upload status, and any compression result in `priority_media`.
 
-`asset.default_variant_url` from each result is the DAM URL to reference. (Alternatively, the `fluid dam upload --url <SOURCE_IMAGE_URL> --name <name>` CLI fetches a remote URL directly without a local download.) See [references/batch-upload-script.md](references/batch-upload-script.md) for the batch pattern.
+Before discovery passes, reconcile every priority `<img>`, `<video>`,
+`<source>`, and CSS media URL from the retained rendered HTML against
+`priority_media`. Every required item must have a working DAM URL, or a
+structured failure with the attempted upload/compression evidence. Missing
+priority video is a hard failure, not a cosmetic refine note. See
+[references/batch-upload-script.md](references/batch-upload-script.md).
 
 ---
 
@@ -357,7 +395,12 @@ See [theme-refine.md](../theme-refine/SKILL.md#section-shell-pattern--enforce-on
 ALL text content uses `richtext` type — the WYSIWYG handles font, size, weight, color, alignment. Defaults must be wrapped in HTML tags.
 
 ```json
-{ "type": "richtext", "id": "text", "label": "Heading", "default": "<h2>Your heading here</h2>" }
+{
+  "type": "richtext",
+  "id": "text",
+  "label": "Heading",
+  "default": "<h2>Your heading here</h2>"
+}
 ```
 
 **NEVER** use `text` or `textarea` for visible content — those create plain text that can't be styled in the editor.
@@ -973,7 +1016,7 @@ for root, dirs, files in os.walk(WORK_DIR):
         else:
             # Binary: call the dam_upload tool with the file path; it returns
             # the asset record. Register asset.default_variant_url as the resource.
-            dam_url = dam_upload(file=filepath, name=fname)["asset"]["default_variant_url"]
+            dam_url = dam_upload(path=filepath, name=fname)["asset"]["default_variant_url"]
             if dam_url:
                 fluid_api(f"/api/application_themes/{theme_id}/resources", "PUT",
                     {"key": key, "dam_asset": dam_url})

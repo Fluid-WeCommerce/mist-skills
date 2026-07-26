@@ -19,6 +19,9 @@ FLAGSHIP_CONTRACT_FILES = (
     ROOT / "onboarding/onboarding-prefill/references/api-endpoints.md",
     ROOT / "onboarding/onboarding-prefill/references/brand-md.md",
     ROOT / "themes/theme-clone/SKILL.md",
+    ROOT / "themes/page-clone/references/pixel-perfect-page.md",
+    ROOT / "themes/clone-home-page/SKILL.md",
+    ROOT / "themes/clone-shop-page/SKILL.md",
     FLAGSHIP_WORKFLOW_PATH,
 )
 
@@ -199,6 +202,40 @@ def validate_flagship_contracts() -> None:
         "onboarding brand API reference",
     )
 
+    theme_clone_skill = (ROOT / "themes/theme-clone/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    require_fragments(
+        theme_clone_skill,
+        (
+            'document.querySelectorAll("img,video,video source")',
+            "different desktop/mobile video sources",
+            "`dam_upload` with its public `url`",
+            "`compress_media`",
+            "`priority_media`",
+            "video is a hard failure",
+        ),
+        "theme-clone priority media contract",
+    )
+
+    page_contract = (
+        ROOT / "themes/page-clone/references/pixel-perfect-page.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        page_contract,
+        (
+            "source_copy_sha256",
+            "exact normalized visible copy",
+            'dam_upload({ url: "<exact-public-url>", create_media: true })',
+            "compress_media",
+            "`currentSrc`",
+            "`read_preview_dom",
+            "within 5% of source",
+            'status:"pass"|"needs-review"|"cap-reached"',
+        ),
+        "shared pixel-perfect page contract",
+    )
+
     workflow = load_json(FLAGSHIP_WORKFLOW_PATH)
     if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
         raise CatalogValidationError("flagship workflow steps must be an array")
@@ -208,6 +245,95 @@ def validate_flagship_contracts() -> None:
         for step in workflow["steps"]
         if isinstance(step, dict) and isinstance(step.get("id"), str)
     }
+    theme_discovery = steps.get("theme-scrape-inventory")
+    if not isinstance(theme_discovery, dict):
+        raise CatalogValidationError(
+            "flagship workflow: theme-scrape-inventory step is missing"
+        )
+    theme_discovery_acceptance = json.dumps(
+        theme_discovery.get("acceptance", [])
+    )
+    require_fragments(
+        theme_discovery_acceptance,
+        (
+            "priority_media",
+            "dam_upload(url=..., create_media=true)",
+            "compress_media",
+            "video content type",
+        ),
+        "flagship workflow theme discovery",
+    )
+
+    home_step = steps.get("theme-homepage")
+    shop_step = steps.get("theme-shop-page")
+    if not isinstance(home_step, dict) or not isinstance(shop_step, dict):
+        raise CatalogValidationError(
+            "flagship workflow: home and shop golden-route steps are required"
+        )
+    if home_step.get("skill") != "themes/clone-home-page":
+        raise CatalogValidationError(
+            "flagship workflow: theme-homepage must use themes/clone-home-page"
+        )
+    if shop_step.get("skill") != "themes/clone-shop-page":
+        raise CatalogValidationError(
+            "flagship workflow: theme-shop-page must use themes/clone-shop-page"
+        )
+    if shop_step.get("dependsOn") != ["theme-homepage", "products-import"]:
+        raise CatalogValidationError(
+            "flagship workflow: shop must wait for home and product import"
+        )
+    for step_id, step in (
+        ("theme-homepage", home_step),
+        ("theme-shop-page", shop_step),
+    ):
+        required_tools = json.dumps(step.get("qa", {}).get("requiredTools", []))
+        require_fragments(
+            required_tools,
+            (
+                '"tool": "crawl"',
+                '"minSuccessfulCalls": 2',
+                '"formats": ["html", "screenshot"]',
+                '"screenshot_options.viewport.width"',
+                '"tool": "read_preview_dom"',
+                '"tool": "compare_preview_to_source"',
+                '"width": 1440',
+                '"height": 900',
+                '"width": 390',
+                '"height": 844',
+                '"mode": "full"',
+                '"tool": "interact_preview"',
+            ),
+            f"flagship workflow {step_id} evidence floor",
+        )
+        require_fragments(
+            json.dumps(step.get("acceptance", [])),
+            (
+                "normalized visible",
+                "local rendered DOM",
+                "signed successful compare_preview_to_source",
+                "within 5%",
+                "needs-review",
+                "cap-reached",
+            ),
+            f"flagship workflow {step_id} golden-route gate",
+        )
+
+    for step_id in ("theme-product-collection", "theme-content-pages-push"):
+        theme_step = steps.get(step_id)
+        if not isinstance(theme_step, dict):
+            raise CatalogValidationError(
+                f"flagship workflow: {step_id} step is missing"
+            )
+        require_fragments(
+            json.dumps(theme_step.get("acceptance", [])),
+            (
+                "priority",
+                "video",
+                "HARD-FAIL BAR",
+            ),
+            f"flagship workflow {step_id}",
+        )
+
     products_import = steps.get("products-import")
     if not isinstance(products_import, dict):
         raise CatalogValidationError("flagship workflow: products-import step is missing")
