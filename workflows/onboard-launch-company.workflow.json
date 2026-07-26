@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-25.12",
+  "revision": "2026-07-25.13",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog before theme work, clone the home/shop/PDP experience through independently reviewed build stages, and finish with rendered-route and launch-readiness gates. Worker and reviewer models are deliberately cross-vendor so evidence, not one model's self-assessment, decides whether the run passes.",
@@ -72,6 +72,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "Brand colors + fonts were verified against the SOURCE STYLESHEET (its `:root` tokens and `@font-face` blocks), not merely 'set' and not eyeballed from a screenshot. Exact stylesheet URLs and token/font declarations are persisted in STEP_OUTPUT. Legally re-hostable fonts are present in GET /api/settings/brand_guidelines → fonts[] with exact DAM URLs and metadata, and every URL was re-fetched successfully; proprietary/unverified bytes are absent and a licensed substitute is documented. A fixable palette/font mismatch was fixed and re-verified.",
         "logo_url, icon_url, and favicon_url resolve to non-empty Fluid-DAM assets verified as this company's canonical standalone identity. Collaboration/campaign marks and generic Fluid defaults were replaced. A documented same-brand fallback is allowed only when the source has no distinct icon.",
@@ -101,6 +102,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "source-catalog.json exists and its SHA-256, observation time, and path are reported.",
         "Discovery used the union of sitemap(s), structured catalog endpoints when available, and collection/category links; every source pagination/batch exit condition is recorded.",
@@ -130,6 +132,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "A SOURCE MANIFEST was built before importing (Cases A/B): the source catalog was enumerated to a concrete list of {source_url, title, price, currency, images, option axes, variant count} with app-helper/$0 junk filtered out, `source_count` is reported from it, and the enumeration method + exit condition are recorded (all sitemap/collection pages exhausted, API pagination returned empty, or equivalent). 'Products exist in Fluid' proves nothing without a demonstrably complete source number.",
         "The importer consumed the exact source-catalog.json path + SHA-256 produced by catalog-source-manifest; it did not replace the reviewed denominator with a smaller collection-page list or a new ad-hoc crawl.",
@@ -178,6 +181,7 @@
         "kind": "theme"
       },
       "maxReworkRounds": 1,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "DISCOVERY-ONLY BOUNDARY: this step does not build the theme. The local preview may still be the generic scaffold, and future built_path routes/selectors are plans that are verified in later build steps. Do not fail this step because those routes do not yet resolve or because the scaffold does not match the source.",
         "`clone-manifest.json` exists at the theme project root and contains a page manifest, home + shop + representative-PDP section inventories with concrete computed style values, header/footer inventory, brand tokens (colors + fonts with licensing notes), and a source-URL → DAM-URL asset map — verify by READING the file, not the worker's claim.",
@@ -219,6 +223,7 @@
         "kind": "theme"
       },
       "maxReworkRounds": 1,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "settings_data.json + settings_schema.json parse as valid JSON; the 12 color slots and 5 font slots are populated with the manifest's brand values (not base-theme defaults), and every color/font setting has its option_group.",
         "layouts/theme.liquid wires all --clr-* and --ff-* variables with | default: fallbacks; the font decision (real @font-face or named substitute) is recorded.",
@@ -259,6 +264,7 @@
         "kind": "theme"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "main_navbar and main_footer exist, render in the dev preview without Liquid errors (check the dev server log), and visibly correspond to the source's header/footer structure (logo, nav items, footer columns).",
         "Fluid's cart/locale JS hooks are intact in the navbar (grep for #show-cart, #fluid-cart-count — their absence breaks cart + locale switching store-wide).",
@@ -304,6 +310,7 @@
         "kind": "theme"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "The reviewer opened the durable rendered SOURCE screenshot itself and compared it against the clone side by side. A worker description, DOM inventory, or metrics-only review does not satisfy this criterion.",
         "The homepage renders in the dev preview without server/Liquid errors and contains a section for every entry in the manifest's homepage inventory, in source order (verify against the manifest, not the worker's claim).",
@@ -351,6 +358,7 @@
         "kind": "theme"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "The reviewer opened the durable rendered SOURCE screenshots for the PDP and collection and compared them against the clone side by side. A worker description, DOM inventory, or metrics-only review does not satisfy this criterion.",
         "product/default/index.liquid leads with the scaffold's canonical product-data section (product_hero or main_product — unmodified, not a hand-rolled replacement) and adds source-matching sections after it; collection/default exists and renders.",
@@ -398,6 +406,7 @@
         "kind": "theme"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "`python3 scripts/theme_audit.py` exits 0 on every file the clone touched (new/modified templates, sections, configs). Pre-existing violations in UNTOUCHED base-theme scaffold files are recorded as a note with the per-rule rollup — they are not this step's failure.",
         "The theme was pushed: GET /api/application_themes shows the landing theme and STEP_OUTPUT records its id (verify via the API, not the worker's claim).",
@@ -450,6 +459,7 @@
         "kind": "theme"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "Preflight validated all six durable source files from `clone-manifest.json`: each `.mist-desktop/source-baselines/` path exists, its `git hash-object --no-filters -- <path>` digest matches the recorded sha256, and its nonzero bytes/dimensions/requested viewport/final URL/status/overlay handling are complete. Missing or opaque source evidence was recaptured before any visual round.",
         "The reviewer opened the source and clone pixels side by side for every home/shop/PDP desktop/mobile pair. Worker summaries, DOM inventories, and metrics without the source image do not satisfy visual review.",
@@ -483,6 +493,7 @@
         "flag": "import_products"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "If import_products was not selected, the step correctly skipped and did no work.",
         "Otherwise: every source collection, every curated category (or justified none), every static /pages/* page, every published post, every source playlist/media resource, and the site nav/menus were mapped to the correct Fluid resource type. v202604 lists were cursor-paginated to next_cursor=null and exact source-vs-created counts are reported without relying on total_count.",
@@ -511,6 +522,7 @@
         "flag": "push_business_data"
       },
       "maxReworkRounds": 1,
+      "recovery": { "mode": "manual" },
       "acceptance": [
         "The step made a real GET /api/companies/{id}/onboarding_info call this turn (or documented its exact failure status) — the report cites concrete fields from the actual response, and does NOT call the removed /api/v1/onboardings endpoints.",
         "No non-empty server value was overwritten; nothing LOW-confidence or KYC-sensitive was pushed; every deferred field has an explicit reason.",
@@ -582,6 +594,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "prompt": "Audit EVERY link in the storefront and make each point to a valid, correctly-rendering Fluid resource template — this is the step that catches nav items wired to dead or generic routes. Cover: the header navigation, the footer (support / legal / social / localization), and primary in-page CTAs (hero, category tiles, banners). For each link, resolve the target and confirm it (a) returns HTTP 200 and (b) renders the CORRECT template: collection links -> collection template, category -> category, page -> page, product -> /home/products/<slug>, home -> home. FIX links that point to: a dead or generic route (e.g. a bare `/shop` that 204s instead of `/home/shop`), the wrong template, a Shopify-style URL that doesn't map to Fluid's `/home/...` routes, or a 302/404/406. EVERY resource-DETAIL href the theme emits MUST carry the credit segment (`/home/products/<slug>`, `/home/collections/<slug>`, `/home/pages/<slug>`, `/home/posts/<slug>`) — a bare `/products/<slug>` 404s at the origin and only appears to work once the CDN has cached the `/home/...` render, then breaks again when that cache entry ages out. Test each link COLD: if a bare detail URL returns 200, re-test it against a slug you have not visited this run before believing it. Also grep the rendered HTML for the unsubstituted credit placeholder `__fluid_affiliate_username__` — it resolves by fallback but must be replaced with `home` (or a real Liquid credit variable) in the theme source. Navigation menu items MUST map to real resources — e.g. 'By Scent' -> a collections/scent index (`/home/collections`), NOT a generic shop URL; 'Best Sellers' -> `/home/collections/best-sellers`; 'Gifts & Sets' -> `/home/collections/sets`. Prefer binding the nav to a real Fluid navigation menu (link_list) with correct resource URLs so it stays admin-manageable; otherwise correct the hrefs. Point footer info links at the imported pages (`/home/pages/<slug>`). A PDP (or any resource type) that returns 204/blank or 500 on its CREDIT-PREFIXED URL is NOT 'platform-side' — it almost always means the active theme has no `default: true` template for that themeable_type (check `GET /api/application_themes/active` -> application_theme_templates grouped by themeable_type). Fix the theme; do not wave it through. SLUG GOTCHA: enumerate PDP URLs from links the STOREFRONT renders (collection/search pages), not from the API's canonical_url — a PATCH that includes the title re-slugifies the product (new uuid suffix) and the old canonical_url silently falls through to the home template. End with STEP_OUTPUT containing a table: link label -> target URL -> HTTP status -> resolved template.",
       "acceptance": [
         "Every header-nav, footer, and primary in-page link resolves to HTTP 200 and the correct resource template, asserted on the credit-prefixed URL. A PDP/collection/page that 204s or 500s is treated as a theme template-default gap to fix, not a platform excuse.",
@@ -609,6 +622,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "prompt": "Focused QA — PRODUCT PRICING ONLY. Use query_docs to confirm the v202604 Product list/show response before checking. Cursor-paginate `GET /api/v202604/company/products?page[limit]=100` through every `meta.pagination.next_cursor` until null; do not assume total_count or stop at the first 100.\n\nFor EVERY real published product, load its detail record as needed and visit its local-preview PDP using the canonical route returned/mapped by the API. Compare the rendered retail price and, when the source genuinely offers one, subscription price against the default company's country-relative Product pricing/variant-country data. A missing, zero, stale, wholesale, or mismatched value fails that product.\n\nCheckpoint per product so interruption/restart resumes rather than restarting the catalog. Keep preview navigations bounded (maximum two in flight) and report progress every 20 products to avoid overwhelming a lower-end machine or slow network.\n\nIf the company serves multiple countries, test every configured country on the flagship and one multi-variant product; confirm both amount and currency change to that country's resolved pricing. Do not check links, cart, or layout here.\n\nEnd with STEP_OUTPUT: { enumerated, checked, destination_pages, default_country, matches, mismatches:[{product_id,title,route,displayed,expected,reason}], country_switches:[...], checkpoint_path, unresolved:[] }.",
       "acceptance": [
         "Every cursor-paginated product was checked; each PDP's rendered retail price and currency exactly match the default-country v202604 response. Zero is accepted only when the source manifest also says the product is legitimately free.",
@@ -635,6 +649,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "prompt": "Focused QA — ADD TO CART ONLY. Visit EVERY PDP and confirm the add-to-cart button is correctly wired through FairShare: `data-fluid-add-to-cart=\"<variantId>\"` is present and the id is a REAL active variant of that product; on multi-variant products it is VARIANT-AWARE (selecting a scent/size updates the button's variant id + price); `data-fluid-quantity` and `data-fluid-open-cart-after-add` are sane. Confirm the cart drawer/FairShare SDK is present (the `fluid-cdn-script` is injected). Flag any PDP with a missing, hardcoded, placeholder, or stale variant id, or a non-variant-aware selector. Do NOT check prices/links/layout. STEP_OUTPUT: a table of PDP -> data-fluid-add-to-cart value -> real active variant? -> variant-aware?, plus any failures.",
       "acceptance": [
         "Every PDP has a data-fluid-add-to-cart bound to a real, active variant id for that product.",
@@ -661,6 +676,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "prompt": "Focused QA — MOBILE ONLY. Use the fresh-machine Mist preview capabilities, not a local/global Playwright assumption. Call start_preview if needed, confirm local URL with preview_state, then for one of EACH route type — home, collection, category (if any), product PDP, content page, cart — call screenshot_preview with `{mode:\"full\",path:\"<route>\",width:390,height:844}`. Require HTTP 200 and use the reported document width to prove no horizontal overflow. Inspect images/text/tap-target geometry in the screenshots. On the home route, inspect the real mobile-menu button selector, call interact_preview to open it, take a fresh 390x844 screenshot, then close it and recapture; aria-expanded/state and visible menu content must change. Read preview console + local server logs after the route matrix. Flag any overflow, overlap/cutoff, broken mobile nav, unreadable type, or runtime failure. Do NOT check prices/cart wiring/link targets. STEP_OUTPUT: route -> status -> viewport/document width -> screenshot paths -> issues, plus mobile-menu interaction evidence and log status.",
       "acceptance": [
         "Every sampled route has current screenshot_preview evidence at an exact 390x844 viewport, HTTP 200, and reported document width <= 390px.",
@@ -687,6 +703,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "prompt": "Focused QA — PRODUCT LIFECYCLE ONLY, before price and add-to-cart QA. Use query_docs for the v202604 list/update contract. Cursor-paginate ALL products from `GET /api/v202604/company/products?page[limit]=100` until `meta.pagination.next_cursor` is null.\n\nA launch product must resolve as `status:\"published\"` AND `active:true`. For any manifest-backed product that is draft, scheduled, archived, or inactive by mistake, PATCH `/api/v202604/company/products/{id}` with only the documented lifecycle keys needed—normally `{product:{status:\"published\",public:true,publish_at:null}}`—then re-read it. Never use legacy `status:\"active\"`.\n\nAfter correction, verify every product's local PDP route renders the expected product rather than a 404/redirect and verify collection membership for products that should have it. Use returned canonical routes and checkpoints; do not compose slugs or stop at a page limit. Do not check price, cart, or visual layout here.\n\nEnd with STEP_OUTPUT: { enumerated, destination_pages, before_status_counts, corrected:[{id,from,to}], after_status_counts, pdp_routes_checked, membership_failures:[], unresolved:[], checkpoint_path }.",
       "acceptance": [
         "Every destination cursor was exhausted and every manifest-backed product resolves as `status == published` and `active == true`; no launch product remains draft, scheduled, archived, or inactive.",
@@ -713,6 +730,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "prompt": "Focused QA — ROUTE HEALTH. Assert the home index AND one of EACH resource type — collection, category (if any), product PDP, content page, cart — returns HTTP 200 with a non-trivial rendered body.\n\nURL shape is part of the test. Fluid detail routes require `/{credit}/{resource}/{slug}`, with `home` as unattributed credit: `/home/products/<slug>`, `/home/collections/<slug>`, `/home/pages/<slug>`, `/home/posts/<slug>`. Index routes are credit-optional. Never accept a bare Shopify-style detail URL; a cached 200 there is not routing proof.\n\nPRECHECK 1: GET `/api/application_themes/active`; compare its id to the built theme id. If different/draft, activate the built theme before continuing or report a blocker.\n\nPRECHECK 2: group active theme templates by themeable_type and require a `default:true` template for layouts, locales, config, home_page, navbar, footer, product, collection, category, page, post, cart_page, shop_page. Fix missing defaults; do not label blank 204 routes as platform bugs.\n\nMETHODOLOGY: use Mist's managed browser. For each PUBLIC storefront URL, call crawl with `formats:[\"html\",\"screenshot\"]`, `only_main_content:false`, and exact viewport screenshot options. Record requested URL, final URL, metadata HTTP status, title, screenshot, and non-trivial resource-specific body. A redirect to home, generic home body, blank/loading screenshot, 204, 404, or 500 fails. For the matching LOCAL route, call screenshot_preview with path + exact viewport and record its navigation status. Read preview console/local logs. This requires no local Playwright install. If an older Mist build cannot report crawl final URL/status or exact screenshots, report tooling needs-review rather than inventing a browser pass.\n\nSTEP_OUTPUT: route type -> public requested/final URL -> public status/rendered -> local URL/status -> evidence paths; plus PRECHECK 1 active/built theme ids and PRECHECK 2 default-template table.",
       "acceptance": [
         "PRECHECK 1 ran: the theme returned by GET /api/application_themes/active is the theme this run built (or the drift is reported as a blocker).",
@@ -740,6 +758,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "prompt": "Focused QA — SEO METADATA ONLY (browser-based). For each route type (home, a collection, a product PDP, a content page), load it in a real browser and assert the <head> + document are SEO-ready: a non-empty, resource-SPECIFIC <title> (NOT empty and NOT a generic storefront default like 'Live Free.'), a meaningful <meta name=description> (not the generic default), a <link rel=canonical>, and exactly ONE <h1> with real resource content. Product and collection pages should also emit the relevant JSON-LD (Product / ItemList / BreadcrumbList). Fix what the THEME controls (title/description/canonical/h1/JSON-LD in the layout + templates, driven by the resource drop — e.g. `{{ page_title }}`, product/collection fields). FLAG what only store-level SEO settings can fix (site-wide default title/description, robots) for the human. STEP_OUTPUT: a per-route-type table -> title / description / canonical / h1 / JSON-LD present? -> pass/flag.",
       "acceptance": [
         "Every route type has a non-empty, resource-specific <title> (not a generic default) and a meaningful meta description.",
@@ -767,6 +786,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "prompt": "Focused QA — CONTENT PAGE ROUTES ONLY. Use query_docs for the v202604 Page list/show contract, then cursor-paginate `GET /api/v202604/company/pages?page[limit]=100` until `meta.pagination.next_cursor` is null.\n\nFor every source-authored content page (About, Contact, Shipping, Privacy, Terms, FAQ, store locator, and every other manifest page), open its local preview route in a real browser and assert the expected authored main content renders—not just shared header/footer chrome and not a different page behind a redirect. Use the canonical path returned/mapped by the page/create_page result; never compose a slug.\n\nIf a page resource or theme template is missing, repair it with Mist's `create_page` tool so resource, template, route, dev server, and preview pane remain coordinated. Do not raw-POST a legacy page endpoint. Re-open the page after repair and verify every header/footer link that targets it resolves to the same authored content.\n\nEnd with STEP_OUTPUT: { enumerated_pages, destination_pages, rows:[{source_url,title,canonical_path,record_exists,template_exists,body_renders,linked_from_resolves,status}], repaired_with_create_page:[], unresolved:[] }.",
       "acceptance": [
         "Every authored content page renders its real body copy in a browser, not just nav + footer.",
@@ -793,6 +813,7 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
       "prompt": "Focused QA — FONT LICENSING & SUBSTITUTION ONLY. Determine the source brand's primary display + body typefaces. If a source font is proprietary (not OFL/Google-hosted/freely licensable) and was substituted with a free alternative, assert the substitution is done honestly and completely: (1) the closest free family is used consistently across the theme (no lingering references to the proprietary family name), (2) a license disclaimer naming the original font and the free substitute is embedded in the theme (e.g. a comment in layouts/theme.liquid), and (3) a sane font-stack fallback is present so text never renders in an unstyled default. If the brand's own licensed font files ARE importable (this is their store), import the real @font-face and keep the disclaimer noting the licensing assumption. STEP_OUTPUT: source font(s) -> proprietary? -> substitute used -> disclaimer present? -> fallback present? -> pass/flag.",
       "acceptance": [
         "Source typefaces identified; any proprietary font that was substituted is called out.",
