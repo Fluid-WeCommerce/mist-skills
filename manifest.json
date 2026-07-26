@@ -118,7 +118,8 @@
         "themes/theme-clone/references/section-template.md",
         "themes/theme-clone/references/template-variables.md",
         "themes/theme-clone/references/theme-upload-api.md"
-      ]
+      ],
+      "assets": ["themes/theme-clone/scripts/theme_audit.py"]
     },
     {
       "slug": "themes/theme-refine",

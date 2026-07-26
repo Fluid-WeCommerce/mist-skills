@@ -299,7 +299,7 @@ aspect ratio, fit, position, overlay, border, and radius controls remain availab
 Run:
 
 ```bash
-python3 scripts/theme_audit.py sections/source_feature/index.liquid
+python3 <THEME_AUDIT_PATH> sections/source_feature/index.liquid
 ```
 
 Do not push until it exits zero. If the source pattern can be expressed by an existing base
