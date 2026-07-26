@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-26.26",
+  "revision": "2026-07-26.27",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog, prove the home golden route, prove the canonical shop/list route, then build dependent detail/content surfaces and finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so source HTML, rendered DOM, durable pixels, and interaction evidence—not one model's self-assessment—decide whether the run passes.",
@@ -193,7 +193,7 @@
           }
         ]
       },
-      "prompt": "First theme step. You are in a scaffolded Fluid base-theme project. Call run_skill(\"themes/theme-clone\") and execute its discovery phases only: page discovery, content scraping, rendered visual audit, source CSS/token extraction, and DAM asset upload. Do not build sections or templates yet.\n\nBuild three evidence layers instead of treating one crawl payload as truth:\n1. CONTENT/DATA — use AI-friendly Markdown when advertised plus sitemap/collection/PDP content for exact copy and catalog facts. Markdown is not visual truth.\n2. DOM/TOKENS — retain rendered HTML with global chrome (`only_main_content:false`) and inspect linked stylesheets, CSS custom properties, @font-face declarations, and layout geometry.\n3. VISUAL — follow themes/theme-clone/references/dev-preview-visual-diff.md. In Mist, use managed `crawl` with `screenshot_options:{full_page:true,quality:90,viewport:{width,height}}`; capture home, shop, and PDP at 1440x900 and 390x844. This must work without local/global Playwright. Inspect HTML before using a constrained click action to dismiss a geo/cookie/newsletter overlay, then record the selector/action. A redirected, blank, loading, or obscured screenshot is invalid. For every capture, copy the crawl result's `<!-- screenshot baseline -->` object into the matching manifest cell. It must be the real `.mist-desktop/source-baselines/` file plus captured_at, sha256, positive bytes, decoded width/height, requested_viewport, final_url, status, and overlay_handling. A hosted URL, chat attachment id, prose claim, or label such as `crawl:1440x900` is NOT evidence. Verify each file with `run_cli({command:\"git\",args:[\"hash-object\",\"--no-filters\",\"--\",\"<relative-path>\"]})` and compare the raw-byte digest before claiming 6/6.\n\nPriority routes are the homepage, the source's primary shop/collection index, and the flagship or most complex multi-variant PDP. Inventory EVERY visible section on all three in source order, plus global header/footer. Inspect up to two more PDPs and four key static pages for content/structure coverage. Ingest every asset required by the priority routes with Mist's `dam_upload`: pass a public source directly as `url` so the upload service uses `external_asset_url`, and use `path` only for an existing sandbox file. If and only if a direct upload returns a size rejection, call `compress_media(url=...)` and immediately retry with `dam_upload(path=<output_path>)`; never omit or replace media because it is large. Record `asset.default_variant_url`. Extract real font families/weights and a license/substitution decision. The source wins any disagreement with gather-context, but record the conflict.\n\nWrite `clone-manifest.json` at the theme root with: source_url, page_manifest, section_inventory for home/shop/PDP/header/footer, brand_tokens, dam_assets, and `visual_routes` entries for home/shop/pdp. Each visual route contains source_url, future built_path, ordered landmarks `{id,source_selector,built_selector}` for every visible priority section, and `source_evidence.desktop` + `source_evidence.mobile` objects with the required durable fields above. Also record `hero_copy.headline`, `hero_copy.subheadline`, and `hero_copy.primary_cta` verbatim, each with its evidence source (`markdown`, `rendered_html`, or `screenshot`). Markdown and a rendered screenshot are complementary: dynamic overlay text can be absent from Markdown, while a screenshot may show only one carousel state. If no evidence establishes a field, store null with the reason; never substitute invented or base-theme copy. Built selectors use stable template section ids chosen now so later build steps implement the manifest rather than inventing mappings afterward.\n\nThese are local QA artifacts, not Fluid theme resources. Create or update `.fluidignore` at the theme root so it includes exact entries for `clone-manifest.json`, `.mist-desktop/source-baselines/`, and `baselines/` while preserving every existing rule. Verify the ignore file before starting the dev watcher; otherwise theme dev will repeatedly send invalid resource uploads and flood the user with 404 errors.\n\nEnd with STEP_OUTPUT: manifest path, priority route URLs, per-route landmark counts, 6/6 verified local source baseline paths + hashes, verbatim hero copy + evidence sources, page count, uploaded asset count, brand tokens, and non-priority gaps.",
+      "prompt": "First theme step. You are in a scaffolded Fluid base-theme project. Call run_skill(\"themes/theme-clone\") and execute its discovery phases only: page discovery, content scraping, rendered visual audit, source CSS/token extraction, and DAM asset upload. Do not build sections or templates yet.\n\nBuild three evidence layers instead of treating one crawl payload as truth:\n1. CONTENT/DATA — use AI-friendly Markdown when advertised plus sitemap/collection/PDP content for exact copy and catalog facts. Markdown is not visual truth.\n2. DOM/TOKENS — retain rendered HTML with global chrome (`only_main_content:false`) and inspect linked stylesheets, CSS custom properties, @font-face declarations, and layout geometry.\n3. VISUAL — follow themes/theme-clone/references/dev-preview-visual-diff.md. In Mist, use managed `crawl` with `capture_page_evidence:true` and `screenshot_options:{full_page:true,quality:90,viewport:{width,height}}`; capture home, shop, and PDP at 1440x900 and 390x844. This must work without local/global Playwright. Inspect HTML before using a constrained click action to dismiss a geo/cookie/newsletter overlay, then record the selector/action. A redirected, blank, loading, or obscured screenshot is invalid. For every capture, copy the crawl result's `<!-- screenshot baseline -->` object into the matching manifest cell. It must contain the real `.mist-desktop/source-baselines/` screenshot plus captured_at, sha256, positive bytes, decoded width/height, requested_viewport, final_url, status, overlay_handling, and the matching `page_evidence` path/SHA-256 that binds rendered copy/landmarks/media to those pixels. A hosted URL, chat attachment id, prose claim, screenshot without its sidecar, or label such as `crawl:1440x900` is NOT evidence. Verify each screenshot file with `run_cli({command:\"git\",args:[\"hash-object\",\"--no-filters\",\"--\",\"<relative-path>\"]})` and compare the raw-byte digest before claiming 6/6.\n\nPriority routes are the homepage, the source's primary shop/collection index, and the flagship or most complex multi-variant PDP. Inventory EVERY visible section on all three in source order, plus global header/footer. Inspect up to two more PDPs and four key static pages for content/structure coverage. Ingest every asset required by the priority routes with Mist's `dam_upload`: pass a public source directly as `url` so the upload service uses `external_asset_url`, and use `path` only for an existing sandbox file. If and only if a direct upload returns a size rejection, call `compress_media(url=...)` and immediately retry with `dam_upload(path=<output_path>)`; never omit or replace media because it is large. Record `asset.default_variant_url`. Extract real font families/weights and a license/substitution decision. The source wins any disagreement with gather-context, but record the conflict.\n\nWrite `clone-manifest.json` at the theme root with: source_url, page_manifest, section_inventory for home/shop/PDP/header/footer, brand_tokens, dam_assets, and `visual_routes` entries for home/shop/pdp. Each visual route contains source_url, future built_path, ordered landmarks `{id,source_selector,built_selector}` for every visible priority section, and `source_evidence.desktop` + `source_evidence.mobile` objects with the required durable screenshot and page-evidence fields above. Also record `hero_copy.headline`, `hero_copy.subheadline`, and `hero_copy.primary_cta` verbatim, each with its evidence source (`markdown`, `rendered_html`, or `screenshot`). Markdown and a rendered screenshot are complementary: dynamic overlay text can be absent from Markdown, while a screenshot may show only one carousel state. If no evidence establishes a field, store null with the reason; never substitute invented or base-theme copy. Built selectors use stable template section ids chosen now so later build steps implement the manifest rather than inventing mappings afterward.\n\nThese are local QA artifacts, not Fluid theme resources. Create or update `.fluidignore` at the theme root so it includes exact entries for `clone-manifest.json`, `.mist-desktop/source-baselines/`, and `baselines/` while preserving every existing rule. Verify the ignore file before starting the dev watcher; otherwise theme dev will repeatedly send invalid resource uploads and flood the user with 404 errors.\n\nEnd with STEP_OUTPUT: manifest path, priority route URLs, per-route landmark counts, 6/6 verified local source screenshot + page-evidence paths/hashes, verbatim hero copy + evidence sources, page count, uploaded asset count, brand tokens, and non-priority gaps.",
       "target": {
         "type": "kind",
         "kind": "theme"
@@ -314,7 +314,9 @@
             "minSuccessfulCalls": 2,
             "input": {
               "formats": ["html", "screenshot"],
-              "only_main_content": false
+              "only_main_content": false,
+              "capture_page_evidence": true,
+              "screenshot_options": { "full_page": true }
             },
             "distinctBy": ["screenshot_options.viewport.width"]
           },
@@ -323,7 +325,8 @@
             "input": {
               "width": 1440,
               "height": 900,
-              "mode": "full"
+              "mode": "full",
+              "copy_mode": "exact"
             }
           },
           {
@@ -331,7 +334,8 @@
             "input": {
               "width": 390,
               "height": 844,
-              "mode": "full"
+              "mode": "full",
+              "copy_mode": "exact"
             }
           },
           {
@@ -357,7 +361,7 @@
       "recovery": { "mode": "manual" },
       "acceptance": [
         "The QA reviewer independently crawled the exact source home route as rendered HTML plus a durable full-page screenshot at 1440x900 and 390x844, then read the local rendered DOM. QA reconciled the ordered normalized visible strings landmark-by-landmark; source wording, punctuation, capitalization, CTA labels, and link labels match exactly except for an itemized allowed dynamic-value list. A screenshot-only or worker-summary review fails.",
-        "The reviewer produced signed successful compare_preview_to_source receipts for the exact home route at 1440x900 and 390x844 after the final code change, and inspected both attached durable SOURCE images and both current local images. Every source landmark exists once in the same order; no priority landmark is missing, duplicated, or replaced by unrelated starter content. Comparable landmark width/height/padding/gap is within 5%, zero majors remain, and at most two named minors remain. Pixel metrics are diagnostic and do not replace landmark, copy, DOM, or interaction review.",
+        "The reviewer produced signed successful compare_preview_to_source receipts for the exact home route at 1440x900 and 390x844 after the final code change. Each receipt binds the matching source screenshot/page-evidence hashes and reports comparison.copy mode exact, exact true, and non-truncated source/local copy. The reviewer inspected both attached durable SOURCE images and both current local images. Every source landmark exists once in the same order; no priority landmark is missing, duplicated, or replaced by unrelated starter content. Comparable landmark width/height/padding/gap is within 5%, zero majors remain, and at most two named minors remain. Pixel metrics are diagnostic and do not replace landmark, DOM, or interaction review.",
         "Every homepage priority image and video is DAM-backed and ready in the rendered page. Responsive videos use the manifest's exact desktop/mobile sources, and QA verified currentSrc, decoded dimensions/orientation, playback attributes, and zero failed/pending media at both viewports. A poster-only or static substitution fails.",
         "The mobile navigation and each homepage disclosure/tab/carousel state were exercised from inspected rendered selectors. Primary CTA targets resolve to the source-equivalent Fluid route.",
         "The homepage and shared shell render without Liquid/server errors, console exceptions, failed priority resources, horizontal overflow at 390px, or visible base-theme placeholder copy. The materialized theme audit passes on every touched file.",
@@ -384,7 +388,9 @@
             "minSuccessfulCalls": 2,
             "input": {
               "formats": ["html", "screenshot"],
-              "only_main_content": false
+              "only_main_content": false,
+              "capture_page_evidence": true,
+              "screenshot_options": { "full_page": true }
             },
             "distinctBy": ["screenshot_options.viewport.width"]
           },
@@ -393,7 +399,8 @@
             "input": {
               "width": 1440,
               "height": 900,
-              "mode": "full"
+              "mode": "full",
+              "copy_mode": "exact"
             }
           },
           {
@@ -401,7 +408,8 @@
             "input": {
               "width": 390,
               "height": 844,
-              "mode": "full"
+              "mode": "full",
+              "copy_mode": "exact"
             }
           },
           {
@@ -430,7 +438,7 @@
         "Ordered normalized visible source wording, product-card fields, badges, price formatting, filter/sort labels, result counts, pagination copy, and empty-state copy were reconciled against the local DOM. No unrelated starter copy or hard-coded fake product cards remain.",
         "The shop uses actual Fluid product resources and canonical returned PDP routes. QA verified representative normal, discounted/badged, and multi-option/unavailable card states where the source exposes them, plus the complete expected catalog through the page's real pagination model.",
         "Filtering, sorting, search, pagination/load-more, and mobile disclosures were exercised from inspected rendered selectors and their resulting DOM/state was verified. A decorative nonfunctional source-equivalent control is a major failure.",
-        "The reviewer produced signed successful compare_preview_to_source receipts proving the exact selected shop source/local route at 1440x900 and 390x844 after the final code change. The reviewer inspected both attached durable SOURCE images and current local images landmark-by-landmark. Geometry is within 5% where compositions match, zero majors remain, at most two named minors remain, and 390px has no horizontal overflow. Pixel metrics are diagnostic and do not replace landmark, copy, DOM, data, or interaction review.",
+        "The reviewer produced signed successful compare_preview_to_source receipts proving the exact selected shop source/local route at 1440x900 and 390x844 after the final code change. Each receipt binds the matching source screenshot/page-evidence hashes and reports comparison.copy mode exact, exact true, and non-truncated source/local copy. The reviewer inspected both attached durable SOURCE images and current local images landmark-by-landmark. Geometry is within 5% where compositions match, zero majors remain, at most two named minors remain, and 390px has no horizontal overflow. Pixel metrics are diagnostic and do not replace landmark, DOM, data, or interaction review.",
         "All priority shop media is DAM-backed and ready, and server logs/console contain no unresolved route, runtime, or asset errors. The materialized theme audit passes on touched files.",
         "PAGE_OUTPUT includes the route/copy/evidence/media/interaction proof plus a reusable list_contract naming product-card, grid, filter/sort, pagination, search, and empty/loading/error implementations. Any `needs-review` or `cap-reached` status fails this gate."
       ],

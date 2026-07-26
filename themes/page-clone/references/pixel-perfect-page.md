@@ -29,6 +29,7 @@ Call `crawl` for the exact source route at both required viewports:
   "url": "<source_url>",
   "formats": ["markdown", "html", "screenshot"],
   "only_main_content": false,
+  "capture_page_evidence": true,
   "screenshot_options": {
     "full_page": true,
     "quality": 90,
@@ -44,10 +45,12 @@ If a cookie, country, age, or newsletter overlay obscures content, inspect the
 returned HTML, repeat with one concrete click selector, and record the action.
 Never delete every dialog or guess a selector.
 
-Persist the exact source baseline object returned by Mist: local path,
+Persist the exact source bundle returned by Mist: screenshot local path,
 timestamp, SHA-256, byte count, decoded dimensions, requested viewport, final
-URL/status, and overlay handling. A hosted URL or prose label is not durable
-evidence.
+URL/status, overlay handling, and the matching `page_evidence` path/SHA-256.
+That JSON sidecar binds ordered rendered copy, landmarks, and live responsive
+media sources to the screenshot pixels and viewport. A hosted URL, prose label,
+or screenshot without its matching sidecar is not durable page-clone evidence.
 
 ## 2. Build a source truth table
 
@@ -151,9 +154,9 @@ Before comparison:
 
 For the route under test:
 
-1. `compare_preview_to_source(source_path:<desktop_source_path>, mode:"full", path:<built_path>, width:1440, height:900)`
+1. `compare_preview_to_source(source_path:<desktop_source_path>, source_evidence_path:<desktop_page_evidence_path>, copy_mode:"exact", mode:"full", path:<built_path>, width:1440, height:900)`
 2. `read_preview_dom(path:<built_path>, mode:"all")`
-3. `compare_preview_to_source(source_path:<mobile_source_path>, mode:"full", path:<built_path>, width:390, height:844)`
+3. `compare_preview_to_source(source_path:<mobile_source_path>, source_evidence_path:<mobile_page_evidence_path>, copy_mode:"exact", mode:"full", path:<built_path>, width:390, height:844)`
 4. inspect critical crops with `screenshot_preview(mode:"viewport", ...)` when
    needed
 5. exercise inspected disclosure/tab/menu selectors with `interact_preview`
@@ -161,11 +164,13 @@ For the route under test:
 
 `compare_preview_to_source` is the final source/local image capture for the
 route. It must return a **signed successful Agent Surface receipt** for each
-viewport. A screenshot path, worker-authored metric, or prose comparison is not
-an equivalent substitute. The tool refuses a source screenshot with the wrong
-width rather than silently resizing it, and it machine-fails unresolved media,
-HTTP errors, capture truncation, horizontal overflow, and full-page height drift
-above 5%.
+viewport. Its signed `comparison.copy` evidence must report `mode:"exact"`,
+`exact:true`, non-truncated source/local copy, and bound screenshot/sidecar
+hashes. A screenshot path, worker-authored metric, or prose comparison is not
+an equivalent substitute. The tool refuses mixed captures or a source
+screenshot with the wrong route/viewport rather than silently resizing it, and
+it machine-fails copy mismatch/truncation, unresolved media, HTTP errors,
+capture truncation, horizontal overflow, and full-page height drift above 5%.
 
 Treat its pixel metrics as diagnostics, not a universal pass threshold.
 Antialiasing, dynamic video frames, and source personalization can move raw
@@ -199,6 +204,8 @@ The page passes only when all are true:
 - source and local desktop/mobile evidence is current and durable
 - both required `compare_preview_to_source` calls have signed successful
   receipts for the exact route and 1440 × 900 / 390 × 844 viewports
+- both receipts bind the matching rendered source sidecar and report
+  `comparison.copy.mode=exact`, `exact=true`, and no copy truncation
 - requested and final routes match and local HTTP status is 200
 - every source landmark exists once, in order
 - exact source wording is present, with every allowed dynamic difference listed

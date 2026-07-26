@@ -185,15 +185,19 @@ the required evidence is not a benchmark result.
 ## Evidence implementation
 
 Mist Desktop PR #7323 adds the first enforceable source-vs-preview comparison
-surface. `compare_preview_to_source` captures the exact local route at the
-source width and returns a signed receipt with source/local hashes, geometry,
-coverage, bounded pixel diagnostics, HTTP status, horizontal overflow, capture
-truncation, and media readiness. The Home and Shop QA gates require successful
-receipts at 1440 × 900 and 390 × 844 after the final code change.
+surface. Stacked PR #7324 adds a viewport-bound rendered source sidecar and
+exact ordered-copy enforcement. `compare_preview_to_source` now requires the
+matching screenshot and page-evidence paths, rejects mixed captures, and
+returns a signed receipt with source/local copy hashes and exactness alongside
+geometry, coverage, bounded pixel diagnostics, HTTP status, horizontal
+overflow, capture truncation, and media readiness. The Home and Shop QA gates
+require successful `copy_mode:"exact"` receipts at 1440 × 900 and 390 × 844
+after the final code change.
 
 The receipt is necessary evidence, not a universal visual oracle. Raw pixel
 scores vary with antialiasing, dynamic video frames, and source
-personalization. Review must still reconcile exact copy, rendered DOM,
-landmarks, interactions, and the attached source/local images. The next Surface
-API increment should add structured landmark and exact-copy reconciliation so
-those remaining judgments are machine-associated with the same evidence.
+personalization. Exact ordered copy is now machine-enforced and associated with
+the same screenshot bundle. Review must still reconcile landmark identity and
+geometry, interactions, dynamic-value policy, and the attached source/local
+images. The next Surface API increment should add structured landmark matching
+and workflow-authored dynamic-copy waivers rather than model-authored ignores.
