@@ -47,8 +47,10 @@ project sandbox. As a CLI fallback, `fluid dam upload --url
 
 ## Oversized assets
 
-If the remote upload is rejected for size, fetch the asset into the sandbox
-and chain `compress_media` → `dam_upload(path=...)`. `compress_media` writes a
-sibling `<name>_compressed.<ext>` (video: H.264/AAC; image: q:v, optional
-`width` downscale) and returns the new path. Record the initial failure and
-compressed byte size; never silently omit the asset.
+If the remote upload is rejected for size, pass the same public URL to
+`compress_media(url=...)`, then feed its returned `output_path` to
+`dam_upload(path=...)`. Mist safely streams the source into a bounded temporary
+sandbox file and removes that staging file after compression. `compress_media`
+writes a `<name>_compressed.<ext>` result (video: H.264/AAC; image: q:v,
+optional `width` downscale). Record the initial failure and compressed byte
+size; never silently omit the asset.

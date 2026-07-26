@@ -324,9 +324,11 @@ Fluid Media library. Use the returned `asset.default_variant_url` in the theme.
 For every required source asset:
 
 1. Call `dam_upload` with its public `url`. Parallel calls may batch assets.
-2. If the service rejects the asset for size, fetch it into the sandbox, call
-   `compress_media`, then call `dam_upload` with the returned compressed
-   `path`. Do not treat a size error as permission to omit the media.
+2. If the service rejects the asset for size, call `compress_media` with the
+   same public `url`, then call `dam_upload` with the returned compressed
+   `output_path`. Mist streams the remote source into a bounded temporary
+   sandbox file and removes it after compression; no manual download is
+   needed. Do not treat a size error as permission to omit the media.
 3. Record source URL, viewport/role, media kind, byte size when known, DAM URL,
    upload status, and any compression result in `priority_media`.
 
