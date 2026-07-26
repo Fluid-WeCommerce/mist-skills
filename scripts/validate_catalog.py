@@ -19,6 +19,8 @@ FLAGSHIP_CONTRACT_FILES = (
     ROOT / "onboarding/onboarding-prefill/references/api-endpoints.md",
     ROOT / "onboarding/onboarding-prefill/references/brand-md.md",
     ROOT / "themes/theme-clone/SKILL.md",
+    ROOT / "themes/theme-source-inventory/SKILL.md",
+    ROOT / "themes/references/pixel-fidelity-core.md",
     ROOT / "themes/page-clone/references/pixel-perfect-page.md",
     ROOT / "themes/clone-home-page/SKILL.md",
     ROOT / "themes/clone-shop-page/SKILL.md",
@@ -218,6 +220,21 @@ def validate_flagship_contracts() -> None:
         "theme-clone priority media contract",
     )
 
+    source_inventory_skill = (
+        ROOT / "themes/theme-source-inventory/SKILL.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        source_inventory_skill,
+        (
+            "evidence_run_started_at",
+            "30 minutes after it",
+            "union of all six rendered sidecars",
+            "`SOURCE_INVENTORY_VALIDATION: pass`",
+            "validate_theme_source_inventory",
+        ),
+        "theme source-inventory contract",
+    )
+
     page_contract = (
         ROOT / "themes/page-clone/references/pixel-perfect-page.md"
     ).read_text(encoding="utf-8")
@@ -265,9 +282,19 @@ def validate_flagship_contracts() -> None:
             "priority_media",
             "all 24 fresh files",
             "opens the manifest plus all six manifest-recorded HTML files",
+            "SOURCE_INVENTORY_VALIDATION: pass",
             "Catalog reconciliation and DAM delivery are intentionally not graded here",
         ),
         "flagship workflow source discovery",
+    )
+    require_fragments(
+        str(theme_discovery.get("prompt", "")),
+        (
+            'run_skill("themes/theme-source-inventory")',
+            "validate_theme_source_inventory",
+            "Do not load the all-phases theme-clone skill",
+        ),
+        "flagship workflow source discovery skill boundary",
     )
 
     theme_catalog = steps.get("theme-catalog-index")

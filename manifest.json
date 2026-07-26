@@ -122,6 +122,16 @@
       "assets": ["themes/theme-clone/scripts/theme_audit.py"]
     },
     {
+      "slug": "themes/theme-source-inventory",
+      "name": "Theme Source Inventory",
+      "description": "Capture a fresh, machine-verifiable Home/Shop/PDP source bundle with exact copy, DOM, screenshots, and exhaustive image/video evidence before a Fluid theme build.",
+      "category": "themes",
+      "icon": "scan-search",
+      "path": "themes/theme-source-inventory/SKILL.md",
+      "updated_at": "2026-07-26T22:53:55Z",
+      "references": ["themes/references/pixel-fidelity-core.md"]
+    },
+    {
       "slug": "themes/theme-refine",
       "name": "Theme Refine",
       "description": "Refine a Fluid theme to the gold standard: pixel-perfect visual QA after a clone, or migrate a legacy theme to the canonical architecture.",
@@ -323,7 +333,7 @@
     {
       "slug": "onboard-launch-company",
       "path": "workflows/onboard-launch-company.workflow.json",
-      "updated_at": "2026-07-26T21:48:00Z"
+      "updated_at": "2026-07-26T22:06:54Z"
     },
     {
       "slug": "open-country",
