@@ -188,6 +188,11 @@ viewports, required video attributes, and coverage of every URL exposed by the
 rendered sidecars. Fix every error and call it again.
 `SOURCE_INVENTORY_VALIDATION: pass` is required.
 
+Do not create a root-level helper script: theme dev can mistake it for a theme
+resource. Prefer Mist's file and validation tools. If a bounded local helper is
+unavoidable, write it only under the ignored `scripts/` directory; never use
+`pnpm rm` to delete a file because that command mutates package dependencies.
+
 The read-only QA reviewer must independently:
 
 1. read the manifest and `.fluidignore`;
