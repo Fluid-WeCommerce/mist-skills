@@ -248,7 +248,7 @@ Create products with nested attributes:
   "product": {
     "title": "Exact Source Product Title",
     "description": "Exact source description",
-    "status": "published",
+    "status": "active",
     "public": true,
     "images_attributes": [
       {
@@ -279,10 +279,10 @@ Endpoint: `POST /api/v202604/company/products`
 
 Contract:
 
-- Use canonical lifecycle vocabulary: `status: "published"` plus
-  `public: true` for a live product. `active` remains a read-side visibility
-  field; the undocumented raw `status: "active"` value is legacy
-  compatibility, not the current write contract.
+- Use the documented raw Product enum on writes: `status: "active"` plus
+  `public: true` for a live product. The v202604 `ProductWrite` schema accepts
+  `active`, `draft`, or `archived`; `published` is a presentation label on
+  some read surfaces and is not a valid ProductWrite enum.
 - `images_attributes` uses `image_url`, not `url`.
 - Exactly one variant has `is_master: true`.
 - Product `option_attrs` are option names.
@@ -355,7 +355,8 @@ The product import passes only when:
 - every discovered route is live or has an evidence-backed exclusion;
 - unresolved source and destination counts are zero;
 - coverage is exactly 100%;
-- destination products resolve as `status: "published"` and `active: true`;
+- destination products resolve as the documented live lifecycle
+  (`status: "active"` on the raw v202604 resource) and `active: true`;
 - exact price and currency match;
 - source option axes and variant counts match;
 - every available source image is represented by a resolving Fluid DAM URL;

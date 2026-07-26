@@ -245,7 +245,7 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
 - **Product creates need the v202604 nested-attributes payload** — a flat
   `{product:{title,price}}` cannot express country pricing. Pricing lives on
   `variants_attributes[].variant_countries_attributes`; exactly one variant is
-  `is_master:true`; use canonical `status:"published"` + `public:true`. Options
+  `is_master:true`; use documented raw `status:"active"` + `public:true`. Options
   use `option_attrs` (product = names, variant = values). Collection membership
   is product `collection_ids` or the collection's full-replacement `product_ids`.
 - **Three product-payload details that silently or noisily kill an import:**
