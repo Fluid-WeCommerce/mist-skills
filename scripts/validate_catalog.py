@@ -263,7 +263,8 @@ def validate_flagship_contracts() -> None:
         theme_discovery_acceptance,
         (
             "priority_media",
-            "all 12 fresh files",
+            "all 24 fresh files",
+            "opens the manifest plus all six manifest-recorded HTML files",
             "Catalog reconciliation and DAM delivery are intentionally not graded here",
         ),
         "flagship workflow source discovery",
