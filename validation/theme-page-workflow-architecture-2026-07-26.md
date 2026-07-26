@@ -95,6 +95,29 @@ Therefore the current production-safe design is one parent workflow with
 page-skill steps and explicit `dependsOn` edges. Do not emulate composition by
 launching detached child workflows from a step.
 
+## Parallelism boundary
+
+Do not run several page agents against one mutable theme checkout merely
+because Home and Shop passed. Different template files still share tokens,
+sections, snippets, config, generated theme state, Git history, and one dev
+server. Per-file write queues do not prevent two workers from making
+incompatible assumptions about a shared component.
+
+Safe fan-out requires:
+
+1. a named integration commit after Home and Shop pass
+2. one isolated Git worktree/branch per page archetype
+3. an explicit ownership manifest for template, section, snippet, and config
+   paths; shared shell paths are read-only unless the integrator grants a lock
+4. at most three workers, each with its own preview port and evidence namespace
+5. a linker step that merges/cherry-picks the page commits, resolves conflicts,
+   reruns the full theme audit, recaptures Home and Shop regressions, and then
+   verifies every canonical route
+
+Until Mist can create, scope, and reconcile those isolated page worktrees, keep
+the page implementation steps sequential. The desired dependency graph is not
+authorization for nondeterministic concurrent writes.
+
 A future first-class composed-workflow step should provide:
 
 - awaited child terminal status
