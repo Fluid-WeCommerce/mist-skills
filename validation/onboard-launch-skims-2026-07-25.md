@@ -119,6 +119,24 @@ for this authorized test but is the wrong product boundary: an agent should
 receive a company-scoped batch import capability without discovering
 `~/.fluid/config.json`.
 
+### Omitted product subscription data is not neutral
+
+Live v202604 creates that omitted
+`product_subscription_plans_attributes` inherited SKIMS' company-default
+Monthly plan. Product `78353`, for example, returned
+`has_subscription_plans:true` with an active/default join despite the source
+product having no subscription offer. The delegated create implementation
+sets `skip_default_subscription_plan` only when the nested array is non-empty;
+an omitted key or empty array therefore means "attach the default."
+
+The verified no-subscription create signal is the non-empty sentinel
+`product_subscription_plans_attributes:[{"_destroy":true}]`: it causes the
+manager to skip the default while the nested association writer discards the
+sentinel. Workflow revision `2026-07-25.19` now requires that payload for every
+source-non-subscription product, a complete destination re-read of
+`has_subscription_plans`, and repair by returned join ID rather than disabling
+the company-wide plan.
+
 ### Restart and UI recovery
 
 - A deliberate app restart preserved the run, completed steps, diagnostics, and

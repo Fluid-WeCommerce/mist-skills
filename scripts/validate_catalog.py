@@ -178,6 +178,7 @@ def validate_flagship_contracts() -> None:
             'status: "active"',
             "Do not send\n  `currency_code`",
             "external_asset_url",
+            'product_subscription_plans_attributes:[{"_destroy":true}]',
         ),
         "fluid-product-admin-import",
     )
@@ -226,6 +227,12 @@ def validate_flagship_contracts() -> None:
             "manifest_sha256",
         ),
         "flagship workflow products-import",
+    )
+    product_acceptance = json.dumps(products_import.get("acceptance", []))
+    require_fragments(
+        product_acceptance,
+        ('product_subscription_plans_attributes:[{\\"_destroy\\":true}]',),
+        "flagship workflow products-import acceptance",
     )
 
     content_import = steps.get("content-import")

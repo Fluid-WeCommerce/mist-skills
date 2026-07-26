@@ -250,6 +250,11 @@ Create products with nested attributes:
     "description": "Exact source description",
     "status": "active",
     "public": true,
+    "product_subscription_plans_attributes": [
+      {
+        "_destroy": true
+      }
+    ],
     "images_attributes": [
       {
         "image_url": "https://ik.imagekit.io/fluid/...",
@@ -295,7 +300,18 @@ Contract:
   source currency.
 - Preserve source description, gallery order, option names/values, and exact
   prices.
-- Do not attach a subscription plan unless the source offers that plan.
+- Do not attach a subscription plan unless the source offers that plan. Fluid
+  companies can have a company-default plan that the product create action
+  attaches when `product_subscription_plans_attributes` is omitted or empty.
+  For a source product with no subscription offer, send the non-empty skip
+  sentinel `product_subscription_plans_attributes:[{"_destroy":true}]`. The
+  v202604 create contract accepts `_destroy`; the write action treats the
+  non-empty array as an instruction to skip its default and creates no join.
+  An empty array is not equivalent. Re-read every created product and require
+  `has_subscription_plans:false` plus zero active/default subscription joins.
+  Repair a pre-existing join through the documented v202604 nested update using
+  its returned join `id` and `_destroy:true`; never disable the company-wide plan
+  to repair one import.
 - Static bundle links use documented `product_bundles_attributes`. Dynamic
   `product_bundle_groups_attributes` are not writable on v202604; if the source
   requires that unsupported shape, stop and report the exact gap instead of
