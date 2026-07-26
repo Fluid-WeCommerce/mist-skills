@@ -89,6 +89,51 @@ Write `clone-manifest.json` with:
   path, ordered landmark mappings, and complete desktop/mobile evidence cells;
 - `priority_media.items`.
 
+Use this exact shape for each desktop/mobile evidence cell. Copy values from
+the crawl-returned page-evidence sidecar and the file receipts; do not invent
+them. The screenshot receipt is the cell itself—do not nest it under a
+`screenshot` key.
+
+```json
+{
+  "captured_at": "<sidecar.capturedAt>",
+  "requested_viewport": { "width": 1440, "height": 900 },
+  "final_url": "<sidecar.finalUrl>",
+  "status": 200,
+  "overlay_handling": "none, or exact actions taken before capture",
+  "path": ".mist-desktop/source-baselines/<capture>.png",
+  "sha256": "<raw PNG sha256>",
+  "bytes": 123456,
+  "width": 1440,
+  "height": 5678,
+  "page_evidence": {
+    "path": ".mist-desktop/source-baselines/<capture>.page-evidence.json",
+    "sha256": "<raw sidecar sha256>",
+    "bytes": 12345,
+    "media": 42,
+    "landmarks": 8
+  },
+  "documents": {
+    "html": {
+      "path": ".mist-desktop/source-baselines/<capture>.html",
+      "sha256": "<raw HTML sha256>",
+      "bytes": 123456
+    },
+    "markdown": {
+      "path": ".mist-desktop/source-baselines/<capture>.md",
+      "sha256": "<raw Markdown sha256>",
+      "bytes": 12345
+    }
+  }
+}
+```
+
+`page_evidence.media` and `.landmarks` are the exact lengths of
+`sidecar.rendered.media` and `.landmarks`. Full-page screenshot `height` is the
+decoded PNG height, not the requested viewport height. `status`, final URL,
+capture time, viewport, and the direct screenshot receipt must exactly match
+the sidecar.
+
 Build `priority_media.items` from the union of all six rendered sidecars plus
 the retained HTML/CSS—not from a visual sample. Include every visible:
 
@@ -106,6 +151,11 @@ their selected source differs. Do not collapse an entire rail into one item or
 discard responsive candidates; keep candidates on their owning item so later
 DAM delivery can select one high-quality source without uploading every
 transform as a separate asset.
+
+Every `source_url` and `source_candidates[]` value must be one bare absolute
+HTTP(S) URL. Split `srcset` strings into individual URLs and remove width/density
+descriptors such as `800w` or `2x`; never store an entire comma-separated
+`srcset` string as one candidate.
 
 ## 5. Protect local evidence
 
