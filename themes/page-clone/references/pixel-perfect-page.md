@@ -166,11 +166,18 @@ For the route under test:
 route. It must return a **signed successful Agent Surface receipt** for each
 viewport. Its signed `comparison.copy` evidence must report `mode:"exact"`,
 `exact:true`, non-truncated source/local copy, and bound screenshot/sidecar
-hashes. A screenshot path, worker-authored metric, or prose comparison is not
-an equivalent substitute. The tool refuses mixed captures or a source
-screenshot with the wrong route/viewport rather than silently resizing it, and
-it machine-fails copy mismatch/truncation, unresolved media, HTTP errors,
+hashes. Its signed `comparison.media.videoParity` evidence must report
+`exact:true`, equal identified source/local video counts, non-truncated media
+inventories, and no orientation or playback-behavior mismatches. A screenshot
+path, worker-authored metric, or prose comparison is not an equivalent
+substitute. The tool refuses mixed captures or a source screenshot with the
+wrong route/viewport rather than silently resizing it, and it machine-fails
+copy mismatch/truncation, source-video omission, unresolved media, HTTP errors,
 capture truncation, horizontal overflow, and full-page height drift above 5%.
+
+If the running Mist build does not return either `comparison.copy` or
+`comparison.media.videoParity`, report `needs-review: tooling upgrade required`.
+Do not reinterpret an absent machine gate as a pass.
 
 Treat its pixel metrics as diagnostics, not a universal pass threshold.
 Antialiasing, dynamic video frames, and source personalization can move raw

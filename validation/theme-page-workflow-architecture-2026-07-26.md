@@ -166,9 +166,32 @@ Initial diversity matrix:
 | dimebeautyco.com | Promotion-heavy beauty storefront and responsive nav      |
 | taftclothing.com | Fashion imagery, variants, strong visual identity         |
 
-Start with two contrasting sites and two builders. Expand only after the test
-harness produces durable, comparable results. A prose reviewer verdict without
-the required evidence is not a benchmark result.
+Run the benchmark in three phases:
+
+1. **Harness calibration:** Flourist and Verve, four builders
+   (`openai/gpt-5.6-sol`, Fable 5, Opus 5, and
+   `google/gemini-3.6-flash`), with two independent Home runs per cell. This is
+   16 isolated runs. Use the same frozen evidence, 1M-class context allowance,
+   tool/turn limits, and a fixed blinded QA route for every cell.
+2. **Generalization:** advance the top two builders across Partner, Caldera
+   Lab, Dime Beauty, and Taft. Repeat a cell when the two calibration runs
+   disagreed materially rather than hiding run variance inside an average.
+3. **Dynamic-commerce gate:** run the top two on Shop for the two most
+   contrasting sites. Do not choose the theme builder or author more archetype
+   skills until one route proves both editorial Home fidelity and real Fluid
+   catalog behavior.
+
+Use `moonshotai/kimi-k3` as the initial fixed QA model because it is not a
+phase-one builder and can keep evaluation cost bounded. Its prose never
+overrides machine evidence. If judge calibration against human review is poor,
+replace the judge for every cell and rerun; never change judge model only for a
+candidate that scored badly.
+
+`google/gemini-3.6-flash` remains the default discovery/inventory hypothesis,
+but it still receives a builder cell so that role choice is measured rather
+than assumed. Kimi may enter a later builder cost/quality round after the
+harness is calibrated. A prose reviewer verdict without the required evidence
+is not a benchmark result.
 
 ## Performance and resilience
 
@@ -186,18 +209,28 @@ the required evidence is not a benchmark result.
 
 Mist Desktop PR #7323 adds the first enforceable source-vs-preview comparison
 surface. Stacked PR #7324 adds a viewport-bound rendered source sidecar and
-exact ordered-copy enforcement. `compare_preview_to_source` now requires the
-matching screenshot and page-evidence paths, rejects mixed captures, and
-returns a signed receipt with source/local copy hashes and exactness alongside
-geometry, coverage, bounded pixel diagnostics, HTTP status, horizontal
-overflow, capture truncation, and media readiness. The Home and Shop QA gates
-require successful `copy_mode:"exact"` receipts at 1440 × 900 and 390 × 844
-after the final code change.
+exact ordered-copy enforcement. Stacked PR #7326 adds native, embedded,
+responsive, custom-element, and open-shadow-root video inventory plus
+machine-enforced source/local count, identification, orientation, and playback
+parity. `compare_preview_to_source` now requires the matching screenshot and
+page-evidence paths, rejects mixed captures, and returns a signed receipt with
+source/local copy hashes and exactness alongside geometry, coverage, bounded
+pixel diagnostics, HTTP status, horizontal overflow, capture truncation, media
+readiness, and video parity. The Home and Shop QA gates require successful
+`copy_mode:"exact"` receipts at 1440 × 900 and 390 × 844 after the final code
+change.
+
+Mist Desktop PR #7325 independently aligns GPT-5.6 Sol/Terra/Luna, Gemini 3.6
+Flash, Kimi K3, Opus 5, and Fable 5 with their live 1M-class context windows.
+Without it, several candidates compact near the legacy 128k fallback and the
+benchmark measures infrastructure bias rather than model capability.
 
 The receipt is necessary evidence, not a universal visual oracle. Raw pixel
 scores vary with antialiasing, dynamic video frames, and source
 personalization. Exact ordered copy is now machine-enforced and associated with
 the same screenshot bundle. Review must still reconcile landmark identity and
 geometry, interactions, dynamic-value policy, and the attached source/local
-images. The next Surface API increment should add structured landmark matching
+images. Video parity is not byte identity after a URL-changing Fluid DAM
+transfer; signed source-to-DAM asset lineage remains a separate gap. The next
+Surface API increments should add that lineage, structured landmark matching,
 and workflow-authored dynamic-copy waivers rather than model-authored ignores.
