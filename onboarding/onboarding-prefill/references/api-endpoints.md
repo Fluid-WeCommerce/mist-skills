@@ -17,6 +17,12 @@ Authentication is injected automatically by the Mist runtime — call these endp
 
 **Critical:** `PUT` overwrites the ENTIRE `onboarding_info` blob. Always `GET` first, deep-merge new data into the existing blob, then `PUT` back.
 
+The GET response can contain empty optional nested objects such as
+`terms_and_conditions_info: {}`. Do **not** echo an empty optional object into the PUT:
+the write contract validates any object that is present and will reject it when its required
+human-consent fields are absent. Omit an empty optional object. Preserve a non-empty
+human-entered object verbatim; never invent or alter consent fields.
+
 ## Legal Entities
 
 | Method | Endpoint                             |
@@ -116,6 +122,11 @@ Rails `UpdateAction` params schema — anything else is dropped):
 3. `PATCH /api/settings/brand_guidelines` with `logo_url` (and/or `icon_url`,
    `favicon_url`) set to that DAM URL. Never point these at the source site's CDN — those
    links rot and leak the source domain.
+4. Re-GET the settings and re-fetch each saved asset URL. Require a successful response,
+   non-empty bytes, and the expected media type. Confirm `logo_url` is the canonical
+   standalone brand mark from the rendered global header/source metadata—not a collaboration
+   lockup, campaign graphic, or generic Fluid default. Use a verified same-brand fallback for
+   icon/favicon only when the source exposes no distinct icon, and record that decision.
 
 **Font flow.** Only ingest a font when the company owns a webfont license that
 allows re-hosting:
@@ -130,6 +141,8 @@ allows re-hosting:
 4. For a proprietary or unverified font, do not copy its bytes. Record the
    original family and a legally usable substitute in `brand.md`, and only
    persist the licensed substitute in `fonts`.
+5. Re-fetch every persisted `file_url`. Reject 404/empty responses and reject several
+   declared weights that all resolve to one duplicated regular-font file.
 
 Notes:
 
@@ -170,3 +183,23 @@ mobile_app_identifier, … — anything not in the schema is dropped.)
 
 (`country_id` integer required — 214 = US. `GET /api/settings/company_countries` first to
 check what exists; note `company_country_id` ≠ `country_id`.)
+
+**`PATCH /api/settings/company_countries/{company_country_id}`** — attach the matched
+legal entity to an existing selling country and record settlement details. The id in this
+path is the company-country record id returned by `GET /api/settings/company_countries`,
+not the country id and not the entity id:
+
+```jsonc
+{
+  "company_country": {
+    "entity_id": 126,
+    "entity_legally_registered": true,
+    "settlement_currency": "USD",
+  },
+}
+```
+
+After the PATCH, GET the company countries again and require the intended country row to
+return that entity, `entity_legally_registered: true`, and the expected settlement
+currency. Writing the same values only to `onboarding_info.countries_info` does not attach
+the entity to the live market.

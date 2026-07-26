@@ -175,9 +175,10 @@ def validate_flagship_contracts() -> None:
             "/openapi/api-reference/storefront-v2026-04.yaml",
             "/api/v202604/company/products",
             "meta.pagination.next_cursor",
-            'status: "published"',
+            'status: "active"',
             "Do not send\n  `currency_code`",
             "external_asset_url",
+            'product_subscription_plans_attributes:[{"_destroy":true}]',
         ),
         "fluid-product-admin-import",
     )
@@ -221,11 +222,17 @@ def validate_flagship_contracts() -> None:
             'run_skill("fluid-product-admin-import")',
             "/api/v202604/company/products",
             "meta.pagination.next_cursor",
-            'status:"published"',
+            'status:"active"',
             "external_asset_url",
             "manifest_sha256",
         ),
         "flagship workflow products-import",
+    )
+    product_acceptance = json.dumps(products_import.get("acceptance", []))
+    require_fragments(
+        product_acceptance,
+        ('product_subscription_plans_attributes:[{\\"_destroy\\":true}]',),
+        "flagship workflow products-import acceptance",
     )
 
     content_import = steps.get("content-import")

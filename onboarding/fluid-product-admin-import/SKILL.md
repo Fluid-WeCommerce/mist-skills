@@ -65,12 +65,29 @@ Discovery is a union:
 2. Exhaust structured catalog endpoints when available. Follow documented
    cursors or pages until their real terminator; do not stop at the first
    successful page.
-3. Exhaust every collection/category pagination and collect product links.
+3. Exhaust every collection/category pagination and collect product links. A
+   collection whose bounded retries ended in a network/fetch error is
+   unresolved, not exhausted; retry it independently and fail the manifest
+   gate if it still has no content-based terminal page/cursor.
 4. Fetch every unique PDP. Use an advertised `.md` twin for copy and simple
-   facts, but recover images, JSON-LD, options, and variants from rendered HTML,
-   sitemap images, or structured APIs.
+   facts, but recover images, JSON-LD, embedded application state, options, and
+   variants from rendered HTML, sitemap images, or structured APIs. Capture the
+   complete product gallery from JSON-LD, embedded state,
+   `src`/`srcset`/`data-src`, and gallery thumbnails while excluding unrelated
+   recommendation and chrome images. One sitemap or Open Graph image is not a
+   complete gallery when the rendered PDP exposes more.
 5. Reconcile all sets. Every discovered product URL becomes one live manifest
    product or one evidence-backed exclusion.
+
+Do not synthesize variant combinations as a Cartesian product unless the
+source explicitly proves every combination exists. Before finalizing, re-open
+a deterministic sample of at least 10 PDPs that includes the
+flagship/most-complex product, most-expensive product, one single-variant
+product, and multiple multi-variant products. The manifest's exact gallery
+URLs/count and real variant options/count must match the rendered or embedded
+source evidence for every sample. Store that compact `fidelity_sample` plus the
+whole-manifest image-count distribution in the manifest and step output; a
+mismatch is repair work, not a note.
 
 Required shape:
 
@@ -82,7 +99,8 @@ Required shape:
     "sitemap_urls": 343,
     "api_urls": 0,
     "collection_urls": 324,
-    "unique_product_urls": 343
+    "unique_product_urls": 343,
+    "collection_errors": 0
   },
   "products": [
     {
@@ -107,6 +125,20 @@ Required shape:
         }
       ],
       "evidence": ["sitemap", "rendered-html", "json-ld"]
+    }
+  ],
+  "image_count_distribution": [
+    { "image_count": 1, "product_count": 12 },
+    { "image_count": 6, "product_count": 331 }
+  ],
+  "fidelity_sample": [
+    {
+      "source_url": "https://example.com/products/source-product-123",
+      "manifest_image_count": 6,
+      "source_image_count": 6,
+      "manifest_variant_count": 2,
+      "source_variant_count": 2,
+      "status": "match"
     }
   ],
   "excluded": [
@@ -216,8 +248,13 @@ Create products with nested attributes:
   "product": {
     "title": "Exact Source Product Title",
     "description": "Exact source description",
-    "status": "published",
+    "status": "active",
     "public": true,
+    "product_subscription_plans_attributes": [
+      {
+        "_destroy": true
+      }
+    ],
     "images_attributes": [
       {
         "image_url": "https://ik.imagekit.io/fluid/...",
@@ -247,10 +284,10 @@ Endpoint: `POST /api/v202604/company/products`
 
 Contract:
 
-- Use canonical lifecycle vocabulary: `status: "published"` plus
-  `public: true` for a live product. `active` remains a read-side visibility
-  field; the undocumented raw `status: "active"` value is legacy
-  compatibility, not the current write contract.
+- Use the documented raw Product enum on writes: `status: "active"` plus
+  `public: true` for a live product. The v202604 `ProductWrite` schema accepts
+  `active`, `draft`, or `archived`; `published` is a presentation label on
+  some read surfaces and is not a valid ProductWrite enum.
 - `images_attributes` uses `image_url`, not `url`.
 - Exactly one variant has `is_master: true`.
 - Product `option_attrs` are option names.
@@ -263,7 +300,26 @@ Contract:
   source currency.
 - Preserve source description, gallery order, option names/values, and exact
   prices.
-- Do not attach a subscription plan unless the source offers that plan.
+- Omit `description` entirely when the source description is genuinely blank.
+  Do not send `null` or `""`: the outer v202604 validator normalizes the empty
+  string to null, then the delegated create returns
+  `422 product.description must be a string`, even though some generated and
+  docs-side schemas describe the field as nullable.
+- Do not attach a subscription plan unless the source offers that plan. Fluid
+  companies can have a company-default plan that the product create action
+  attaches when `product_subscription_plans_attributes` is omitted or empty.
+  For a source product with no subscription offer, send the non-empty skip
+  sentinel `product_subscription_plans_attributes:[{"_destroy":true}]`. The
+  v202604 create contract accepts `_destroy`; the write action treats the
+  non-empty array as an instruction to skip its default and creates no join.
+  An empty array is not equivalent. Re-read every created product and require
+  `has_subscription_plans:false` plus zero active/default subscription joins.
+  For a pre-existing join on the current production contract, PATCH the
+  returned join `id` with `active:false` and `default:false`, then re-read it;
+  never disable the company-wide plan to repair one import. Although the
+  v202604 update schema advertises `_destroy`, its delegated product-update
+  validator currently drops `_destroy` for this nested association, so do not
+  claim physical deletion unless the re-read proves the join is gone.
 - Static bundle links use documented `product_bundles_attributes`. Dynamic
   `product_bundle_groups_attributes` are not writable on v202604; if the source
   requires that unsupported shape, stop and report the exact gap instead of
@@ -323,7 +379,8 @@ The product import passes only when:
 - every discovered route is live or has an evidence-backed exclusion;
 - unresolved source and destination counts are zero;
 - coverage is exactly 100%;
-- destination products resolve as `status: "published"` and `active: true`;
+- destination products resolve as the documented live lifecycle
+  (`status: "active"` on the raw v202604 resource) and `active: true`;
 - exact price and currency match;
 - source option axes and variant counts match;
 - every available source image is represented by a resolving Fluid DAM URL;

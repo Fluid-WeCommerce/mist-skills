@@ -245,9 +245,19 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
 - **Product creates need the v202604 nested-attributes payload** — a flat
   `{product:{title,price}}` cannot express country pricing. Pricing lives on
   `variants_attributes[].variant_countries_attributes`; exactly one variant is
-  `is_master:true`; use canonical `status:"published"` + `public:true`. Options
+  `is_master:true`; use documented raw `status:"active"` + `public:true`. Options
   use `option_attrs` (product = names, variant = values). Collection membership
   is product `collection_ids` or the collection's full-replacement `product_ids`.
+- **A company-default subscription plan is attached when product plan attributes
+  are omitted.** For a source product with no subscription offer, include the
+  non-empty v202604 skip sentinel
+  `product_subscription_plans_attributes:[{"_destroy":true}]`. An omitted key or
+  empty array triggers the default. Re-read the product and require
+  `has_subscription_plans:false` with no active/default join. On the current
+  production update path, repair historical joins by returned join ID with
+  `active:false,default:false`; its delegated validator drops `_destroy`, so
+  physical deletion must not be claimed unless a re-read proves it. Never
+  disable the company-wide plan.
 - **Three product-payload details that silently or noisily kill an import:**
   - `variant_countries_attributes` needs **`country_id` (integer) + `active`**.
     `country_iso` alone 422s `active is missing, country_id is missing`. Get the
@@ -261,6 +271,11 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
     combinations and avoids a risky repair. If a repair is needed, re-read the
     v202604 PATCH schema and existing nested IDs before writing; never assume a
     legacy PATCH limitation still applies.
+  - Omit `description` entirely when the source description is empty. Do not
+    send `null` or `""`: the outer validator normalizes the empty string to
+    null, then the delegated live create rejects it with
+    `422 product.description must be a string` despite nullable-looking
+    generated/docs-side shapes.
 - **DAM upload supports a local file or a remote URL.** Use `dam_upload` for a
   file already in the sandbox, or `fluid dam upload --url <SOURCE_URL>` for a
   remote source. The underlying `POST https://upload.fluid.app/upload` accepts

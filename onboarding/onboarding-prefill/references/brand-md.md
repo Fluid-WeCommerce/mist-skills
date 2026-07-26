@@ -87,7 +87,7 @@ beats a long invented one — but a run that fills in only two sections has not 
 | Do's and Don'ts          | invert everything above into concrete guardrails, plus anything the site conspicuously never does                                                                                                                    |
 | Brands & Sites We Admire | brands the site stocks/partners with, press outlets it quotes, explicit comparisons in press quotes                                                                                                                  |
 | Examples                 | 3-5 on-brand snippets quoted verbatim, **and 3 off-brand lines** written specifically to be rejected for this brand                                                                                                  |
-| Sources                  | every URL you actually read, plus the stylesheet filename                                                                                                                                                            |
+| Sources                  | every URL you actually read, plus each exact stylesheet URL and the color-token / `@font-face` declarations used                                                                                                      |
 
 ### Harvesting the palette and typography from the source stylesheet
 
@@ -95,7 +95,10 @@ Modern storefronts declare their real design tokens in CSS custom properties. Th
 far more reliable than eyeballing a screenshot.
 
 1. Fetch the page HTML and pull the `<link rel="stylesheet">` hrefs (Shopify/Hydrogen
-   themes usually have one main bundle).
+   themes usually have one main bundle). When rendered/crawl HTML omits `<head>`, use
+   `web_fetch` on the canonical page to read the raw HTML and extract the hashed bundle URLs.
+   Resolve relative links against the final page URL. Do not search for or synthesize a CDN
+   filename—the raw document is the authority.
 2. Fetch that stylesheet and read:
    - `:root { --color-*: … }` — the brand's own names for its own colors. Values may be
      space-separated RGB triples (`--color-primary: 18 52 86` → `#123456`).
@@ -109,6 +112,10 @@ far more reliable than eyeballing a screenshot.
    Typefaces, Commercial Type, Klim, Lineto, most foundry faces) cannot be re-hosted.
    Name the face, name the closest free substitute, and record both — the theme step and
    the font-substitution QA step both read this.
+5. Retain the exact stylesheet URL plus the relevant custom-property and `@font-face`
+   declarations in the guide's Sources section and structured step output. A reviewer in a
+   fresh chat must be able to reproduce the palette, font names, weights, and license verdict
+   without access to the worker's transient crawl response.
 
 ### Use three source layers, each for what it actually proves
 

@@ -721,7 +721,7 @@ Each section goes through an iterative cycle until it matches the source AND pas
    never repeats raw brand hexes or font-family literals.
 3. **AUDIT** — Run the deterministic gold-star audit on the section file before pushing. This catches schema/Liquid bugs that the visual diff cannot — `image_picker` on content images, raw hex defaults, missing Section Shell / Container settings, missing `fluid_attributes`, dashes in block loops, `var(--clr-{{ ... }})` footguns, etc. Visual diff can't see these — but they break the editor silently.
    ```bash
-   python3 scripts/theme_audit.py "$THEME_DIR/sections/<section_name>/index.liquid"
+   python3 <THEME_AUDIT_PATH> "$THEME_DIR/sections/<section_name>/index.liquid"
    ```
    Exit code 0 = clean. Exit code 1 = violations printed as `file:line: RULE_ID: message`. Fix every violation before moving to step 4. Use `--rules GS001,GS002,...` to scope a re-run to specific rules. The full rule list is in [Schema & Liquid audit (theme_audit.py)](#schema--liquid-audit-theme_auditpy) below.
 4. **PREVIEW** — Call `start_preview`; let Mist select and own the port. Confirm
@@ -739,26 +739,32 @@ Aim for 1-3 rounds per section. After 3 rounds, note remaining deviations in a c
 
 ### Schema & Liquid audit (`theme_audit.py`)
 
-A deterministic, non-subjective companion to the visual diff. The script lives at `scripts/theme_audit.py` and runs 26 gold-star rules over `.liquid` section, block, and template files. Each rule has a stable ID (GS001-GS026) and a high signal-to-noise ratio.
+A deterministic, non-subjective companion to the visual diff. Mist ships this
+skill's script as a runtime asset. `run_skill("themes/theme-clone")` prints its
+exact project-relative path under `.mist-desktop/skill-assets/`; use that path
+as `<THEME_AUDIT_PATH>` below. Never assume a newly cloned theme already has
+`scripts/theme_audit.py`, and never copy or edit the materialized audit script.
+The script runs 26 gold-star rules over `.liquid` section, block, and template
+files. Each rule has a stable ID (GS001-GS026) and a high signal-to-noise ratio.
 
 ```bash
 # Audit one file
-python3 scripts/theme_audit.py "$THEME_DIR/sections/hero/index.liquid"
+python3 <THEME_AUDIT_PATH> "$THEME_DIR/sections/hero/index.liquid"
 
 # Audit a whole directory
-python3 scripts/theme_audit.py "$THEME_DIR/sections/"
+python3 <THEME_AUDIT_PATH> "$THEME_DIR/sections/"
 
 # Audit only files changed since last commit (CI-style gate)
-python3 scripts/theme_audit.py --since-commit
+python3 <THEME_AUDIT_PATH> --since-commit
 
 # Audit modified files vs HEAD (pre-push gate)
-python3 scripts/theme_audit.py --diff
+python3 <THEME_AUDIT_PATH> --diff
 
 # JSON output for tool integration
-python3 scripts/theme_audit.py --json "$THEME_DIR/"
+python3 <THEME_AUDIT_PATH> --json "$THEME_DIR/"
 
 # Run a subset of rules
-python3 scripts/theme_audit.py --rules GS001,GS002,GS014 "$THEME_DIR/sections/"
+python3 <THEME_AUDIT_PATH> --rules GS001,GS002,GS014 "$THEME_DIR/sections/"
 ```
 
 Exit codes: `0` = clean, `1` = violations found, `2` = invocation error.
@@ -899,7 +905,7 @@ Print the findings table per breakpoint, then loop. After 3 rounds with no conve
 Run the gold-star audit across the whole theme. **This is the final gate before Phase 7 — the theme does not ship with violations.**
 
 ```bash
-python3 scripts/theme_audit.py "$THEME_DIR"
+python3 <THEME_AUDIT_PATH> "$THEME_DIR"
 ```
 
 Exit code 0 = ready to upload. Exit code 1 = fix every violation, then re-run. The audit covers all 26 GS rules — see the [rule catalogue](#schema--liquid-audit-theme_auditpy) for what each catches and how to fix it.
