@@ -131,7 +131,7 @@
       "updated_at": "2026-07-26T22:06:54Z",
       "references": ["themes/references/pixel-fidelity-core.md"],
       "assets": [
-        "themes/theme-source-inventory/scripts/validate_source_inventory.py"
+        "themes/theme-source-inventory/scripts/validate-source-inventory.mjs"
       ]
     },
     {

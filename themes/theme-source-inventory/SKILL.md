@@ -127,10 +127,11 @@ Hash all 24 files in one `file_sha256` call and store the exact raw-byte digests
 and byte counts. Then run the materialized validator returned with this skill:
 
 ```text
-python3 <SOURCE_INVENTORY_VALIDATOR_PATH> --manifest clone-manifest.json
+node <SOURCE_INVENTORY_VALIDATOR_PATH> --manifest clone-manifest.json
 ```
 
-The validator checks freshness, file/path/hash/size/dimension consistency,
+Use Mist's bundled Node runtime; do not require Python or a global package
+install. The validator checks freshness, file/path/hash/size/dimension consistency,
 sidecar receipts, real HTML, all six viewports, required video attributes, and
 coverage of every URL exposed by the rendered sidecars. Fix every error and run
 it again. `SOURCE_INVENTORY_VALIDATION: pass` is required.
