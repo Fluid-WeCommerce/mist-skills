@@ -262,15 +262,58 @@ def validate_flagship_contracts() -> None:
         theme_discovery_acceptance,
         (
             "priority_media",
-            "dam_upload(url=..., create_media=true)",
-            "compress_media",
-            "video content type",
-            "fluid-catalog-index.json",
-            "theme_dam_fidelity_fallback",
-            "Never infer a product id",
             "all 12 fresh files",
+            "Catalog reconciliation and DAM delivery are intentionally not graded here",
         ),
-        "flagship workflow theme discovery",
+        "flagship workflow source discovery",
+    )
+
+    theme_catalog = steps.get("theme-catalog-index")
+    theme_media = steps.get("theme-media-inventory")
+    theme_tokens = steps.get("theme-tokens-skeleton")
+    if (
+        not isinstance(theme_catalog, dict)
+        or not isinstance(theme_media, dict)
+        or not isinstance(theme_tokens, dict)
+    ):
+        raise CatalogValidationError(
+            "flagship workflow: split catalog, media, and token steps are required"
+        )
+    if theme_catalog.get("dependsOn") != ["theme-scrape-inventory"]:
+        raise CatalogValidationError(
+            "flagship workflow: catalog index must wait for source discovery"
+        )
+    if theme_media.get("dependsOn") != ["theme-catalog-index"]:
+        raise CatalogValidationError(
+            "flagship workflow: media delivery must wait for the complete catalog index"
+        )
+    if theme_tokens.get("dependsOn") != ["theme-media-inventory"]:
+        raise CatalogValidationError(
+            "flagship workflow: theme tokens must wait for media delivery"
+        )
+    require_fragments(
+        json.dumps(theme_catalog),
+        (
+            "fluid-catalog-index.json",
+            "page[limit]=100",
+            "meta.pagination.next_cursor",
+            "complete:true",
+            "first, middle, and last",
+            "No product id or continuation was inferred",
+        ),
+        "flagship workflow catalog index",
+    )
+    require_fragments(
+        json.dumps(theme_media),
+        (
+            "dam_upload(url=<exact public source>,create_media=true)",
+            "external_asset_url",
+            "compress_media",
+            "theme_dam_fidelity_fallback",
+            "video content type",
+            "No id was inferred",
+        ),
+        "flagship workflow media delivery",
     )
 
     home_step = steps.get("theme-homepage")

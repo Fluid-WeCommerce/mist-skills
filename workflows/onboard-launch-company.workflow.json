@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-26.30",
+  "revision": "2026-07-26.31",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog, prove the home golden route, prove the canonical shop/list route, then build dependent detail/content surfaces and finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so source HTML, rendered DOM, durable pixels, and interaction evidence—not one model's self-assessment—decide whether the run passes.",
@@ -172,7 +172,7 @@
     },
     {
       "id": "theme-scrape-inventory",
-      "name": "Theme — source route, section, copy, and media inventory",
+      "name": "Theme — capture source routes, sections, copy, and visual evidence",
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,
@@ -197,7 +197,7 @@
           }
         ]
       },
-      "prompt": "First theme step. You are in a scaffolded Fluid base-theme project. Call run_skill(\"themes/theme-clone\") and execute its discovery phases only: page discovery, content scraping, rendered visual audit, source CSS/token extraction, and DAM asset upload. Do not build sections or templates yet.\n\nBuild three evidence layers instead of treating one crawl payload as truth:\n1. CONTENT/DATA — use AI-friendly Markdown when advertised plus sitemap/collection/PDP content for exact copy and catalog facts. Markdown is not visual truth.\n2. DOM/TOKENS — retain rendered HTML with global chrome (`only_main_content:false`) and inspect linked stylesheets, CSS custom properties, @font-face declarations, and layout geometry.\n3. VISUAL — follow themes/theme-clone/references/dev-preview-visual-diff.md. In Mist, use managed `crawl` with `capture_page_evidence:true` and `screenshot_options:{full_page:true,quality:90,viewport:{width,height}}`; capture home, shop, and PDP at 1440x900 and 390x844. This must work without local/global Playwright. Inspect HTML before using a constrained click action to dismiss a geo/cookie/newsletter overlay, then record the selector/action. A redirected, blank, loading, or obscured screenshot is invalid. For every capture, copy the crawl result's `<!-- screenshot baseline -->` object into the matching manifest cell. It must contain the real `.mist-desktop/source-baselines/` screenshot plus captured_at, sha256, positive bytes, decoded width/height, requested_viewport, final_url, status, overlay_handling, and the matching `page_evidence` path/SHA-256 that binds rendered copy/landmarks/media to those pixels. A hosted URL, chat attachment id, prose claim, screenshot without its sidecar, or label such as `crawl:1440x900` is NOT evidence. Hash ALL 12 files (six screenshots and six sidecars) in one `file_sha256({paths:[...]})` call and store every returned raw-byte SHA-256 before claiming 6/6.\n\nBefore assigning any `catalog_runtime` media, call `query_docs` for the Product list/detail schemas in `/openapi/api-reference/storefront-v2026-04.yaml`. Enumerate the entire Fluid catalog with `/api/v202604/company/products?page[limit]=100`, following `meta.pagination.next_cursor` to null. Write a compact `fluid-catalog-index.json` at the theme root containing only API-returned product id, exact title, SKU, canonical URL, and image URL; never infer an id from list position, a source URL, or a title fragment. For every runtime mapping, require an exact normalized title/SKU/source-identity match, then re-read the mapped record and verify its returned image URL with HTTP 200. If this theme-only run has no exact Fluid product for a visible source product, do NOT fabricate a mapping: upload that visible source image to DAM as a documented `theme_dam_fidelity_fallback`, record `catalog_match:null` plus the missing source identity, and continue the visual clone. Full/data-theme runs must instead leave that mismatch for product-import reconciliation. The discovery step may use a static fidelity fallback; later launch QA must still report catalog dynamism as a blocker when the catalog was in scope.\n\nPriority routes are the homepage, the source's primary shop/collection index, and the flagship or most complex multi-variant PDP. Inventory EVERY visible section on all three in source order, plus global header/footer. Inspect up to two more PDPs and four key static pages for content/structure coverage. Ingest every asset required by the priority routes with Mist's `dam_upload`: pass a public source directly as `url` so the upload service uses `external_asset_url`, and use `path` only for an existing sandbox file. If and only if a direct upload returns a size rejection, call `compress_media(url=...)` and immediately retry with `dam_upload(path=<output_path>)`; never omit or replace media because it is large. For each attempted upload record the complete auditable receipt: tool, attempted_at, source URL, requested name, compression attempt/result, returned asset id, `asset.default_variant_url`, and verification response. Extract real font families/weights and a license/substitution decision. The source wins any disagreement with gather-context, but record the conflict.\n\nWrite `clone-manifest.json` at the theme root with: source_url, page_manifest, section_inventory for home/shop/PDP/header/footer, brand_tokens, dam_assets, and `visual_routes` entries for home/shop/pdp. Each visual route contains source_url, future built_path, ordered landmarks `{id,source_selector,built_selector}` for every visible priority section, and `source_evidence.desktop` + `source_evidence.mobile` objects with the required durable screenshot and page-evidence fields above. Also record `hero_copy.headline`, `hero_copy.subheadline`, and `hero_copy.primary_cta` verbatim, each with its evidence source (`markdown`, `rendered_html`, or `screenshot`). Markdown and a rendered screenshot are complementary: dynamic overlay text can be absent from Markdown, while a screenshot may show only one carousel state. If no evidence establishes a field, store null with the reason; never substitute invented or base-theme copy. Built selectors use stable template section ids chosen now so later build steps implement the manifest rather than inventing mappings afterward.\n\nThese are local QA artifacts, not Fluid theme resources. Create or update `.fluidignore` at the theme root so it includes exact entries for `clone-manifest.json`, `fluid-catalog-index.json`, `.mist-desktop/source-baselines/`, and `baselines/` while preserving every existing rule. Verify the ignore file before starting the dev watcher; otherwise theme dev will repeatedly send invalid resource uploads and flood the user with 404 errors.\n\nEnd with STEP_OUTPUT: manifest path, priority route URLs, per-route landmark counts, 6/6 verified local source screenshot + page-evidence paths/hashes, verbatim hero copy + evidence sources, page count, uploaded asset count, catalog index path/count and exact/fallback match counts, brand tokens, and non-priority gaps.",
+      "prompt": "First theme step. You are in a scaffolded Fluid base-theme project. Call run_skill(\"themes/theme-clone\") and execute only page discovery, content scraping, rendered visual audit, source CSS/token extraction, and source-media enumeration. Do not build sections/templates, enumerate the Fluid catalog, or upload DAM assets in this step; dedicated downstream steps own catalog indexing and media delivery so this turn stays bounded.\n\nBuild three evidence layers instead of treating one crawl payload as truth:\n1. CONTENT/DATA — use AI-friendly Markdown when advertised plus sitemap/collection/PDP content for exact copy and catalog facts. Markdown is not visual truth.\n2. DOM/TOKENS — retain rendered HTML with global chrome (`only_main_content:false`) and inspect linked stylesheets, CSS custom properties, @font-face declarations, layout geometry, and every visible media element.\n3. VISUAL — follow themes/theme-clone/references/dev-preview-visual-diff.md. In Mist, use managed `crawl` with `capture_page_evidence:true` and `screenshot_options:{full_page:true,quality:90,viewport:{width,height}}`; capture home, shop, and PDP at 1440x900 and 390x844. Inspect HTML before any constrained click used to dismiss a geo/cookie/newsletter overlay, then record the action. A redirected, blank, loading, or obscured screenshot is invalid. Copy each crawl result's complete `<!-- screenshot baseline -->` object into the matching manifest cell. Hash all 12 files (six screenshots and six page-evidence sidecars) in one `file_sha256({paths:[...]})` call and store the returned raw-byte digests.\n\nPriority routes are the homepage, the source's primary shop/collection index, and the flagship or most complex multi-variant PDP. Inventory every visible section on all three in source order, plus the global header/footer. Inspect up to two more PDPs and four key static pages for content/structure coverage. Enumerate every priority-route `<img>`, `<video>`, `<source>`, poster, and CSS media URL seen in either desktop or mobile rendered evidence. Record source URL, route, landmark, viewport role, media kind, source product identity when applicable, and all video playback attributes. Do not sample product grids, galleries, rails, or videos. Extract the real font families/weights and a license/substitution decision. The source wins any disagreement with gather-context, but record the conflict.\n\nWrite `clone-manifest.json` at the theme root with source_url, page_manifest, section_inventory for home/shop/PDP/header/footer, brand_tokens, `priority_media.items`, and `visual_routes` entries for home/shop/pdp. Each visual route contains source_url, future built_path, ordered landmarks `{id,source_selector,built_selector}` for every visible priority section, and complete `source_evidence.desktop` + `source_evidence.mobile` objects. Record `hero_copy.headline`, `hero_copy.subheadline`, and `hero_copy.primary_cta` verbatim with every applicable evidence source. If no evidence establishes a field, store null with the reason; never substitute invented or base-theme copy.\n\nCreate or update `.fluidignore` so it preserves prior rules and includes exact entries for `clone-manifest.json`, `fluid-catalog-index.json`, `.mist-desktop/source-baselines/`, and `baselines/`.\n\nEnd with STEP_OUTPUT: manifest path, priority route URLs, per-route landmark and media-item counts, 6/6 verified local screenshot + sidecar paths/hashes, verbatim hero copy + evidence sources, page count, brand tokens, and non-priority gaps.",
       "target": {
         "type": "kind",
         "kind": "theme"
@@ -206,19 +206,100 @@
       "recovery": { "mode": "manual" },
       "acceptance": [
         "DISCOVERY-ONLY BOUNDARY: this step does not build the theme. The local preview may still be the generic scaffold, and future built_path routes/selectors are plans that are verified in later build steps. Do not fail this step because those routes do not yet resolve or because the scaffold does not match the source.",
-        "`clone-manifest.json` exists at the theme project root and contains a page manifest, home + shop + representative-PDP section inventories with concrete computed style values, header/footer inventory, brand tokens (colors + fonts with licensing notes), and a source-URL → DAM-URL asset map — verify by READING the file, not the worker's claim.",
+        "`clone-manifest.json` exists at the theme project root and contains a page manifest, home + shop + representative-PDP section inventories with concrete computed style values, header/footer inventory, brand tokens (colors + fonts with licensing notes), and a complete source-media inventory — verify by READING the file, not the worker's claim.",
         "The theme root `.fluidignore` preserves its prior rules and contains exact entries for `clone-manifest.json`, `fluid-catalog-index.json`, `.mist-desktop/source-baselines/`, and `baselines/`, so the theme dev watcher cannot upload local discovery/visual-QA artifacts as Fluid theme resources.",
         "The manifest has `visual_routes.home`, `visual_routes.shop`, and `visual_routes.pdp`. Each records source_url, built_path, and an ordered landmark list mapping every visible priority source section selector to a stable built section id/selector.",
         "Source discovery used three distinct evidence layers: AI-friendly Markdown for copy/catalog facts, rendered HTML/CSS for DOM/tokens/fonts, and clean managed-browser full-page screenshots at 1440x900 and 390x844 for visual structure. Capture a fresh 6/6 source matrix during THIS workflow step (home/shop/PDP × desktop/mobile); pre-existing screenshots or manifest cells may inform discovery but cannot satisfy this run's evidence gate. Record `evidence_run_started_at` before the first capture and reject any source_evidence whose captured_at predates it. A crawl that writes a screenshot but fails before returning its page-evidence sidecar is incomplete and must be retried. Each `source_evidence` cell records a real local `.mist-desktop/source-baselines/` path, captured_at, 64-character sha256, positive bytes, decoded width/height, requested_viewport, final_url, HTTP status, overlay_handling, and the matching rendered page-evidence path/SHA-256. The worker hashes all 12 fresh files in one `file_sha256({paths:[...]})` call; the read-only QA reviewer independently repeats that call and rejects hosted URLs, chat ids, prose claims, stale captures, opaque `crawl:<viewport>` labels, and any mismatch.",
         "`hero_copy` records the source homepage headline, subheadline, and primary CTA verbatim. Each field cites every applicable evidence layer (Markdown, rendered HTML, screenshot), not a single opaque label. A field absent from all evidence is null with a reason; invented or base-theme replacement copy is a hard failure.",
-        "`priority_media.items` reconciles every priority-route `<img>`, `<video>`, `<source>`, poster, and CSS media URL found in the retained rendered HTML at desktop and mobile — including logo/flag/footer icons, every product-grid card, every PDP gallery image, and every recommendation/cross-sell rail item. Each entry records source URL, route, landmark, viewport role, media kind, and delivery mode. Editorial/campaign/static media use `delivery_mode:\"theme_dam\"` and record the complete upload receipt (tool, attempted_at, source URL, requested name, compression result, returned asset id/default_variant_url, and verification). Product-owned media may use `delivery_mode:\"catalog_runtime\"` only after the worker cursor-paginates the full v202604 Fluid catalog into `fluid-catalog-index.json`, exact-matches title/SKU/source identity, re-reads the specific returned product id, and HTTP-verifies the API-returned image URL; record that correspondence with `upload_attempt:\"not_applicable_catalog_runtime\"`. Never infer a product id. In `theme_only`, an absent exact catalog match instead uses a verified `theme_dam_fidelity_fallback` with `catalog_match:null` and an itemized dynamism remainder; full/data-theme runs leave it for product-import reconciliation. Videos also record autoplay, loop, muted, playsinline, preload, poster, and controls per source element. A sample-per-rail, flat URL map, or generic note such as `media: video` is incomplete.",
-        "Every required self-hosted priority video was attempted with `dam_upload(url=..., create_media=true)`. A size rejection was followed by `compress_media(url=...)` and an immediate `dam_upload(path=<output_path>, create_media=true)` retry before the temporary one-hour compressed handoff expired; it was never treated as permission to omit or replace the video. Spot-check each uploaded priority video: its DAM URL returns HTTP 200 with a video content type. If the source truly has zero priority videos, the manifest says so with rendered-HTML evidence.",
-        "Spot-check 2-3 DAM URLs from the manifest: they resolve to real images (HTTP 200).",
+        "`priority_media.items` enumerates every priority-route `<img>`, `<video>`, `<source>`, poster, and CSS media URL found in retained desktop and mobile rendered evidence — including logos/icons, every product-grid card, every PDP gallery image, and every recommendation/cross-sell item. Each entry records source URL, route, landmark, viewport role, media kind, source product identity where applicable, and all video playback attributes. A sample-per-rail, flat URL map, or generic note such as `media: video` is incomplete.",
         "The section inventory covers every visible home, shop, and representative-PDP section in source order (compare against the live rendered pages), including promotional/editorial modules below the main collection grid or product detail, cross-sells, related-product rails, collection exploration, and media/video blocks.",
         "For all three priority routes the manifest contains auditable references to the captured Markdown (when advertised), retained rendered HTML/CSS evidence, and both durable screenshot files; screenshots alone are not proof of exact copy or DOM/token extraction.",
-        "HARD-FAIL BAR: fail when any priority route lacks a fresh clean screenshot+sidecar pair from this run, the worker or reviewer did not independently hash all 12 files, a priority landmark inventory is incomplete, the manifest is missing/empty, the media inventory samples instead of enumerating every visible priority item, any editorial/static priority image lacks a verified theme-DAM mapping and upload receipt, any claimed catalog-runtime mapping was inferred or not exact/API-verified, any theme-only catalog miss lacks a verified theme-DAM fidelity fallback, any priority video source is missing from `priority_media.items` or lacks a successful DAM mapping/structured failed attempt plus playback attributes, or hero copy was invented rather than captured-or-recorded-as-missing. Non-priority static-page gaps and explicitly itemized theme-only catalog dynamism gaps can remain notes."
+        "HARD-FAIL BAR: fail when any priority route lacks a fresh clean screenshot+sidecar pair from this run, the worker or reviewer did not independently hash all 12 files, a priority landmark inventory is incomplete, the manifest is missing/empty, the media inventory samples instead of enumerating every visible priority item, any priority video source/playback attribute is missing, or hero copy was invented rather than captured-or-recorded-as-missing. Catalog reconciliation and DAM delivery are intentionally not graded here."
       ],
       "dependsOn": ["gather-context-qa"],
+      "runIf": {
+        "flag": "build_theme"
+      }
+    },
+    {
+      "id": "theme-catalog-index",
+      "name": "Theme — index the complete Fluid runtime catalog",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "anthropic/claude-opus-5",
+        "strictness": "strict",
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "fluid-catalog-index.json"
+            }
+          },
+          {
+            "tool": "fluid_api",
+            "minSuccessfulCalls": 2
+          }
+        ]
+      },
+      "prompt": "Create the exact Fluid runtime catalog index used by theme media reconciliation. This is a bounded data step: do not crawl source pages, upload media, or edit theme code.\n\nCall `query_docs` for the Product list/detail schemas in `/openapi/api-reference/storefront-v2026-04.yaml`. Cursor-paginate `/api/v202604/company/products?page[limit]=100` to `meta.pagination.next_cursor:null`, using the returned cursor on the next request. Mist may replace an oversized product response with a complete compact projection; it is complete for that page and preserves the real pagination metadata. Never use page-number pagination, a public storefront proxy, or inferred continuation. De-duplicate by API-returned product id and detect a repeated cursor/page as a hard error.\n\nWrite `fluid-catalog-index.json` with `{source_endpoint,page_limit,page_count,product_count,complete,next_cursor,products}` where every product contains only API-returned `id`, exact `title`, `sku`, `canonical_url`, and `image_url`. Set `complete:true` only after the server returns `next_cursor:null`. Do not infer or repair any field. Re-read the first, middle, and last product IDs via the documented detail endpoint and require the exact title/SKU/image identity to match the index. Keep the file in `.fluidignore`.\n\nEnd with STEP_OUTPUT: path, page_count, product_count, final cursor, duplicate count, three spot-check receipts, and status.",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
+      "acceptance": [
+        "`fluid-catalog-index.json` exists, parses, records the documented v202604 endpoint, contains only API-returned product identities, and has `complete:true` with `next_cursor:null`.",
+        "Pagination followed every server-returned `meta.pagination.next_cursor` from a page limit of 100 until null; page_count and product_count agree with the written array after de-duplication, with no repeated cursor/page.",
+        "The reviewer independently re-reads first, middle, and last IDs and confirms exact title/SKU/image identity. No product id or continuation was inferred.",
+        "HARD-FAIL BAR: fail for an incomplete/non-cursor export, duplicate/repeated page, inferred identity, count mismatch, missing index, or any failed independent spot-check."
+      ],
+      "dependsOn": ["theme-scrape-inventory"],
+      "runIf": {
+        "flag": "build_theme"
+      }
+    },
+    {
+      "id": "theme-media-inventory",
+      "name": "Theme — reconcile and deliver all priority media",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "anthropic/claude-opus-5",
+        "strictness": "strict",
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "clone-manifest.json"
+            }
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "fluid-catalog-index.json"
+            }
+          }
+        ]
+      },
+      "prompt": "Reconcile and deliver every `priority_media.items` entry in `clone-manifest.json`. This is a bounded media step: consume the already-captured source evidence and complete catalog index; do not recrawl pages or build theme sections.\n\nFor product-owned media, use `catalog_runtime` only when `fluid-catalog-index.json` supplies an exact normalized title/SKU/source-identity match. Re-read that exact product id with `fluid_api`, then HTTP-verify the API-returned image URL. Record the product id, exact identity fields, verification, and `upload_attempt:\"not_applicable_catalog_runtime\"`. Never infer an id from position, fuzzy title, URL, or neighboring cards.\n\nEditorial/campaign/static media use `theme_dam`. Call `dam_upload(url=<exact public source>,create_media=true)` so the service uses `external_asset_url`; use `path` only for an existing sandbox file. Record a complete receipt for every attempt: tool, attempted_at, source URL, requested name, compression result, returned asset id, `asset.default_variant_url`, and HTTP verification. If a direct video upload returns a size rejection, call `compress_media(url=...)` and immediately retry `dam_upload(path=<output_path>,create_media=true)` before the temporary result expires. Never omit or replace a video because it is large.\n\nWhen a theme-only run has no exact Fluid product for a visible source product, upload the exact source media as `theme_dam_fidelity_fallback`, record `catalog_match:null`, the missing source identity, complete upload receipt, and a catalog-dynamism remainder. Full/data-theme runs leave unmatched product media for product-import reconciliation rather than fabricating a match. Preserve every source media entry and add delivery fields in place; do not sample. Verify all delivered URLs, and spot-check every video for HTTP 200 plus video content type.\n\nEnd with STEP_OUTPUT: total media count, catalog-runtime exact matches, theme-DAM assets, fidelity fallbacks, unresolved full/data-theme items, video compression/upload results, and verification failures.",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 3,
+      "recovery": { "mode": "manual" },
+      "acceptance": [
+        "Every source `priority_media.items` entry remains present and has exactly one auditable delivery outcome: verified catalog_runtime, verified theme_dam, verified theme_dam_fidelity_fallback for theme-only, or an explicit unresolved product-import reconciliation for full/data-theme.",
+        "Every catalog_runtime mapping exact-matches title/SKU/source identity against the complete index, was re-read by returned id, and has an HTTP-verified API image URL. No id was inferred.",
+        "Every editorial/static asset and theme-only fallback has a complete `dam_upload` receipt with returned asset id/default_variant_url and successful verification.",
+        "Every required video was attempted. A size rejection was followed by `compress_media` and immediate path upload; every successful video DAM URL returns HTTP 200 with a video content type and retains source playback attributes.",
+        "HARD-FAIL BAR: fail for sampled/omitted media, inferred runtime mappings, missing upload receipts, an unattempted priority video, an unverified delivered URL, or an unhandled theme-only product-media gap."
+      ],
+      "dependsOn": ["theme-catalog-index"],
       "runIf": {
         "flag": "build_theme"
       }
@@ -254,7 +335,7 @@
         "The dev preview boots and renders without server errors — verified with a screenshot_preview this turn (placeholder content is acceptable; this step is about tokens + skeleton, not content).",
         "HARD-FAIL BAR: fail only when a config file is invalid/unwritten, tokens still hold base-theme defaults, or the dev preview cannot boot. Imperfect color mapping or a debatable font substitute is a NOTE for the refine pass."
       ],
-      "dependsOn": ["theme-scrape-inventory"],
+      "dependsOn": ["theme-media-inventory"],
       "runIf": {
         "flag": "build_theme"
       }
