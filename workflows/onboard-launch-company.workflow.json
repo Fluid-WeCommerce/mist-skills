@@ -1,8 +1,8 @@
 {
-  "revision": "2026-07-25.24",
+  "revision": "2026-07-26.25",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
-  "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog before theme work, clone the home/shop/PDP experience through independently reviewed build stages, and finish with rendered-route and launch-readiness gates. Worker and reviewer models are deliberately cross-vendor so evidence, not one model's self-assessment, decides whether the run passes.",
+  "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog, prove the home golden route, prove the canonical shop/list route, then build dependent detail/content surfaces and finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so source HTML, rendered DOM, durable pixels, and interaction evidence—not one model's self-assessment—decide whether the run passes.",
   "maxParallel": 3,
   "runTitleTemplate": "Onboard {{website_url}}",
   "finalGate": {
@@ -12,19 +12,35 @@
   "deriveContext": [
     {
       "set": "build_theme",
-      "when": { "in": { "key": "run_scope", "values": ["full", "data_theme", "theme_only"] } }
+      "when": {
+        "in": {
+          "key": "run_scope",
+          "values": ["full", "data_theme", "theme_only"]
+        }
+      }
     },
-    { "set": "import_products", "when": { "equals": { "key": "run_scope", "value": "full" } } },
+    {
+      "set": "import_products",
+      "when": { "equals": { "key": "run_scope", "value": "full" } }
+    },
     {
       "set": "push_business_data",
       "when": {
-        "in": { "key": "run_scope", "values": ["full", "data_theme", "data_only"] }
+        "in": {
+          "key": "run_scope",
+          "values": ["full", "data_theme", "data_only"]
+        }
       }
     },
-    { "set": "discover_ugc", "when": { "includes": { "key": "extras", "value": "discover_ugc" } } },
+    {
+      "set": "discover_ugc",
+      "when": { "includes": { "key": "extras", "value": "discover_ugc" } }
+    },
     {
       "set": "import_brand_social",
-      "when": { "includes": { "key": "extras", "value": "import_brand_social" } }
+      "when": {
+        "includes": { "key": "extras", "value": "import_brand_social" }
+      }
     }
   ],
   "steps": [
@@ -156,7 +172,7 @@
     },
     {
       "id": "theme-scrape-inventory",
-      "name": "Theme 1/6 — scrape source + section inventory + DAM assets",
+      "name": "Theme — source route, section, copy, and media inventory",
       "model": "google/gemini-3.6-flash",
       "qa": {
         "enabled": true,
@@ -205,7 +221,7 @@
     },
     {
       "id": "theme-tokens-skeleton",
-      "name": "Theme 2/6 — design tokens + skeleton boots",
+      "name": "Theme — design tokens and runnable skeleton",
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,
@@ -241,7 +257,7 @@
     },
     {
       "id": "theme-header-footer",
-      "name": "Theme 3/6 — header, navigation & footer",
+      "name": "Theme — shared header, navigation, and footer",
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,
@@ -285,7 +301,7 @@
     },
     {
       "id": "theme-homepage",
-      "name": "Theme 4/6 — homepage sections",
+      "name": "Theme — prove the home golden route",
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,
@@ -293,6 +309,15 @@
         "strictness": "strict",
         "onFail": "stop",
         "requiredTools": [
+          {
+            "tool": "crawl",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "formats": ["html", "screenshot"],
+              "only_main_content": false
+            },
+            "distinctBy": ["screenshot_options.viewport.width"]
+          },
           {
             "tool": "view_project_image",
             "minSuccessfulCalls": 2,
@@ -305,10 +330,19 @@
           },
           {
             "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
           }
         ]
       },
-      "prompt": "Build the homepage. Using clone-manifest.json's homepage section inventory, compose `home_page/default/index.liquid` from the base theme's canonical section library (heroes, image_text_split, feature_grid, featured_products, testimonial_grid, faq_accordion, cta_banner_v2 …) — call run_skill(\"themes/theme-clone\") for the library list, section rules, and exact materialized `<THEME_AUDIT_PATH>`. Prefer canonical sections; only write a custom section when nothing in the library fits, following the full Section Shell + Container pattern.\n\nRequirements:\n- If a homepage section needs a collection to render, inspect the current schema with query_docs and use `/api/v202604/company/collections`. GET-before-create; persist the returned ID/canonical URL. Set complete membership with the collection's `product_ids` full-replacement field, or patch a product's `collection_ids` through `/api/v202604/company/products/{id}`. v202604 PATCH is partial and does NOT require resending title. The later content-import step reconciles the full source set; do not wait for it.\n- Every source homepage section is represented, in source order, with REAL scraped copy and DAM image URLs from the manifest — no lorem ipsum, no hotlinked source-CDN images.\n- Content lives in blocks (richtext for text, canonical image blocks for images); template schema carries sections + order + settings ONLY (never blocks data).\n- Tokens, not hex: colors via the background_colors option group, fonts via font_families.\n- Audit gate: `python3 <THEME_AUDIT_PATH>` on every touched file — fix every violation. A fresh theme does not contain the skill's script; never assume `scripts/theme_audit.py` exists.\n- Verify with screenshot_preview at desktop and mobile; compare against the manifest's source notes and record deviations as refine notes.\n\nEnd with STEP_OUTPUT: sections used (canonical vs custom), audit result, and the deviation notes list for the refine pass.",
+      "skill": "themes/clone-home-page",
       "target": {
         "type": "kind",
         "kind": "theme"
@@ -316,14 +350,13 @@
       "maxReworkRounds": 2,
       "recovery": { "mode": "manual" },
       "acceptance": [
-        "The reviewer opened the durable rendered SOURCE screenshot itself and compared it against the clone side by side. A worker description, DOM inventory, or metrics-only review does not satisfy this criterion.",
-        "The homepage renders in the dev preview without server/Liquid errors and contains a section for every entry in the manifest's homepage inventory, in source order (verify against the manifest, not the worker's claim).",
-        "The homepage's hero headline, subheadline and primary CTA label match `clone-manifest.json`'s `hero_copy` VERBATIM — quote all three in STEP_OUTPUT beside the manifest's values. Where the manifest recorded a null, the step must say what it used instead and why. Sections otherwise use real scraped copy + DAM images: no base-theme boilerplate anywhere on the page (\"Your Logo\", \"Built different\", \"NEW DROP\", \"Trusted by thousands\", \"Shop the drop\" and friends), and no <img> pointing at the source site's CDN.",
-        "Every homepage landmark recorded as video renders a real `<video>` using the matching DAM URL(s), including separate desktop/mobile sources when the manifest found them, with source-matching autoplay/loop/muted/playsinline behavior and a poster fallback. `read_preview_dom` verifies those elements and URLs. A still image, poster-only render, gradient, or flat-color substitute is a hard failure.",
-        "The exact materialized `<THEME_AUDIT_PATH>` returned by run_skill passes on the homepage template and every new/modified section file.",
-        "Desktop + mobile screenshots were taken this turn and the page is structurally coherent at both widths (no blank page, no stacked garbage).",
-        "Authored copy obeys `brand.md`. Mist injects the company's brand guide into every turn as a `<brand_voice>` block; scraped source strings win, and any string the agent had to write itself is in that voice and consistent with its Do's and Don'ts. Surviving base-theme placeholder copy — \"NEW DROP\", \"Built different\", \"Trusted by thousands\", \"Shop the drop\", lorem — is a defect even when the layout matches, and is the single most visible way a clone reads as generic.",
-        "HARD-FAIL BAR: fail for a broken/blank homepage, a missing majority of sections, any missing/substituted priority video, any base-theme placeholder copy surviving in a visible section, hero copy that does not match the manifest, authored copy that violates brand.md, or unfixed audit violations. Spacing/size/color drift vs the source remains a refine-pass note."
+        "The QA reviewer independently crawled the exact source home route as rendered HTML plus a durable full-page screenshot at 1440x900 and 390x844, then read the local rendered DOM. QA reconciled the ordered normalized visible strings landmark-by-landmark; source wording, punctuation, capitalization, CTA labels, and link labels match exactly except for an itemized allowed dynamic-value list. A screenshot-only or worker-summary review fails.",
+        "The reviewer opened both durable SOURCE images and both current local images. Every source landmark exists once in the same order; no priority landmark is missing, duplicated, or replaced by unrelated starter content. Comparable landmark width/height/padding/gap is within 5%, zero majors remain, and at most two named minors remain.",
+        "Every homepage priority image and video is DAM-backed and ready in the rendered page. Responsive videos use the manifest's exact desktop/mobile sources, and QA verified currentSrc, decoded dimensions/orientation, playback attributes, and zero failed/pending media at both viewports. A poster-only or static substitution fails.",
+        "The mobile navigation and each homepage disclosure/tab/carousel state were exercised from inspected rendered selectors. Primary CTA targets resolve to the source-equivalent Fluid route.",
+        "The homepage and shared shell render without Liquid/server errors, console exceptions, failed priority resources, horizontal overflow at 390px, or visible base-theme placeholder copy. The materialized theme audit passes on every touched file.",
+        "PAGE_OUTPUT includes exact source/local copy hashes, durable evidence, landmark/media counts, interaction results, majors/minors, runtime errors, and a reusable shell_contract. Any `needs-review` or `cap-reached` status fails this hard gate.",
+        "HARD-FAIL BAR: downstream page work must not begin while home has wrong wording, missing/reordered sections, substituted media, untested responsive navigation, runtime errors, any major visual defect, or more than two itemized minors."
       ],
       "dependsOn": ["theme-header-footer"],
       "runIf": {
@@ -331,8 +364,72 @@
       }
     },
     {
+      "id": "theme-shop-page",
+      "name": "Theme — prove the shop golden list route",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "anthropic/claude-opus-5",
+        "strictness": "strict",
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "crawl",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "formats": ["html", "screenshot"],
+              "only_main_content": false
+            },
+            "distinctBy": ["screenshot_options.viewport.width"]
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"]
+          },
+          {
+            "tool": "screenshot_preview",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["width"]
+          },
+          {
+            "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
+      },
+      "skill": "themes/clone-shop-page",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 2,
+      "recovery": { "mode": "manual" },
+      "acceptance": [
+        "QA independently proved the selected source URL is the canonical shop/all-products route rather than a collection detail or redirect, crawled its rendered HTML and durable full-page screenshot at both required viewports, and read the exact local rendered DOM.",
+        "Ordered normalized visible source wording, product-card fields, badges, price formatting, filter/sort labels, result counts, pagination copy, and empty-state copy were reconciled against the local DOM. No unrelated starter copy or hard-coded fake product cards remain.",
+        "The shop uses actual Fluid product resources and canonical returned PDP routes. QA verified representative normal, discounted/badged, and multi-option/unavailable card states where the source exposes them, plus the complete expected catalog through the page's real pagination model.",
+        "Filtering, sorting, search, pagination/load-more, and mobile disclosures were exercised from inspected rendered selectors and their resulting DOM/state was verified. A decorative nonfunctional source-equivalent control is a major failure.",
+        "Both durable SOURCE images and current local desktop/mobile images were compared landmark-by-landmark. Geometry is within 5% where compositions match, zero majors remain, at most two named minors remain, and 390px has no horizontal overflow.",
+        "All priority shop media is DAM-backed and ready, and server logs/console contain no unresolved route, runtime, or asset errors. The materialized theme audit passes on touched files.",
+        "PAGE_OUTPUT includes the route/copy/evidence/media/interaction proof plus a reusable list_contract naming product-card, grid, filter/sort, pagination, search, and empty/loading/error implementations. Any `needs-review` or `cap-reached` status fails this gate."
+      ],
+      "dependsOn": ["theme-homepage", "products-import"],
+      "runIf": {
+        "flag": "build_theme"
+      }
+    },
+    {
       "id": "theme-product-collection",
-      "name": "Theme 5/6 — product & collection templates",
+      "name": "Theme — product and collection detail templates",
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,
@@ -373,14 +470,14 @@
         "Authored copy obeys `brand.md`. Mist injects the company's brand guide into every turn as a `<brand_voice>` block; scraped source strings win, and any string the agent had to write itself is in that voice and consistent with its Do's and Don'ts. Surviving base-theme placeholder copy — \"NEW DROP\", \"Built different\", \"Trusted by thousands\", \"Shop the drop\", lorem — is a defect even when the layout matches, and is the single most visible way a clone reads as generic.",
         "HARD-FAIL BAR: fail for erroring PDP/collection routes, a missing/substituted priority video, a replaced/modified main_product section, or unfixed audit violations. Other fidelity gaps vs the source PDP layout are refine-pass NOTES."
       ],
-      "dependsOn": ["theme-homepage", "products-import"],
+      "dependsOn": ["theme-shop-page", "products-import"],
       "runIf": {
         "flag": "build_theme"
       }
     },
     {
       "id": "theme-content-pages-push",
-      "name": "Theme 6/6 — content pages, full audit & push",
+      "name": "Theme — content/system pages, full audit, and push",
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,

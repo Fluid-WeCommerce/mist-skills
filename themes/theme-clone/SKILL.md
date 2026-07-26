@@ -20,11 +20,11 @@ This skill supports two modes:
 - **Full site clone** — systematically clone all key pages of a website
 
 **Workflow mode (phased execution).** When you were launched by the
-`onboard-launch-company` workflow, the clone is split into six small,
-individually-QA'd steps and your step prompt names the ONLY phases you own
-(1: discovery/scrape/assets → 2: tokens/skeleton → 3: header/footer →
-4: homepage → 5: product/collection templates → 6: content pages + audit +
-push). Execute just those phases, read/write the shared `clone-manifest.json`
+`onboard-launch-company` workflow, the clone is split into individually-QA'd
+discovery, shell, page-archetype, and final-integration gates. The home golden
+route must pass before shop; the shop golden list route must pass before the
+remaining catalog/detail pages. Your step prompt or page skill names the ONLY
+surface you own. Execute just that scope, read/write the shared `clone-manifest.json`
 at the theme project root instead of re-scraping, and record cosmetic
 deviations as notes for the refine pass rather than fixing everything in one
 step. `clone-manifest.json`, `.mist-desktop/source-baselines/`, and `baselines/`
@@ -213,7 +213,13 @@ TOTAL: X pages
 
 ### 4d: Identify shared sections (CTA banners, testimonials, newsletter signup) — build once, reuse
 
-### 4e: Clone order — nav/footer first, homepage, products, collections, static pages
+### 4e: Clone order
+
+Build the global shell first, then prove the homepage, then prove the canonical
+shop/all-products list. Only after both golden routes pass should the workflow
+continue through collection/category/blog/search list archetypes, their detail
+archetypes (PDP, post, content), cart/system states, and final cross-route
+linking/regression.
 
 ---
 
@@ -252,9 +258,15 @@ document
 ```javascript
 var el = document.querySelector(".hero-section");
 var s = getComputedStyle(el);
-[s.backgroundColor, s.color, s.fontFamily, s.fontSize, s.fontWeight, s.padding, s.margin].join(
-  " | ",
-);
+[
+  s.backgroundColor,
+  s.color,
+  s.fontFamily,
+  s.fontSize,
+  s.fontWeight,
+  s.padding,
+  s.margin,
+].join(" | ");
 ```
 
 ### 2d: Note animations (scroll, hover, carousel, parallax)
@@ -383,7 +395,12 @@ See [theme-refine.md](../theme-refine/SKILL.md#section-shell-pattern--enforce-on
 ALL text content uses `richtext` type — the WYSIWYG handles font, size, weight, color, alignment. Defaults must be wrapped in HTML tags.
 
 ```json
-{ "type": "richtext", "id": "text", "label": "Heading", "default": "<h2>Your heading here</h2>" }
+{
+  "type": "richtext",
+  "id": "text",
+  "label": "Heading",
+  "default": "<h2>Your heading here</h2>"
+}
 ```
 
 **NEVER** use `text` or `textarea` for visible content — those create plain text that can't be styled in the editor.
