@@ -65,8 +65,9 @@ Repeat with the mobile viewport. Keep the exact crawl-returned local paths for:
 - complete Markdown: copy and catalog facts;
 - complete rendered HTML: DOM, stylesheets, tokens, fonts, and media;
 - full-page screenshot: visual order, geometry, crop, and responsive behavior;
-- page-evidence sidecar: rendered text, landmarks, media, viewport, route, and
-  screenshot receipt.
+- page-evidence sidecar: rendered text, landmarks, bounded section anchors +
+  computed typography/layout styles, media, viewport, route, and screenshot
+  receipt.
 
 Do not reconstruct any file from chat output. A successful screenshot without
 all three companion files is an incomplete cell.
@@ -111,7 +112,8 @@ them. The screenshot receipt is the cell itself—do not nest it under a
     "sha256": "<raw sidecar sha256>",
     "bytes": 12345,
     "media": 42,
-    "landmarks": 8
+    "landmarks": 8,
+    "sections": 14
   },
   "documents": {
     "html": {
@@ -128,11 +130,21 @@ them. The screenshot receipt is the cell itself—do not nest it under a
 }
 ```
 
-`page_evidence.media` and `.landmarks` are the exact lengths of
-`sidecar.rendered.media` and `.landmarks`. Full-page screenshot `height` is the
-decoded PNG height, not the requested viewport height. `status`, final URL,
-capture time, viewport, and the direct screenshot receipt must exactly match
-the sidecar.
+`page_evidence.media`, `.landmarks`, and `.sections` are the exact lengths of
+`sidecar.rendered.media`, `.landmarks`, and `.sections`. Require
+`sidecar.rendered.sectionsTruncated === false`. Full-page screenshot `height`
+is the decoded PNG height, not the requested viewport height. `status`, final
+URL, capture time, viewport, and the direct screenshot receipt must exactly
+match the sidecar.
+
+Build each ordered section entry from `sidecar.rendered.sections`, not from
+memory or visual guessing. Cite the sidecar path plus the section's exact
+`anchor`. Copy its measured rect, section `style` fields, and representative
+`heading`/`body`/`action` typography where present. Use HTML and screenshots to
+name and order sections, but never hand-invent a color, font size, spacing,
+display/grid value, or selector when the signed sidecar supplies it. If a
+needed section is absent or `sectionsTruncated` is true, recapture; a plausible
+worker-authored value is not measured evidence.
 
 Build `priority_media.items` from the union of all six rendered sidecars plus
 the retained HTML/CSS—not from a visual sample. Include every visible:
@@ -171,6 +183,12 @@ pnpm-lock.yaml
 scripts/
 ```
 
+Do not create temporary generators at the theme root. Put an unavoidable
+helper under the already ignored `scripts/` directory, but prefer direct
+`write_file`/`edit_file` calls. Never run package-manager remove commands to
+delete a helper; they mutate package dependencies rather than deleting a
+project file.
+
 ## 6. Validate before reporting
 
 Hash all 24 files in one `file_sha256` call and store the exact raw-byte digests
@@ -184,8 +202,9 @@ Do not execute a downloaded validator or require Node, Python, packages, or
 other global tooling. The Mist capability reads only project-scoped,
 descriptor-held bytes and checks freshness, bounded file sizes,
 file/path/hash/size/dimension consistency, sidecar receipts, real HTML, all six
-viewports, required video attributes, and coverage of every URL exposed by the
-rendered sidecars. Fix every error and call it again.
+viewports, complete non-truncated computed section evidence, required video
+attributes, and coverage of every URL exposed by the rendered sidecars. Fix
+every error and call it again.
 `SOURCE_INVENTORY_VALIDATION: pass` is required.
 
 The read-only QA reviewer must independently:
