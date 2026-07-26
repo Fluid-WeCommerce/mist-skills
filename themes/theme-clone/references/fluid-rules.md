@@ -54,9 +54,13 @@ These are rendered by `layouts/theme.liquid` and appear on every page. Only modi
 
 | Type                          | Handling                                                                                                                    |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Self-hosted (`.mp4`, `.webm`) | Upload with the `dam_upload` tool (pass `create_media=true` for Media library visibility). Use `asset.default_variant_url`. |
+| Self-hosted (`.mp4`, `.webm`) | Upload the public source directly with `dam_upload(url=..., create_media=true)`. If rejected for size, fetch to the sandbox, run `compress_media`, and retry with `dam_upload(path=...)`. Use `asset.default_variant_url`. |
 | YouTube/Vimeo embeds          | Keep original embed URLs. Use a supported `url` setting or the canonical Fluid Media block.                                 |
 | Background videos             | Use `autoplay`, `loop`, `muted`, `playsinline` attributes. Include poster image fallback.                                   |
+
+Rendered HTML can expose different desktop and mobile `<source>` URLs. Record
+and upload both when present. Replacing a required source video with a still
+image, poster, gradient, or flat color is a launch-blocking fidelity defect.
 
 ---
 

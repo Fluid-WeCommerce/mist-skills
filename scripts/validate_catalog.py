@@ -199,6 +199,22 @@ def validate_flagship_contracts() -> None:
         "onboarding brand API reference",
     )
 
+    theme_clone_skill = (ROOT / "themes/theme-clone/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    require_fragments(
+        theme_clone_skill,
+        (
+            'document.querySelectorAll("img,video,video source")',
+            "different desktop/mobile video sources",
+            "`dam_upload` with its public `url`",
+            "`compress_media`",
+            "`priority_media`",
+            "video is a hard failure",
+        ),
+        "theme-clone priority media contract",
+    )
+
     workflow = load_json(FLAGSHIP_WORKFLOW_PATH)
     if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
         raise CatalogValidationError("flagship workflow steps must be an array")
@@ -208,6 +224,45 @@ def validate_flagship_contracts() -> None:
         for step in workflow["steps"]
         if isinstance(step, dict) and isinstance(step.get("id"), str)
     }
+    theme_discovery = steps.get("theme-scrape-inventory")
+    if not isinstance(theme_discovery, dict):
+        raise CatalogValidationError(
+            "flagship workflow: theme-scrape-inventory step is missing"
+        )
+    theme_discovery_acceptance = json.dumps(
+        theme_discovery.get("acceptance", [])
+    )
+    require_fragments(
+        theme_discovery_acceptance,
+        (
+            "priority_media",
+            "dam_upload(url=..., create_media=true)",
+            "compress_media",
+            "video content type",
+        ),
+        "flagship workflow theme discovery",
+    )
+
+    for step_id in (
+        "theme-homepage",
+        "theme-product-collection",
+        "theme-content-pages-push",
+    ):
+        theme_step = steps.get(step_id)
+        if not isinstance(theme_step, dict):
+            raise CatalogValidationError(
+                f"flagship workflow: {step_id} step is missing"
+            )
+        require_fragments(
+            json.dumps(theme_step.get("acceptance", [])),
+            (
+                "priority",
+                "video",
+                "hard failure" if step_id == "theme-homepage" else "HARD-FAIL BAR",
+            ),
+            f"flagship workflow {step_id}",
+        )
+
     products_import = steps.get("products-import")
     if not isinstance(products_import, dict):
         raise CatalogValidationError("flagship workflow: products-import step is missing")
