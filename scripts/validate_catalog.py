@@ -253,10 +253,11 @@ def validate_flagship_contracts() -> None:
     theme_discovery_acceptance = json.dumps(
         theme_discovery.get("acceptance", [])
     )
-    if theme_discovery.get("model") != "openai/gpt-5.6-sol":
+    if theme_discovery.get("model") != "google/gemini-3.6-flash":
         raise CatalogValidationError(
-            "flagship workflow: theme discovery must use openai/gpt-5.6-sol "
-            "after the Gemini inventory benchmark produced inferred product ids"
+            "flagship workflow: bounded source discovery must use "
+            "google/gemini-3.6-flash; catalog indexing is now a separate "
+            "server-paginated step, so this gate cannot infer product ids"
         )
     require_fragments(
         theme_discovery_acceptance,
