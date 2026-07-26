@@ -268,6 +268,10 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
     combinations and avoids a risky repair. If a repair is needed, re-read the
     v202604 PATCH schema and existing nested IDs before writing; never assume a
     legacy PATCH limitation still applies.
+  - Preserve an empty source description as `""` or omit it; do not turn it
+    into `null`. The live create contract rejects `null` with
+    `422 product.description must be a string` despite nullable-looking
+    generated/docs-side shapes.
 - **DAM upload supports a local file or a remote URL.** Use `dam_upload` for a
   file already in the sandbox, or `fluid dam upload --url <SOURCE_URL>` for a
   remote source. The underlying `POST https://upload.fluid.app/upload` accepts

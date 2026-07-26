@@ -137,6 +137,12 @@ source-non-subscription product, a complete destination re-read of
 `has_subscription_plans`, and repair by returned join ID rather than disabling
 the company-wide plan.
 
+The same import found a smaller schema contradiction: SKIMS Gift Box has a
+genuinely empty source description. Coercing that empty string to `null`
+returned `422 product.description must be a string`; the retry-safe importer
+now preserves `""` instead. Revision `2026-07-25.20` records that live behavior
+instead of trusting the nullable-looking generated contract.
+
 ### Restart and UI recovery
 
 - A deliberate app restart preserved the run, completed steps, diagnostics, and
