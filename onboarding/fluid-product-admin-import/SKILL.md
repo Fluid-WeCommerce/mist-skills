@@ -65,12 +65,29 @@ Discovery is a union:
 2. Exhaust structured catalog endpoints when available. Follow documented
    cursors or pages until their real terminator; do not stop at the first
    successful page.
-3. Exhaust every collection/category pagination and collect product links.
+3. Exhaust every collection/category pagination and collect product links. A
+   collection whose bounded retries ended in a network/fetch error is
+   unresolved, not exhausted; retry it independently and fail the manifest
+   gate if it still has no content-based terminal page/cursor.
 4. Fetch every unique PDP. Use an advertised `.md` twin for copy and simple
-   facts, but recover images, JSON-LD, options, and variants from rendered HTML,
-   sitemap images, or structured APIs.
+   facts, but recover images, JSON-LD, embedded application state, options, and
+   variants from rendered HTML, sitemap images, or structured APIs. Capture the
+   complete product gallery from JSON-LD, embedded state,
+   `src`/`srcset`/`data-src`, and gallery thumbnails while excluding unrelated
+   recommendation and chrome images. One sitemap or Open Graph image is not a
+   complete gallery when the rendered PDP exposes more.
 5. Reconcile all sets. Every discovered product URL becomes one live manifest
    product or one evidence-backed exclusion.
+
+Do not synthesize variant combinations as a Cartesian product unless the
+source explicitly proves every combination exists. Before finalizing, re-open
+a deterministic sample of at least 10 PDPs that includes the
+flagship/most-complex product, most-expensive product, one single-variant
+product, and multiple multi-variant products. The manifest's exact gallery
+URLs/count and real variant options/count must match the rendered or embedded
+source evidence for every sample. Store that compact `fidelity_sample` plus the
+whole-manifest image-count distribution in the manifest and step output; a
+mismatch is repair work, not a note.
 
 Required shape:
 
@@ -82,7 +99,8 @@ Required shape:
     "sitemap_urls": 343,
     "api_urls": 0,
     "collection_urls": 324,
-    "unique_product_urls": 343
+    "unique_product_urls": 343,
+    "collection_errors": 0
   },
   "products": [
     {
@@ -107,6 +125,20 @@ Required shape:
         }
       ],
       "evidence": ["sitemap", "rendered-html", "json-ld"]
+    }
+  ],
+  "image_count_distribution": [
+    { "image_count": 1, "product_count": 12 },
+    { "image_count": 6, "product_count": 331 }
+  ],
+  "fidelity_sample": [
+    {
+      "source_url": "https://example.com/products/source-product-123",
+      "manifest_image_count": 6,
+      "source_image_count": 6,
+      "manifest_variant_count": 2,
+      "source_variant_count": 2,
+      "status": "match"
     }
   ],
   "excluded": [
