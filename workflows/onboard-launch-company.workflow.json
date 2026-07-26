@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-26.37",
+  "revision": "2026-07-26.38",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog, prove the home golden route, prove the canonical shop/list route, then build dependent detail/content surfaces and finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so source HTML, rendered DOM, durable pixels, and interaction evidence—not one model's self-assessment—decide whether the run passes.",
@@ -210,7 +210,7 @@
       "maxReworkRounds": 3,
       "recovery": { "mode": "manual" },
       "acceptance": [
-        "DISCOVERY-ONLY RUNTIME BOUNDARY: this step does not build, serve, or sync the theme. The worker and read-only QA reviewer did not call start_preview, preview_state, screenshot_preview, read_local_server_logs, publish, or any local theme-dev/sync command. Managed source crawl screenshots are the only required pixels in this step. The local preview may still be the generic scaffold, and future built_path routes/selectors are plans verified in later build steps; do not fail because those routes do not yet resolve or because the scaffold does not match the source.",
+        "DISCOVERY-ONLY GRADING BOUNDARY: this step does not build the theme, but worker and QA agents may use theme dev for fresh-machine/runtime verification. Any dev server was started only through `start_preview` so Mist owns its port and lifecycle, and `.fluidignore` was made upload-safe before startup; never use bounded `run_cli` for a long-lived theme server and never publish in this step. If theme dev was used, `preview_state`, server logs, and browser console were checked. The local preview may still be the generic scaffold, so its visual mismatch and unresolved future built_path routes are not source-fidelity failures; managed source crawl screenshots remain the visual truth until build steps run.",
         "`clone-manifest.json` exists at the theme project root and contains a page manifest, home + shop + representative-PDP section inventories with concrete computed style values, header/footer inventory, brand tokens (colors + fonts with licensing notes), and a complete source-media inventory — verify by READING the file, not the worker's claim.",
         "The theme root `.fluidignore` preserves its prior rules and contains exact entries for `clone-manifest.json`, `fluid-catalog-index.json`, `.mist-desktop/source-baselines/`, `baselines/`, `package.json`, `pnpm-lock.yaml`, and `scripts/`, so a later theme dev watcher cannot upload local discovery/visual-QA, package-manager, or helper-script artifacts as Fluid theme resources.",
         "The manifest has `visual_routes.home`, `visual_routes.shop`, and `visual_routes.pdp`. Each records source_url, built_path, and an ordered landmark list mapping every visible priority source section selector to a stable built section id/selector.",
