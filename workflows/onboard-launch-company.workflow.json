@@ -393,7 +393,7 @@
             "tool": "read_preview_dom"
           },
           {
-            "tool": "view_image",
+            "tool": "view_project_image",
             "minSuccessfulCalls": 4,
             "distinctBy": ["path"]
           }
