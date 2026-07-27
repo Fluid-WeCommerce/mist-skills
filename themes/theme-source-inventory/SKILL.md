@@ -90,6 +90,32 @@ Write `clone-manifest.json` with:
   path, ordered landmark mappings, and complete desktop/mobile evidence cells;
 - `priority_media.items`.
 
+Each `visual_routes.<route>` must use this structure:
+
+```json
+{
+  "source_url": "https://source.example/route",
+  "built_path": "/future-fluid-route",
+  "landmarks": [
+    {
+      "source_anchor": "#exact-sidecar-section-anchor",
+      "built_section": "#stable-future-fluid-section-id"
+    }
+  ],
+  "source_evidence": {
+    "desktop": {},
+    "mobile": {}
+  }
+}
+```
+
+Create exactly one ordered landmark mapping for every entry in that route's
+desktop `sidecar.rendered.sections`. `source_anchor` is the exact signed
+section `anchor`, not a guessed tag/class or a generic `main`. Do not replace
+the section list with the much larger `rendered.landmarks` accessibility/link
+list. `built_section` is the stable section id/selector later build steps must
+implement.
+
 Use this exact shape for each desktop/mobile evidence cell. Copy values from
 the crawl-returned page-evidence sidecar and the file receipts; do not invent
 them. The screenshot receipt is the cell itself—do not nest it under a
@@ -146,6 +172,32 @@ display/grid value, or selector when the signed sidecar supplies it. If a
 needed section is absent or `sectionsTruncated` is true, recapture; a plausible
 worker-authored value is not measured evidence.
 
+Every `section_inventory.<route>[i]` must retain, at minimum, this exact signed
+subset from the route's desktop sidecar:
+
+```json
+{
+  "sidecar_path": ".mist-desktop/source-baselines/<capture>.page-evidence.json",
+  "anchor": "#exact-sidecar-section-anchor",
+  "rect": {},
+  "style": {},
+  "heading": null,
+  "body": null,
+  "action": null
+}
+```
+
+Copy `rect`, `style`, `heading`, `body`, and `action` byte-for-byte as JSON
+values. The array length and order must equal `sidecar.rendered.sections`.
+Semantic `name`/`type` fields may be added, but never replace the signed fields.
+
+`hero_copy.headline`, `.subheadline`, and `.primary_cta` must be verbatim text
+present in both retained Home desktop Markdown and HTML after whitespace
+normalization. A genuinely absent field is `null` plus a non-empty
+`<field>_reason`. Point `hero_copy.evidence_sources.markdown`, `.html`, and
+`.screenshot` to the exact retained Home desktop paths; labels such as
+`"verified in source"` are not evidence.
+
 Build `priority_media.items` from the union of all six rendered sidecars plus
 the retained HTML/CSS—not from a visual sample. Include every visible:
 
@@ -163,6 +215,47 @@ their selected source differs. Do not collapse an entire rail into one item or
 discard responsive candidates; keep candidates on their owning item so later
 DAM delivery can select one high-quality source without uploading every
 transform as a separate asset.
+
+Use this minimum per-element shape:
+
+```json
+{
+  "route": "home",
+  "landmark": "#exact-containing-sidecar-section-anchor",
+  "viewport_role": "desktop",
+  "media_kind": "image",
+  "source_url": "https://source.example/current.webp",
+  "source_candidates": [
+    "https://source.example/current.webp",
+    "https://source.example/large.webp"
+  ],
+  "source_product_identity": null
+}
+```
+
+Use `desktop` or `mobile`, never `both`. Repeated elements with the same URL
+remain repeated items, and unmatched extra manifest items are forbidden. The
+manifest item count must equal the total `rendered.media` element count across
+all six sidecars. Assign `landmark` to the smallest signed section whose
+rectangle contains the media element's center. For video, also add:
+
+```json
+{
+  "poster": "https://source.example/poster.webp",
+  "video_playback_attributes": {
+    "autoplay": true,
+    "loop": true,
+    "muted": true,
+    "playsinline": true,
+    "controls": false
+  }
+}
+```
+
+Copy every playback boolean from that exact rendered media element. Do not
+default attributes, infer them from a file extension, or add an HTML-regex media
+item with invented playback values. If retained HTML exposes media that the
+sidecar omitted, recapture so the rendered evidence is complete.
 
 Every `source_url` and `source_candidates[]` value must be one bare absolute
 HTTP(S) URL. Split `srcset` strings into individual URLs and remove width/density
@@ -183,11 +276,11 @@ pnpm-lock.yaml
 scripts/
 ```
 
-Do not create temporary generators at the theme root. Put an unavoidable
-helper under the already ignored `scripts/` directory, but prefer direct
-`write_file`/`edit_file` calls. Never run package-manager remove commands to
-delete a helper; they mutate package dependencies rather than deleting a
-project file.
+Do not create a `package.json`, temporary generator, or runtime dependency to
+assemble the manifest. Do not call `run_cli`, `pnpm`, `npm`, Node, Python, or a
+downloaded validator for this transformation. Use project file tools and the
+first-class Mist validator. Never run package-manager remove commands to delete
+a helper; they mutate package dependencies rather than deleting a project file.
 
 ## 6. Validate before reporting
 
@@ -202,9 +295,10 @@ Do not execute a downloaded validator or require Node, Python, packages, or
 other global tooling. The Mist capability reads only project-scoped,
 descriptor-held bytes and checks freshness, bounded file sizes,
 file/path/hash/size/dimension consistency, sidecar receipts, real HTML, all six
-viewports, complete non-truncated computed section evidence, required video
-attributes, and coverage of every URL exposed by the rendered sidecars. Fix
-every error and call it again.
+viewports, exact signed section anchors/geometry/styles, source-backed hero
+copy, one manifest entry per rendered media element and viewport, matching
+video attributes, and coverage of every URL exposed by the rendered sidecars.
+Fix every error and call it again.
 `SOURCE_INVENTORY_VALIDATION: pass` is required.
 
 The read-only QA reviewer must independently:
