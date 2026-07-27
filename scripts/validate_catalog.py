@@ -230,6 +230,8 @@ def validate_flagship_contracts() -> None:
             "30 minutes after it",
             "union of all six rendered sidecars",
             "build_theme_source_inventory",
+            "documents.html",
+            "path/SHA-256/byte-length receipts",
             "`SOURCE_INVENTORY_BUILD: written`",
             "`SOURCE_INVENTORY_VALIDATION: pass`",
             "validate_theme_source_inventory",

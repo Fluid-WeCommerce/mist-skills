@@ -67,10 +67,14 @@ Repeat with the mobile viewport. Keep the exact crawl-returned local paths for:
 - full-page screenshot: visual order, geometry, crop, and responsive behavior;
 - page-evidence sidecar: rendered text, landmarks, bounded section anchors +
   computed typography/layout styles, media, viewport, route, and screenshot
-  receipt.
+  receipt, plus Mist-generated `documents.html` and `documents.markdown`
+  path/SHA-256/byte-length receipts for the exact companion files.
 
 Do not reconstruct any file from chat output. A successful screenshot without
 all three companion files is an incomplete cell.
+Do not reuse a legacy sidecar that lacks either signed document receipt:
+recapture that viewport. Matching basenames alone are not evidence that HTML or
+Markdown came from the same crawl.
 
 Inspect every screenshot with `view_project_image`. Open every HTML file with
 `read_file`; use targeted later offsets or searches when the needed copy/media
@@ -150,13 +154,17 @@ are complete, call Mist's local-only deterministic builder exactly once:
 ```
 
 The tool name is `build_theme_source_inventory`. It reads descriptor-held
-bytes, verifies the six viewports and freshness boundary, hashes all 24 files,
-copies every signed desktop section exactly, assigns one future mapping per
-signed section, and emits one media item per rendered element and viewport. It
-atomically replaces only `evidence_run_started_at`, `section_inventory`,
-`visual_routes`, `priority_media`, and hero evidence paths; it preserves
-`page_manifest`, `brand_tokens`, and unrelated downstream fields. If it fails,
-repair the named path/capture or recrawl the incomplete cell and call it again.
+bytes, verifies each screenshot/HTML/Markdown file against the Mist-generated
+path/SHA-256/byte-length receipts inside its sidecar, verifies the six
+viewports and freshness boundary, copies every signed desktop section exactly,
+assigns one future mapping per signed section, and emits one media item per
+rendered element and viewport. It atomically replaces only
+`evidence_run_started_at`, `section_inventory`, `visual_routes`,
+`priority_media`, and hero evidence paths; it preserves `page_manifest`,
+`brand_tokens`, and unrelated downstream fields. If it reports a missing
+signed document receipt, recapture that cell with the current Mist build; do
+not rename/copy an older document into place. For other failures, repair the
+named path/capture or recrawl the incomplete cell and call it again.
 Never replace it with `write_file`/`edit_file` transcription of section,
 receipt, landmark, or media arrays. Require
 `SOURCE_INVENTORY_BUILD: written` before continuing.
