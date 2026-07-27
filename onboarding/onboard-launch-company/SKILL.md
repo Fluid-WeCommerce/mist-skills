@@ -276,6 +276,10 @@ These are non-obvious and cost real time when rediscovered. Bake them in.
     integer from `GET /api/settings/company_countries` →
     `company_countries[].country.id`; never hard-code an example country's ID.
     This is the classic cause of a catalog with correct titles and no prices.
+    Before the first product probe, require that exact source market to exist
+    with the source currency. Do not reuse a different same-currency country,
+    and never use the company-country row's own `id`. A CAD manifest written
+    against a US/USD-only company silently becomes USD.
   - `images_attributes` entries use **`image_url`**, not `url` — `{"url": …}`
     422s `image_url is missing`, which is how a whole catalog ends up on Fluid's
     grey placeholder.

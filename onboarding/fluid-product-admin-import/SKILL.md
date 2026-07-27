@@ -207,16 +207,25 @@ On restart, verify checkpointed records and resume the remaining identities.
 
 Before product creates:
 
-1. `GET /api/settings/company_countries`
-2. choose the intended active company country from caller/source context;
-3. use `company_countries[].country.id` as integer `country_id`;
-4. retain the source currency and confirm it agrees with the selected market;
-5. paginate `GET /api/v202604/company/products?page[limit]=100` to understand
+1. prove the source manifest has one common currency and determine its market
+   ISO from source/business localization evidence—never from currency alone;
+2. `GET /api/settings/company_countries`;
+3. require an entry for that exact market whose `currency` matches the source;
+   a different country that uses the same currency is not equivalent;
+4. when an onboarding/import scope authorizes store setup, create a missing
+   exact market through documented `POST /api/settings/company_countries`
+   before any product probe; otherwise stop and request that prerequisite;
+5. use `company_countries[].country.id` as integer `country_id`, never the
+   company-country row's own `id`;
+6. paginate `GET /api/v202604/company/products?page[limit]=100` to understand
    existing destination state. Follow each opaque
    `meta.pagination.next_cursor` via `page[cursor]` until it is `null`; this
    surface does not promise a `total_count`.
 
-Do not substitute `country_iso` for `country_id`.
+Do not substitute `country_iso` or the company-country row id for `country_id`.
+Do not create a one-product contract probe until the market/currency preflight
+passes; a CAD numeric price written against a US/USD company country is stored
+as USD and is not a harmless probe.
 
 ## 4. Move source images into Fluid DAM
 
@@ -296,8 +305,10 @@ Contract:
 - Every variant country includes integer `country_id`, `active`, exact decimal
   string `price`, and `compare_price` when present. Do not send
   `currency_code`: the selected country determines currency on this contract.
-  Verify the response's country-relative `pricing.currency_code` matches the
-  source currency.
+  Verify the exact returned target-country row and its configured
+  company-country currency against the source. When multiple markets exist,
+  top-level `pricing.currency_code` may describe a different/default market and
+  is not sufficient evidence by itself.
 - Preserve source description, gallery order, option names/values, and exact
   prices.
 - Omit `description` entirely when the source description is genuinely blank.
@@ -380,7 +391,9 @@ The product import passes only when:
 - unresolved source and destination counts are zero;
 - coverage is exactly 100%;
 - destination products resolve as the documented live lifecycle
-  (`status: "active"` on the raw v202604 resource) and `active: true`;
+  (`active: true` plus read `status: "active"` or the presentation label
+  `"published"`); writes always used ProductWrite `status: "active"` and never
+  sent `"published"`;
 - exact price and currency match;
 - source option axes and variant counts match;
 - every available source image is represented by a resolving Fluid DAM URL;
