@@ -161,7 +161,13 @@ assigns one future mapping per signed section, and emits one media item per
 rendered element and viewport. It atomically replaces only
 `evidence_run_started_at`, `section_inventory`, `visual_routes`,
 `priority_media`, and hero evidence paths; it preserves `page_manifest`,
-`brand_tokens`, and unrelated downstream fields. If it reports a missing
+`brand_tokens`, and unrelated downstream fields after verifying that
+`page_manifest` contains exactly one matching Home, Shop, and PDP entry.
+The Home `built_path` is always `/`; all three built paths are normalized,
+local, distinct, and must exactly match the corresponding builder input and
+signed crawl source URL. Fix a stale page manifest before retrying—never carry
+`/home` as the Home preview route or let `page_manifest` disagree with
+`visual_routes`. If the tool reports a missing
 signed document receipt, recapture that cell with the current Mist build; do
 not rename/copy an older document into place. For other failures, repair the
 named path/capture or recrawl the incomplete cell and call it again.
