@@ -93,6 +93,20 @@ At minimum:
 
 Static screenshots cannot prove these states.
 
+## Keep media delivery bounded
+
+Use the verified delivery URLs recorded in `clone-manifest.json` for homepage
+media. Never embed binary image or video bytes as `data:`/base64 in Liquid,
+CSS, JSON, or JavaScript to bypass a broken asset URL. That fallback inflates
+theme resources, makes every theme-dev update expensive, and hides the actual
+delivery failure.
+
+If a required delivery URL does not render, diagnose the DAM response, URL
+escaping, theme markup, and browser network failure. Repair the delivery path
+or leave the media as a named major; do not convert the binary into source
+code. Small authored SVG/CSS interface icons are not media fallbacks and remain
+allowed.
+
 ## Materialize the shared audit
 
 This page skill intentionally does not declare another skill's script as its
@@ -107,12 +121,17 @@ restart the broad theme-clone workflow or weaken this page's narrower gate.
 
 In addition to the shared gate:
 
-- signed `compare_preview_to_source` receipts prove the exact `/` source/local
-  pair at 1440 × 900 and 390 × 844 after the final home code change, bind each
-  source screenshot to its rendered-evidence sidecar, and report exact,
-  non-truncated ordered copy
+- signed `compare_preview_to_source` receipts prove the exact source-home to
+  local `/` pair at 1440 × 900 and 390 × 844 after the final home code change,
+  bind each source screenshot to its rendered-evidence sidecar, and report
+  exact, non-truncated ordered copy. If the signed source final URL redirects or
+  localizes to another pathname (for example `/en-us`), pass that pathname as
+  `source_route` while keeping `path:"/"`; source and Fluid pathnames are a
+  deliberate mapping, not required to be identical
 - every homepage section is present once and ordered correctly
 - hero and all below-the-fold priority media match at both widths
+- no touched Liquid, CSS, JSON, or JavaScript file contains an inline binary
+  `data:`/base64 media fallback
 - all exact homepage wording is reconciled from source HTML to local DOM
 - header/navigation/footer are visually and interactively valid
 - no base-theme marketing filler remains
