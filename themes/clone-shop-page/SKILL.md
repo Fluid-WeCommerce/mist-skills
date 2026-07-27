@@ -120,7 +120,10 @@ In addition to the shared gate:
 - signed `compare_preview_to_source` receipts prove the selected shop
   source/local pair at 1440 × 900 and 390 × 844 after the final shop code
   change, bind each source screenshot to its rendered-evidence sidecar, and
-  report exact, non-truncated ordered copy
+  report exact, non-truncated ordered copy. When the signed source final
+  pathname differs from the Fluid `built_path`, pass it as `source_route` and
+  keep `path` set to the Fluid route; never rewrite either side just to make
+  their platform-specific pathnames equal
 - the selected source route is truly the canonical shop/all-products list
 - exact source wording and visible card fields match
 - the complete expected Fluid product set is reachable through the page's
