@@ -154,13 +154,29 @@
       ]
     },
     {
+      "slug": "themes/clone-page-to-liquid",
+      "name": "Clone Page to Liquid",
+      "description": "Universal visual-copy engine for one source URL and one declared Fluid Liquid route: durable pixels/DOM, responsive implementation, managed preview, comparison, refinement, and honest evidence. Page-type skills supply semantics.",
+      "category": "themes",
+      "icon": "scan-eye",
+      "path": "themes/clone-page-to-liquid/SKILL.md",
+      "updated_at": "2026-07-27T04:48:39Z",
+      "references": [
+        "themes/page-clone/references/pixel-perfect-page.md",
+        "themes/theme-clone/references/fluid-rules.md",
+        "themes/theme-clone/references/page-templates.md",
+        "themes/theme-clone/references/section-template.md",
+        "themes/theme-clone/references/template-variables.md"
+      ]
+    },
+    {
       "slug": "themes/clone-home-page",
       "name": "Clone Home Page",
       "description": "Reconstruct one storefront homepage in a Fluid theme with exact copy, responsive images and video, navigation states, and independently verifiable desktop/mobile evidence.",
       "category": "themes",
       "icon": "house",
       "path": "themes/clone-home-page/SKILL.md",
-      "updated_at": "2026-07-27T01:48:41Z",
+      "updated_at": "2026-07-27T04:48:39Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -173,17 +189,62 @@
     {
       "slug": "themes/clone-shop-page",
       "name": "Clone Shop Page",
-      "description": "Reconstruct a storefront's canonical shop/all-products listing in Fluid with real product cards, filtering, sorting, search, pagination, responsive behavior, and exact source evidence.",
+      "description": "Reconstruct a storefront's canonical shop/all-products listing in Fluid with a bounded real preview-data set, filtering, sorting, search, pagination, responsive behavior, and source evidence.",
       "category": "themes",
       "icon": "shopping-bag",
       "path": "themes/clone-shop-page/SKILL.md",
-      "updated_at": "2026-07-27T01:48:41Z",
+      "updated_at": "2026-07-27T04:48:39Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
         "themes/theme-clone/references/page-templates.md",
         "themes/theme-clone/references/schema-settings-reference.md",
         "themes/theme-clone/references/section-template.md",
+        "themes/theme-clone/references/template-variables.md"
+      ]
+    },
+    {
+      "slug": "themes/clone-product-page",
+      "name": "Clone Product Page",
+      "description": "Recreate one source PDP as a Fluid Liquid product template using one source-backed preview product, canonical product data sections, gallery/options/price states, responsive behavior, and visual evidence.",
+      "category": "themes",
+      "icon": "package",
+      "path": "themes/clone-product-page/SKILL.md",
+      "updated_at": "2026-07-27T04:48:39Z",
+      "references": [
+        "themes/page-clone/references/pixel-perfect-page.md",
+        "themes/theme-clone/references/fluid-rules.md",
+        "themes/theme-clone/references/page-templates.md",
+        "themes/theme-clone/references/template-variables.md"
+      ]
+    },
+    {
+      "slug": "themes/clone-category-page",
+      "name": "Clone Category Page",
+      "description": "Recreate a source category index or detail page as Fluid Liquid with bounded real preview data, category-specific templates, responsive list behavior, and visual evidence.",
+      "category": "themes",
+      "icon": "folders",
+      "path": "themes/clone-category-page/SKILL.md",
+      "updated_at": "2026-07-27T04:48:39Z",
+      "references": [
+        "themes/page-clone/references/pixel-perfect-page.md",
+        "themes/theme-clone/references/fluid-rules.md",
+        "themes/theme-clone/references/page-templates.md",
+        "themes/theme-clone/references/template-variables.md"
+      ]
+    },
+    {
+      "slug": "themes/clone-collection-page",
+      "name": "Clone Collection Page",
+      "description": "Recreate a source collection index or detail page as Fluid Liquid with bounded real preview data, collection-specific templates, responsive merchandising behavior, and visual evidence.",
+      "category": "themes",
+      "icon": "layout-grid",
+      "path": "themes/clone-collection-page/SKILL.md",
+      "updated_at": "2026-07-27T04:48:39Z",
+      "references": [
+        "themes/page-clone/references/pixel-perfect-page.md",
+        "themes/theme-clone/references/fluid-rules.md",
+        "themes/theme-clone/references/page-templates.md",
         "themes/theme-clone/references/template-variables.md"
       ]
     },
@@ -333,7 +394,7 @@
     {
       "slug": "onboard-launch-company",
       "path": "workflows/onboard-launch-company.workflow.json",
-      "updated_at": "2026-07-27T01:48:41Z"
+      "updated_at": "2026-07-27T04:53:55Z"
     },
     {
       "slug": "open-country",

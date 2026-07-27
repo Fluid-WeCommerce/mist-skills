@@ -11,6 +11,10 @@ description: >-
 Own one canonical product-list route: the source shop/all-products index mapped
 to the equivalent Fluid local route.
 
+Call `run_skill("themes/clone-page-to-liquid")` first and follow its universal
+visual-copy loop. This skill supplies only Shop/list semantics, preview data,
+and required interactions.
+
 Follow
 [`../page-clone/references/pixel-perfect-page.md`](../page-clone/references/pixel-perfect-page.md)
 in full. This file adds shop/PLP-specific requirements.
@@ -56,20 +60,23 @@ Capture exact desktop/mobile HTML and full-page screenshots. Record:
 Inventory at least three representative card states when the source exposes
 them: ordinary, discounted/badged, and multi-option or unavailable.
 
-## Fluid data mapping
+## Minimum renderable Fluid data
 
-The page must render actual Fluid resources:
+The page must render actual Fluid resources, but full-catalog migration is not
+part of this page-copy skill.
 
-- enumerate the destination products through documented v202604 pagination
-- use raw `status == "active"` and `active == true`
-- use DAM-backed product imagery
-- keep price, country currency, inventory, badges, and links dynamic
-- map collection/category membership from real IDs
-- use canonical credit-prefixed detail routes returned by Fluid
+- Reuse existing active products first.
+- If none exist, create/import at most three source-backed preview products
+  through documented v202604 contracts after verifying market/currency.
+- Prefer states that exercise ordinary, discounted/badged, and multi-option or
+  unavailable cards when the source exposes them.
+- Record every preview-resource ID so later catalog import can reconcile it.
+- Use DAM-backed imagery and canonical returned Fluid routes.
+- Keep price, country currency, inventory, badges, and links dynamic.
 
 Never hard-code a handful of source product cards to make the screenshot look
-right. If the import is incomplete, fail with the exact missing resource
-evidence instead of hiding it in the theme.
+right. Do not start, await, or grade a complete product import from this page
+skill. Catalog completeness belongs to data/launch QA.
 
 Filtering, sorting, search, and pagination must use the canonical Fluid
 capability available in the current scaffold/API. If a source behavior has no
@@ -126,12 +133,14 @@ In addition to the shared gate:
   their platform-specific pathnames equal
 - the selected source route is truly the canonical shop/all-products list
 - exact source wording and visible card fields match
-- the complete expected Fluid product set is reachable through the page's
-  pagination model
+- the bounded preview set renders through the real list/card data path, and the
+  template's pagination model remains dynamic for a later full catalog
 - cards use real product data and correct canonical routes
 - filters/sort/search/pagination are functional or the exact unsupported gap is
   a declared major
 - representative product-card states match at desktop and mobile
 - reusable list contracts are recorded for dependent page skills
 
-Do not fan out collection/category/PDP work until this page passes.
+Return `needs_adjudication` when evidence is sound but an unsupported source
+filter/search/pagination behavior needs a product decision. Do not block
+unrelated page skills on full-catalog completeness.

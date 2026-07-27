@@ -11,6 +11,9 @@ description: >-
 Own exactly one golden route: the canonical source homepage mapped to the
 Fluid theme home route.
 
+Call `run_skill("themes/clone-page-to-liquid")` first and follow its universal
+visual-copy loop. This skill supplies only Home semantics and its page contract.
+
 Follow
 [`../page-clone/references/pixel-perfect-page.md`](../page-clone/references/pixel-perfect-page.md)
 in full. This file adds homepage-specific requirements.
@@ -155,4 +158,5 @@ In addition to the shared gate:
 - no base-theme marketing filler remains
 - `PAGE_OUTPUT.shell_contract` is complete enough for later page workers
 
-Do not proceed to shop or fan-out page work until this page passes.
+Return an honest `needs_adjudication` when the universal evidence is sound but
+a Home-specific responsive/dynamic judgment remains. Do not label that a pass.

@@ -2,59 +2,77 @@
 
 ## Decision
 
-Keep **Copy Theme** as the user-facing outcome and final acceptance boundary.
-Do not use it as one agent-sized implementation task.
+Keep **Copy Theme** as the user-facing outcome and final acceptance boundary,
+but do not use it as one agent-sized implementation task or one rigid
+site-shape contract.
 
-Execute the theme track as a dependency graph of page-scoped skills that all
-inherit one strict pixel-perfect page contract:
+Use a two-layer skill architecture:
+
+1. `themes/clone-page-to-liquid` owns the universal visual-copy mechanics for
+   one source route and one Fluid route: source evidence, Liquid
+   implementation, managed preview, DOM/log inspection, visual comparison,
+   refinement, and evidence output.
+2. Thin page-type skills own semantics: route classification, canonical
+   template family, minimum real Fluid resources, required interactions, and
+   page-specific judgment. The first set is Home, Shop, Product, Category, and
+   Collection. Blog, Post, Content, Cart, Search, 404, and other system-page
+   skills should follow from real traces.
+
+The workflow composes those page skills as a dependency graph:
 
 ```text
-source/data evidence
+brand + route discovery
         |
 global tokens + shell
         |
-home golden route
+Home specialist -> universal visual core
         |
-shop/all-products golden route
+Shop specialist -> universal visual core
         |
-        +----------------+----------------+----------------+
-        |                |                |                |
-catalog lists       product detail   editorial pages   system states
-        |                |                |                |
-        +----------------+----------------+----------------+
-                         |
-                link + regression gate
+PDP specialist -> universal visual core
+        |
+Collection specialist -> universal visual core
+        |
+content/system specialists
+        |
+link + regression gate
 ```
 
 The home route is first because it establishes typography, brand tokens,
 announcement/header/navigation/footer, container widths, breakpoints, and the
 primary editorial section language.
 
-The shop route is a second hard gate, not just another fan-out task. Home does
-not prove dynamic product cards, catalog completeness, canonical PDP links,
-filters, sorting, search, pagination, mobile drawers, or empty/loading/error
-states. Parallel page work starts only after both home and shop pass.
+The Shop route is a second semantic gate, not just another Home-like page.
+Home does not prove dynamic product cards, canonical PDP links, filters,
+sorting, search, pagination, mobile drawers, or empty/loading/error states.
+It also does not make catalog completeness a prerequisite for visual work.
+Shop and PDP reuse existing Fluid data or reconcile a bounded source-backed
+preview set; complete catalog migration stays on the separate data track.
 
 ## Execution unit
 
 One worker owns one source route mapped to one Fluid route. It must return the
-shared `PAGE_OUTPUT` contract with durable source/local evidence, exact copy
-hashes, media readiness, interaction proof, majors/minors, and an honest
-pass/needs-review/cap-reached result.
+shared `PAGE_OUTPUT` contract with durable source/local evidence, classified
+stable/resource/dynamic/external landmarks, copy hashes, media readiness,
+interaction proof, material deltas, and an honest
+pass/needs_adjudication/blocked result.
 
 The shared contract lives in
 `themes/page-clone/references/pixel-perfect-page.md`. Page-archetype skills may
-add requirements but may not weaken it.
+add semantic requirements but may not weaken its evidence floor.
 
-The first two concrete skills are:
+The first concrete skills are:
 
+- `themes/clone-page-to-liquid`
 - `themes/clone-home-page`
 - `themes/clone-shop-page`
+- `themes/clone-product-page`
+- `themes/clone-category-page`
+- `themes/clone-collection-page`
 
-Do not author every remaining archetype from theory before these two
-generalize. Forward-test them across materially different storefronts, record
-recurring failures, then extract collection/category/blog/PDP/post/system-page
-rules from actual traces.
+Continue forward-testing across materially different storefronts. Add or
+change specialist rules only when the evidence shows a repeated semantic
+need; do not grow the universal skill into an encyclopedic site importer.
 
 ## Page taxonomy
 
@@ -209,16 +227,21 @@ is not a benchmark result.
 
 Mist Desktop PR #7323 adds the first enforceable source-vs-preview comparison
 surface. Stacked PR #7324 adds a viewport-bound rendered source sidecar and
-exact ordered-copy enforcement. Stacked PR #7326 adds native, embedded,
-responsive, custom-element, and open-shadow-root video inventory plus
-machine-enforced source/local count, identification, orientation, and playback
-parity. `compare_preview_to_source` now requires the matching screenshot and
-page-evidence paths, rejects mixed captures, and returns a signed receipt with
-source/local copy hashes and exactness alongside geometry, coverage, bounded
-pixel diagnostics, HTTP status, horizontal overflow, capture truncation, media
-readiness, and video parity. The Home and Shop QA gates require successful
-`copy_mode:"exact"` receipts at 1440 × 900 and 390 × 844 after the final code
-change.
+ordered-copy evidence. Stacked PR #7326 adds native, embedded, responsive,
+custom-element, and open-shadow-root video inventory plus source/local count,
+identification, orientation, and playback evidence.
+`compare_preview_to_source` requires the matching screenshot and page-evidence
+paths, rejects mixed captures, and returns a signed receipt with source/local
+copy hashes alongside geometry, coverage, bounded pixel diagnostics, HTTP
+status, horizontal overflow, capture truncation, media readiness, and video
+parity.
+
+The universal workflow requests `copy_mode:"diagnostic"` because the generic
+runner cannot know which text is stable and which is resource-backed, dynamic,
+or external. The page specialist must classify those landmarks. Stable cells
+must then match exactly; a specialist may use `copy_mode:"exact"` for a cell
+known to be entirely stable. Fixed 1440 × 900 and 390 × 844 cells remain the
+current onboarding benchmark defaults, not platform-wide requirements.
 
 Mist Desktop PR #7325 independently aligns GPT-5.6 Sol/Terra/Luna, Gemini 3.6
 Flash, Kimi K3, Opus 5, and Fable 5 with their live 1M-class context windows.
@@ -226,11 +249,16 @@ Without it, several candidates compact near the legacy 128k fallback and the
 benchmark measures infrastructure bias rather than model capability.
 
 The receipt is necessary evidence, not a universal visual oracle. Raw pixel
-scores vary with antialiasing, dynamic video frames, and source
-personalization. Exact ordered copy is now machine-enforced and associated with
-the same screenshot bundle. Review must still reconcile landmark identity and
-geometry, interactions, dynamic-value policy, and the attached source/local
-images. Video parity is not byte identity after a URL-changing Fluid DAM
-transfer; signed source-to-DAM asset lineage remains a separate gap. The next
-Surface API increments should add that lineage, structured landmark matching,
-and workflow-authored dynamic-copy waivers rather than model-authored ignores.
+scores vary with antialiasing, dynamic video frames, source personalization,
+viewport reflow, and resource state. Review must still reconcile stable
+landmark identity/order/copy, geometry, interactions, variable-data policy, and
+the attached source/local images. A universal five-percent geometry rule or
+minor-count cap produces false passes and false failures; the specialist makes
+that judgment and must surface unresolved material deltas as
+`needs_adjudication`.
+
+Video parity is not byte identity after a URL-changing Fluid DAM transfer;
+signed source-to-DAM asset lineage remains a separate gap. The next Surface API
+increments should add that lineage, structured landmark matching, and
+workflow-authored variable-copy classifications rather than model-authored
+ignores.

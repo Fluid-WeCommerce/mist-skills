@@ -22,8 +22,12 @@ FLAGSHIP_CONTRACT_FILES = (
     ROOT / "themes/theme-source-inventory/SKILL.md",
     ROOT / "themes/references/pixel-fidelity-core.md",
     ROOT / "themes/page-clone/references/pixel-perfect-page.md",
+    ROOT / "themes/clone-page-to-liquid/SKILL.md",
     ROOT / "themes/clone-home-page/SKILL.md",
     ROOT / "themes/clone-shop-page/SKILL.md",
+    ROOT / "themes/clone-product-page/SKILL.md",
+    ROOT / "themes/clone-category-page/SKILL.md",
+    ROOT / "themes/clone-collection-page/SKILL.md",
     FLAGSHIP_WORKFLOW_PATH,
 )
 
@@ -171,6 +175,26 @@ def validate_flagship_contracts() -> None:
                     f"contract fragment found: {fragment!r}"
                 )
 
+    manifest = load_json(MANIFEST_PATH)
+    manifest_skills = {
+        entry.get("slug"): entry.get("path")
+        for entry in manifest.get("skills", [])
+        if isinstance(entry, dict)
+    }
+    expected_page_skills = {
+        "themes/clone-page-to-liquid": "themes/clone-page-to-liquid/SKILL.md",
+        "themes/clone-home-page": "themes/clone-home-page/SKILL.md",
+        "themes/clone-shop-page": "themes/clone-shop-page/SKILL.md",
+        "themes/clone-product-page": "themes/clone-product-page/SKILL.md",
+        "themes/clone-category-page": "themes/clone-category-page/SKILL.md",
+        "themes/clone-collection-page": "themes/clone-collection-page/SKILL.md",
+    }
+    for slug, expected_path in expected_page_skills.items():
+        if manifest_skills.get(slug) != expected_path:
+            raise CatalogValidationError(
+                f"manifest must publish {slug!r} at {expected_path!r}"
+            )
+
     product_skill = (
         ROOT / "onboarding/fluid-product-admin-import/SKILL.md"
     ).read_text(encoding="utf-8")
@@ -246,16 +270,73 @@ def validate_flagship_contracts() -> None:
         page_contract,
         (
             "source_copy_sha256",
-            "exact normalized visible copy",
+            "`stable`, `resource`, `dynamic`, or `external`",
             'dam_upload({ url: "<exact-public-url>", create_media: true })',
             "compress_media",
             "`currentSrc`",
             "`read_preview_dom",
-            "within 5% of source",
-            'status:"pass"|"needs-review"|"cap-reached"',
+            "signed Agent Surface receipt",
+            "page-type reviewer",
+            "Do not use a universal minor-count or geometry percentage",
+            'status:"pass"|"needs_adjudication"|"blocked"',
         ),
         "shared pixel-perfect page contract",
     )
+
+    universal_page_skill = (
+        ROOT / "themes/clone-page-to-liquid/SKILL.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        universal_page_skill,
+        (
+            "This skill owns visual reconstruction only",
+            "page_contract",
+            "data_contract",
+            "`stable`",
+            "`resource`",
+            "`dynamic`",
+            "`external`",
+            'copy_mode:"exact"',
+            'copy_mode:"diagnostic"',
+            "independent reviewer",
+            'status:"pass"|"needs_adjudication"|"blocked"',
+        ),
+        "universal page-to-Liquid skill",
+    )
+
+    specialist_contracts = {
+        "themes/clone-home-page/SKILL.md": (
+            'run_skill("themes/clone-page-to-liquid")',
+            "Home semantics",
+        ),
+        "themes/clone-shop-page/SKILL.md": (
+            'run_skill("themes/clone-page-to-liquid")',
+            "Do not start, await, or grade a complete product import",
+        ),
+        "themes/clone-product-page/SKILL.md": (
+            'run_skill("themes/clone-page-to-liquid")',
+            "bulk catalog import",
+            "canonical product-data/add-to-cart section",
+        ),
+        "themes/clone-category-page/SKILL.md": (
+            'run_skill("themes/clone-page-to-liquid")',
+            "do not await a complete catalog",
+            "`category_index`",
+            "`category_showcase`",
+        ),
+        "themes/clone-collection-page/SKILL.md": (
+            'run_skill("themes/clone-page-to-liquid")',
+            "page-copy prerequisite",
+            "`collection_index`",
+            "`collection_showcase`",
+        ),
+    }
+    for relative_path, fragments in specialist_contracts.items():
+        require_fragments(
+            (ROOT / relative_path).read_text(encoding="utf-8"),
+            fragments,
+            f"{relative_path} specialist contract",
+        )
 
     workflow = load_json(FLAGSHIP_WORKFLOW_PATH)
     if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
@@ -364,9 +445,10 @@ def validate_flagship_contracts() -> None:
         raise CatalogValidationError(
             "flagship workflow: theme-shop-page must use themes/clone-shop-page"
         )
-    if shop_step.get("dependsOn") != ["theme-homepage", "products-import"]:
+    if shop_step.get("dependsOn") != ["theme-homepage"]:
         raise CatalogValidationError(
-            "flagship workflow: shop must wait for home and product import"
+            "flagship workflow: shop must wait for home without blocking on "
+            "the complete product import"
         )
     for step_id, step in (
         ("theme-homepage", home_step),
@@ -387,6 +469,7 @@ def validate_flagship_contracts() -> None:
                 '"width": 390',
                 '"height": 844',
                 '"mode": "full"',
+                '"copy_mode": "diagnostic"',
                 '"tool": "interact_preview"',
             ),
             f"flagship workflow {step_id} evidence floor",
@@ -394,31 +477,98 @@ def validate_flagship_contracts() -> None:
         require_fragments(
             json.dumps(step.get("acceptance", [])),
             (
-                "normalized visible",
-                "local rendered DOM",
-                "signed successful compare_preview_to_source",
-                "within 5%",
-                "needs-review",
-                "cap-reached",
+                "stable",
+                "resource/dynamic/external",
+                "signed compare_preview_to_source",
+                "independent",
+                "needs_adjudication",
+                "blocked",
             ),
-            f"flagship workflow {step_id} golden-route gate",
+            f"flagship workflow {step_id} specialist gate",
         )
 
-    for step_id in ("theme-product-collection", "theme-content-pages-push"):
-        theme_step = steps.get(step_id)
-        if not isinstance(theme_step, dict):
-            raise CatalogValidationError(
-                f"flagship workflow: {step_id} step is missing"
-            )
+    product_page_step = steps.get("theme-product-page")
+    collection_page_step = steps.get("theme-collection-page")
+    if not isinstance(product_page_step, dict) or not isinstance(
+        collection_page_step, dict
+    ):
+        raise CatalogValidationError(
+            "flagship workflow: separate product and collection page steps "
+            "are required"
+        )
+    if product_page_step.get("skill") != "themes/clone-product-page":
+        raise CatalogValidationError(
+            "flagship workflow: product page must use themes/clone-product-page"
+        )
+    if collection_page_step.get("skill") != "themes/clone-collection-page":
+        raise CatalogValidationError(
+            "flagship workflow: collection page must use "
+            "themes/clone-collection-page"
+        )
+    if product_page_step.get("dependsOn") != ["theme-shop-page"]:
+        raise CatalogValidationError(
+            "flagship workflow: PDP must wait for shop without blocking on "
+            "the complete product import"
+        )
+    if collection_page_step.get("dependsOn") != ["theme-product-page"]:
+        raise CatalogValidationError(
+            "flagship workflow: collection page must wait for the PDP page step"
+        )
+
+    for step_id, theme_step in (
+        ("theme-product-page", product_page_step),
+        ("theme-collection-page", collection_page_step),
+    ):
+        required_tools = json.dumps(theme_step.get("qa", {}).get("requiredTools", []))
+        require_fragments(
+            required_tools,
+            (
+                '"tool": "crawl"',
+                '"minSuccessfulCalls": 2',
+                '"tool": "compare_preview_to_source"',
+                '"copy_mode": "diagnostic"',
+                '"tool": "read_preview_dom"',
+                '"tool": "interact_preview"',
+            ),
+            f"flagship workflow {step_id} evidence floor",
+        )
         require_fragments(
             json.dumps(theme_step.get("acceptance", [])),
             (
-                "priority",
-                "video",
-                "HARD-FAIL BAR",
+                "stable",
+                "resource/dynamic/external",
+                "signed compare_preview_to_source",
+                "needs_adjudication",
+                "blocked",
             ),
-            f"flagship workflow {step_id}",
+            f"flagship workflow {step_id} specialist gate",
         )
+
+    content_pages_step = steps.get("theme-content-pages-push")
+    if not isinstance(content_pages_step, dict):
+        raise CatalogValidationError(
+            "flagship workflow: theme-content-pages-push step is missing"
+        )
+    if content_pages_step.get("dependsOn") != ["theme-collection-page"]:
+        raise CatalogValidationError(
+            "flagship workflow: content/push must wait for the collection page"
+        )
+    require_fragments(
+        json.dumps(content_pages_step.get("acceptance", [])),
+        (
+            "priority",
+            "video",
+            "HARD-FAIL BAR",
+        ),
+        "flagship workflow theme-content-pages-push",
+    )
+
+    for removed_step_id in ("theme-product-collection",):
+        if removed_step_id in steps:
+            raise CatalogValidationError(
+                f"flagship workflow: obsolete combined step {removed_step_id} "
+                "must be split into page-type specialists"
+            )
 
     products_import = steps.get("products-import")
     if not isinstance(products_import, dict):
