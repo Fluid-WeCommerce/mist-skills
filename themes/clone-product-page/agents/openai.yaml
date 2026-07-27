@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clone Product Page"
+  short_description: "Recreate a source PDP in Fluid Liquid"
+  default_prompt: "Use $clone-product-page to recreate this product detail page in my Fluid theme."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clone Category Page"
+  short_description: "Recreate a category page in Fluid Liquid"
+  default_prompt: "Use $clone-category-page to recreate this category page in my Fluid theme."

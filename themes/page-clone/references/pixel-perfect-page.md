@@ -1,7 +1,9 @@
 # Pixel-perfect page reconstruction contract
 
-This is the shared execution contract for every Fluid page-clone skill. A page
-archetype reference may add requirements, but it may not weaken these gates.
+This is the universal visual-copy contract for every Fluid page-clone skill.
+Page-type skills supply semantics, resource requirements, canonical template
+families, and interactions. This contract supplies evidence, implementation,
+preview, comparison, and refinement mechanics.
 
 The unit of work is **one source route mapped to one local Fluid route**. Do not
 hide unfinished routes behind a broad “site clone complete” statement.
@@ -12,9 +14,11 @@ Resolve these before editing:
 
 - `source_url`: the exact public route to copy
 - `built_path`: the exact local Fluid preview route
-- `page_type`: the source and Fluid archetype
+- `page_contract`: the page-type skill's semantic/template/interaction contract
 - `manifest_key`: the entry under `clone-manifest.json.visual_routes`
 - `project_path`: the active Fluid theme checkout
+- `viewports`: one or more declared source/local comparison cells
+- `data_contract`: resources the page-type skill says must already render
 
 In an onboarding workflow, read them from caller context, dependency output,
 and `clone-manifest.json`. Do not ask a sleeping user to repeat known inputs.
@@ -22,7 +26,7 @@ When run standalone and an input is genuinely missing, ask only for that input.
 
 ## 1. Inspect before implementing
 
-Call `crawl` for the exact source route at both required viewports:
+Call `crawl` for the exact source route at every declared viewport:
 
 ```json
 {
@@ -33,13 +37,15 @@ Call `crawl` for the exact source route at both required viewports:
   "screenshot_options": {
     "full_page": true,
     "quality": 90,
-    "viewport": { "width": 1440, "height": 900 }
+    "viewport": { "width": "<declared-width>", "height": "<declared-height>" }
   }
 }
 ```
 
-Repeat at `390 × 844`. Use the returned final URL and HTTP status. A redirect
-to the homepage is not proof that a requested detail route exists.
+The default benchmark cells are `1440 × 900` and `390 × 844`, but they are
+workflow defaults rather than platform laws. Use the returned final URL and
+HTTP status. A redirect to the homepage is not proof that a requested detail
+route exists.
 
 If a cookie, country, age, or newsletter overlay obscures content, inspect the
 returned HTML, repeat with one concrete click selector, and record the action.
@@ -70,15 +76,17 @@ For every visible semantic landmark, store this in route order:
 }
 ```
 
-`visible_copy` is exact source wording, punctuation, capitalization, price
-formatting, and CTA text—not a summary. Normalize only runs of whitespace when
-comparing. Never “improve” source copy or substitute generic base-theme text.
+Also classify every landmark as `stable`, `resource`, `dynamic`, or `external`
+and record the evidence for that classification. `visible_copy` is exact source
+wording, punctuation, capitalization, price formatting, and CTA text—not a
+summary. Normalize only runs of whitespace when comparing. Never “improve”
+stable source copy or substitute generic base-theme text.
 
 Record the ordered normalized strings and a SHA-256 of their JSON encoding as
 `source_copy_sha256`. Record the local strings and hash after implementation.
-The hashes may differ only for explicitly documented dynamic values such as a
-signed-in greeting or live inventory count. Every allowed difference must name
-the source string, local string, and reason.
+Stable-copy hashes should match. Resource/dynamic/external differences must
+name the source string, local string, reason, classification evidence, and the
+page-type reviewer that accepted or rejected the difference.
 
 Inspect source HTML for all of:
 
@@ -95,8 +103,11 @@ screenshots decide.
 
 ## 3. Preserve priority media
 
-Every priority source image and video belongs in the route manifest with its
-exact source URL, landmark, viewport, and expected behavior.
+The page-type skill declares priority media. Every declared priority source
+image and video belongs in the route manifest with its exact source URL,
+landmark, viewport, and expected behavior. Other observed media remains in the
+evidence dossier and may be classified as dynamic/external; it is not silently
+discarded or automatically promoted to a universal blocker.
 
 Use direct remote DAM ingestion first:
 
@@ -160,34 +171,29 @@ Before comparison:
 2. `read_local_server_logs` — zero unresolved Liquid/runtime errors
 3. `read_preview_console` — zero unresolved exceptions or failed priority assets
 
-For the route under test:
+For every declared viewport:
 
-1. `compare_preview_to_source(source_path:<desktop_source_path>, source_evidence_path:<desktop_page_evidence_path>, copy_mode:"exact", mode:"full", path:<built_path>, width:1440, height:900)`
+1. `compare_preview_to_source(source_path:<source_path>, source_evidence_path:<page_evidence_path>, copy_mode:<exact-or-diagnostic>, mode:"full", path:<built_path>, width:<declared-width>, height:<declared-height>)`
 2. `read_preview_dom(path:<built_path>, mode:"all")`
-3. `compare_preview_to_source(source_path:<mobile_source_path>, source_evidence_path:<mobile_page_evidence_path>, copy_mode:"exact", mode:"full", path:<built_path>, width:390, height:844)`
-4. inspect critical crops with `screenshot_preview(mode:"viewport", ...)` when
+3. inspect critical crops with `screenshot_preview(mode:"viewport", ...)` when
    needed
-5. exercise inspected disclosure/tab/menu selectors with `interact_preview`
-6. recapture the changed state and rerun the affected signed comparison
+4. exercise page-contract controls with `interact_preview`
+5. recapture the changed state and rerun the affected signed comparison
 
 `compare_preview_to_source` is the final source/local image capture for the
-route. It must return a **signed successful Agent Surface receipt** for each
-viewport. Its signed `comparison.copy` evidence must report `mode:"exact"`,
-`exact:true`, non-truncated source/local copy, and bound screenshot/sidecar
-hashes. Its signed `comparison.media.videoParity` evidence must report
-`exact:true`, equal identified source/local video counts, non-truncated media
-inventories, and no orientation or playback-behavior mismatches. A screenshot
-path, worker-authored metric, or prose comparison is not an equivalent
-substitute. The tool refuses mixed captures or a source screenshot with the
-wrong route/viewport rather than silently resizing it, and it machine-fails
-copy mismatch/truncation, source-video omission, unresolved media, HTTP errors,
-capture truncation, horizontal overflow, and full-page height drift above 5%.
-For full-page comparisons, height drift is measured against the signed source
-document height, not the stitched screenshot's decoded pixel height.
+route. It must return a signed Agent Surface receipt for each viewport with
+bound screenshot/sidecar hashes. Use exact copy mode for a stable-copy cell.
+Use diagnostic mode when the dossier proves resource/dynamic/external copy; the
+receipt must still itemize mismatches and cannot itself declare semantic
+acceptance. A screenshot path, worker-authored metric, or prose comparison is
+not an equivalent substitute. Mixed captures, wrong route/viewport evidence,
+HTTP failures, capture truncation, and unresolved priority media remain hard
+failures. Pixel and height deltas are evidence for specialist review, not
+universal verdicts.
 
-If the running Mist build does not return either `comparison.copy` or
-`comparison.media.videoParity`, report `needs-review: tooling upgrade required`.
-Do not reinterpret an absent machine gate as a pass.
+If the running Mist build does not return the comparison fields required by
+the page contract, report `needs_adjudication: tooling upgrade required`. Do
+not reinterpret absent machine evidence as a pass.
 
 Treat its pixel metrics as diagnostics, not a universal pass threshold.
 Antialiasing, dynamic video frames, and source personalization can move raw
@@ -214,31 +220,31 @@ Check:
 After each meaningful fix, recapture only the affected route/viewports. The
 final proof must be newer than the final code change.
 
-## 6. Hard passing gate
+## 6. Evidence outcome
 
-The page passes only when all are true:
+Hard requirements:
 
-- source and local desktop/mobile evidence is current and durable
-- both required `compare_preview_to_source` calls have signed successful
-  receipts for the exact route and 1440 × 900 / 390 × 844 viewports
-- both receipts bind the matching rendered source sidecar and report
-  `comparison.copy.mode=exact`, `exact=true`, and no copy truncation
+- every declared source/local evidence cell is current and durable
+- every declared viewport has a signed comparison receipt for the exact route
 - requested and final routes match and local HTTP status is 200
-- every source landmark exists once, in order
-- exact source wording is present, with every allowed dynamic difference listed
-- zero source landmarks use unrelated placeholder copy or media
-- every priority image/video is DAM-backed and ready; zero failed/pending media
-- responsive video `currentSrc` and decoded orientation match each viewport
-- zero majors remain
-- at most two itemized minors remain
-- comparable landmark geometry is within 5% of source
-- no horizontal document overflow at 390px
-- required interactions were exercised from rendered selectors
+- every stable landmark exists once, in order, with no unrelated placeholder
+- every stable-copy cell is exact; every variable difference is classified
+- page-contract priority media is DAM-backed and ready
+- page-contract interactions were exercised from rendered selectors
+- no horizontal overflow at the page contract's narrow viewport
 - console and server logs have no unresolved route/runtime/asset errors
 - `theme_audit.py` passes for touched theme files
 
-“Looks good,” “close enough,” a successful build, or a prose QA statement is
-not a pass.
+The page-type reviewer judges responsive equivalence, resource/dynamic content,
+third-party surfaces, geometry, and visual severity. Return:
+
+- `pass` — hard requirements pass and no unreviewed material delta remains
+- `needs_adjudication` — evidence is valid but a documented judgment remains
+- `blocked` — a hard requirement failed
+
+Do not use a universal minor-count or geometry percentage as a substitute for
+page-type judgment. “Looks good,” a successful build, or prose without signed
+evidence is never a pass.
 
 ## Performance and resilience
 
@@ -256,28 +262,29 @@ End with:
 
 ```text
 PAGE_OUTPUT: {
-  page_type,
+  page_contract,
   source_url,
   built_path,
   source_status,
   local_status,
   source_copy_sha256,
   local_copy_sha256,
-  allowed_copy_differences:[],
-  source_evidence:{desktop,mobile},
-  local_evidence:{desktop,mobile},
-  comparison_receipts:{desktop,mobile},
+  classified_copy_differences:[],
+  source_evidence:[],
+  local_evidence:[],
+  comparison_receipts:[],
   landmarks_total,
   landmarks_matched,
   priority_media:{expected,ready,failed,pending},
   interactions:[],
-  majors:[],
-  minors:[],
+  blockers:[],
+  material_deltas:[],
+  accepted_exceptions:[],
   runtime_errors:[],
-  status:"pass"|"needs-review"|"cap-reached",
+  status:"pass"|"needs_adjudication"|"blocked",
   next
 }
 ```
 
-If five focused repair rounds cannot satisfy the gate, return `cap-reached`.
-Never turn that into a pass.
+When the page-type skill's repair budget expires with valid evidence, return
+`needs_adjudication`. Never turn budget exhaustion into a pass.

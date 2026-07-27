@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clone Collection Page"
+  short_description: "Recreate a collection page in Fluid Liquid"
+  default_prompt: "Use $clone-collection-page to recreate this collection page in my Fluid theme."

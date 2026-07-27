@@ -1,8 +1,8 @@
 {
-  "revision": "2026-07-26.42",
+  "revision": "2026-07-27.1",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
-  "description": "Flagship end-to-end onboarding: build a source-of-truth brand and catalog manifest, import the complete product catalog, prove the home golden route, prove the canonical shop/list route, then build dependent detail/content surfaces and finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so source HTML, rendered DOM, durable pixels, and interaction evidence—not one model's self-assessment—decide whether the run passes.",
+  "description": "Flagship end-to-end onboarding: build source-backed brand and route evidence, run Home, Shop, PDP, and Collection specialists through one universal page-to-Liquid visual-copy core, keep complete catalog migration on its own optional data track, then finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so rendered DOM, durable pixels, interactions, logs, and signed evidence—not one model's self-assessment—decide whether the run passes.",
   "maxParallel": 3,
   "runTitleTemplate": "Onboard {{website_url}}",
   "finalGate": {
@@ -479,7 +479,7 @@
               "width": 1440,
               "height": 900,
               "mode": "full",
-              "copy_mode": "exact"
+              "copy_mode": "diagnostic"
             }
           },
           {
@@ -488,7 +488,7 @@
               "width": 390,
               "height": 844,
               "mode": "full",
-              "copy_mode": "exact"
+              "copy_mode": "diagnostic"
             }
           },
           {
@@ -513,15 +513,16 @@
       "maxReworkRounds": 4,
       "recovery": { "mode": "manual" },
       "acceptance": [
-        "The QA reviewer independently crawled the exact source home route as rendered HTML plus a durable full-page screenshot at 1440x900 and 390x844, then read the local rendered DOM. QA reconciled the ordered normalized visible strings landmark-by-landmark; source wording, punctuation, capitalization, CTA labels, and link labels match exactly except for an itemized allowed dynamic-value list. A screenshot-only or worker-summary review fails.",
-        "The reviewer produced signed successful compare_preview_to_source receipts for the exact home route at 1440x900 and 390x844 after the final code change. Each receipt binds the matching source screenshot/page-evidence hashes and reports comparison.copy mode exact, exact true, and non-truncated source/local copy. The reviewer inspected both attached durable SOURCE images and both current local images. Every source landmark exists once in the same order; no priority landmark is missing, duplicated, or replaced by unrelated starter content. Comparable landmark width/height/padding/gap is within 5%, zero majors remain, and at most two named minors remain. Pixel metrics are diagnostic and do not replace landmark, DOM, or interaction review.",
+        "The QA reviewer independently ran the universal visual-copy evidence loop for the exact Home source and local routes at 1440x900 and 390x844, opened the durable source/local pixels, and read the local rendered DOM. A screenshot path, worker summary, or prose claim without direct evidence fails.",
+        "Every Home landmark is explicitly classified as stable or resource/dynamic/external with source evidence. Stable landmarks occur once in source order and their wording, punctuation, capitalization, CTA labels, link labels, media, and visual hierarchy match. Every variable landmark has a concrete reason and observed source/local values; difficult content was not relabeled dynamic to evade copying.",
+        "The independent reviewer produced a current signed compare_preview_to_source receipt for both viewports after the final code change. Receipts bind the exact route, viewport, screenshot, and page-evidence hashes. Pixel/geometry metrics are diagnostic evidence for the Home specialist rather than a universal threshold; material responsive or visual deltas remain blockers unless explicitly adjudicated.",
         "Every homepage priority image and video is DAM-backed and ready in the rendered page. Responsive videos use the manifest's exact desktop/mobile sources, and QA verified currentSrc, semantic alt/context or DAM filename lineage, decoded dimensions/orientation, playback attributes, and zero failed/pending media at both viewports. Image-count parity created with empty filler nodes, generic labels, zero/near-zero opacity, hidden overflow, off-canvas duplication, or unrelated assets is a hard failure; each occurrence must belong to a real source-equivalent tab/carousel state that QA exercised. A poster-only or static substitution fails.",
         "No touched Liquid, CSS, JSON, or JavaScript file embeds binary image/video bytes as a `data:` or base64 fallback. Priority media uses verified delivery URLs from clone-manifest.json or bounded theme assets; a megabyte-scale inline-media workaround is a hard failure because it hides the delivery defect and makes theme-dev updates prohibitively slow.",
         "The homepage keeps normal responsive document flow. QA directly rejects any viewport-specific hardcoded page/section/footer top or left coordinate, fixed or absolute whole-section relocation, arbitrary page-height clamp, overflow clipping, or hidden/cropped source content used to improve screenshot metrics. Mobile footer accordions are real accessible disclosures exercised closed and open. Full-page geometry is judged against signed rendered-evidence document dimensions, not a stitched screenshot's decoded height.",
         "The mobile navigation and each homepage disclosure/tab/carousel state were exercised from inspected rendered selectors. Primary CTA targets resolve to the source-equivalent Fluid route.",
         "The homepage and shared shell render without Liquid/server errors, console exceptions, failed priority resources, horizontal overflow at 390px, or visible base-theme placeholder copy. The materialized theme audit passes on every touched file.",
-        "PAGE_OUTPUT includes exact source/local copy hashes, durable evidence, landmark/media counts, interaction results, majors/minors, runtime errors, and a reusable shell_contract. Any `needs-review` or `cap-reached` status fails this hard gate.",
-        "HARD-FAIL BAR: downstream page work must not begin while home has wrong wording, missing/reordered sections, substituted media, untested responsive navigation, runtime errors, any major visual defect, or more than two itemized minors."
+        "PAGE_OUTPUT includes source/local copy hashes, classified stable and resource/dynamic/external landmarks, signed evidence, interaction results, material deltas, runtime errors, and a reusable shell_contract. `needs_adjudication` is an honest review outcome, not a pass; `blocked` identifies a failed hard requirement.",
+        "HARD-FAIL BAR: downstream page work must not begin while Home has wrong stable wording, missing/reordered stable sections, substituted priority media, untested responsive navigation, runtime errors, or an unreviewed material visual defect."
       ],
       "dependsOn": ["theme-header-footer"],
       "runIf": {
@@ -555,7 +556,7 @@
               "width": 1440,
               "height": 900,
               "mode": "full",
-              "copy_mode": "exact"
+              "copy_mode": "diagnostic"
             }
           },
           {
@@ -564,7 +565,7 @@
               "width": 390,
               "height": 844,
               "mode": "full",
-              "copy_mode": "exact"
+              "copy_mode": "diagnostic"
             }
           },
           {
@@ -589,22 +590,22 @@
       "maxReworkRounds": 4,
       "recovery": { "mode": "manual" },
       "acceptance": [
-        "QA independently proved the selected source URL is the canonical shop/all-products route rather than a collection detail or redirect, crawled its rendered HTML and durable full-page screenshot at both required viewports, and read the exact local rendered DOM.",
-        "Ordered normalized visible source wording, product-card fields, badges, price formatting, filter/sort labels, result counts, pagination copy, and empty-state copy were reconciled against the local DOM. No unrelated starter copy or hard-coded fake product cards remain.",
-        "The shop uses actual Fluid product resources and canonical returned PDP routes. QA verified representative normal, discounted/badged, and multi-option/unavailable card states where the source exposes them, plus the complete expected catalog through the page's real pagination model.",
+        "QA independently proved the selected source URL is the canonical Shop/all-products route rather than a collection detail or redirect, ran the universal visual-copy evidence loop at 1440x900 and 390x844, opened durable source/local pixels, and read the exact local rendered DOM.",
+        "Every Shop landmark is classified as stable or resource/dynamic/external with source evidence. Stable editorial/filter/interaction copy matches exactly; product-backed values are itemized as resource evidence. No unrelated starter copy or hard-coded fake product cards remain.",
+        "The Shop uses a bounded set of actual Fluid preview products and canonical returned PDP routes. Existing products were reused first; otherwise at most three source-backed preview products were reconciled after market/currency verification and their IDs recorded. The template remains dynamic for the later complete catalog; the page step did not start, await, or grade a full import.",
         "Filtering, sorting, search, pagination/load-more, and mobile disclosures were exercised from inspected rendered selectors and their resulting DOM/state was verified. A decorative nonfunctional source-equivalent control is a major failure.",
-        "The reviewer produced signed successful compare_preview_to_source receipts proving the exact selected shop source/local route at 1440x900 and 390x844 after the final code change. Each receipt binds the matching source screenshot/page-evidence hashes and reports comparison.copy mode exact, exact true, and non-truncated source/local copy. The reviewer inspected both attached durable SOURCE images and current local images landmark-by-landmark. Geometry is within 5% where compositions match, zero majors remain, at most two named minors remain, and 390px has no horizontal overflow. Pixel metrics are diagnostic and do not replace landmark, DOM, data, or interaction review.",
+        "The independent reviewer produced current signed compare_preview_to_source receipts for both viewports after the final code change. Receipts bind exact routes, viewports, screenshots, and page-evidence hashes. Pixel/geometry metrics are diagnostic evidence for the Shop specialist; an unreviewed material responsive or visual delta remains a blocker.",
         "All priority shop media is DAM-backed and ready, and server logs/console contain no unresolved route, runtime, or asset errors. The materialized theme audit passes on touched files.",
-        "PAGE_OUTPUT includes the route/copy/evidence/media/interaction proof plus a reusable list_contract naming product-card, grid, filter/sort, pagination, search, and empty/loading/error implementations. Any `needs-review` or `cap-reached` status fails this gate."
+        "PAGE_OUTPUT includes classified stable and resource/dynamic/external landmarks, signed evidence, preview resource IDs, media/interactions, and a reusable list_contract naming product-card, grid, filter/sort, pagination, search, and empty/loading/error implementations. `needs_adjudication` is not a pass; `blocked` identifies a failed hard requirement."
       ],
-      "dependsOn": ["theme-homepage", "products-import"],
+      "dependsOn": ["theme-homepage"],
       "runIf": {
         "flag": "build_theme"
       }
     },
     {
-      "id": "theme-product-collection",
-      "name": "Theme — product and collection detail templates",
+      "id": "theme-product-page",
+      "name": "Theme — prove one representative PDP route",
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,
@@ -614,32 +615,48 @@
         "requiredTools": [
           {
             "tool": "crawl",
-            "minSuccessfulCalls": 4,
+            "minSuccessfulCalls": 2,
             "input": {
               "formats": ["html", "screenshot"],
               "only_main_content": false,
               "capture_page_evidence": true,
               "screenshot_options": { "full_page": true }
             },
-            "distinctBy": ["url", "screenshot_options.viewport.width"]
+            "distinctBy": ["screenshot_options.viewport.width"]
           },
           {
             "tool": "compare_preview_to_source",
-            "minSuccessfulCalls": 4,
             "input": {
+              "width": 1440,
+              "height": 900,
               "mode": "full",
-              "copy_mode": "exact"
-            },
-            "distinctBy": ["path", "width"]
+              "copy_mode": "diagnostic"
+            }
           },
           {
-            "tool": "read_preview_dom",
-            "minSuccessfulCalls": 2,
-            "distinctBy": ["path"]
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full",
+              "copy_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
           }
         ]
       },
-      "prompt": "Build the product and collection surfaces — the catalog was imported BEFORE the theme track, so verify against REAL products. Call run_skill(\"themes/theme-clone\") for template rules (Phase 5), the canonical PDP/collection section list, and the exact materialized `<THEME_AUDIT_PATH>`.\n\nRequirements:\n- `product/default/index.liquid`: lead with the canonical product-data section that wires Fluid's product object + add-to-cart (`product_hero` in the current base theme; `main_product` in older scaffolds — use whichever the scaffold ships, NEVER a hand-rolled replacement and never modify `sections/main_product`), then match the SOURCE PDP's section structure from the manifest (benefits, ingredients, how-to-use, reviews, related — whatever the source uses) with canonical product_* sections. This one default template drives every PDP.\n- `collection/default/index.liquid` (+ `collection_index` if the source has a collections/shop index) using canonical collection sections. Remember: Liquid's `collections` global has a different shape than the REST API (see the skill's gotchas).\n- Verify in the dev preview with REAL data: cursor-paginate `GET /api/v202604/company/products?page[limit]=100` through `meta.pagination.next_cursor`, then open the flagship or most complex real product's local PDP route plus the primary collection route and screenshot both at desktop and mobile. Use canonical URLs/paths returned by the API and mapped into the local preview—never compose a slug. If the run has no real products, verify the placeholder/empty state and report that the flagship launch gate remains unmet.\n- Audit gate: `python3 <THEME_AUDIT_PATH>` on all touched files. A fresh theme does not contain the skill's script.\n\nEnd with STEP_OUTPUT: templates written, which real product/collection routes were verified with screenshots, audit result, refine notes.",
+      "skill": "themes/clone-product-page",
       "target": {
         "type": "kind",
         "kind": "theme"
@@ -647,15 +664,90 @@
       "maxReworkRounds": 4,
       "recovery": { "mode": "manual" },
       "acceptance": [
-        "The reviewer independently crawled the canonical PDP and collection source routes as rendered HTML plus durable full-page screenshots at 1440x900 and 390x844, then produced four signed successful exact/full compare_preview_to_source receipts against the matching local routes after the final code change. The reviewer inspected all four attached source/local image pairs side by side. A worker description, DOM inventory, or metrics-only review does not satisfy this criterion.",
-        "product/default/index.liquid leads with the scaffold's canonical product-data section (product_hero or main_product — unmodified, not a hand-rolled replacement) and adds source-matching sections after it; collection/default exists and renders.",
-        "At least one REAL product PDP and one collection route were loaded in the dev preview this turn without server/Liquid errors, with screenshots (or, when the catalog is legitimately empty for this run scope, the empty state renders cleanly and is noted).",
-        "Every PDP or collection landmark recorded as video renders a real `<video>` from its DAM mapping at desktop and mobile; `read_preview_dom` verifies the element, URL, and playback attributes. Static-image, poster-only, gradient, and flat-color substitutions fail QA.",
-        "The exact materialized `<THEME_AUDIT_PATH>` returned by run_skill passes on the touched files.",
-        "Authored copy obeys `brand.md`. Mist injects the company's brand guide into every turn as a `<brand_voice>` block; scraped source strings win, and any string the agent had to write itself is in that voice and consistent with its Do's and Don'ts. Surviving base-theme placeholder copy — \"NEW DROP\", \"Built different\", \"Trusted by thousands\", \"Shop the drop\", lorem — is a defect even when the layout matches, and is the single most visible way a clone reads as generic.",
-        "HARD-FAIL BAR: fail for erroring PDP/collection routes, a missing/substituted priority video, a replaced/modified main_product section, or unfixed audit violations. Other fidelity gaps vs the source PDP layout are refine-pass NOTES."
+        "QA independently selected and justified one representative source PDP, then ran the universal visual-copy evidence loop for its exact source and canonical Fluid routes at 1440x900 and 390x844. It opened both source/local pixel pairs and read rendered DOM; prose or metrics alone are insufficient.",
+        "The PDP renders one real source-backed Fluid preview product on the canonical returned route. Existing matching data was reused first; otherwise one preview product was reconciled through documented v202604 contracts after market/currency verification. Its source identity and Fluid ID are recorded, and the page step did not start or await a bulk catalog import.",
+        "Every PDP landmark is classified as stable or resource/dynamic/external. Stable editorial copy/media/order match; product title, prices, variants, availability, reviews, and recommendations are verified as real resource or variable data rather than static screenshot fakes.",
+        "The independent reviewer produced current signed compare_preview_to_source receipts for both viewports after the final code change. Receipts bind exact routes, viewports, screenshots, and page-evidence hashes. Pixel/geometry metrics are diagnostic evidence for the PDP specialist; unreviewed material gallery, purchase-panel, responsive, or visual deltas remain blockers.",
+        "product/default/index.liquid leads with the scaffold's canonical product-data/add-to-cart section (product_hero or main_product, unmodified and not imitated by static Liquid), with source-matching sections composed after it.",
+        "Gallery selection, one option change, safe disclosures, add-to-cart hooks, and enabled/disabled purchase states were exercised from rendered selectors without placing an order. Priority videos are real DAM-backed video elements with verified currentSrc and playback attributes.",
+        "The route has no Liquid/server errors, console exceptions, failed priority media, horizontal mobile overflow, or unrelated starter copy, and the materialized theme audit passes on touched files.",
+        "PAGE_OUTPUT includes classified stable and resource/dynamic/external landmarks, signed evidence, the product_contract, interactions, material deltas, and status. `needs_adjudication` is not a pass; `blocked` identifies a failed hard requirement."
       ],
-      "dependsOn": ["theme-shop-page", "products-import"],
+      "dependsOn": ["theme-shop-page"],
+      "runIf": {
+        "flag": "build_theme"
+      }
+    },
+    {
+      "id": "theme-collection-page",
+      "name": "Theme — prove one representative collection route",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "anthropic/claude-opus-5",
+        "strictness": "strict",
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "crawl",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "formats": ["html", "screenshot"],
+              "only_main_content": false,
+              "capture_page_evidence": true,
+              "screenshot_options": { "full_page": true }
+            },
+            "distinctBy": ["screenshot_options.viewport.width"]
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 1440,
+              "height": 900,
+              "mode": "full",
+              "copy_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full",
+              "copy_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
+      },
+      "skill": "themes/clone-collection-page",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 4,
+      "recovery": { "mode": "manual" },
+      "acceptance": [
+        "QA independently proved whether the chosen source route is a collection index or detail rather than Shop or Category, then ran the universal visual-copy evidence loop for its exact source and canonical Fluid routes at 1440x900 and 390x844.",
+        "The route uses one real source-backed Fluid preview Collection and a bounded real product set. Existing resources were reused first; otherwise one collection and at most three products were reconciled after market/currency verification. All IDs are recorded, and full collection or catalog completeness was not treated as a page-copy prerequisite.",
+        "Every Collection landmark is classified as stable or resource/dynamic/external. Stable editorial/merchandising content matches, while titles, counts, product cards, prices, and availability remain bound to real Fluid resources. The Shop card/grid contract is reused rather than forked.",
+        "The independent reviewer produced current signed compare_preview_to_source receipts for both viewports after the final code change. Receipts bind exact routes, viewports, screenshots, and page-evidence hashes. Pixel/geometry metrics are diagnostic evidence for the Collection specialist; unreviewed material merchandising, grid, responsive, or visual deltas remain blockers.",
+        "The scaffold's collection_index or collection_showcase contract is used as appropriate, Liquid does not assume REST-only product_collections fields, and one real product link plus any index-to-detail link reaches the canonical Fluid route.",
+        "Filter/sort/pagination/load-more and mobile disclosures were exercised where present. The route has no Liquid/server errors, console exceptions, failed priority media, horizontal mobile overflow, or unrelated starter copy, and the materialized theme audit passes on touched files.",
+        "PAGE_OUTPUT includes classified stable and resource/dynamic/external landmarks, signed evidence, collection IDs/classification, interactions, material deltas, and status. `needs_adjudication` is not a pass; `blocked` identifies a failed hard requirement."
+      ],
+      "dependsOn": ["theme-product-page"],
       "runIf": {
         "flag": "build_theme"
       }
@@ -704,7 +796,7 @@
         "Authored copy obeys `brand.md`. Mist injects the company's brand guide into every turn as a `<brand_voice>` block; scraped source strings win, and any string the agent had to write itself is in that voice and consistent with its Do's and Don'ts. Surviving base-theme placeholder copy — \"NEW DROP\", \"Built different\", \"Trusted by thousands\", \"Shop the drop\", lorem — is a defect even when the layout matches, and is the single most visible way a clone reads as generic.",
         "HARD-FAIL BAR: fail when the push did not land (no theme id verifiable via the API), any priority video is absent/substituted, audit violations remain, or the preview is broken after push. A shorter-than-hoped page list or a long remaining_for_refine list is fine — the refine pass exists for that."
       ],
-      "dependsOn": ["theme-product-collection"],
+      "dependsOn": ["theme-collection-page"],
       "runIf": {
         "flag": "build_theme"
       }
@@ -750,14 +842,14 @@
       "maxReworkRounds": 2,
       "recovery": { "mode": "manual" },
       "acceptance": [
-        "Preflight validated all six durable source files from `clone-manifest.json`: each `.mist-desktop/source-baselines/` path exists, its `file_sha256({paths:[\"<path>\"]})` digest matches the recorded sha256, and its nonzero bytes/dimensions/requested viewport/final URL/status/overlay handling are complete. Missing or opaque source evidence was recaptured before any visual round.",
-        "The reviewer opened the source and clone pixels side by side for every home/shop/PDP desktop/mobile pair. Worker summaries, DOM inventories, and metrics without the source image do not satisfy visual review.",
+        "Preflight validated every declared source evidence cell for the Home, Shop, and PDP page contracts: each `.mist-desktop/source-baselines/` path exists, its `file_sha256({paths:[\"<path>\"]})` digest matches the recorded sha256, and its nonzero bytes/dimensions/requested viewport/final URL/status/overlay handling are complete. Missing or opaque evidence was recaptured before visual refinement.",
+        "The reviewer opened source and current local pixels side by side for every declared Home/Shop/PDP viewport. Worker summaries, DOM inventories, and metrics without the source image do not satisfy visual review.",
         "Phase A CODE-parity gate ran FIRST and reported CODE_PARITY: pass before any screenshot round: per-template structural comparison vs the source (sections present + ordered), brand tokens (no hardcoded hex/fonts), lint clean (no Liquid errors in the dev server log), every template route renders, and COPY/VOICE parity against `brand.md` (the `<brand_voice>` block) with no surviving base-theme placeholder copy. Screenshots are the granular FINAL pass — a run that started pixel-diffing before code parity does not satisfy this step.",
-        "The skill ran up to five semantic source-vs-clone rounds over home, shop, and PDP at desktop and mobile, and reported STATUS: pass. `cap-reached` is an honest needs-review outcome, not acceptance for the flagship workflow.",
-        "The final same-round evidence shows zero majors on all three priority routes, at most two itemized minors per route, no missing/reordered landmarks, correct copy/data/primary imagery, and priority landmark geometry within 5% unless responsive reflow is explicitly demonstrated.",
-        "STEP_OUTPUT names every route and viewport verified and includes current screenshot + metrics paths generated after the final code change.",
+        "The skill ran bounded semantic source-vs-clone rounds over Home, Shop, and PDP. Every landmark retains its specialist classification as stable or resource/dynamic/external; stable copy/order/media must match, while every variable difference is itemized and independently reviewed.",
+        "The final same-round evidence has zero hard failures, no missing/reordered stable landmarks, correct real resource bindings, complete priority media, and no unreviewed material responsive or visual delta. Pixel and geometry metrics inform specialist judgment but no universal percentage or minor-count substitutes for that review.",
+        "STEP_OUTPUT names every route and viewport verified, includes current signed evidence generated after the final code change, and reports pass, needs_adjudication, or blocked. Only pass satisfies this workflow gate.",
         "The theme's dev preview is still healthy, every touched file passes theme_audit.py, and the final desktop/mobile routes have no Liquid errors or horizontal document overflow.",
-        "HARD-FAIL BAR: fail when the loop never ran, the preview is broken, evidence is stale/fabricated, any priority route retains a major, or the run ends `cap-reached`."
+        "HARD-FAIL BAR: fail when the loop never ran, the preview is broken, evidence is stale/fabricated, stable content is missing or substituted, resource data is faked, priority media is missing, or the run ends needs_adjudication or blocked."
       ],
       "dependsOn": ["theme-content-pages-push"],
       "runIf": {
