@@ -229,6 +229,8 @@ def validate_flagship_contracts() -> None:
             "evidence_run_started_at",
             "30 minutes after it",
             "union of all six rendered sidecars",
+            "build_theme_source_inventory",
+            "`SOURCE_INVENTORY_BUILD: written`",
             "`SOURCE_INVENTORY_VALIDATION: pass`",
             "validate_theme_source_inventory",
         ),
@@ -291,6 +293,7 @@ def validate_flagship_contracts() -> None:
         str(theme_discovery.get("prompt", "")),
         (
             'run_skill("themes/theme-source-inventory")',
+            "build_theme_source_inventory",
             "validate_theme_source_inventory",
             "Do not load the all-phases theme-clone skill",
         ),

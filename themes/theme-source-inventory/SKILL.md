@@ -90,6 +90,77 @@ Write `clone-manifest.json` with:
   path, ordered landmark mappings, and complete desktop/mobile evidence cells;
 - `priority_media.items`.
 
+Do not hand-transcribe the evidence-derived arrays. After all six crawl bundles
+are complete, call Mist's local-only deterministic builder exactly once:
+
+```json
+{
+  "manifest_path": "clone-manifest.json",
+  "evidence_run_started_at": "<current-turn UTC boundary>",
+  "routes": {
+    "home": {
+      "built_path": "/",
+      "desktop": {
+        "page_evidence_path": "<Home desktop .page-evidence.json>",
+        "html_path": "<Home desktop .html>",
+        "markdown_path": "<Home desktop .md>"
+      },
+      "mobile": {
+        "page_evidence_path": "<Home mobile .page-evidence.json>",
+        "html_path": "<Home mobile .html>",
+        "markdown_path": "<Home mobile .md>"
+      }
+    },
+    "shop": {
+      "built_path": "<future Fluid Shop path>",
+      "desktop": {
+        "page_evidence_path": "<Shop desktop .page-evidence.json>",
+        "html_path": "<Shop desktop .html>",
+        "markdown_path": "<Shop desktop .md>"
+      },
+      "mobile": {
+        "page_evidence_path": "<Shop mobile .page-evidence.json>",
+        "html_path": "<Shop mobile .html>",
+        "markdown_path": "<Shop mobile .md>"
+      }
+    },
+    "pdp": {
+      "built_path": "<future Fluid PDP path>",
+      "desktop": {
+        "page_evidence_path": "<PDP desktop .page-evidence.json>",
+        "html_path": "<PDP desktop .html>",
+        "markdown_path": "<PDP desktop .md>"
+      },
+      "mobile": {
+        "page_evidence_path": "<PDP mobile .page-evidence.json>",
+        "html_path": "<PDP mobile .html>",
+        "markdown_path": "<PDP mobile .md>"
+      }
+    }
+  },
+  "hero_copy": {
+    "headline": "<verbatim or null>",
+    "headline_reason": "<required only when null>",
+    "subheadline": "<verbatim or null>",
+    "subheadline_reason": "<required only when null>",
+    "primary_cta": "<verbatim or null>",
+    "primary_cta_reason": "<required only when null>"
+  }
+}
+```
+
+The tool name is `build_theme_source_inventory`. It reads descriptor-held
+bytes, verifies the six viewports and freshness boundary, hashes all 24 files,
+copies every signed desktop section exactly, assigns one future mapping per
+signed section, and emits one media item per rendered element and viewport. It
+atomically replaces only `evidence_run_started_at`, `section_inventory`,
+`visual_routes`, `priority_media`, and hero evidence paths; it preserves
+`page_manifest`, `brand_tokens`, and unrelated downstream fields. If it fails,
+repair the named path/capture or recrawl the incomplete cell and call it again.
+Never replace it with `write_file`/`edit_file` transcription of section,
+receipt, landmark, or media arrays. Require
+`SOURCE_INVENTORY_BUILD: written` before continuing.
+
 Each `visual_routes.<route>` must use this structure:
 
 ```json
@@ -163,14 +234,14 @@ is the decoded PNG height, not the requested viewport height. `status`, final
 URL, capture time, viewport, and the direct screenshot receipt must exactly
 match the sidecar.
 
-Build each ordered section entry from `sidecar.rendered.sections`, not from
-memory or visual guessing. Cite the sidecar path plus the section's exact
-`anchor`. Copy its measured rect, section `style` fields, and representative
-`heading`/`body`/`action` typography where present. Use HTML and screenshots to
-name and order sections, but never hand-invent a color, font size, spacing,
-display/grid value, or selector when the signed sidecar supplies it. If a
-needed section is absent or `sectionsTruncated` is true, recapture; a plausible
-worker-authored value is not measured evidence.
+The deterministic builder creates each ordered section entry from
+`sidecar.rendered.sections`, not from memory or visual guessing. It cites the
+sidecar path plus the section's exact `anchor` and copies measured rect,
+section `style`, and representative `heading`/`body`/`action` values. Use HTML
+and screenshots to understand and name sections for later build steps, but
+never hand-invent or rewrite a color, font size, spacing, display/grid value,
+selector, or section array when the signed sidecar supplies it. If a needed
+section is absent or `sectionsTruncated` is true, recapture.
 
 Every `section_inventory.<route>[i]` must retain, at minimum, this exact signed
 subset from the route's desktop sidecar:
@@ -198,8 +269,9 @@ normalization. A genuinely absent field is `null` plus a non-empty
 `.screenshot` to the exact retained Home desktop paths; labels such as
 `"verified in source"` are not evidence.
 
-Build `priority_media.items` from the union of all six rendered sidecars plus
-the retained HTML/CSS—not from a visual sample. Include every visible:
+The deterministic builder creates `priority_media.items` from the union of all six rendered sidecars—not from a visual sample. Use the retained HTML/CSS to
+verify the rendered sidecars did not omit a visible media element; if it did,
+recapture instead of adding an unsigned HTML-regex row. Include every visible:
 
 - image `currentSrc`/`src` and responsive source candidate;
 - video `currentSrc`, `<source>`, poster, and format candidate;
@@ -284,8 +356,9 @@ a helper; they mutate package dependencies rather than deleting a project file.
 
 ## 6. Validate before reporting
 
-Hash all 24 files in one `file_sha256` call and store the exact raw-byte digests
-and byte counts. Then call Mist's first-class, project-scoped validator:
+The builder stores raw-byte digests and byte counts for all 24 files. Independently
+hash the same 24 paths in one `file_sha256` call, then call Mist's first-class,
+project-scoped validator:
 
 ```text
 validate_theme_source_inventory({ manifest_path: "clone-manifest.json" })
