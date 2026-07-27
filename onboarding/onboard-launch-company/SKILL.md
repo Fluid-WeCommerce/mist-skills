@@ -42,12 +42,14 @@ Before asking anything, discover which Connect integrations the company can
 actually use so the picker isn't padded with dead options.
 
 ```
-GET /api/droplets       — list of installed droplets
+GET /api/droplets/company_droplets
 ```
 
-The Connect-eligible droplet names today are: **Shopify**, **Exigo**, **ByDesign**,
-**Pillars**, **Infotrax**. Match on `droplet.name` (case-sensitive). For each,
-capture: `uuid`, `name`, and `is_connected`.
+Use only the compact installed-droplet facts returned by this company-scoped
+endpoint; do not fetch the marketplace-sized `/api/droplets` response.
+The Connect-eligible providers today are **Shopify**, **Exigo**, **ByDesign**,
+**Pillars**, and **Infotrax**. For each available provider, retain only its
+provider slug, display name, installed Droplet UUID, and connection status.
 
 - If ≥ 1 droplet is `is_connected: true` → mark that provider as "already
   connected" — the workflow can pull products/customers directly.
@@ -57,14 +59,23 @@ capture: `uuid`, `name`, and `is_connected`.
 - If none of the Connect droplets are installed → the picker only offers
   "scrape public product pages" or "manual entry (stub)."
 
-Also GET `/api/settings/companies/{active_id}` (or the equivalent company-detail
-route) to check whether the company already has a `website_url` set. If so,
-suggest it as the default — do not silently reuse it, but pre-fill.
+For the source URL, use an http(s) URL the user supplied in the triggering
+message as the suggestion. Otherwise leave the field blank. Always show it for
+confirmation. Do not fetch `/api/me`, company-detail, onboarding, database, or
+reporting payloads merely to guess this optional default.
 
-Finally, GET `/api/application_themes` to list the company's existing themes
-(capture `id` + `name`). This populates the "clone into an existing theme or
-create a new one" question in Step 1. If the company has no themes yet, the only
-option is "create new."
+Finally, make exactly one `GET /api/application_themes?per_page=100` call and
+retain only each theme's `id` and `name`. This populates the "clone into an
+existing theme or create a new one" question in Step 1. If a valid id is visible
+but its name is absent because the legacy response was truncated behind large
+stylesheet fields, label it `Theme #<id>` and continue. Do not probe
+`db_schema`, `list_projects`, `run_cli`, or alternate API paths to recover a
+display name. If the read fails, offer only "create new" and proceed.
+
+**Discovery budget:** Step 0 is at most two tool calls:
+the company-droplets GET and the single theme-list GET. Then open `steps`
+immediately. Discovery errors are picker metadata gaps, not a reason to wander
+through unrelated tools or keep the user waiting.
 
 ## Step 1 — Steps panel
 
@@ -120,8 +131,9 @@ YOUR TURN and wait for answers:
    - Always: id `new`, label `Create a new theme (recommended)`, description "Scaffold a
      fresh theme for {{brand}} — keeps the clone isolated and safe to iterate."
    - For each existing theme from Step 0, add id `existing_<theme_id>`, label
-     `Clone into: <theme name>`, description "Refine this existing theme instead of
-     creating a new one." If the company has no themes, only `new` is offered.
+     `Clone into: <theme name or Theme #id>`, description "Refine this existing
+     theme instead of creating a new one." If the company has no themes, only
+     `new` is offered.
 
 5. `extras` — multi_select (mode `opt_in` — empty by default) "Add any optional content
    steps?" Off unless picked.
