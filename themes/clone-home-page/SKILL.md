@@ -107,6 +107,20 @@ or leave the media as a named major; do not convert the binary into source
 code. Small authored SVG/CSS interface icons are not media fallbacks and remain
 allowed.
 
+## Preserve honest document geometry
+
+Build the page with normal responsive flow. Never absolutely or fixed-position
+the full page, a whole section, or the footer at a hardcoded pixel coordinate;
+clamp an arbitrary page height; apply overflow clipping to hide content; or
+remove/crop a source landmark to force a screenshot-height metric. Those are
+evidence-gaming failures even if a comparison number improves.
+
+Use the signed rendered-evidence sidecar's `document.height` as source geometry
+truth. A full-page screenshot can have a different decoded height because a
+provider stitched viewports or repeated sticky chrome. A mobile footer may use
+accordions only when they are semantic, accessible disclosures and QA exercises
+the real closed and opened states.
+
 ## Materialize the shared audit
 
 This page skill intentionally does not declare another skill's script as its
@@ -132,6 +146,10 @@ In addition to the shared gate:
 - hero and all below-the-fold priority media match at both widths
 - no touched Liquid, CSS, JSON, or JavaScript file contains an inline binary
   `data:`/base64 media fallback
+- normal responsive document flow is preserved: no viewport-specific hardcoded
+  page/section/footer coordinate, fixed or absolute whole-section relocation,
+  arbitrary height clamp, overflow clipping, or hidden/cropped source content
+  is used to satisfy screenshot geometry
 - all exact homepage wording is reconciled from source HTML to local DOM
 - header/navigation/footer are visually and interactively valid
 - no base-theme marketing filler remains

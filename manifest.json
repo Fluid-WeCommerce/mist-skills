@@ -160,7 +160,7 @@
       "category": "themes",
       "icon": "house",
       "path": "themes/clone-home-page/SKILL.md",
-      "updated_at": "2026-07-26T08:45:00Z",
+      "updated_at": "2026-07-27T01:48:41Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -177,7 +177,7 @@
       "category": "themes",
       "icon": "shopping-bag",
       "path": "themes/clone-shop-page/SKILL.md",
-      "updated_at": "2026-07-26T08:45:00Z",
+      "updated_at": "2026-07-27T01:48:41Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -333,7 +333,7 @@
     {
       "slug": "onboard-launch-company",
       "path": "workflows/onboard-launch-company.workflow.json",
-      "updated_at": "2026-07-26T22:06:54Z"
+      "updated_at": "2026-07-27T01:48:41Z"
     },
     {
       "slug": "open-country",

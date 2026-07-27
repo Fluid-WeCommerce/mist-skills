@@ -140,6 +140,14 @@ Fix root causes in this order:
 6. micro-spacing
 
 Arbitrary offsets that only line up one screenshot are a regression, not a fix.
+Never move a whole section, page body, or footer to a hardcoded viewport-specific
+`top`/`left` coordinate; fix it in place; clamp the page to an arbitrary height;
+hide, crop, or overflow-clip source content; or otherwise change layout solely
+to satisfy a screenshot or height metric. Mobile footer groups may collapse
+only as real accessible disclosures whose closed and opened states are both
+exercised. The rendered-evidence sidecar's signed `document.height` is the
+source geometry truth; a stitched full-page screenshot may be shorter or taller
+because sticky elements are captured more than once.
 
 ## 5. Run the local proof loop
 
@@ -174,6 +182,8 @@ substitute. The tool refuses mixed captures or a source screenshot with the
 wrong route/viewport rather than silently resizing it, and it machine-fails
 copy mismatch/truncation, source-video omission, unresolved media, HTTP errors,
 capture truncation, horizontal overflow, and full-page height drift above 5%.
+For full-page comparisons, height drift is measured against the signed source
+document height, not the stitched screenshot's decoded pixel height.
 
 If the running Mist build does not return either `comparison.copy` or
 `comparison.media.videoParity`, report `needs-review: tooling upgrade required`.
