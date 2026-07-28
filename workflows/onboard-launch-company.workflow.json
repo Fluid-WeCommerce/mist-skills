@@ -458,7 +458,7 @@
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,
-        "model": "anthropic/claude-opus-5",
+        "model": "google/gemini-3.6-flash",
         "strictness": "strict",
         "onFail": "stop",
         "requiredTools": [
@@ -474,12 +474,19 @@
             "distinctBy": ["screenshot_options.viewport.width"]
           },
           {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"]
+          },
+          {
             "tool": "compare_preview_to_source",
             "input": {
               "width": 1440,
               "height": 900,
               "mode": "full",
-              "copy_mode": "diagnostic"
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
             }
           },
           {
@@ -488,7 +495,9 @@
               "width": 390,
               "height": 844,
               "mode": "full",
-              "copy_mode": "diagnostic"
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
             }
           },
           {
@@ -535,7 +544,7 @@
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,
-        "model": "anthropic/claude-opus-5",
+        "model": "google/gemini-3.6-flash",
         "strictness": "strict",
         "onFail": "stop",
         "requiredTools": [
@@ -551,12 +560,19 @@
             "distinctBy": ["screenshot_options.viewport.width"]
           },
           {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"]
+          },
+          {
             "tool": "compare_preview_to_source",
             "input": {
               "width": 1440,
               "height": 900,
               "mode": "full",
-              "copy_mode": "diagnostic"
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
             }
           },
           {
@@ -565,7 +581,9 @@
               "width": 390,
               "height": 844,
               "mode": "full",
-              "copy_mode": "diagnostic"
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
             }
           },
           {
@@ -609,7 +627,7 @@
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,
-        "model": "anthropic/claude-opus-5",
+        "model": "google/gemini-3.6-flash",
         "strictness": "strict",
         "onFail": "stop",
         "requiredTools": [
@@ -625,12 +643,19 @@
             "distinctBy": ["screenshot_options.viewport.width"]
           },
           {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"]
+          },
+          {
             "tool": "compare_preview_to_source",
             "input": {
               "width": 1440,
               "height": 900,
               "mode": "full",
-              "copy_mode": "diagnostic"
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
             }
           },
           {
@@ -639,7 +664,9 @@
               "width": 390,
               "height": 844,
               "mode": "full",
-              "copy_mode": "diagnostic"
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
             }
           },
           {
@@ -684,7 +711,7 @@
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,
-        "model": "anthropic/claude-opus-5",
+        "model": "google/gemini-3.6-flash",
         "strictness": "strict",
         "onFail": "stop",
         "requiredTools": [
@@ -700,12 +727,19 @@
             "distinctBy": ["screenshot_options.viewport.width"]
           },
           {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"]
+          },
+          {
             "tool": "compare_preview_to_source",
             "input": {
               "width": 1440,
               "height": 900,
               "mode": "full",
-              "copy_mode": "diagnostic"
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
             }
           },
           {
@@ -714,7 +748,9 @@
               "width": 390,
               "height": 844,
               "mode": "full",
-              "copy_mode": "diagnostic"
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
             }
           },
           {

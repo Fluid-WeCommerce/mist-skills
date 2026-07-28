@@ -195,6 +195,19 @@ def validate_flagship_contracts() -> None:
                 f"manifest must publish {slug!r} at {expected_path!r}"
             )
 
+    page_reference = (
+        ROOT / "themes/page-clone/references/pixel-perfect-page.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        page_reference,
+        (
+            "baseline_admissibility",
+            "contaminated",
+            "repeated fixed overlays",
+        ),
+        "pixel-perfect-page",
+    )
+
     product_skill = (
         ROOT / "onboarding/fluid-product-admin-import/SKILL.md"
     ).read_text(encoding="utf-8")
@@ -276,6 +289,11 @@ def validate_flagship_contracts() -> None:
             "`currentSrc`",
             "`read_preview_dom",
             "signed Agent Surface receipt",
+            'geometry_mode:"diagnostic"',
+            'media_mode:"diagnostic"',
+            "A successful diagnostic call",
+            "failed/refused `interact_preview`",
+            "tool_failures:[]",
             "page-type reviewer",
             "Do not use a universal minor-count or geometry percentage",
             'status:"pass"|"needs_adjudication"|"blocked"',
@@ -298,6 +316,11 @@ def validate_flagship_contracts() -> None:
             "`external`",
             'copy_mode:"exact"',
             'copy_mode:"diagnostic"',
+            'geometry_mode:"diagnostic"',
+            'media_mode:"diagnostic"',
+            "Diagnostic comparison success",
+            "failed or refused page-contract interaction",
+            "tool_failures:[]",
             "independent reviewer",
             'status:"pass"|"needs_adjudication"|"blocked"',
         ),
@@ -470,10 +493,32 @@ def validate_flagship_contracts() -> None:
                 '"height": 844',
                 '"mode": "full"',
                 '"copy_mode": "diagnostic"',
+                '"geometry_mode": "diagnostic"',
+                '"media_mode": "diagnostic"',
+                '"tool": "view_project_image"',
                 '"tool": "interact_preview"',
             ),
             f"flagship workflow {step_id} evidence floor",
         )
+        image_requirements = [
+            requirement
+            for requirement in step.get("qa", {}).get("requiredTools", [])
+            if requirement.get("tool") == "view_project_image"
+        ]
+        if not any(
+            requirement.get("minSuccessfulCalls") == 2
+            and requirement.get("distinctBy") == ["path"]
+            for requirement in image_requirements
+        ):
+            raise CatalogValidationError(
+                f"flagship workflow: {step_id} QA must open two distinct "
+                "durable source images"
+            )
+        if step.get("qa", {}).get("model") != "google/gemini-3.6-flash":
+            raise CatalogValidationError(
+                f"flagship workflow: {step_id} bounded page QA must use "
+                "google/gemini-3.6-flash"
+            )
         require_fragments(
             json.dumps(step.get("acceptance", [])),
             (
@@ -527,11 +572,33 @@ def validate_flagship_contracts() -> None:
                 '"minSuccessfulCalls": 2',
                 '"tool": "compare_preview_to_source"',
                 '"copy_mode": "diagnostic"',
+                '"geometry_mode": "diagnostic"',
+                '"media_mode": "diagnostic"',
+                '"tool": "view_project_image"',
                 '"tool": "read_preview_dom"',
                 '"tool": "interact_preview"',
             ),
             f"flagship workflow {step_id} evidence floor",
         )
+        image_requirements = [
+            requirement
+            for requirement in theme_step.get("qa", {}).get("requiredTools", [])
+            if requirement.get("tool") == "view_project_image"
+        ]
+        if not any(
+            requirement.get("minSuccessfulCalls") == 2
+            and requirement.get("distinctBy") == ["path"]
+            for requirement in image_requirements
+        ):
+            raise CatalogValidationError(
+                f"flagship workflow: {step_id} QA must open two distinct "
+                "durable source images"
+            )
+        if theme_step.get("qa", {}).get("model") != "google/gemini-3.6-flash":
+            raise CatalogValidationError(
+                f"flagship workflow: {step_id} bounded page QA must use "
+                "google/gemini-3.6-flash"
+            )
         require_fragments(
             json.dumps(theme_step.get("acceptance", [])),
             (

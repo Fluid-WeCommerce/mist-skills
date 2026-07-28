@@ -29,6 +29,7 @@ page_contract
 project_path
 viewports
 data_contract
+comparison_policy
 ```
 
 The caller owns `page_contract` and `data_contract`. Do not infer a template
@@ -44,6 +45,12 @@ as source evidence without forcing the source and Fluid pathnames to match.
 For every declared viewport, call `crawl` once with rendered HTML, Markdown,
 full-page screenshot, and page evidence. Retain the exact Mist-generated files
 and receipts.
+
+Open each retained source image and record `baseline_admissibility`. Repeated
+fixed overlays, duplicated/blank stitched cells, clipping, or pixels that
+cannot be reconciled with signed DOM/landmarks are contaminated. Recapture
+after one concrete overlay action or use clean bounded landmark cells; without
+admissible source pixels, return `needs_adjudication` rather than a visual pass.
 
 Classify each visible landmark:
 
@@ -92,15 +99,30 @@ Use one Mist-owned `start_preview`. Never start a second theme server.
 For each declared viewport:
 
 1. Inspect `preview_state`, server logs, console, and rendered DOM.
-2. Run `compare_preview_to_source`.
+2. Run `compare_preview_to_source` with an explicit geometry and media policy
+   derived from the dossier and page contract.
 3. Use `copy_mode:"exact"` when all compared copy is stable.
 4. Use `copy_mode:"diagnostic"` when the dossier proves resource/dynamic copy;
    itemize every difference instead of calling the page exact.
-5. Exercise relevant controls with `interact_preview`.
-6. Fix the highest-impact root cause and recapture only this route/viewport.
+5. Use `geometry_mode:"diagnostic"` for normal page-specialist review. Use
+   `geometry_mode:"strict"` only when the page contract explicitly makes the
+   whole-document height threshold a hard requirement.
+6. Use `media_mode:"strict"` only when every compared source image/video layer
+   is stable and required. Use `media_mode:"diagnostic"` when the dossier proves
+   resource, dynamic, external, consent, review, or personalized layers; the
+   page contract's priority media remains independently hard-required.
+7. Exercise relevant controls with `interact_preview`.
+8. Fix the highest-impact root cause and recapture only this route/viewport.
 
 Reuse valid source evidence. Do not recrawl unchanged source cells or restart a
 full site workflow for one page correction.
+
+Diagnostic comparison success means Mist captured and signed usable evidence.
+It is never a visual pass. The page specialist must open the attached pixels,
+reconcile landmarks/DOM/media, and adjudicate every reported material delta.
+A failed or refused page-contract interaction is a hard failure until the
+reviewer reruns it successfully from an inspected rendered selector. Do not
+omit the failure from the final verdict or substitute a prose claim.
 
 ## 6. Separate facts from judgment
 
@@ -110,9 +132,10 @@ Hard failures:
 - stale, mixed, missing, or hash-invalid evidence
 - unsafe or unbounded writes
 - market/currency mismatch for preview resources
-- broken Liquid, non-200 route, console/server exception, failed priority media
+- broken Liquid, non-200 route, truncated capture/copy/media evidence,
+  horizontal overflow, console/server exception, failed priority media
 - missing/reordered stable landmark or unrelated starter content
-- inaccessible or fake controls
+- inaccessible or fake controls; failed/refused page-contract tool interactions
 
 Specialist judgment:
 
@@ -140,6 +163,8 @@ PAGE_OUTPUT: {
   template_paths:[],
   data_contract:{required:[],resolved:[],missing:[]},
   evidence_dossier:{source:[],local:[],comparison_receipts:[]},
+  baseline_admissibility:[],
+  comparison_policy:{geometry,media,copy},
   stable_landmarks:{expected,matched,missing:[],reordered:[]},
   variable_landmarks:{resource:[],dynamic:[],external:[]},
   interactions:[],
@@ -147,6 +172,7 @@ PAGE_OUTPUT: {
   material_deltas:[],
   accepted_exceptions:[],
   runtime_errors:[],
+  tool_failures:[],
   timing:{first_render_seconds,total_seconds,rework_rounds},
   status:"pass"|"needs_adjudication"|"blocked",
   next

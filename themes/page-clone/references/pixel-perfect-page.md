@@ -19,6 +19,8 @@ Resolve these before editing:
 - `project_path`: the active Fluid theme checkout
 - `viewports`: one or more declared source/local comparison cells
 - `data_contract`: resources the page-type skill says must already render
+- `comparison_policy`: explicit `copy`, `geometry`, and `media` modes derived
+  from the source dossier plus the page-type contract
 
 In an onboarding workflow, read them from caller context, dependency output,
 and `clone-manifest.json`. Do not ask a sleeping user to repeat known inputs.
@@ -50,6 +52,25 @@ route exists.
 If a cookie, country, age, or newsletter overlay obscures content, inspect the
 returned HTML, repeat with one concrete click selector, and record the action.
 Never delete every dialog or guess a selector.
+
+Open the retained source pixels before reusing them or issuing a verdict. Record
+`baseline_admissibility` for each viewport as `usable`, `contaminated`, or
+`invalid`, with observations and the recovery attempted. Compare the decoded
+screenshot dimensions with the sidecar's signed rendered-document dimensions,
+but use judgment rather than a universal ratio: sticky stitching can make the
+bitmap legitimately longer or shorter. Signs such as repeated fixed overlays,
+duplicated scroll cells, large blank/blurred regions, clipped content, or a
+screenshot whose visible page cannot be reconciled with its DOM/landmarks make
+the pixels contaminated acceptance evidence.
+
+Dismiss one observed overlay with a concrete selector and recapture when
+possible. If a clean full-page capture is not possible, retain the contaminated
+artifact for provenance and use clean bounded landmark/viewport cells for
+visual review. Return `needs_adjudication` when current provenance is valid but
+no admissible visual baseline exists; return `blocked` for mixed, corrupt,
+missing, or hash-invalid evidence. Never classify a consent surface as
+`external` and then call the whole page a pass while its repeated pixels still
+obscure the source.
 
 Persist the exact source bundle returned by Mist: screenshot local path,
 timestamp, SHA-256, byte count, decoded dimensions, requested viewport, final
@@ -173,7 +194,7 @@ Before comparison:
 
 For every declared viewport:
 
-1. `compare_preview_to_source(source_path:<source_path>, source_evidence_path:<page_evidence_path>, copy_mode:<exact-or-diagnostic>, mode:"full", path:<built_path>, width:<declared-width>, height:<declared-height>)`
+1. `compare_preview_to_source(source_path:<source_path>, source_evidence_path:<page_evidence_path>, copy_mode:<exact-or-diagnostic>, geometry_mode:<strict-or-diagnostic>, media_mode:<strict-or-diagnostic>, mode:"full", path:<built_path>, width:<declared-width>, height:<declared-height>)`
 2. `read_preview_dom(path:<built_path>, mode:"all")`
 3. inspect critical crops with `screenshot_preview(mode:"viewport", ...)` when
    needed
@@ -190,6 +211,31 @@ not an equivalent substitute. Mixed captures, wrong route/viewport evidence,
 HTTP failures, capture truncation, and unresolved priority media remain hard
 failures. Pixel and height deltas are evidence for specialist review, not
 universal verdicts.
+
+Select policy from evidence rather than whichever mode is easiest to pass:
+
+- `geometry_mode:"diagnostic"` is the normal page-specialist policy because
+  full-page height and pixel severity require landmark-aware visual judgment.
+  Use `strict` only when the page contract explicitly declares the entire
+  document-height threshold to be a hard requirement.
+- `media_mode:"strict"` applies only when every compared source image/video
+  layer is stable and required. Use `media_mode:"diagnostic"` when the dossier
+  proves resource, dynamic, external, consent, review, experiment, or
+  personalized media. Priority media declared by the page contract is still a
+  hard requirement regardless of this parity policy.
+- `copy_mode:"exact"` remains machine-enforced for stable cells. Diagnostic
+  copy requires an itemized, evidence-backed classification for every mismatch.
+
+A successful diagnostic call proves that the evidence is current, bound, and
+available for review. It does not prove that the page is visually acceptable.
+The page specialist must open the attached source/local pixels, inspect DOM and
+landmarks, and either fix or explicitly adjudicate every material diagnostic.
+The reviewer must also re-check `baseline_admissibility`; a signed comparison
+against contaminated source pixels cannot produce `pass`, even when local
+runtime, geometry, and interactions are healthy.
+Likewise, a failed/refused `interact_preview` call is a hard failure for a
+required control. Rerun it successfully from an inspected rendered selector;
+never drop the failed call from the verdict or infer success from markup alone.
 
 If the running Mist build does not return the comparison fields required by
 the page contract, report `needs_adjudication: tooling upgrade required`. Do
@@ -225,6 +271,9 @@ final proof must be newer than the final code change.
 Hard requirements:
 
 - every declared source/local evidence cell is current and durable
+- every source cell used for visual acceptance has
+  `baseline_admissibility:"usable"`; contaminated cells require a clean
+  recapture, clean bounded replacement cells, or `needs_adjudication`
 - every declared viewport has a signed comparison receipt for the exact route
 - requested and final routes match and local HTTP status is 200
 - every stable landmark exists once, in order, with no unrelated placeholder
@@ -233,6 +282,8 @@ Hard requirements:
 - page-contract interactions were exercised from rendered selectors
 - no horizontal overflow at the page contract's narrow viewport
 - console and server logs have no unresolved route/runtime/asset errors
+- every required interaction completed successfully; no failed/refused
+  page-contract tool call was omitted from the verdict
 - `theme_audit.py` passes for touched theme files
 
 The page-type reviewer judges responsive equivalence, resource/dynamic content,
@@ -243,8 +294,8 @@ third-party surfaces, geometry, and visual severity. Return:
 - `blocked` — a hard requirement failed
 
 Do not use a universal minor-count or geometry percentage as a substitute for
-page-type judgment. “Looks good,” a successful build, or prose without signed
-evidence is never a pass.
+page-type judgment. “Looks good,” a successful build/tool call, or prose
+without signed evidence is never a pass.
 
 ## Performance and resilience
 
@@ -269,6 +320,8 @@ PAGE_OUTPUT: {
   local_status,
   source_copy_sha256,
   local_copy_sha256,
+  baseline_admissibility:[],
+  comparison_policy:{copy,geometry,media},
   classified_copy_differences:[],
   source_evidence:[],
   local_evidence:[],
@@ -281,6 +334,7 @@ PAGE_OUTPUT: {
   material_deltas:[],
   accepted_exceptions:[],
   runtime_errors:[],
+  tool_failures:[],
   status:"pass"|"needs_adjudication"|"blocked",
   next
 }
