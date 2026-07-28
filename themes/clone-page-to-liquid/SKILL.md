@@ -114,6 +114,9 @@ full site workflow for one page correction.
 Diagnostic comparison success means Mist captured and signed usable evidence.
 It is never a visual pass. The page specialist must open the attached pixels,
 reconcile landmarks/DOM/media, and adjudicate every reported material delta.
+A failed or refused page-contract interaction is a hard failure until the
+reviewer reruns it successfully from an inspected rendered selector. Do not
+omit the failure from the final verdict or substitute a prose claim.
 
 ## 6. Separate facts from judgment
 
@@ -126,7 +129,7 @@ Hard failures:
 - broken Liquid, non-200 route, truncated capture/copy/media evidence,
   horizontal overflow, console/server exception, failed priority media
 - missing/reordered stable landmark or unrelated starter content
-- inaccessible or fake controls
+- inaccessible or fake controls; failed/refused page-contract tool interactions
 
 Specialist judgment:
 
@@ -162,6 +165,7 @@ PAGE_OUTPUT: {
   material_deltas:[],
   accepted_exceptions:[],
   runtime_errors:[],
+  tool_failures:[],
   timing:{first_render_seconds,total_seconds,rework_rounds},
   status:"pass"|"needs_adjudication"|"blocked",
   next

@@ -211,6 +211,9 @@ A successful diagnostic call proves that the evidence is current, bound, and
 available for review. It does not prove that the page is visually acceptable.
 The page specialist must open the attached source/local pixels, inspect DOM and
 landmarks, and either fix or explicitly adjudicate every material diagnostic.
+Likewise, a failed/refused `interact_preview` call is a hard failure for a
+required control. Rerun it successfully from an inspected rendered selector;
+never drop the failed call from the verdict or infer success from markup alone.
 
 If the running Mist build does not return the comparison fields required by
 the page contract, report `needs_adjudication: tooling upgrade required`. Do
@@ -254,6 +257,8 @@ Hard requirements:
 - page-contract interactions were exercised from rendered selectors
 - no horizontal overflow at the page contract's narrow viewport
 - console and server logs have no unresolved route/runtime/asset errors
+- every required interaction completed successfully; no failed/refused
+  page-contract tool call was omitted from the verdict
 - `theme_audit.py` passes for touched theme files
 
 The page-type reviewer judges responsive equivalence, resource/dynamic content,
@@ -303,6 +308,7 @@ PAGE_OUTPUT: {
   material_deltas:[],
   accepted_exceptions:[],
   runtime_errors:[],
+  tool_failures:[],
   status:"pass"|"needs_adjudication"|"blocked",
   next
 }
