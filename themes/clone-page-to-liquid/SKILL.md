@@ -140,6 +140,20 @@ never by itself a visual pass. The page specialist must first require
 pixels, reconcile landmarks/DOM/media, and adjudicate every reported material
 delta. A completed comparison with source status `needs_adjudication` remains
 ineligible for pass.
+
+Read the tool envelope and machine outcome literally:
+
+- Every tool result with `isError:true` belongs in `tool_failures`; do not
+  report zero tool errors or a smaller tool-call count from memory.
+- If a usable source comparison returns `MACHINE OUTCOME: failed` because of
+  exact-copy, required-media, route, overflow, runtime, or interaction
+  differences, the page is `blocked` / **REWORK** until those concrete
+  differences are fixed or an authorized reviewer accepts named exceptions.
+- `needs_adjudication` is not a softer synonym for failed comparison. Use it
+  only when the receipt identifies source/provenance ambiguity or when valid
+  evidence leaves a specifically named product judgment that cannot be
+  resolved from the page contract. Unreviewed material deltas are blockers.
+
 A failed or refused page-contract interaction is a hard failure until the
 reviewer reruns it successfully from an inspected rendered selector. Do not
 omit the failure from the final verdict or substitute a prose claim.
@@ -201,3 +215,7 @@ PAGE_OUTPUT: {
 
 `pass` means zero hard failures and no unreviewed material delta. It does not
 mean mathematical pixel identity.
+
+Derive tool-call and tool-failure counts from the durable chat/tool receipts
+when that transcript is available. Otherwise omit those counts; never estimate
+them in final prose.

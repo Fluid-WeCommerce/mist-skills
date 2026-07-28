@@ -79,6 +79,16 @@ Interpret Mist's signed source result before interpreting comparison metrics:
 A tool envelope with `isError:false` says only that capture and comparison
 completed. It cannot make `eligibleForVisualPass:false` acceptable.
 
+Conversely, a comparison envelope with `isError:true` and
+`MACHINE OUTCOME: failed` is a recorded tool failure. With a usable source,
+concrete exact-copy, required-media, route, overflow, runtime, or interaction
+differences mean **REWORK** / `blocked`; they do not become
+`needs_adjudication` merely because specialist review is also recommended.
+Reserve `needs_adjudication` for named source/provenance ambiguity or a
+specific unresolved product judgment supported by otherwise valid evidence.
+Count calls and failures from durable tool blocks when available; omit the
+counts rather than guessing.
+
 Dismiss one observed overlay with a concrete selector and recapture when
 possible. If a clean full-page capture is not possible, retain the contaminated
 artifact for provenance and use clean bounded landmark/viewport cells for
