@@ -195,6 +195,19 @@ def validate_flagship_contracts() -> None:
                 f"manifest must publish {slug!r} at {expected_path!r}"
             )
 
+    page_reference = (
+        ROOT / "themes/page-clone/references/pixel-perfect-page.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        page_reference,
+        (
+            "baseline_admissibility",
+            "contaminated",
+            "repeated fixed overlays",
+        ),
+        "pixel-perfect-page",
+    )
+
     product_skill = (
         ROOT / "onboarding/fluid-product-admin-import/SKILL.md"
     ).read_text(encoding="utf-8")

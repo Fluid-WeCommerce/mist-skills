@@ -53,6 +53,25 @@ If a cookie, country, age, or newsletter overlay obscures content, inspect the
 returned HTML, repeat with one concrete click selector, and record the action.
 Never delete every dialog or guess a selector.
 
+Open the retained source pixels before reusing them or issuing a verdict. Record
+`baseline_admissibility` for each viewport as `usable`, `contaminated`, or
+`invalid`, with observations and the recovery attempted. Compare the decoded
+screenshot dimensions with the sidecar's signed rendered-document dimensions,
+but use judgment rather than a universal ratio: sticky stitching can make the
+bitmap legitimately longer or shorter. Signs such as repeated fixed overlays,
+duplicated scroll cells, large blank/blurred regions, clipped content, or a
+screenshot whose visible page cannot be reconciled with its DOM/landmarks make
+the pixels contaminated acceptance evidence.
+
+Dismiss one observed overlay with a concrete selector and recapture when
+possible. If a clean full-page capture is not possible, retain the contaminated
+artifact for provenance and use clean bounded landmark/viewport cells for
+visual review. Return `needs_adjudication` when current provenance is valid but
+no admissible visual baseline exists; return `blocked` for mixed, corrupt,
+missing, or hash-invalid evidence. Never classify a consent surface as
+`external` and then call the whole page a pass while its repeated pixels still
+obscure the source.
+
 Persist the exact source bundle returned by Mist: screenshot local path,
 timestamp, SHA-256, byte count, decoded dimensions, requested viewport, final
 URL/status, overlay handling, and the matching `page_evidence` path/SHA-256.
@@ -211,6 +230,9 @@ A successful diagnostic call proves that the evidence is current, bound, and
 available for review. It does not prove that the page is visually acceptable.
 The page specialist must open the attached source/local pixels, inspect DOM and
 landmarks, and either fix or explicitly adjudicate every material diagnostic.
+The reviewer must also re-check `baseline_admissibility`; a signed comparison
+against contaminated source pixels cannot produce `pass`, even when local
+runtime, geometry, and interactions are healthy.
 Likewise, a failed/refused `interact_preview` call is a hard failure for a
 required control. Rerun it successfully from an inspected rendered selector;
 never drop the failed call from the verdict or infer success from markup alone.
@@ -249,6 +271,9 @@ final proof must be newer than the final code change.
 Hard requirements:
 
 - every declared source/local evidence cell is current and durable
+- every source cell used for visual acceptance has
+  `baseline_admissibility:"usable"`; contaminated cells require a clean
+  recapture, clean bounded replacement cells, or `needs_adjudication`
 - every declared viewport has a signed comparison receipt for the exact route
 - requested and final routes match and local HTTP status is 200
 - every stable landmark exists once, in order, with no unrelated placeholder
@@ -295,6 +320,7 @@ PAGE_OUTPUT: {
   local_status,
   source_copy_sha256,
   local_copy_sha256,
+  baseline_admissibility:[],
   comparison_policy:{copy,geometry,media},
   classified_copy_differences:[],
   source_evidence:[],

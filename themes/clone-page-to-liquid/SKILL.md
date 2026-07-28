@@ -46,6 +46,12 @@ For every declared viewport, call `crawl` once with rendered HTML, Markdown,
 full-page screenshot, and page evidence. Retain the exact Mist-generated files
 and receipts.
 
+Open each retained source image and record `baseline_admissibility`. Repeated
+fixed overlays, duplicated/blank stitched cells, clipping, or pixels that
+cannot be reconciled with signed DOM/landmarks are contaminated. Recapture
+after one concrete overlay action or use clean bounded landmark cells; without
+admissible source pixels, return `needs_adjudication` rather than a visual pass.
+
 Classify each visible landmark:
 
 - `stable` — shell/editorial wording and media that should match
@@ -157,6 +163,7 @@ PAGE_OUTPUT: {
   template_paths:[],
   data_contract:{required:[],resolved:[],missing:[]},
   evidence_dossier:{source:[],local:[],comparison_receipts:[]},
+  baseline_admissibility:[],
   comparison_policy:{geometry,media,copy},
   stable_landmarks:{expected,matched,missing:[],reordered:[]},
   variable_landmarks:{resource:[],dynamic:[],external:[]},
