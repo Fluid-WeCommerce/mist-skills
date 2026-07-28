@@ -19,6 +19,8 @@ Resolve these before editing:
 - `project_path`: the active Fluid theme checkout
 - `viewports`: one or more declared source/local comparison cells
 - `data_contract`: resources the page-type skill says must already render
+- `comparison_policy`: explicit `copy`, `geometry`, and `media` modes derived
+  from the source dossier plus the page-type contract
 
 In an onboarding workflow, read them from caller context, dependency output,
 and `clone-manifest.json`. Do not ask a sleeping user to repeat known inputs.
@@ -173,7 +175,7 @@ Before comparison:
 
 For every declared viewport:
 
-1. `compare_preview_to_source(source_path:<source_path>, source_evidence_path:<page_evidence_path>, copy_mode:<exact-or-diagnostic>, mode:"full", path:<built_path>, width:<declared-width>, height:<declared-height>)`
+1. `compare_preview_to_source(source_path:<source_path>, source_evidence_path:<page_evidence_path>, copy_mode:<exact-or-diagnostic>, geometry_mode:<strict-or-diagnostic>, media_mode:<strict-or-diagnostic>, mode:"full", path:<built_path>, width:<declared-width>, height:<declared-height>)`
 2. `read_preview_dom(path:<built_path>, mode:"all")`
 3. inspect critical crops with `screenshot_preview(mode:"viewport", ...)` when
    needed
@@ -190,6 +192,25 @@ not an equivalent substitute. Mixed captures, wrong route/viewport evidence,
 HTTP failures, capture truncation, and unresolved priority media remain hard
 failures. Pixel and height deltas are evidence for specialist review, not
 universal verdicts.
+
+Select policy from evidence rather than whichever mode is easiest to pass:
+
+- `geometry_mode:"diagnostic"` is the normal page-specialist policy because
+  full-page height and pixel severity require landmark-aware visual judgment.
+  Use `strict` only when the page contract explicitly declares the entire
+  document-height threshold to be a hard requirement.
+- `media_mode:"strict"` applies only when every compared source image/video
+  layer is stable and required. Use `media_mode:"diagnostic"` when the dossier
+  proves resource, dynamic, external, consent, review, experiment, or
+  personalized media. Priority media declared by the page contract is still a
+  hard requirement regardless of this parity policy.
+- `copy_mode:"exact"` remains machine-enforced for stable cells. Diagnostic
+  copy requires an itemized, evidence-backed classification for every mismatch.
+
+A successful diagnostic call proves that the evidence is current, bound, and
+available for review. It does not prove that the page is visually acceptable.
+The page specialist must open the attached source/local pixels, inspect DOM and
+landmarks, and either fix or explicitly adjudicate every material diagnostic.
 
 If the running Mist build does not return the comparison fields required by
 the page contract, report `needs_adjudication: tooling upgrade required`. Do
@@ -243,8 +264,8 @@ third-party surfaces, geometry, and visual severity. Return:
 - `blocked` — a hard requirement failed
 
 Do not use a universal minor-count or geometry percentage as a substitute for
-page-type judgment. “Looks good,” a successful build, or prose without signed
-evidence is never a pass.
+page-type judgment. “Looks good,” a successful build/tool call, or prose
+without signed evidence is never a pass.
 
 ## Performance and resilience
 
@@ -269,6 +290,7 @@ PAGE_OUTPUT: {
   local_status,
   source_copy_sha256,
   local_copy_sha256,
+  comparison_policy:{copy,geometry,media},
   classified_copy_differences:[],
   source_evidence:[],
   local_evidence:[],

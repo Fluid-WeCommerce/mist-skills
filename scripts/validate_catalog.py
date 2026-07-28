@@ -276,6 +276,9 @@ def validate_flagship_contracts() -> None:
             "`currentSrc`",
             "`read_preview_dom",
             "signed Agent Surface receipt",
+            'geometry_mode:"diagnostic"',
+            'media_mode:"diagnostic"',
+            "A successful diagnostic call",
             "page-type reviewer",
             "Do not use a universal minor-count or geometry percentage",
             'status:"pass"|"needs_adjudication"|"blocked"',
@@ -298,6 +301,9 @@ def validate_flagship_contracts() -> None:
             "`external`",
             'copy_mode:"exact"',
             'copy_mode:"diagnostic"',
+            'geometry_mode:"diagnostic"',
+            'media_mode:"diagnostic"',
+            "Diagnostic comparison success",
             "independent reviewer",
             'status:"pass"|"needs_adjudication"|"blocked"',
         ),
@@ -470,10 +476,17 @@ def validate_flagship_contracts() -> None:
                 '"height": 844',
                 '"mode": "full"',
                 '"copy_mode": "diagnostic"',
+                '"geometry_mode": "diagnostic"',
+                '"media_mode": "diagnostic"',
                 '"tool": "interact_preview"',
             ),
             f"flagship workflow {step_id} evidence floor",
         )
+        if step.get("qa", {}).get("model") != "google/gemini-3.6-flash":
+            raise CatalogValidationError(
+                f"flagship workflow: {step_id} bounded page QA must use "
+                "google/gemini-3.6-flash"
+            )
         require_fragments(
             json.dumps(step.get("acceptance", [])),
             (
@@ -527,11 +540,18 @@ def validate_flagship_contracts() -> None:
                 '"minSuccessfulCalls": 2',
                 '"tool": "compare_preview_to_source"',
                 '"copy_mode": "diagnostic"',
+                '"geometry_mode": "diagnostic"',
+                '"media_mode": "diagnostic"',
                 '"tool": "read_preview_dom"',
                 '"tool": "interact_preview"',
             ),
             f"flagship workflow {step_id} evidence floor",
         )
+        if theme_step.get("qa", {}).get("model") != "google/gemini-3.6-flash":
+            raise CatalogValidationError(
+                f"flagship workflow: {step_id} bounded page QA must use "
+                "google/gemini-3.6-flash"
+            )
         require_fragments(
             json.dumps(theme_step.get("acceptance", [])),
             (

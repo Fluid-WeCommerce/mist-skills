@@ -146,70 +146,34 @@ A future first-class composed-workflow step should provide:
 - child revision pinning
 - bounded child concurrency and cost
 
-## Model benchmark
+## Model routing decision
 
-Model choice is an empirical page-build decision, not a vendor preference.
-Never let candidate models edit the same checkout.
+Model choice is an empirical page-build decision, not a vendor preference. The
+initial diversity trials are complete enough to stop the open-ended model
+tournament and finish the product:
 
-For each source site/model cell:
+- `openai/gpt-5.6-sol` is the default Home, Shop, PDP, and universal-page
+  builder/refiner.
+- `google/gemini-3.6-flash` handles fast source discovery and bounded,
+  independent, read-only page QA after the builder's final change.
+- `anthropic/claude-opus-5` is the escalation path for unusually difficult
+  structural/media reconstruction or a QA disagreement that cannot be
+  adjudicated from current evidence.
+- Kimi and Fable remain available tools, but are not default golden-route gates.
 
-1. Create an isolated company and theme.
-2. Reuse one frozen source evidence snapshot for all candidates.
-3. Run the same home skill, tool access, turn limits, and QA thresholds.
-4. Use a fixed independent evaluator that did not build the candidate.
-5. Keep the final artifact and every signed evidence receipt.
+Observed all-SOL creation on the retained Taft trial took 7:46 for Home, 8:55
+for Shop, and 8:29 for PDP (25:10 total). Representative bounded SOL refinements
+took 5:04-5:53; a deep structural recovery took 12:57. Read-only QA took
+approximately 1:42-2:44 per page. These are operational baselines, not a
+controlled performance guarantee: record first-render time, total time,
+rework rounds, tool failures, and signed receipts for every retained run.
 
-Measure:
-
-- wall-clock time to first render and hard pass
-- builder and reviewer model/tool calls
-- rework rounds and terminal failures
-- exact copy missing/extra/mismatch counts
-- source landmarks matched
-- priority media ready/failed/pending
-- desktop/mobile visual majors and minors
-- landmark geometry error
-- horizontal overflow and runtime errors
-- interaction checks passed
-- approximate cost when available
-
-Initial diversity matrix:
-
-| Source           | Why it matters                                            |
-| ---------------- | --------------------------------------------------------- |
-| flourist.com     | Editorial food imagery, typography, commerce storytelling |
-| vervecoffee.com  | Dense merchandising, product rails, motion/media          |
-| partner.co       | Membership and branded commerce behavior                  |
-| calderalab.com   | Premium editorial PDP/home composition                    |
-| dimebeautyco.com | Promotion-heavy beauty storefront and responsive nav      |
-| taftclothing.com | Fashion imagery, variants, strong visual identity         |
-
-Run the benchmark in three phases:
-
-1. **Harness calibration:** Flourist and Verve, four builders
-   (`openai/gpt-5.6-sol`, Fable 5, Opus 5, and
-   `google/gemini-3.6-flash`), with two independent Home runs per cell. This is
-   16 isolated runs. Use the same frozen evidence, 1M-class context allowance,
-   tool/turn limits, and a fixed blinded QA route for every cell.
-2. **Generalization:** advance the top two builders across Partner, Caldera
-   Lab, Dime Beauty, and Taft. Repeat a cell when the two calibration runs
-   disagreed materially rather than hiding run variance inside an average.
-3. **Dynamic-commerce gate:** run the top two on Shop for the two most
-   contrasting sites. Do not choose the theme builder or author more archetype
-   skills until one route proves both editorial Home fidelity and real Fluid
-   catalog behavior.
-
-Use `moonshotai/kimi-k3` as the initial fixed QA model because it is not a
-phase-one builder and can keep evaluation cost bounded. Its prose never
-overrides machine evidence. If judge calibration against human review is poor,
-replace the judge for every cell and rerun; never change judge model only for a
-candidate that scored badly.
-
-`google/gemini-3.6-flash` remains the default discovery/inventory hypothesis,
-but it still receives a builder cell so that role choice is measured rather
-than assumed. Kimi may enter a later builder cost/quality round after the
-harness is calibrated. A prose reviewer verdict without the required evidence
-is not a benchmark result.
+Gemini QA may never pass from prose or a successful comparison call. It must
+inspect the current attached pixels, DOM, interactions, console/server logs,
+and signed comparison receipts. Machine hard failures stop the page. Geometry
+and variable-media diagnostics go to the page specialist; unresolved material
+deltas return `needs_adjudication`. Escalate to Opus only with the exact failed
+contract and current evidence, never by starting an unbounded second clone.
 
 ## Performance and resilience
 
