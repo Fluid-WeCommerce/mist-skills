@@ -52,6 +52,22 @@ cannot be reconciled with signed DOM/landmarks are contaminated. Recapture
 after one concrete overlay action or use clean bounded landmark cells; without
 admissible source pixels, return `needs_adjudication` rather than a visual pass.
 
+Read the signed source-admissibility fields literally:
+
+- `status:"usable"` with `eligibleForVisualPass:true` may enter visual review.
+- `status:"contaminated"` means Mist attributed obstructing pixels to a
+  rendered overlay; inspect the named selector/geometry, dismiss that concrete
+  surface when safe, and recapture.
+- `status:"needs_adjudication"` means Mist found a plausible serialized
+  dialog/overlay signal but could not attribute visible pixels to it. Open the
+  retained image, inspect the reported DOM candidate and repeated-region
+  geometry, then either dismiss a concrete rendered surface and recapture or
+  preserve the result as `needs_adjudication`.
+
+`isError:false` only means the capture/comparison operation completed. It does
+not override `eligibleForVisualPass:false`, and it never turns
+`needs_adjudication` into a visual pass.
+
 Classify each visible landmark:
 
 - `stable` — shell/editorial wording and media that should match
@@ -117,9 +133,13 @@ For each declared viewport:
 Reuse valid source evidence. Do not recrawl unchanged source cells or restart a
 full site workflow for one page correction.
 
-Diagnostic comparison success means Mist captured and signed usable evidence.
-It is never a visual pass. The page specialist must open the attached pixels,
-reconcile landmarks/DOM/media, and adjudicate every reported material delta.
+Diagnostic comparison success means Mist captured and signed evidence. It is
+never by itself a visual pass. The page specialist must first require
+`source.admissibility.status:"usable"` and
+`source.admissibility.eligibleForVisualPass:true`, then open the attached
+pixels, reconcile landmarks/DOM/media, and adjudicate every reported material
+delta. A completed comparison with source status `needs_adjudication` remains
+ineligible for pass.
 A failed or refused page-contract interaction is a hard failure until the
 reviewer reruns it successfully from an inspected rendered selector. Do not
 omit the failure from the final verdict or substitute a prose claim.

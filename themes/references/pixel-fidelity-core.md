@@ -29,6 +29,10 @@ No layer substitutes for another. In particular, a screenshot cannot prove
 exact hidden copy or source URLs, and an HTML excerpt cannot prove the rendered
 page is visible and unobscured.
 
+Before visual judgment, require the signed source-admissibility result to be
+`status:"usable"` with `eligibleForVisualPass:true`. `isError:false` means the
+tool completed, not that the source is visually admissible.
+
 ## Required viewports
 
 Use 1440×900 and 390×844 for the golden Home, Shop, and PDP routes. Capture the

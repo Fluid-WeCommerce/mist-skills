@@ -54,14 +54,30 @@ returned HTML, repeat with one concrete click selector, and record the action.
 Never delete every dialog or guess a selector.
 
 Open the retained source pixels before reusing them or issuing a verdict. Record
-`baseline_admissibility` for each viewport as `usable`, `contaminated`, or
-`invalid`, with observations and the recovery attempted. Compare the decoded
-screenshot dimensions with the sidecar's signed rendered-document dimensions,
-but use judgment rather than a universal ratio: sticky stitching can make the
-bitmap legitimately longer or shorter. Signs such as repeated fixed overlays,
-duplicated scroll cells, large blank/blurred regions, clipped content, or a
-screenshot whose visible page cannot be reconciled with its DOM/landmarks make
-the pixels contaminated acceptance evidence.
+`baseline_admissibility` for each viewport as `usable`, `contaminated`,
+`needs_adjudication`, or `invalid`, with observations and the recovery
+attempted. Compare the decoded screenshot dimensions with the sidecar's signed
+rendered-document dimensions, but use judgment rather than a universal ratio:
+sticky stitching can make the bitmap legitimately longer or shorter. Signs
+such as repeated fixed overlays, duplicated scroll cells, large blank/blurred
+regions, clipped content, or a screenshot whose visible page cannot be
+reconciled with its DOM/landmarks make the pixels contaminated acceptance
+evidence.
+
+Interpret Mist's signed source result before interpreting comparison metrics:
+
+- `usable` plus `eligibleForVisualPass:true`: the pixels may be reviewed.
+- `contaminated`: Mist attributed visible obstruction to a rendered overlay.
+  Inspect the reported selector/rectangle, perform one concrete dismissal when
+  safe, and recapture.
+- `needs_adjudication`: serialized dialog/overlay markup exists, but Mist could
+  not prove that a reported repeated pixel region belongs to it. Inspect the
+  retained pixels, DOM candidate, and region geometry. Recapture after a
+  concrete observed action when possible; otherwise keep this outcome.
+- `invalid`: the evidence is missing, corrupt, mixed, or hash-invalid.
+
+A tool envelope with `isError:false` says only that capture and comparison
+completed. It cannot make `eligibleForVisualPass:false` acceptable.
 
 Dismiss one observed overlay with a concrete selector and recapture when
 possible. If a clean full-page capture is not possible, retain the contaminated
@@ -231,8 +247,9 @@ available for review. It does not prove that the page is visually acceptable.
 The page specialist must open the attached source/local pixels, inspect DOM and
 landmarks, and either fix or explicitly adjudicate every material diagnostic.
 The reviewer must also re-check `baseline_admissibility`; a signed comparison
-against contaminated source pixels cannot produce `pass`, even when local
-runtime, geometry, and interactions are healthy.
+against contaminated or `needs_adjudication` source pixels cannot produce
+`pass`, even when the tool returned `isError:false` and local runtime, geometry,
+and interactions are healthy.
 Likewise, a failed/refused `interact_preview` call is a hard failure for a
 required control. Rerun it successfully from an inspected rendered selector;
 never drop the failed call from the verdict or infer success from markup alone.
@@ -272,8 +289,10 @@ Hard requirements:
 
 - every declared source/local evidence cell is current and durable
 - every source cell used for visual acceptance has
-  `baseline_admissibility:"usable"`; contaminated cells require a clean
-  recapture, clean bounded replacement cells, or `needs_adjudication`
+  `baseline_admissibility:"usable"` and
+  `eligibleForVisualPass:true`; contaminated or `needs_adjudication` cells
+  require a clean recapture, clean bounded replacement cells, or a non-pass
+  outcome
 - every declared viewport has a signed comparison receipt for the exact route
 - requested and final routes match and local HTTP status is 200
 - every stable landmark exists once, in order, with no unrelated placeholder
