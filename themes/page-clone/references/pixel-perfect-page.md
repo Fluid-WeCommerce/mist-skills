@@ -89,6 +89,14 @@ specific unresolved product judgment supported by otherwise valid evidence.
 Count calls and failures from durable tool blocks when available; omit the
 counts rather than guessing.
 
+When a signed source sidecar lists `captureNormalizations`, those receipts
+describe inactive offscreen dialogs that Mist excluded from full-page stitch
+pixels because their rendered state was `aria-hidden="true"`. Keep the
+serialized HTML for provenance, but do not recreate a normalized closed dialog
+as page content. If `captureNormalizationsTruncated:true` and an unrecorded
+dialog-like block remains in the pixels, classify that viewport
+`needs_adjudication` until it is recaptured or independently bounded.
+
 Dismiss one observed overlay with a concrete selector and recapture when
 possible. If a clean full-page capture is not possible, retain the contaminated
 artifact for provenance and use clean bounded landmark/viewport cells for
