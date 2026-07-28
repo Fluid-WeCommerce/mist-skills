@@ -474,6 +474,11 @@
             "distinctBy": ["screenshot_options.viewport.width"]
           },
           {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"]
+          },
+          {
             "tool": "compare_preview_to_source",
             "input": {
               "width": 1440,
@@ -555,6 +560,11 @@
             "distinctBy": ["screenshot_options.viewport.width"]
           },
           {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"]
+          },
+          {
             "tool": "compare_preview_to_source",
             "input": {
               "width": 1440,
@@ -631,6 +641,11 @@
               "screenshot_options": { "full_page": true }
             },
             "distinctBy": ["screenshot_options.viewport.width"]
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"]
           },
           {
             "tool": "compare_preview_to_source",
@@ -710,6 +725,11 @@
               "screenshot_options": { "full_page": true }
             },
             "distinctBy": ["screenshot_options.viewport.width"]
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"]
           },
           {
             "tool": "compare_preview_to_source",

@@ -495,10 +495,25 @@ def validate_flagship_contracts() -> None:
                 '"copy_mode": "diagnostic"',
                 '"geometry_mode": "diagnostic"',
                 '"media_mode": "diagnostic"',
+                '"tool": "view_project_image"',
                 '"tool": "interact_preview"',
             ),
             f"flagship workflow {step_id} evidence floor",
         )
+        image_requirements = [
+            requirement
+            for requirement in step.get("qa", {}).get("requiredTools", [])
+            if requirement.get("tool") == "view_project_image"
+        ]
+        if not any(
+            requirement.get("minSuccessfulCalls") == 2
+            and requirement.get("distinctBy") == ["path"]
+            for requirement in image_requirements
+        ):
+            raise CatalogValidationError(
+                f"flagship workflow: {step_id} QA must open two distinct "
+                "durable source images"
+            )
         if step.get("qa", {}).get("model") != "google/gemini-3.6-flash":
             raise CatalogValidationError(
                 f"flagship workflow: {step_id} bounded page QA must use "
@@ -559,11 +574,26 @@ def validate_flagship_contracts() -> None:
                 '"copy_mode": "diagnostic"',
                 '"geometry_mode": "diagnostic"',
                 '"media_mode": "diagnostic"',
+                '"tool": "view_project_image"',
                 '"tool": "read_preview_dom"',
                 '"tool": "interact_preview"',
             ),
             f"flagship workflow {step_id} evidence floor",
         )
+        image_requirements = [
+            requirement
+            for requirement in theme_step.get("qa", {}).get("requiredTools", [])
+            if requirement.get("tool") == "view_project_image"
+        ]
+        if not any(
+            requirement.get("minSuccessfulCalls") == 2
+            and requirement.get("distinctBy") == ["path"]
+            for requirement in image_requirements
+        ):
+            raise CatalogValidationError(
+                f"flagship workflow: {step_id} QA must open two distinct "
+                "durable source images"
+            )
         if theme_step.get("qa", {}).get("model") != "google/gemini-3.6-flash":
             raise CatalogValidationError(
                 f"flagship workflow: {step_id} bounded page QA must use "
