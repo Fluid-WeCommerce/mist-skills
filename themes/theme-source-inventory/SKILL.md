@@ -85,7 +85,8 @@ is beyond the first chunk. A leading excerpt alone is not a DOM audit.
 Write `clone-manifest.json` with:
 
 - `source_url` and `evidence_run_started_at`;
-- `page_manifest`;
+- `page_manifest` with exactly three entries shaped as
+  `{"name":"home|shop|pdp","source_url":"<signed final URL>","built_path":"<matching local path>"}`;
 - ordered `section_inventory` for Home, Shop, PDP, header, and footer;
 - `brand_tokens` with computed colors, font families/weights, stylesheet
   evidence, and an explicit font license/substitution decision;
@@ -163,6 +164,8 @@ rendered element and viewport. It atomically replaces only
 `priority_media`, and hero evidence paths; it preserves `page_manifest`,
 `brand_tokens`, and unrelated downstream fields after verifying that
 `page_manifest` contains exactly one matching Home, Shop, and PDP entry.
+The route discriminator is the exact `name` field (`home`, `shop`, or `pdp`);
+`type`, `route`, `route_type`, `page_type`, and `id` are not aliases.
 The Home `built_path` is always `/`; all three built paths are normalized,
 local, distinct, and must exactly match the corresponding builder input and
 signed crawl source URL. Fix a stale page manifest before retrying—never carry
@@ -295,12 +298,18 @@ recapture instead of adding an unsigned HTML-regex row. Include every visible:
 Create one item per rendered media element and viewport role. Each item records
 its actual `source_url`, a complete `source_candidates` URL array, route,
 landmark, viewport role, media kind, and source product identity when
-applicable. Video items also record `autoplay`, `loop`, `muted`, `playsinline`,
-`controls`, type, and poster. Preserve distinct desktop/mobile elements when
-their selected source differs. Do not collapse an entire rail into one item or
-discard responsive candidates; keep candidates on their owning item so later
-DAM delivery can select one high-quality source without uploading every
-transform as a separate asset.
+applicable. A legitimate non-fetchable rendered visual—such as a CSS gradient,
+data URI, runtime blob, or custom media element that exposed no URL—uses
+`source_url:null` plus the deterministic builder's `source_value`,
+`source_value_sha256`, and `source_unavailable_reason` receipts. Do not invent
+an HTTP URL, drop the element, or edit files under
+`.mist-desktop/source-baselines/`; those Mist-managed bundles are read-only and
+must be replaced with a fresh `crawl` capture when wrong. Video items also
+record `autoplay`, `loop`, `muted`, `playsinline`, `controls`, type, and poster.
+Preserve distinct desktop/mobile elements when their selected source differs.
+Do not collapse an entire rail into one item or discard responsive candidates;
+keep candidates on their owning item so later DAM delivery can select one
+high-quality source without uploading every transform as a separate asset.
 
 Use this minimum per-element shape:
 

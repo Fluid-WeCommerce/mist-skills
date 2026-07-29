@@ -192,6 +192,7 @@ set only `id`, `name`, one of `prompt`/`skill`, and `acceptance`.
   "slug": "open-country",                      // matches the manifest entry; a user file of the same slug overrides this one
   "name": "Open a Country",
   "description": "…",
+  "launcherSkill": "countries/open-a-country", // optional vetted skill that gathers run context before run_workflow
   "maxParallel": 5,                            // 1-10, default 5. How many dependency-satisfied steps may run at once
   "steps": [
     {
