@@ -52,6 +52,22 @@ cannot be reconciled with signed DOM/landmarks are contaminated. Recapture
 after one concrete overlay action or use clean bounded landmark cells; without
 admissible source pixels, return `needs_adjudication` rather than a visual pass.
 
+Read the signed source-admissibility fields literally:
+
+- `status:"usable"` with `eligibleForVisualPass:true` may enter visual review.
+- `status:"contaminated"` means Mist attributed obstructing pixels to a
+  rendered overlay; inspect the named selector/geometry, dismiss that concrete
+  surface when safe, and recapture.
+- `status:"needs_adjudication"` means Mist found a plausible serialized
+  dialog/overlay signal but could not attribute visible pixels to it. Open the
+  retained image, inspect the reported DOM candidate and repeated-region
+  geometry, then either dismiss a concrete rendered surface and recapture or
+  preserve the result as `needs_adjudication`.
+
+`isError:false` only means the capture/comparison operation completed. It does
+not override `eligibleForVisualPass:false`, and it never turns
+`needs_adjudication` into a visual pass.
+
 Classify each visible landmark:
 
 - `stable` — shell/editorial wording and media that should match
@@ -117,9 +133,27 @@ For each declared viewport:
 Reuse valid source evidence. Do not recrawl unchanged source cells or restart a
 full site workflow for one page correction.
 
-Diagnostic comparison success means Mist captured and signed usable evidence.
-It is never a visual pass. The page specialist must open the attached pixels,
-reconcile landmarks/DOM/media, and adjudicate every reported material delta.
+Diagnostic comparison success means Mist captured and signed evidence. It is
+never by itself a visual pass. The page specialist must first require
+`source.admissibility.status:"usable"` and
+`source.admissibility.eligibleForVisualPass:true`, then open the attached
+pixels, reconcile landmarks/DOM/media, and adjudicate every reported material
+delta. A completed comparison with source status `needs_adjudication` remains
+ineligible for pass.
+
+Read the tool envelope and machine outcome literally:
+
+- Every tool result with `isError:true` belongs in `tool_failures`; do not
+  report zero tool errors or a smaller tool-call count from memory.
+- If a usable source comparison returns `MACHINE OUTCOME: failed` because of
+  exact-copy, required-media, route, overflow, runtime, or interaction
+  differences, the page is `blocked` / **REWORK** until those concrete
+  differences are fixed or an authorized reviewer accepts named exceptions.
+- `needs_adjudication` is not a softer synonym for failed comparison. Use it
+  only when the receipt identifies source/provenance ambiguity or when valid
+  evidence leaves a specifically named product judgment that cannot be
+  resolved from the page contract. Unreviewed material deltas are blockers.
+
 A failed or refused page-contract interaction is a hard failure until the
 reviewer reruns it successfully from an inspected rendered selector. Do not
 omit the failure from the final verdict or substitute a prose claim.
@@ -181,3 +215,7 @@ PAGE_OUTPUT: {
 
 `pass` means zero hard failures and no unreviewed material delta. It does not
 mean mathematical pixel identity.
+
+Derive tool-call and tool-failure counts from the durable chat/tool receipts
+when that transcript is available. Otherwise omit those counts; never estimate
+them in final prose.
