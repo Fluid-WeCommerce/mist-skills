@@ -1,8 +1,9 @@
 {
-  "revision": "2026-07-27.1",
+  "revision": "2026-07-28-launcher-skill",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build source-backed brand and route evidence, run Home, Shop, PDP, and Collection specialists through one universal page-to-Liquid visual-copy core, keep complete catalog migration on its own optional data track, then finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so rendered DOM, durable pixels, interactions, logs, and signed evidence—not one model's self-assessment—decide whether the run passes.",
+  "launcherSkill": "onboarding/onboard-launch-company",
   "maxParallel": 3,
   "runTitleTemplate": "Onboard {{website_url}}",
   "finalGate": {
