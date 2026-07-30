@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-30-speed-import-theme-first-wave",
+  "revision": "2026-07-30-speed-import-theme-first-wave+context-budget",
   "slug": "speed-import",
   "name": "Speed Import",
   "description": "The shortest path from a live website to a live Fluid storefront: brand, catalog, and source capture open together so the theme starts building in the second wave, then home, shop, product, publish. One model \u2014 Grok 4.5 \u2014 end to end, no QA turns, nothing that can stop the run. Deliberately skips the onboarding form, content and collection import, media and UGC, and storefront QA; the handoff says so explicitly. Use Streamlined Onboard & Launch when the company needs to actually launch.",
@@ -28,7 +28,7 @@
       "target": {
         "type": "manager"
       },
-      "prompt": "Build the product source manifest. Call run_skill(\"fluid-product-admin-import\") and follow its catalog completion contract. Read-only against Fluid.\n\nDiscovery is a union of sitemap, any structured catalog API, and every collection pagination followed to its end \u2014 then fetch each unique PDP for real fields: identity, title, description, price, variants, images, collection membership.\n\nSpeed matters here, completeness matters more: a product you never discovered is a product the store cannot sell. But do not re-verify what you already have.\n\nEnd with STEP_OUTPUT: { manifest_path, products, variants, collections, unresolved: [...] }.",
+      "prompt": "Build the product source manifest. Call run_skill(\"fluid-product-admin-import\") and follow its catalog completion contract. Read-only against Fluid.\n\nWRITE AS YOU GO. Your context window is the binding constraint: fetching every product page and holding it in the conversation blows the model's prompt limit, which is a hard turn error that kills this step and everything downstream. Measured on a real catalog: 779,638 tokens against a 500,000 limit.\n\nDiscover identities first and append them to a JSONL manifest as you find them. Then enrich in batches of at most 20 \u2014 fetch, extract, append, drop the page. Never keep a fetched body in context after its fields are out, and never summarize batches back into the conversation. Prefer a products JSON endpoint or JSON-LD over a full page; when you must fetch a page, ask for markdown, not html.\n\nDiscovery is a union of sitemap, any structured catalog API, and every collection pagination followed to its end. Speed matters here, completeness matters more: a product you never discovered is a product the store cannot sell.\n\nIf room runs short, stop enriching and keep every discovered identity. A complete identity list with partial fields is recoverable; a dead step is not.\n\nEnd with STEP_OUTPUT: { manifest_path, products, enriched, identity_only, variants, collections, unresolved: [...] }.",
       "acceptance": [],
       "qa": {
         "enabled": false
