@@ -57,7 +57,8 @@ guessed list, silently default to a theme, or call `run_workflow`.
 Call `steps` with title `Onboard <company name>` and the four steps below.
 Then end the turn and wait for the answers.
 
-1. `run_scope` — required `single_select`, "What should this run do?"
+1. `run_scope` — `single_select` with `skippable: false`, "What should this
+   run do?"
    - `full` — **Full onboarding (recommended):** brand and business data,
      theme, products and content, media and UGC, storefront check, and handoff.
    - `data_theme` — **Data + theme (no products):** brand and business data,
@@ -66,18 +67,19 @@ Then end the turn and wait for the answers.
      handoff; no product import or business-data push.
    - `data_only` — **Data onboarding only:** brand and business data plus
      handoff; no theme or products.
-2. `website_url` — required `text_input`, "What URL should we pull the store
-   from?" Always show this step. If the triggering request supplied an http(s)
-   URL, use its canonical origin as the input's `placeholder`; otherwise use
-   the active company's website URL when it is a valid http(s) URL, or an empty
-   placeholder when it is not. A placeholder is only a hint: require the user
-   to enter an explicit answer. Validate that the answer is an http(s) URL. If
-   it is invalid, open a new required one-field `steps` panel for `website_url`,
-   end the turn, and wait for a valid answer. (`steps_answer` only mirrors a
-   valid chat-typed answer into a panel that is still active; it does not
-   re-open a completed invalid input.)
-3. `theme_target` — required `single_select`, "Build a new theme or use an
-   existing one?" Add
+2. `website_url` — `text_input` with `skippable: false`, "What URL should we
+   pull the store from?" Always show this step. If the triggering request
+   supplied an http(s) URL, use its canonical origin as the input's
+   `placeholder`; otherwise use the active company's website URL when it is a
+   valid http(s) URL, or an empty placeholder when it is not. A placeholder is
+   only a hint: require the user to enter an explicit answer. Validate that the
+   answer is an http(s) URL. If it is invalid, open a new one-field `steps`
+   panel for `website_url` with `skippable: false`, end the turn, and wait for
+   a valid answer. (`steps_answer` only mirrors a valid chat-typed answer into
+   a panel that is still active; it does not re-open a completed invalid
+   input.)
+3. `theme_target` — `single_select` with `skippable: false`, "Build a new theme
+   or use an existing one?" Add
    `show_if: { step_id: "run_scope", any_of: ["full", "data_theme",
    "theme_only"] }`.
    - First option: id `new`, label `Create a new theme (recommended)`,
@@ -85,7 +87,8 @@ Then end the turn and wait for the answers.
    - Then add one option per discovered theme: id
      `existing_<theme_id>`, label `Use: <theme name or Theme #id>`,
      description "Build and publish this exact existing theme."
-4. `confirm` — required `single_select`, "Ready to start this onboarding run?"
+4. `confirm` — `single_select` with `skippable: false`, "Ready to start this
+   onboarding run?"
    - `go` — `Yes, launch it`
    - `cancel` — `Not yet`
 
@@ -174,7 +177,7 @@ Then stop. Do not poll `workflow_status` or narrate steps as they pass. Use
 
 Worth knowing before you recommend one.
 
-**Quality** runs 15 steps over 6 waves. Three source-reading steps open
+**Full Quality** runs 15 steps over 6 waves. Three source-reading steps open
 together, the theme starts building in the second wave, and the product,
 business-profile, and media tracks run beside it. Fable 5 on the theme.
 
