@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-30-streamlined-theme-first-wave",
+  "revision": "2026-07-30-streamlined-page-specialists",
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
   "description": "Get a company live fast. The theme is the long pole, so it starts building in the second wave: source capture, brand, and catalog discovery all open together, then the theme, product, business-profile, and media tracks run beside each other instead of in one chain. No step stops the run \u2014 QA is off or lenient everywhere, so a rough page or an unmatched review profile becomes a line in the handoff rather than a dead run. Themes are built by Fable 5. For the trimmed single-model version, use Speed Import.",
@@ -159,14 +159,14 @@
     },
     {
       "id": "content-pages",
-      "name": "Build the rest of the pages",
+      "name": "Build the blog, cart, error, and content pages",
       "model": "anthropic/claude-fable-5",
       "target": {
         "type": "kind",
         "kind": "theme",
         "fallbackToManager": true
       },
-      "prompt": "Build the remaining routes the source has, reusing the header, footer, and tokens the home page established. Call run_skill(\"themes/clone-page-to-liquid\") and follow its visual-copy loop for each one.\n\nIn scope, when the source has them: about, contact, FAQ, policy and legal pages, blog index and post, plus the cart page and a 404. Read clone-manifest.json for the route list rather than inventing routes.\n\nBound the work: one pass per route, in descending order of how much traffic the route plausibly gets. If you run out of room, ship the pages you finished and list the rest in unresolved. A missing FAQ page is not worth blocking a launch over.\n\nCart and 404 are not optional \u2014 a storefront that cannot show a cart is broken, and a 404 that renders the raw platform error leaks that this is a migration.\n\nEnd with STEP_OUTPUT: { built: [{route, template}], skipped: [{route, reason}], unresolved: [...] }.",
+      "prompt": "Build the routes the source has beyond home, shop, and product, reusing the header, footer, and tokens the home page established. Read clone-manifest.json for the route list rather than inventing routes.\n\nFour of these have their own specialists \u2014 use them, do not hand-roll:\n- Blog or journal index \u2192 run_skill(\"themes/clone-blog-page\"). It also finds blogs that live on a subdomain, a subpath, or an external platform.\n- One article detail \u2192 run_skill(\"themes/clone-post-page\").\n- Cart page or drawer \u2192 run_skill(\"themes/clone-cart-page\").\n- Themed 404 and 503, plus the reusable generic content-page template \u2192 run_skill(\"themes/clone-system-pages\").\n\nFor everything else the source has \u2014 about, contact, FAQ, policy and legal pages \u2014 call run_skill(\"themes/clone-page-to-liquid\") and follow its visual-copy loop once per route, in descending order of how much traffic the route plausibly gets.\n\nSkip a specialist whose route the source genuinely does not have; a store with no blog needs no blog index. Say which you skipped and why.\n\nCart and 404 are not optional even when the source hides them. A storefront that cannot show a cart is broken, and a 404 that renders the raw platform error leaks that this is a migration.\n\nIf you run out of room, ship the pages you finished and list the rest in unresolved. A missing FAQ page is not worth blocking a launch over.\n\nEnd with STEP_OUTPUT: { built: [{route, template, skill}], skipped: [{route, reason}], unresolved: [...] }.",
       "acceptance": [],
       "qa": {
         "enabled": false
