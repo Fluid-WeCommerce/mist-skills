@@ -12,6 +12,9 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = ROOT / "manifest.json"
 FLAGSHIP_WORKFLOW_PATH = ROOT / "workflows/onboard-launch-company.workflow.json"
+STREAMLINED_WORKFLOW_PATH = (
+    ROOT / "workflows/streamlined-onboard-launch.workflow.json"
+)
 FLAGSHIP_CONTRACT_FILES = (
     ROOT / "onboarding/fluid-product-admin-import/SKILL.md",
     ROOT / "onboarding/onboard-launch-company/SKILL.md",
@@ -731,10 +734,124 @@ def validate_flagship_contracts() -> None:
     )
 
 
+def validate_streamlined_product_import_contract() -> None:
+    workflow = load_json(STREAMLINED_WORKFLOW_PATH)
+    if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
+        raise CatalogValidationError("streamlined workflow steps must be an array")
+
+    steps = {
+        step.get("id"): step
+        for step in workflow["steps"]
+        if isinstance(step, dict) and isinstance(step.get("id"), str)
+    }
+    catalog_manifest = steps.get("catalog-manifest")
+    products_import = steps.get("import-products")
+    if not isinstance(catalog_manifest, dict):
+        raise CatalogValidationError(
+            "streamlined workflow: catalog-manifest step is missing"
+        )
+    if "manifest_sha256" not in str(catalog_manifest.get("prompt", "")):
+        raise CatalogValidationError(
+            "streamlined workflow: catalog-manifest must expose its SHA-256 "
+            "to import-products"
+        )
+    if not isinstance(products_import, dict):
+        raise CatalogValidationError(
+            "streamlined workflow: import-products step is missing"
+        )
+    if products_import.get("dependsOn") != ["catalog-manifest"]:
+        raise CatalogValidationError(
+            "streamlined workflow: import-products must wait for catalog-manifest"
+        )
+    if products_import.get("model") != "google/gemini-3.6-flash":
+        raise CatalogValidationError(
+            "streamlined workflow: import-products must use "
+            "google/gemini-3.6-flash"
+        )
+    if products_import.get("maxReworkRounds") != 0:
+        raise CatalogValidationError(
+            "streamlined workflow: deterministic product imports must not rework"
+        )
+    if "skill" in products_import:
+        raise CatalogValidationError(
+            "streamlined workflow: import-products must use its inline tool prompt"
+        )
+
+    prompt = products_import.get("prompt")
+    if not isinstance(prompt, str):
+        raise CatalogValidationError(
+            "streamlined workflow: import-products prompt must be a string"
+        )
+    require_fragments(
+        prompt,
+        (
+            "manifest_path",
+            "manifest_sha256",
+            "exactly once",
+            "write mode",
+            "compact receipt",
+        ),
+        "streamlined workflow import-products",
+    )
+    if prompt.count("fluid_product_import") != 1:
+        raise CatalogValidationError(
+            "streamlined workflow: work prompt must contain exactly one "
+            "fluid_product_import invocation"
+        )
+    for banned_tool in ("fluid_api", "dam_upload"):
+        if banned_tool in prompt:
+            raise CatalogValidationError(
+                "streamlined workflow: import-products must not direct the "
+                f"model to call {banned_tool}"
+            )
+
+    qa = products_import.get("qa")
+    expected_requirement = {
+        "tool": "fluid_product_import",
+        "input": {"verify_only": True},
+        "minSuccessfulCalls": 1,
+    }
+    if not isinstance(qa, dict) or qa.get("enabled") is not True:
+        raise CatalogValidationError(
+            "streamlined workflow: import-products independent QA must be enabled"
+        )
+    if qa.get("model") != "google/gemini-3.6-flash":
+        raise CatalogValidationError(
+            "streamlined workflow: import-products QA must use "
+            "google/gemini-3.6-flash"
+        )
+    if qa.get("strictness") != "lenient":
+        raise CatalogValidationError(
+            "streamlined workflow: import-products QA must remain lenient"
+        )
+    if qa.get("onFail") != "continue":
+        raise CatalogValidationError(
+            "streamlined workflow: import-products QA must continue on failure"
+        )
+    if qa.get("requiredTools") != [expected_requirement]:
+        raise CatalogValidationError(
+            "streamlined workflow: import-products QA must require one "
+            "verify-only fluid_product_import call"
+        )
+
+    acceptance = json.dumps(products_import.get("acceptance", []))
+    require_fragments(
+        acceptance,
+        (
+            "exactly one live Fluid product",
+            "no duplicates, no silent drops",
+            "Prices, variants, and images match",
+            "multi-variant product",
+        ),
+        "streamlined workflow import-products fidelity",
+    )
+
+
 def main() -> int:
     try:
         skill_count, workflow_count = validate_manifest(load_json(MANIFEST_PATH))
         validate_flagship_contracts()
+        validate_streamlined_product_import_contract()
     except CatalogValidationError as error:
         print(f"catalog validation failed: {error}", file=sys.stderr)
         return 1
