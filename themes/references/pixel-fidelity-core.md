@@ -33,6 +33,36 @@ Before visual judgment, require the signed source-admissibility result to be
 `status:"usable"` with `eligibleForVisualPass:true`. `isError:false` means the
 tool completed, not that the source is visually admissible.
 
+### Also check `captureGeometry.status` — a second, separate failure mode
+
+`admissibility` reports whether an overlay obscured the pixels. It says nothing
+about whether the DOM extraction succeeded. Check `captureGeometry.status`
+independently:
+
+- `"exact"` (`heightDelta: 0`) — the document stopped moving before capture.
+- `"dynamic-height"` (non-zero `heightDelta`) — the page was still growing while
+  it was captured, typically lazy-loaded media or an entrance animation.
+
+A `dynamic-height` capture is not merely imprecise; its section and media
+extraction can be near-empty while the screenshot still looks complete.
+Measured across 30 captures of five storefronts, 29 were `exact` and averaged
+17 sections; the single `dynamic-height` capture (heightDelta 855) returned
+**4 sections and 1 media element** for a page whose desktop twin returned 17 and
+66. The screenshot looked fine, so nothing downstream noticed until the media
+inventory could not be built and QA burned a rework round on it.
+
+So: when `captureGeometry.status` is not `"exact"`, do NOT build an inventory
+from that cell. Recapture it — waiting for network idle and scrolling the page
+to force lazy content first. If it stays dynamic after one honest retry, record
+the exact `heightDelta`, section count, and media count, and treat that
+viewport's structural inventory as unavailable rather than reporting four
+sections as if they were the page.
+
+Section and media counts also drift between clean captures of the same page
+(one home page returned 13, 17, and 19 sections across three `exact` desktop
+captures). Compare by identity — landmark order, distinct media URLs — never by
+tally. A tally that collapses by 4x, though, is a broken capture, not drift.
+
 ## Required viewports
 
 Use 1440×900 and 390×844 for the golden Home, Shop, and PDP routes. Capture the
