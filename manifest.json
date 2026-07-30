@@ -452,6 +452,27 @@
         "themes/theme-clone/references/page-templates.md",
         "themes/theme-clone/references/template-variables.md"
       ]
+    },
+    {
+      "slug": "onboarding/brand-from-source",
+      "name": "Brand From Source",
+      "description": "Read a company's public website once and set up its Fluid brand unattended: logo, app icon, favicon, OG image and description, primary and secondary colors, licensed fonts, and a first brand.md drafted from the site's own copy.",
+      "category": "onboarding",
+      "icon": "palette",
+      "path": "onboarding/brand-from-source/SKILL.md",
+      "updated_at": "2026-07-30T09:00:00Z",
+      "references": [
+        "onboarding/onboarding-prefill/references/api-endpoints.md"
+      ]
+    },
+    {
+      "slug": "onboarding/launch-setup",
+      "name": "Launch Setup",
+      "description": "Start an onboard: asks quality or speed, then kicks off the matching workflow with the company's website in context. Quality builds the whole store with Fable 5; speed builds the storefront only with Grok 4.5.",
+      "category": "onboarding",
+      "icon": "rocket",
+      "path": "onboarding/launch-setup/SKILL.md",
+      "updated_at": "2026-07-30T10:00:00Z"
     }
   ],
   "workflows": [
@@ -479,6 +500,16 @@
       "slug": "finalize-usd-country",
       "path": "workflows/finalize-usd-country.workflow.json",
       "updated_at": "2026-07-04T00:00:00Z"
+    },
+    {
+      "slug": "streamlined-onboard-launch",
+      "path": "workflows/streamlined-onboard-launch.workflow.json",
+      "updated_at": "2026-07-30T09:00:00Z"
+    },
+    {
+      "slug": "speed-import",
+      "path": "workflows/speed-import.workflow.json",
+      "updated_at": "2026-07-30T09:00:00Z"
     }
   ]
 }
