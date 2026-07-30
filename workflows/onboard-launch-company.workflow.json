@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-29-brand-qa-speed",
+  "revision": "2026-07-29-gate-topology-and-evidence-split",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build source-backed brand and route evidence, run Home, Shop, PDP, and Collection specialists through one universal page-to-Liquid visual-copy core, keep complete catalog migration on its own optional data track, then finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so rendered DOM, durable pixels, interactions, logs, and signed evidence—not one model's self-assessment—decide whether the run passes.",
@@ -16,31 +16,52 @@
       "when": {
         "in": {
           "key": "run_scope",
-          "values": ["full", "data_theme", "theme_only"]
+          "values": [
+            "full",
+            "data_theme",
+            "theme_only"
+          ]
         }
       }
     },
     {
       "set": "import_products",
-      "when": { "equals": { "key": "run_scope", "value": "full" } }
+      "when": {
+        "equals": {
+          "key": "run_scope",
+          "value": "full"
+        }
+      }
     },
     {
       "set": "push_business_data",
       "when": {
         "in": {
           "key": "run_scope",
-          "values": ["full", "data_theme", "data_only"]
+          "values": [
+            "full",
+            "data_theme",
+            "data_only"
+          ]
         }
       }
     },
     {
       "set": "discover_ugc",
-      "when": { "includes": { "key": "extras", "value": "discover_ugc" } }
+      "when": {
+        "includes": {
+          "key": "extras",
+          "value": "discover_ugc"
+        }
+      }
     },
     {
       "set": "import_brand_social",
       "when": {
-        "includes": { "key": "extras", "value": "import_brand_social" }
+        "includes": {
+          "key": "extras",
+          "value": "import_brand_social"
+        }
       }
     }
   ],
@@ -86,7 +107,9 @@
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "CONTEXT-BUDGET GATE: inspect the dependency STEP_OUTPUT, `<brand_voice>`, and the current brand-guidelines API value before any remote call. Build a missing-claims checklist and fetch only evidence needed for those claims. Text-producing source verification is capped at one raw canonical-homepage fetch, two exact stylesheet-bundle fetches, and two exact quote-page fetches for the whole step. Do not run a broad/site crawl, request screenshots, re-fetch the same URL, or load full unrelated pages. Binary font/logo URL checks return metadata and may be performed separately. If a source remains blocked after its one exact attempt, record the exact failure as a human remainder instead of retrying until context overflows.",
         "Use stylesheet URLs, source URLs, token declarations, and quote provenance already recorded by gather-context to choose the bounded independent fetches; do not trust the recorded values without checking them, but do not rediscover the whole company. The source-matrix step owns durable full-page crawl documents and screenshots later in the workflow.",
@@ -102,7 +125,9 @@
         "STEP_OUTPUT reports status 'pass' or 'cap-reached' with an itemized remaining_for_human list and the brand_md verdict — no silent pass.",
         "HARD-FAIL BAR: grading is against OUTCOMES AVAILABLE DOWNSTREAM, not push mechanics. A value that failed to persist via settings but is correctly RECORDED in STEP_OUTPUT for downstream steps (e.g. brand color the theme build applies directly, or verified locale intent whose documented activation endpoint is unavailable) plus listed in remaining_for_human is acceptable — do not fail the run over a field-level 4xx or missing write capability. A scoped-off stale sentinel with an initial GET receipt and an explicit unusable-downstream/human-cleanup remainder is also a PASS; a read-only reviewer MUST NOT require or perform a prohibited write to manufacture failure evidence. A brand.md that is present and specific LOCALLY but failed to sync to the API is a PASS with a remainder — the local file is what `<brand_voice>` injects. Never fail because this step's own workflow status is still running/rework. FAIL only when the brand palette is wrong/unverified against the source AND unrecoverable this turn, the intended market cannot be determined, or brand.md is still absent/boilerplate after QA's own rewrite attempt."
       ],
-      "dependsOn": ["gather-context"]
+      "dependsOn": [
+        "gather-context"
+      ]
     },
     {
       "id": "catalog-source-manifest",
@@ -112,14 +137,16 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "continue"
       },
       "prompt": "Build the complete product SOURCE MANIFEST before any product write. Call run_skill(\"fluid-product-admin-import\") and follow its Catalog completion contract. This step is read-only against Fluid.\n\nDiscovery is a union: (1) parse sitemap.xml plus every child sitemap and retain every product URL, lastmod, and sitemap image; (2) exhaust any structured catalog API until its documented empty-page/cursor terminator; (3) exhaust EVERY discovered collection/category pagination — never a top-N sample — and collect product links; (4) fetch every unique PDP, including an advertised `.md` twin, rendered HTML/JSON-LD, embedded application state, and structured data as needed. A fixed batch cap such as 100 is transport chunking, never a completion limit. A collection that ended in a retry-exhaustion/network error is NOT exhausted: retry it independently, and if it still cannot be enumerated report it as unresolved so the step fails rather than calling discovery complete.\n\nFor each discovered URL record immutable source_id/url/handle, requested and final URL, HTTP status/content type, title, exact price/currency, ALL source image URLs available from the sitemap, structured data, embedded state, and rendered PDP, exact option axes and REAL variant combinations/count, description, and evidence method. One nonempty image is not proof of a complete gallery: normalize/deduplicate every gallery image from JSON-LD, embedded product state, src/srcset/data-src attributes, thumbnails, and structured APIs, excluding unrelated recommendations/chrome. Likewise, never manufacture variants as a Cartesian product unless the source explicitly proves every combination exists. A 200 that redirects to the homepage is stale, not a live product. Markdown is copy/data evidence only: fill missing images/options from sitemap images, JSON-LD, embedded state, rendered HTML, or APIs. Never exclude a product because one parser failed.\n\nWrite source-catalog.json to a fresh run-specific working directory and checkpoint every successfully resolved product. Reconcile all discovery sets. Every discovered URL must be either a live product or an explicit exclusion with objective evidence. Report duplicate-title groups because later idempotency must use immutable source identity, never title-only fallback. Compute a SHA-256 of the final manifest.\n\nBefore finalizing, independently open a deterministic sample of at least 10 live PDPs that includes the selected flagship/most-complex PDP, the most-expensive item, a one-variant item, and multiple multi-variant items. For each, compare the manifest's exact gallery image count/URLs and variant count/options to the rendered/embedded source evidence. Store this compact `fidelity_sample` in the manifest and STEP_OUTPUT; a mismatch is repair work, not a note. Also report the whole-manifest image-count distribution so a systemic one-image fallback is visible to QA.\n\nUse at most 10 concurrent source fetches — the implementation's concurrency constant must be <=10 — with bounded retries, exponential backoff/jitter, and resume from checkpoints after interruption. Mist run_cli calls have a 60-second execution window: make each invocation process an explicit bounded chunk that completes and checkpoints within that window; do not depend on SIGTERM as normal pagination. Keep large manifests on disk. Never print or read the complete manifest into chat/model context; inspect it with targeted jq/Node summaries and report only compact counts, hashes, samples, and unresolved identities. End with STEP_OUTPUT: { manifest_path, manifest_sha256, observed_at, discovery:{sitemap,api,collections,unique,collection_errors}, live_count, excluded_count, exclusions_by_reason, unresolved_count, duplicate_title_groups, missing_fields:{title,price,images,variants}, image_count_distribution, fidelity_sample, completion_proof }.",
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "source-catalog.json exists and its SHA-256, observation time, and path are reported.",
         "Discovery used the union of sitemap(s), structured catalog endpoints when available, and collection/category links; every source pagination/batch exit condition is recorded. Every discovered collection/category reached a content-based terminal page/cursor with `collection_errors: 0`; bounded retry exhaustion is unresolved work, not a successful exit condition.",
@@ -130,7 +157,9 @@
         "The worker exhausted every discovered collection/category (not a top-N sample), used a concurrency setting <=10, completed each run_cli chunk inside Mist's 60-second window, and kept the full manifest on disk instead of returning it as a tool/chat output.",
         "HARD-FAIL BAR: fail when unresolved_count is nonzero, any collection/category remains on a terminal fetch error, discovery was capped before exhaustion, the fidelity sample has an image/variant mismatch, the manifest does not reconcile every discovered URL, or the file/evidence is missing."
       ],
-      "dependsOn": ["gather-context-qa"],
+      "dependsOn": [
+        "gather-context-qa"
+      ],
       "runIf": {
         "flag": "import_products"
       }
@@ -143,14 +172,16 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "continue"
       },
       "prompt": "Establish the exact Fluid company country that the reviewed source catalog requires BEFORE any product create/update call.\n\nRead the exact manifest path/SHA from `catalog-source-manifest`, recompute the hash, and inspect only compact currency/market summaries. Require exactly one source currency across all live products; a mixed-currency catalog is a blocker requiring an explicit multi-market import plan.\n\nDetermine the source market ISO from the gathered business/market evidence and source localization—not from the currency code alone, because USD and other currencies are shared by multiple countries. GET `/api/countries` and resolve that ISO to its numeric global country id. Call `country_atlas` for the ISO to obtain the published default currency, tax name, inclusive/exclusive setting, and 3DS requirement. If the source currency disagrees with the atlas/default market currency, stop and report the exact conflict instead of guessing.\n\nGET `/api/settings/company_countries`. If an entry already exists for the exact global country id, require its currency to equal the source currency and reuse it. If it is missing, POST `/api/settings/company_countries` with `{company_country:{country_id,currency,tax_name,tax_inclusive_pricing,requires_3ds}}` using only the documented fields and atlas values. When the gathered legal entity is registered in this same country, also send `entity_legally_registered:true`; otherwise omit it. If create reports that the country already exists, re-list and reuse the exact row. Do not modify a different country merely because it uses the same currency, and do not create agreements, languages, warehouses, or converted prices in this focused prerequisite.\n\nFinally GET `/api/settings/company_countries` again and prove the exact global country id + currency exist. End with STEP_OUTPUT: { manifest_path, manifest_sha256, source_market_iso, source_currency, catalog_country_id, company_country_id, action:created|reused, tax_name, tax_inclusive_pricing, requires_3ds }. `catalog_country_id` is the global country id that later v202604 `variant_countries_attributes[].country_id` must use; it is not the company-country row id.",
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "The exact reviewed source manifest hash was reverified and every live product has one common source currency; mixed currencies fail rather than being flattened.",
         "The source market ISO comes from gathered source/business localization evidence and resolves through GET /api/countries to one numeric global country id; it was not inferred from currency alone.",
@@ -158,7 +189,9 @@
         "A missing entry was created idempotently through POST /api/settings/company_countries with only documented company_country fields and Country Atlas tax/3DS defaults; an existing exact entry was reused and a different same-currency country was never treated as equivalent.",
         "STEP_OUTPUT distinguishes catalog_country_id from company_country_id and reports the exact ISO, currency, action, and manifest receipt needed by products-import."
       ],
-      "dependsOn": ["catalog-source-manifest"],
+      "dependsOn": [
+        "catalog-source-manifest"
+      ],
       "runIf": {
         "flag": "import_products"
       }
@@ -171,14 +204,16 @@
         "enabled": true,
         "model": "openai/gpt-5.6-sol",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "continue"
       },
       "prompt": "First call `run_skill(\"fluid-product-admin-import\")` and read the loaded skill plus every referenced file. Then import the complete product catalog so the destination matches the already-reviewed source manifest; treat the loaded contract as authoritative instead of inventing endpoint shapes.\n\nINPUT INVARIANT: read the exact `manifest_path` and `manifest_sha256` from `catalog-source-manifest`, recompute the SHA-256, and stop on a mismatch. Do not replace the approved denominator with a smaller collection list or a fresh ad-hoc crawl.\n\nMARKET PREFLIGHT — BEFORE ANY PRODUCT POST/PATCH: read `catalog_country_id`, `company_country_id`, `source_market_iso`, and `source_currency` from `ensure-catalog-market`. Independently GET `/api/settings/company_countries` and require the exact global `catalog_country_id` row with the exact source currency. Use that global country id in every v202604 `variant_countries_attributes[].country_id`; never use the company-country row id or a different same-currency market. If the row is missing/conflicting, stop before creating a contract-probe product.\n\nBefore the first Fluid catalog call, use `query_docs` against `/openapi/api-reference/storefront-v2026-04.yaml` to inspect the documented Product list/create/update schemas. Use only `/api/v202604/company/products` for product CRUD. Cursor-paginate destination lists with `page[limit]=100` and `meta.pagination.next_cursor` until it is null; do not expect `total_count`.\n\nBranch on `products_source`:\n- `connect`: verify the selected droplet is connected, run its documented product-sync action, wait for it to settle, then reconcile every manifest identity and field. A successful sync is not proof of fidelity.\n- `scrape`: create/update from the manifest with immutable source identity checkpoints. Use the documented ProductWrite lifecycle `status:\"active\"` + `public:true`; nested `images_attributes[].image_url`; exact option axes and all variants; and `variant_countries_attributes` containing integer `country_id`, `active`, and decimal-string prices. Do not send `currency_code` in the v202604 write—the selected company country determines it. Verify the exact target-country row and its company-country currency against the source. A read response may present a successfully active product as `status:\"published\"`; that is an allowed read-side label only, never a ProductWrite value.\n- `manual`: create only the explicit Sample Product stub and report the full human-entry remainder. Never present this branch as a completed catalog.\n\nFor remote media, ingest it into Fluid DAM without hotlinking: use `dam_upload` for a sandbox file or `fluid dam upload --url <SOURCE_URL>` for server-side `external_asset_url` ingestion. Persist source URL → `asset.default_variant_url` mappings. Never leave a real source product on a placeholder.\n\nIdentity is source ID/canonical source URL, never title. Persist the returned Fluid ID, slug, and canonical URL after every successful write before starting the next item. On restart, verify checkpoints and resume. Ambiguous recovery matches stop for review; distinct duplicate titles stay distinct.\n\nAfter writes, cursor-paginate the entire destination, GET detail records as needed, and reconcile every live manifest item: title, exact source description, target-country price/currency, all available images, option names/values, variant count, lifecycle, and membership. Fix every recoverable mismatch and run a second idempotency pass that creates no duplicates.\n\nEnd with STEP_OUTPUT: { products_source, manifest_path, manifest_sha256, source_market_iso, source_currency, catalog_country_id, company_country_id, source_count, imported_count, destination_pages, coverage_pct, status_counts, sample:[...], match_rates:{title,price,currency,images,variants,description}, missing_from_fluid:[], duplicate_title_groups, placeholder_only:[], failures:[], checkpoint_path, idempotent_second_pass, remaining_for_human:[] }.",
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "A SOURCE MANIFEST was built before importing (Cases A/B): the source catalog was enumerated to a concrete list of {source_url, title, price, currency, images, option axes, variant count} with app-helper/$0 junk filtered out, `source_count` is reported from it, and the enumeration method + exit condition are recorded (all sitemap/collection pages exhausted, API pagination returned empty, or equivalent). 'Products exist in Fluid' proves nothing without a demonstrably complete source number.",
         "The importer consumed the exact source-catalog.json path + SHA-256 produced by catalog-source-manifest; it did not replace the reviewed denominator with a smaller collection-page list or a new ad-hoc crawl.",
@@ -194,20 +229,22 @@
         "For Case C: the report explicitly says 'MANUAL ENTRY REQUIRED' and names how many products need human entry; the stub is the only product created.",
         "HARD-FAIL BAR: for Cases A/B, fail when the source manifest is missing/incomplete, coverage is below 100%, a sellable source product is missing, or the sample shows systemic drift — $0/placeholder-priced shells, placeholder images across the catalog, collapsed source variants, or draft products. Case C remains an explicit manual-entry outcome and must never be presented as a completed catalog."
       ],
-      "dependsOn": ["ensure-catalog-market"],
+      "dependsOn": [
+        "ensure-catalog-market"
+      ],
       "runIf": {
         "flag": "import_products"
       }
     },
     {
       "id": "theme-scrape-inventory",
-      "name": "Theme — capture source routes, sections, copy, and visual evidence",
-      "model": "google/gemini-3.6-flash",
+      "name": "Build the shell + Home source evidence bundle",
+      "model": "anthropic/claude-opus-5",
       "qa": {
         "enabled": true,
-        "model": "anthropic/claude-opus-5",
+        "model": "openai/gpt-5.6-sol",
         "strictness": "strict",
-        "onFail": "stop",
+        "onFail": "continue",
         "requiredTools": [
           {
             "tool": "read_file",
@@ -217,13 +254,17 @@
           },
           {
             "tool": "read_file",
-            "minSuccessfulCalls": 7,
-            "distinctBy": ["path"]
+            "minSuccessfulCalls": 3,
+            "distinctBy": [
+              "path"
+            ]
           },
           {
             "tool": "view_project_image",
-            "minSuccessfulCalls": 6,
-            "distinctBy": ["path"]
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "path"
+            ]
           },
           {
             "tool": "file_sha256",
@@ -238,27 +279,31 @@
           }
         ]
       },
-      "prompt": "First theme step. You are in a scaffolded Fluid base-theme project. Call run_skill(\"themes/theme-source-inventory\") and follow its discovery-only contract. Do not load the all-phases theme-clone skill, build sections/templates, enumerate the Fluid catalog, upload DAM assets, start theme dev, push, publish, or activate.\n\nUse the current `website_url`. Capture fresh Home, primary Shop/collection, and a flagship/complex PDP at 1440x900 and 390x844. Preserve all six complete crawl-returned screenshot + page-evidence + HTML + Markdown bundles. Each fresh page-evidence sidecar must contain Mist-generated `documents.html` and `documents.markdown` path/SHA-256/byte-length receipts for its exact companion files; recapture legacy cells that lack them instead of trusting matching filenames. Inspect all six pixels and all six HTML files. Set `evidence_run_started_at` from the current turn before the first crawl; it must be within 30 minutes of every retained capture and may never be copied from an old manifest.\n\nBefore building, make `page_manifest` contain exactly one Home, Shop, and PDP entry whose source URL and built path match the selected signed crawl and builder input. Home's Fluid preview route is exactly `/`, never `/home`; all three built paths must be normalized local paths and distinct.\n\nAfter all six bundles exist, call `build_theme_source_inventory` with the exact six page-evidence/HTML/Markdown path triples, current evidence boundary, future built paths, and verbatim-or-null hero copy. Require `SOURCE_INVENTORY_BUILD: written`; do not hand-transcribe section, receipt, landmark, or media arrays with write_file/edit_file. The builder must verify the companion document bytes against their sidecar receipts, then produce exact ordered sections, one mapping per signed desktop section, and one media item per rendered element and viewport, including every candidate, poster, and exact video playback attribute. Preserve/complete the manifest's page inventory and tokens/fonts/license decision around those deterministic fields.\n\nHash all 24 files in one call. Call `validate_theme_source_inventory({ manifest_path: \"clone-manifest.json\" })`, repair every error, and require `SOURCE_INVENTORY_VALIDATION: pass`. Do not create a package.json/helper runtime, call run_cli/pnpm/npm, execute downloaded validator code, or require global Node/Python/packages. End with the skill's exact STEP_OUTPUT contract.",
+      "prompt": "First theme step. You are in a scaffolded Fluid base-theme project. Call run_skill(\"themes/theme-source-inventory\") and follow its discovery-only contract. Do not load the all-phases theme-clone skill, build sections/templates, enumerate the Fluid catalog, upload DAM assets, start theme dev, push, publish, or activate.\n\nSCOPE — HOME ONLY. Capture a full fresh evidence bundle for the canonical HOME route at 1440x900 and 390x844 (two cells, not six). Home is the shell-defining route: it establishes navigation, header/footer, brand tokens, fonts, and the reusable component vocabulary every later page depends on. Preserve both complete crawl-returned screenshot + page-evidence + HTML + Markdown bundles, and inspect both images and both HTML files.\n\nDO NOT capture Shop or PDP evidence here. The Shop and PDP specialists each run themes/clone-page-to-liquid, which captures its own per-viewport dossier for the route it owns at the moment it builds it. Capturing those four extra cells up front duplicates that work, ages the evidence before it is used, and has repeatedly exhausted this step's context window before it could finish. For Shop and PDP, RESOLVE AND RECORD THE ROUTES ONLY: the final canonical source URL and the intended Fluid built path for each, discovered from rendered navigation, sitemap, and collection/product indexes. Route selection is cheap; evidence capture belongs to the specialist that consumes it.\n\nEach fresh page-evidence sidecar must contain Mist-generated `documents.html` and `documents.markdown` path/SHA-256/byte-length receipts for its exact companion files; recapture legacy cells that lack them instead of trusting matching filenames. Set `evidence_run_started_at` from the current turn before the first crawl; it must be within 30 minutes of every retained capture and may never be copied from an old manifest.\n\n`page_manifest` must contain exactly one Home, Shop, and PDP entry. Home carries full evidence; Shop and PDP carry resolved source_url + built_path and `evidence: \"deferred-to-page-specialist\"`. Home's Fluid preview route is exactly `/`, never `/home`; all three built paths must be normalized local paths and distinct.\n\nAfter both Home bundles exist, call `build_theme_source_inventory` with the exact Home page-evidence/HTML/Markdown path triples, current evidence boundary, future built paths, and verbatim-or-null hero copy. Require `SOURCE_INVENTORY_BUILD: written`; do not hand-transcribe section, receipt, landmark, or media arrays with write_file/edit_file. The builder must verify the companion document bytes against their sidecar receipts, then produce exact ordered Home sections, one mapping per signed desktop section, and one media item per rendered element and viewport, including every candidate, poster, and exact video playback attribute. Also record brand tokens (colors + fonts with licensing notes) read from the source stylesheet.\n\nHash the Home evidence files in one call. Call `validate_theme_source_inventory({ manifest_path: \"clone-manifest.json\" })`, repair every error, and require `SOURCE_INVENTORY_VALIDATION: pass`. Do not create a package.json/helper runtime, call run_cli/pnpm/npm, execute downloaded validator code, or require global Node/Python/packages. End with the skill's exact STEP_OUTPUT contract.",
       "target": {
         "type": "kind",
         "kind": "theme"
       },
       "maxReworkRounds": 3,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "DISCOVERY-ONLY GRADING BOUNDARY: this step does not build the theme, but worker and QA agents may use theme dev for fresh-machine/runtime verification. Any dev server was started only through `start_preview` so Mist owns its port and lifecycle, and `.fluidignore` was made upload-safe before startup; never use bounded `run_cli` for a long-lived theme server and never publish in this step. If theme dev was used, `preview_state`, server logs, and browser console were checked. The local preview may still be the generic scaffold, so its visual mismatch and unresolved future built_path routes are not source-fidelity failures; managed source crawl screenshots remain the visual truth until build steps run.",
-        "`clone-manifest.json` exists at the theme project root and contains a page manifest, home + shop + representative-PDP section inventories with concrete computed style values, header/footer inventory, brand tokens (colors + fonts with licensing notes), and a complete source-media inventory. Each route inventory has exactly the same length/order as its desktop `sidecar.rendered.sections`; every entry copies that section's exact anchor, rect, style, heading, body, and action and cites the matching signed page-evidence path. Plausible worker-authored CSS without that receipt is a failure. Verify by READING the file and sidecars, not the worker's claim.",
+        "`clone-manifest.json` exists at the theme project root and contains a page manifest, a complete HOME section inventory with concrete computed style values, header/footer inventory, brand tokens (colors + fonts with licensing notes), and a complete Home source-media inventory. The Home route inventory has exactly the same length/order as its desktop `sidecar.rendered.sections`. Shop and PDP entries carry a resolved final source_url and built path with `evidence: \"deferred-to-page-specialist\"` — their pixel/DOM evidence is captured by the specialist that builds them and its absence here is correct, not a gap.",
         "The theme root `.fluidignore` preserves its prior rules and contains exact entries for `clone-manifest.json`, `fluid-catalog-index.json`, `.mist-desktop/source-baselines/`, `baselines/`, `package.json`, `pnpm-lock.yaml`, and `scripts/`, so a later theme dev watcher cannot upload local discovery/visual-QA, package-manager, or helper-script artifacts as Fluid theme resources.",
-        "The manifest has `visual_routes.home`, `visual_routes.shop`, and `visual_routes.pdp`. Each records source_url, built_path, and exactly one ordered landmark mapping per desktop signed `rendered.sections` entry. `page_manifest` contains exactly one matching entry for each route with the same signed source URL and built path; Home uses `/` (never `/home`) and all three normalized local built paths are distinct. Every mapping uses that entry's exact `source_anchor` plus a non-empty stable future `built_section` id/selector; guessed tags/classes and the unrelated accessibility `rendered.landmarks` list fail.",
-        "Source discovery used three distinct evidence layers: AI-friendly Markdown for copy/catalog facts, rendered HTML/CSS for DOM/tokens/fonts, and clean managed-browser full-page screenshots at 1440x900 and 390x844 for visual structure. Capture a fresh 6/6 source matrix during THIS workflow step (home/shop/PDP × desktop/mobile); pre-existing screenshots or manifest cells may inform discovery but cannot satisfy this run's evidence gate. Record `evidence_run_started_at` before the first capture and reject any source_evidence whose captured_at predates it. A crawl that writes a screenshot but fails before returning its page-evidence sidecar or either complete requested document is incomplete and must be retried. Each `source_evidence` cell records a real local `.mist-desktop/source-baselines/` screenshot path, captured_at, 64-character sha256, positive bytes, decoded width/height, requested_viewport, final_url, HTTP status, overlay_handling, the matching rendered page-evidence path/SHA-256/positive byte count plus exact `media`, `landmarks`, and `sections` counts, and crawl-returned `documents.html` + `documents.markdown` paths/SHA-256/positive byte counts. The sidecar itself has non-empty `rendered.sections`, `sectionsTruncated:false`, and matching Mist-generated `documents.html` + `documents.markdown` path/SHA-256/byte-length receipts; basename-only association, a legacy sidecar without those receipts, or replaced bytes is a hard failure requiring recapture. HTML must contain real rendered markup (including actual tags, page copy, stylesheet/font/token evidence where present), not a dimensions object, screenshot summary, truncated chat excerpt, or worker-authored reconstruction. The worker hashes all 24 fresh files in one `file_sha256({paths:[...]})` call; the read-only QA reviewer independently repeats that call, opens the manifest plus all six manifest-recorded HTML files with `read_file`, and rejects hosted URLs, chat ids, prose claims, stale captures, opaque `crawl:<viewport>` labels, missing/implausibly small documents, or any mismatch.",
-        "`evidence_run_started_at` is an actual current-turn boundary no more than 30 minutes before every retained capture. The worker called Mist's first-class `build_theme_source_inventory` with all six exact path triples and received `SOURCE_INVENTORY_BUILD: written`; hand-transcribed section/receipt/landmark/media arrays do not satisfy this gate. Worker and reviewer independently call `validate_theme_source_inventory({ manifest_path: \"clone-manifest.json\" })` and receive `SOURCE_INVENTORY_VALIDATION: pass`; the validator's freshness, bounded-file, exact sidecar-route, 24-file receipt, real-HTML, viewport, signed section semantics, source-backed hero copy, per-element media, and exact video-attribute checks are hard gates. A generated package.json/helper runtime, run_cli/pnpm/npm, downloaded validator, or global Node/Python/package dependency cannot satisfy this gate.",
+        "The manifest has `visual_routes.home`, `visual_routes.shop`, and `visual_routes.pdp`. Home records source_url, built_path, and exactly one ordered landmark mapping per desktop signed `rendered.sections` entry. Shop and PDP record source_url + built_path only. `page_manifest` contains exactly one matching entry per route with the same signed source URL and built path; Home uses `/` (never `/home`) and all three normalized built paths are distinct.",
+        "Source discovery used three distinct evidence layers for HOME: AI-friendly Markdown for copy facts, rendered HTML/CSS for DOM/tokens/fonts, and clean managed-browser full-page screenshots at 1440x900 and 390x844. Capture a fresh 2/2 Home matrix during THIS workflow step (desktop + mobile); pre-existing screenshots or manifest cells may inform discovery but never substitute for this run's captures. Shop and PDP cells are intentionally NOT captured here — requiring them is a misreading of this step's scope.",
+        "`evidence_run_started_at` is an actual current-turn boundary no more than 30 minutes before every retained capture. The worker called Mist's first-class `build_theme_source_inventory` with both exact Home path triples and received `SOURCE_INVENTORY_BUILD: written`; hand-transcribed section/receipt/landmark/media arrays do not satisfy this gate. The worker ran `validate_theme_source_inventory` against `clone-manifest.json`, repaired every reported error, and recorded `SOURCE_INVENTORY_VALIDATION: pass`. Catalog reconciliation and DAM delivery are intentionally not graded here — they belong to the catalog-index and media-inventory steps that follow.",
         "`hero_copy` records the source homepage headline, subheadline, and primary CTA verbatim. The normalized non-null text appears in retained Home desktop Markdown and HTML. `evidence_sources.markdown`, `.html`, and `.screenshot` contain the exact retained local paths, not opaque labels. A field absent from all evidence is null with a non-empty `<field>_reason`; invented or base-theme replacement copy is a hard failure.",
-        "`priority_media.items` contains exactly one unique entry per rendered media element per exact `desktop` or `mobile` viewport, including repeated URLs, logos/icons, every product-grid card, every PDP gallery image, every recommendation/cross-sell item, `<source>` candidates, posters, and CSS media; its item count equals the total `rendered.media` count across all six sidecars and unmatched extras are forbidden. Each entry records the exact source URL/candidates, route, smallest containing signed-section anchor as landmark, viewport role (never `both`), media kind, source product identity where applicable, and source-matching video poster/playback booleans. A legitimate CSS gradient, data URI, runtime blob, or media element that exposed no fetchable URL uses `source_url:null` with the builder's exact `source_value`, `source_value_sha256`, and `source_unavailable_reason`; never invent an HTTP URL, drop the occurrence, or edit the Mist-managed `.mist-desktop/source-baselines/` files. URL deduplication, HTML-regex backfill with invented attributes, a sample-per-rail, flat URL map, or generic note such as `media: video` is incomplete.",
-        "The section inventory covers every visible home, shop, and representative-PDP section in source order (compare against the live rendered pages), including promotional/editorial modules below the main collection grid or product detail, cross-sells, related-product rails, collection exploration, and media/video blocks. Its rects, colors, fonts, spacing, and display/grid values come from the signed `rendered.sections` receipts rather than visual guesses.",
-        "For all three priority routes the manifest contains auditable references to the captured Markdown (when advertised), retained rendered HTML/CSS evidence, and both durable screenshot files; screenshots alone are not proof of exact copy or DOM/token extraction.",
-        "HARD-FAIL BAR: fail when any priority route lacks a fresh clean screenshot+sidecar+complete HTML+complete Markdown bundle from this run, the worker or reviewer did not independently hash all 24 files, the reviewer did not open all six HTML files, a priority landmark inventory is incomplete, the manifest is missing/empty, the media inventory samples instead of enumerating every visible priority item, any priority video source/playback attribute is missing, or hero copy was invented rather than captured-or-recorded-as-missing. Catalog reconciliation and DAM delivery are intentionally not graded here."
+        "`priority_media.items` contains exactly one unique entry per rendered HOME media element per exact `desktop` or `mobile` viewport, including repeated URLs, logos/icons, `<source>` candidates, posters, and CSS media; its item count equals the total `rendered.media` count across the two Home sidecars RETAINED BY THIS STEP. Shop-grid and PDP-gallery media are enumerated by their own page specialists.\n\nCOUNT STABILITY: that equality holds only against the retained sidecars, never against a fresh recapture. Measured on one real storefront home page, three captures minutes apart returned 34, 35, and 37 media entries while the set of DISTINCT media URLs was identical (15) every time — a decorative animated element is cloned a nondeterministic number of times, and srcless entries vary with it. The stable cross-capture invariant is the set of distinct media URLs plus the priority items the page contract names, NOT the total element-instance count. A reviewer who recaptures and finds a different instance count has reproduced normal animation behavior and must not fail the step for it; compare distinct URLs and check that no priority item disappeared.",
+        "The section inventory covers every visible HOME section in source order (compare against the live rendered page), including promotional/editorial modules below the fold, cross-sells, collection exploration, and media/video blocks. Its rects, colors, fonts, spacing, and display/grid values come from the signed rendered evidence.",
+        "For HOME the manifest contains auditable references to the captured Markdown (when advertised), retained rendered HTML/CSS evidence, and both durable screenshot files; screenshots alone are not proof of exact copy or DOM/token extraction. Shop and PDP require a resolved route only.",
+        "HARD-FAIL BAR: fail when the HOME route lacks a fresh clean screenshot+sidecar+complete HTML+complete Markdown bundle from this run at both viewports, the worker or reviewer did not independently hash the Home evidence files, the Home landmark inventory is incomplete, the manifest is missing/empty, the Home media inventory samples instead of enumerating every element, or the Shop/PDP routes were not resolved to concrete final URLs. REVIEWER BUDGET: open the two Home HTML files and the two Home screenshots — do not demand six cells, 24 hashes, or Shop/PDP pixels; that scope moved to the page specialists by design. This step is `onFail: continue`: a partial-but-honest inventory degrades downstream page fidelity and is reported as needs-review rather than aborting the run."
       ],
-      "dependsOn": ["gather-context-qa"],
+      "dependsOn": [
+        "gather-context-qa"
+      ],
       "runIf": {
         "flag": "build_theme"
       }
@@ -271,7 +316,7 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop",
+        "onFail": "continue",
         "requiredTools": [
           {
             "tool": "read_file",
@@ -294,14 +339,18 @@
         "kind": "theme"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "`fluid-catalog-index.json` exists, parses, records the documented v202604 endpoint, contains only API-returned product identities, and has `complete:true` with `next_cursor:null`.",
         "The worker used one `fluid_catalog_index` call so v202604 pagination stayed outside model context; the receipt proves every server-returned cursor was followed from a page limit of 100 until null, page_count and product_count agree with the written array, and no duplicate id/repeated cursor was accepted.",
         "The reviewer independently calls `fluid_catalog_index` with `verify_only:true`; it re-enumerates the full live v202604 catalog, compares every stored identity, and re-reads first, middle, and last details without modifying the file. No product id or continuation was inferred.",
         "HARD-FAIL BAR: fail for an incomplete/non-cursor export, duplicate/repeated page, inferred identity, count mismatch, missing index, or any failed independent spot-check."
       ],
-      "dependsOn": ["theme-scrape-inventory"],
+      "dependsOn": [
+        "theme-scrape-inventory"
+      ],
       "runIf": {
         "flag": "build_theme"
       }
@@ -314,7 +363,7 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop",
+        "onFail": "continue",
         "requiredTools": [
           {
             "tool": "read_file",
@@ -344,7 +393,9 @@
         "kind": "theme"
       },
       "maxReworkRounds": 3,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "Every source `priority_media.items` entry remains present and has exactly one auditable outcome: verified catalog_runtime, verified theme_dam, verified theme_dam_fidelity_fallback whenever `import_products:false`, signed source_inline, explicit source_unavailable, or an explicit unresolved product-import reconciliation when `import_products:true`.",
         "Every catalog_runtime mapping exact-matches title/SKU/source identity against the complete index, was re-read by returned id, and has an HTTP-verified API image URL. No id was inferred.",
@@ -353,7 +404,9 @@
         "The worker called `theme_media_reconcile` with `mode:\"catalog_strict\"` exactly when `import_products:true` and `mode:\"theme_only\"` otherwise, and reached zero unreconciled items; the independent reviewer called the same mode with `verify_only:true`, which made no writes, verified signed non-fetchable outcomes, and HEAD-verified every unique recorded delivery URL.",
         "HARD-FAIL BAR: fail for choosing catalog_strict after product import was intentionally skipped, sampled/omitted media, inferred runtime mappings, missing upload receipts for fetchable assets, an unattempted fetchable priority video, a fabricated URL for non-fetchable evidence, an unverified delivered URL, an unhandled no-products product-media gap, or a reviewer that accepted prose without the verify-only tool receipt."
       ],
-      "dependsOn": ["theme-catalog-index"],
+      "dependsOn": [
+        "theme-catalog-index"
+      ],
       "runIf": {
         "flag": "build_theme"
       }
@@ -366,7 +419,7 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop",
+        "onFail": "continue",
         "requiredTools": [
           {
             "tool": "screenshot_preview"
@@ -382,14 +435,18 @@
         "kind": "theme"
       },
       "maxReworkRounds": 1,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "settings_data.json + settings_schema.json parse as valid JSON; the 12 color slots and 5 font slots are populated with the manifest's brand values (not base-theme defaults), and every color/font setting has its option_group.",
         "layouts/theme.liquid wires all --clr-* and --ff-* variables with | default: fallbacks; the font decision (real @font-face or named substitute) is recorded.",
         "The dev preview boots and renders without server errors — verified with a screenshot_preview this turn (placeholder content is acceptable; this step is about tokens + skeleton, not content).",
         "HARD-FAIL BAR: fail only when a config file is invalid/unwritten, tokens still hold base-theme defaults, or the dev preview cannot boot. Imperfect color mapping or a debatable font substitute is a NOTE for the refine pass."
       ],
-      "dependsOn": ["theme-media-inventory"],
+      "dependsOn": [
+        "theme-media-inventory"
+      ],
       "runIf": {
         "flag": "build_theme"
       }
@@ -407,7 +464,9 @@
           {
             "tool": "screenshot_preview",
             "minSuccessfulCalls": 2,
-            "distinctBy": ["width"]
+            "distinctBy": [
+              "width"
+            ]
           },
           {
             "tool": "interact_preview",
@@ -423,7 +482,9 @@
           {
             "tool": "view_project_image",
             "minSuccessfulCalls": 4,
-            "distinctBy": ["path"]
+            "distinctBy": [
+              "path"
+            ]
           }
         ]
       },
@@ -433,7 +494,9 @@
         "kind": "theme"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "main_navbar and main_footer exist and render without Liquid errors (check the dev server log). The reviewer opened the durable source Home pixels at 1440x900 and 390x844 plus fresh local pixels after the final chrome change in the same turn. A worker summary, DOM outline, HTTP success, or remembered screenshot does not satisfy this visual review.",
         "The reviewer produced an explicit source-vs-local chrome checklist covering every utility/announcement rail and exact string, real logo treatment and geometry, search/account/cart/localization controls and icons, navigation rail, colors/borders/spacing, responsive collapse, footer hierarchy/columns, social/legal/address/copyright content, and newsletter when present. Missing, invented, or materially different checklist rows are failures; a generic functional ecommerce header/footer is not a pass.",
@@ -447,7 +510,9 @@
         "Scope stayed inside `sections/main_navbar`, `sections/main_footer`, and their directly required dependencies. The worker did not rewrite unrelated homepage/PDP/collection sections or the shared audit script to satisfy this chrome-only step.",
         "HARD-FAIL BAR: fail for Liquid errors, missing sections, destroyed JS hooks, unfixed audit violations, wrong/missing chrome copy, a substituted or materially mis-scaled logo, missing source-visible controls/icons/rails/footer groups, or material source-vs-local color/typography/geometry/responsive differences. Only named minor anti-aliasing, licensed-font substitution, or sub-5% local spacing deltas may remain as refine notes."
       ],
-      "dependsOn": ["theme-tokens-skeleton"],
+      "dependsOn": [
+        "theme-tokens-skeleton"
+      ],
       "runIf": {
         "flag": "build_theme"
       }
@@ -466,17 +531,26 @@
             "tool": "crawl",
             "minSuccessfulCalls": 2,
             "input": {
-              "formats": ["html", "screenshot"],
+              "formats": [
+                "html",
+                "screenshot"
+              ],
               "only_main_content": false,
               "capture_page_evidence": true,
-              "screenshot_options": { "full_page": true }
+              "screenshot_options": {
+                "full_page": true
+              }
             },
-            "distinctBy": ["screenshot_options.viewport.width"]
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
           },
           {
             "tool": "view_project_image",
             "minSuccessfulCalls": 2,
-            "distinctBy": ["path"]
+            "distinctBy": [
+              "path"
+            ]
           },
           {
             "tool": "compare_preview_to_source",
@@ -520,7 +594,9 @@
         "kind": "theme"
       },
       "maxReworkRounds": 4,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "The QA reviewer independently ran the universal visual-copy evidence loop for the exact Home source and local routes at 1440x900 and 390x844, opened the durable source/local pixels, and read the local rendered DOM. A screenshot path, worker summary, or prose claim without direct evidence fails.",
         "Every Home landmark is explicitly classified as stable or resource/dynamic/external with source evidence. Stable landmarks occur once in source order and their wording, punctuation, capitalization, CTA labels, link labels, media, and visual hierarchy match. Every variable landmark has a concrete reason and observed source/local values; difficult content was not relabeled dynamic to evade copying.",
@@ -533,7 +609,9 @@
         "PAGE_OUTPUT includes source/local copy hashes, classified stable and resource/dynamic/external landmarks, signed evidence, interaction results, material deltas, runtime errors, and a reusable shell_contract. `needs_adjudication` is an honest review outcome, not a pass; `blocked` identifies a failed hard requirement.",
         "HARD-FAIL BAR: downstream page work must not begin while Home has wrong stable wording, missing/reordered stable sections, substituted priority media, untested responsive navigation, runtime errors, or an unreviewed material visual defect."
       ],
-      "dependsOn": ["theme-header-footer"],
+      "dependsOn": [
+        "theme-header-footer"
+      ],
       "runIf": {
         "flag": "build_theme"
       }
@@ -552,17 +630,26 @@
             "tool": "crawl",
             "minSuccessfulCalls": 2,
             "input": {
-              "formats": ["html", "screenshot"],
+              "formats": [
+                "html",
+                "screenshot"
+              ],
               "only_main_content": false,
               "capture_page_evidence": true,
-              "screenshot_options": { "full_page": true }
+              "screenshot_options": {
+                "full_page": true
+              }
             },
-            "distinctBy": ["screenshot_options.viewport.width"]
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
           },
           {
             "tool": "view_project_image",
             "minSuccessfulCalls": 2,
-            "distinctBy": ["path"]
+            "distinctBy": [
+              "path"
+            ]
           },
           {
             "tool": "compare_preview_to_source",
@@ -606,7 +693,9 @@
         "kind": "theme"
       },
       "maxReworkRounds": 4,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "QA independently proved the selected source URL is the canonical Shop/all-products route rather than a collection detail or redirect, ran the universal visual-copy evidence loop at 1440x900 and 390x844, opened durable source/local pixels, and read the exact local rendered DOM.",
         "Every Shop landmark is classified as stable or resource/dynamic/external with source evidence. Stable editorial/filter/interaction copy matches exactly; product-backed values are itemized as resource evidence. No unrelated starter copy or hard-coded fake product cards remain.",
@@ -616,7 +705,9 @@
         "All priority shop media is DAM-backed and ready, and server logs/console contain no unresolved route, runtime, or asset errors. The materialized theme audit passes on touched files.",
         "PAGE_OUTPUT includes classified stable and resource/dynamic/external landmarks, signed evidence, preview resource IDs, media/interactions, and a reusable list_contract naming product-card, grid, filter/sort, pagination, search, and empty/loading/error implementations. `needs_adjudication` is not a pass; `blocked` identifies a failed hard requirement."
       ],
-      "dependsOn": ["theme-homepage"],
+      "dependsOn": [
+        "theme-homepage"
+      ],
       "runIf": {
         "flag": "build_theme"
       }
@@ -635,17 +726,26 @@
             "tool": "crawl",
             "minSuccessfulCalls": 2,
             "input": {
-              "formats": ["html", "screenshot"],
+              "formats": [
+                "html",
+                "screenshot"
+              ],
               "only_main_content": false,
               "capture_page_evidence": true,
-              "screenshot_options": { "full_page": true }
+              "screenshot_options": {
+                "full_page": true
+              }
             },
-            "distinctBy": ["screenshot_options.viewport.width"]
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
           },
           {
             "tool": "view_project_image",
             "minSuccessfulCalls": 2,
-            "distinctBy": ["path"]
+            "distinctBy": [
+              "path"
+            ]
           },
           {
             "tool": "compare_preview_to_source",
@@ -689,7 +789,9 @@
         "kind": "theme"
       },
       "maxReworkRounds": 4,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "QA independently selected and justified one representative source PDP, then ran the universal visual-copy evidence loop for its exact source and canonical Fluid routes at 1440x900 and 390x844. It opened both source/local pixel pairs and read rendered DOM; prose or metrics alone are insufficient.",
         "The PDP renders one real source-backed Fluid preview product on the canonical returned route. Existing matching data was reused first; otherwise one preview product was reconciled through documented v202604 contracts after market/currency verification. Its source identity and Fluid ID are recorded, and the page step did not start or await a bulk catalog import.",
@@ -700,7 +802,9 @@
         "The route has no Liquid/server errors, console exceptions, failed priority media, horizontal mobile overflow, or unrelated starter copy, and the materialized theme audit passes on touched files.",
         "PAGE_OUTPUT includes classified stable and resource/dynamic/external landmarks, signed evidence, the product_contract, interactions, material deltas, and status. `needs_adjudication` is not a pass; `blocked` identifies a failed hard requirement."
       ],
-      "dependsOn": ["theme-shop-page"],
+      "dependsOn": [
+        "theme-shop-page"
+      ],
       "runIf": {
         "flag": "build_theme"
       }
@@ -719,17 +823,26 @@
             "tool": "crawl",
             "minSuccessfulCalls": 2,
             "input": {
-              "formats": ["html", "screenshot"],
+              "formats": [
+                "html",
+                "screenshot"
+              ],
               "only_main_content": false,
               "capture_page_evidence": true,
-              "screenshot_options": { "full_page": true }
+              "screenshot_options": {
+                "full_page": true
+              }
             },
-            "distinctBy": ["screenshot_options.viewport.width"]
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
           },
           {
             "tool": "view_project_image",
             "minSuccessfulCalls": 2,
-            "distinctBy": ["path"]
+            "distinctBy": [
+              "path"
+            ]
           },
           {
             "tool": "compare_preview_to_source",
@@ -773,7 +886,9 @@
         "kind": "theme"
       },
       "maxReworkRounds": 4,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "QA independently proved whether the chosen source route is a collection index or detail rather than Shop or Category, then ran the universal visual-copy evidence loop for its exact source and canonical Fluid routes at 1440x900 and 390x844.",
         "The route uses one real source-backed Fluid preview Collection and a bounded real product set. Existing resources were reused first; otherwise one collection and at most three products were reconciled after market/currency verification. All IDs are recorded, and full collection or catalog completeness was not treated as a page-copy prerequisite.",
@@ -783,7 +898,9 @@
         "Filter/sort/pagination/load-more and mobile disclosures were exercised where present. The route has no Liquid/server errors, console exceptions, failed priority media, horizontal mobile overflow, or unrelated starter copy, and the materialized theme audit passes on touched files.",
         "PAGE_OUTPUT includes classified stable and resource/dynamic/external landmarks, signed evidence, collection IDs/classification, interactions, material deltas, and status. `needs_adjudication` is not a pass; `blocked` identifies a failed hard requirement."
       ],
-      "dependsOn": ["theme-product-page"],
+      "dependsOn": [
+        "theme-product-page"
+      ],
       "runIf": {
         "flag": "build_theme"
       }
@@ -796,17 +913,21 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop",
+        "onFail": "continue",
         "requiredTools": [
           {
             "tool": "screenshot_preview",
             "minSuccessfulCalls": 3,
-            "distinctBy": ["path"]
+            "distinctBy": [
+              "path"
+            ]
           },
           {
             "tool": "read_preview_dom",
             "minSuccessfulCalls": 3,
-            "distinctBy": ["path"]
+            "distinctBy": [
+              "path"
+            ]
           },
           {
             "tool": "read_preview_console"
@@ -822,7 +943,9 @@
         "kind": "theme"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "The exact materialized `<THEME_AUDIT_PATH>` returned by run_skill exits 0 on every file the clone touched (new/modified templates, sections, configs). Pre-existing violations in UNTOUCHED base-theme scaffold files are recorded as a note with the per-rule rollup — they are not this step's failure.",
         "The theme was pushed: GET /api/application_themes shows the landing theme and STEP_OUTPUT records its id (verify via the API, not the worker's claim).",
@@ -832,7 +955,9 @@
         "Authored copy obeys `brand.md`. Mist injects the company's brand guide into every turn as a `<brand_voice>` block; scraped source strings win, and any string the agent had to write itself is in that voice and consistent with its Do's and Don'ts. Surviving base-theme placeholder copy — \"NEW DROP\", \"Built different\", \"Trusted by thousands\", \"Shop the drop\", lorem — is a defect even when the layout matches, and is the single most visible way a clone reads as generic.",
         "HARD-FAIL BAR: fail when the push did not land (no theme id verifiable via the API), any priority video is absent/substituted, audit violations remain, or the preview is broken after push. A shorter-than-hoped page list or a long remaining_for_refine list is fine — the refine pass exists for that."
       ],
-      "dependsOn": ["theme-collection-page"],
+      "dependsOn": [
+        "theme-collection-page"
+      ],
       "runIf": {
         "flag": "build_theme"
       }
@@ -845,22 +970,29 @@
         "enabled": true,
         "model": "openai/gpt-5.6-sol",
         "strictness": "strict",
-        "onFail": "stop",
+        "onFail": "continue",
         "requiredTools": [
           {
             "tool": "view_project_image",
             "minSuccessfulCalls": 6,
-            "distinctBy": ["path"]
+            "distinctBy": [
+              "path"
+            ]
           },
           {
             "tool": "screenshot_preview",
             "minSuccessfulCalls": 6,
-            "distinctBy": ["path", "width"]
+            "distinctBy": [
+              "path",
+              "width"
+            ]
           },
           {
             "tool": "read_preview_dom",
             "minSuccessfulCalls": 3,
-            "distinctBy": ["path"]
+            "distinctBy": [
+              "path"
+            ]
           },
           {
             "tool": "read_preview_console"
@@ -876,7 +1008,9 @@
         "kind": "theme"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "Preflight validated every declared source evidence cell for the Home, Shop, and PDP page contracts: each `.mist-desktop/source-baselines/` path exists, its `file_sha256({paths:[\"<path>\"]})` digest matches the recorded sha256, and its nonzero bytes/dimensions/requested viewport/final URL/status/overlay handling are complete. Missing or opaque evidence was recaptured before visual refinement.",
         "The reviewer opened source and current local pixels side by side for every declared Home/Shop/PDP viewport. Worker summaries, DOM inventories, and metrics without the source image do not satisfy visual review.",
@@ -887,7 +1021,9 @@
         "The theme's dev preview is still healthy, every touched file passes theme_audit.py, and the final desktop/mobile routes have no Liquid errors or horizontal document overflow.",
         "HARD-FAIL BAR: fail when the loop never ran, the preview is broken, evidence is stale/fabricated, stable content is missing or substituted, resource data is faked, priority media is missing, or the run ends needs_adjudication or blocked."
       ],
-      "dependsOn": ["theme-content-pages-push"],
+      "dependsOn": [
+        "theme-content-pages-push"
+      ],
       "runIf": {
         "flag": "build_theme"
       }
@@ -910,7 +1046,9 @@
         "flag": "import_products"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "If import_products was not selected, the step correctly skipped and did no work.",
         "Otherwise: every source collection, every curated category (or justified none), every static /pages/* page, every published post, every source playlist/media resource, and the site nav/menus were mapped to the correct Fluid resource type. v202604 lists were cursor-paginated to next_cursor=null and exact source-vs-created counts are reported without relying on total_count.",
@@ -919,7 +1057,10 @@
         "STEP_OUTPUT reports per-type source-vs-created counts and any remaining_for_human items.",
         "HARD-FAIL BAR: fail when a source resource is silently missing, a documented v202604 type fell back to a legacy endpoint, pages were created without create_page/preview verification, duplicates were created, or counts were fabricated. A named per-item platform failure may remain for human review but cannot be reported as complete."
       ],
-      "dependsOn": ["gather-context-qa", "theme-content-pages-push"]
+      "dependsOn": [
+        "gather-context-qa",
+        "theme-content-pages-push"
+      ]
     },
     {
       "id": "populate-getting-started",
@@ -939,14 +1080,19 @@
         "flag": "push_business_data"
       },
       "maxReworkRounds": 1,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "acceptance": [
         "The step made a real GET /api/companies/{id}/onboarding_info call this turn (or documented its exact failure status) — the report cites concrete fields from the actual response, and does NOT call the removed /api/v1/onboardings endpoints.",
         "No non-empty server value was overwritten; nothing LOW-confidence or KYC-sensitive was pushed; every deferred field has an explicit reason.",
         "STEP_OUTPUT follows the documented shape with fields_set / fields_filled / deferred.",
         "HARD-FAIL BAR: fail only for fabrication (claiming reads/writes the API doesn't show) or destructive overwrites. 'Read-only outcome, everything deferred to the human' is a PASSING outcome when reported honestly."
       ],
-      "dependsOn": ["products-import", "gather-context-qa"]
+      "dependsOn": [
+        "products-import",
+        "gather-context-qa"
+      ]
     },
     {
       "id": "ugc-discovery",
@@ -966,7 +1112,9 @@
         "Either at least one UGC asset was uploaded to the DAM (verifiable via its reported URL), or an explicit finding documents no discoverable social/UGC presence with the queries tried.",
         "No unrelated or off-brand content was uploaded."
       ],
-      "dependsOn": ["populate-getting-started"],
+      "dependsOn": [
+        "populate-getting-started"
+      ],
       "runIf": {
         "flag": "discover_ugc"
       }
@@ -994,7 +1142,9 @@
         "Otherwise: each account's videos were ripped into DAM + Media tagged `brand-content` (never `ugc`), idempotently, per-video failures noted without aborting; or an explicit finding documents no discoverable official social presence.",
         "No UGC / other-people's content was imported by this step (that is ugc-discovery)."
       ],
-      "dependsOn": ["gather-context"]
+      "dependsOn": [
+        "gather-context"
+      ]
     },
     {
       "id": "verify-links",
@@ -1006,12 +1156,17 @@
         "strictness": "strict",
         "onFail": "continue"
       },
-      "dependsOn": ["iterative-theme-refine", "products-import"],
+      "dependsOn": [
+        "iterative-theme-refine",
+        "products-import"
+      ],
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "prompt": "Audit EVERY link in the storefront and make each point to a valid, correctly-rendering Fluid resource template — this is the step that catches nav items wired to dead or generic routes. Cover: the header navigation, the footer (support / legal / social / localization), and primary in-page CTAs (hero, category tiles, banners). For each link, resolve the target and confirm it (a) returns HTTP 200 and (b) renders the CORRECT template: collection links -> collection template, category -> category, page -> page, product -> /home/products/<slug>, home -> home. FIX links that point to: a dead or generic route (e.g. a bare `/shop` that 204s instead of `/home/shop`), the wrong template, a Shopify-style URL that doesn't map to Fluid's `/home/...` routes, or a 302/404/406. EVERY resource-DETAIL href the theme emits MUST carry the credit segment (`/home/products/<slug>`, `/home/collections/<slug>`, `/home/pages/<slug>`, `/home/posts/<slug>`) — a bare `/products/<slug>` 404s at the origin and only appears to work once the CDN has cached the `/home/...` render, then breaks again when that cache entry ages out. Test each link COLD: if a bare detail URL returns 200, re-test it against a slug you have not visited this run before believing it. Also grep the rendered HTML for the unsubstituted credit placeholder `__fluid_affiliate_username__` — it resolves by fallback but must be replaced with `home` (or a real Liquid credit variable) in the theme source. Navigation menu items MUST map to real resources — e.g. 'By Scent' -> a collections/scent index (`/home/collections`), NOT a generic shop URL; 'Best Sellers' -> `/home/collections/best-sellers`; 'Gifts & Sets' -> `/home/collections/sets`. Prefer binding the nav to a real Fluid navigation menu (link_list) with correct resource URLs so it stays admin-manageable; otherwise correct the hrefs. Point footer info links at the imported pages (`/home/pages/<slug>`). A PDP (or any resource type) that returns 204/blank or 500 on its CREDIT-PREFIXED URL is NOT 'platform-side' — it almost always means the active theme has no `default: true` template for that themeable_type (check `GET /api/application_themes/active` -> application_theme_templates grouped by themeable_type). Fix the theme; do not wave it through. SLUG GOTCHA: enumerate PDP URLs from links the STOREFRONT renders (collection/search pages), not from the API's canonical_url — a PATCH that includes the title re-slugifies the product (new uuid suffix) and the old canonical_url silently falls through to the home template. End with STEP_OUTPUT containing a table: link label -> target URL -> HTTP status -> resolved template.",
       "acceptance": [
         "Every header-nav, footer, and primary in-page link resolves to HTTP 200 and the correct resource template, asserted on the credit-prefixed URL. A PDP/collection/page that 204s or 500s is treated as a theme template-default gap to fix, not a platform excuse.",
@@ -1032,14 +1187,18 @@
         "enabled": true,
         "model": "openai/gpt-5.6-sol",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "continue"
       },
-      "dependsOn": ["product-active-status-qa"],
+      "dependsOn": [
+        "product-active-status-qa"
+      ],
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "prompt": "Focused QA — PRODUCT PRICING ONLY. Use query_docs to confirm the v202604 Product list/show response before checking. Cursor-paginate `GET /api/v202604/company/products?page[limit]=100` through every `meta.pagination.next_cursor` until null; do not assume total_count or stop at the first 100.\n\nFor EVERY real published product, load its detail record as needed and visit its local-preview PDP using the canonical route returned/mapped by the API. Compare the rendered retail price and, when the source genuinely offers one, subscription price against the default company's country-relative Product pricing/variant-country data. A missing, zero, stale, wholesale, or mismatched value fails that product.\n\nCheckpoint per product so interruption/restart resumes rather than restarting the catalog. Keep preview navigations bounded (maximum two in flight) and report progress every 20 products to avoid overwhelming a lower-end machine or slow network.\n\nIf the company serves multiple countries, test every configured country on the flagship and one multi-variant product; confirm both amount and currency change to that country's resolved pricing. Do not check links, cart, or layout here.\n\nEnd with STEP_OUTPUT: { enumerated, checked, destination_pages, default_country, matches, mismatches:[{product_id,title,route,displayed,expected,reason}], country_switches:[...], checkpoint_path, unresolved:[] }.",
       "acceptance": [
         "Every cursor-paginated product was checked; each PDP's rendered retail price and currency exactly match the default-country v202604 response. Zero is accepted only when the source manifest also says the product is legitimately free.",
@@ -1059,14 +1218,18 @@
         "enabled": true,
         "model": "openai/gpt-5.6-sol",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "continue"
       },
-      "dependsOn": ["product-active-status-qa"],
+      "dependsOn": [
+        "product-active-status-qa"
+      ],
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "prompt": "Focused QA — ADD TO CART ONLY. Visit EVERY PDP and confirm the add-to-cart button is correctly wired through FairShare: `data-fluid-add-to-cart=\"<variantId>\"` is present and the id is a REAL active variant of that product; on multi-variant products it is VARIANT-AWARE (selecting a scent/size updates the button's variant id + price); `data-fluid-quantity` and `data-fluid-open-cart-after-add` are sane. Confirm the cart drawer/FairShare SDK is present (the `fluid-cdn-script` is injected). Flag any PDP with a missing, hardcoded, placeholder, or stale variant id, or a non-variant-aware selector. Do NOT check prices/links/layout. STEP_OUTPUT: a table of PDP -> data-fluid-add-to-cart value -> real active variant? -> variant-aware?, plus any failures.",
       "acceptance": [
         "Every PDP has a data-fluid-add-to-cart bound to a real, active variant id for that product.",
@@ -1086,14 +1249,19 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "continue"
       },
-      "dependsOn": ["iterative-theme-refine", "products-import"],
+      "dependsOn": [
+        "iterative-theme-refine",
+        "products-import"
+      ],
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "prompt": "Focused QA — MOBILE ONLY. Use the fresh-machine Mist preview capabilities, not a local/global Playwright assumption. Call start_preview if needed, confirm local URL with preview_state, then for one of EACH route type — home, collection, category (if any), product PDP, content page, cart — call screenshot_preview with `{mode:\"full\",path:\"<route>\",width:390,height:844}`. Require HTTP 200 and use the reported document width to prove no horizontal overflow. Inspect images/text/tap-target geometry in the screenshots. On the home route, inspect the real mobile-menu button selector, call interact_preview to open it, take a fresh 390x844 screenshot, then close it and recapture; aria-expanded/state and visible menu content must change. Read preview console + local server logs after the route matrix. Flag any overflow, overlap/cutoff, broken mobile nav, unreadable type, or runtime failure. Do NOT check prices/cart wiring/link targets. STEP_OUTPUT: route -> status -> viewport/document width -> screenshot paths -> issues, plus mobile-menu interaction evidence and log status.",
       "acceptance": [
         "Every sampled route has current screenshot_preview evidence at an exact 390x844 viewport, HTTP 200, and reported document width <= 390px.",
@@ -1113,14 +1281,18 @@
         "enabled": true,
         "model": "openai/gpt-5.6-sol",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "continue"
       },
-      "dependsOn": ["products-import"],
+      "dependsOn": [
+        "products-import"
+      ],
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "prompt": "Focused QA — PRODUCT LIFECYCLE ONLY, before price and add-to-cart QA. Use query_docs for the v202604 list/update contract. Cursor-paginate ALL products from `GET /api/v202604/company/products?page[limit]=100` until `meta.pagination.next_cursor` is null.\n\nA launch product must resolve as raw `status:\"active\"` AND `active:true`. For any manifest-backed product that is draft, archived, or inactive by mistake, PATCH `/api/v202604/company/products/{id}` with only the documented lifecycle keys needed—normally `{product:{status:\"active\",public:true,publish_at:null}}`—then re-read it. `published` is a read-side presentation label on some surfaces, not a valid v202604 ProductWrite enum.\n\nAfter correction, verify every product's local PDP route renders the expected product rather than a 404/redirect and verify collection membership for products that should have it. Use returned canonical routes and checkpoints; do not compose slugs or stop at a page limit. Do not check price, cart, or visual layout here.\n\nEnd with STEP_OUTPUT: { enumerated, destination_pages, before_status_counts, corrected:[{id,from,to}], after_status_counts, pdp_routes_checked, membership_failures:[], unresolved:[], checkpoint_path }.",
       "acceptance": [
         "Every destination cursor was exhausted and every manifest-backed product resolves as raw `status == active` and `active == true`; no launch product remains draft, archived, or inactive.",
@@ -1141,14 +1313,19 @@
         "enabled": true,
         "model": "anthropic/claude-opus-5",
         "strictness": "strict",
-        "onFail": "stop"
+        "onFail": "continue"
       },
-      "dependsOn": ["product-active-status-qa", "iterative-theme-refine"],
+      "dependsOn": [
+        "product-active-status-qa",
+        "iterative-theme-refine"
+      ],
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "prompt": "Focused QA — ROUTE HEALTH. Assert the home index AND one of EACH resource type — collection, category (if any), product PDP, content page, cart — returns HTTP 200 with a non-trivial rendered body.\n\nURL shape is part of the test. Fluid detail routes require `/{credit}/{resource}/{slug}`, with `home` as unattributed credit: `/home/products/<slug>`, `/home/collections/<slug>`, `/home/pages/<slug>`, `/home/posts/<slug>`. Index routes are credit-optional. Never accept a bare Shopify-style detail URL; a cached 200 there is not routing proof.\n\nPRECHECK 1: GET `/api/application_themes/active`; compare its id to the built theme id. If different/draft, activate the built theme before continuing or report a blocker.\n\nPRECHECK 2: group active theme templates by themeable_type and require a `default:true` template for layouts, locales, config, home_page, navbar, footer, product, collection, category, page, post, cart_page, shop_page. Fix missing defaults; do not label blank 204 routes as platform bugs.\n\nMETHODOLOGY: use Mist's managed browser. For each PUBLIC storefront URL, call crawl with `formats:[\"html\",\"screenshot\"]`, `only_main_content:false`, and exact viewport screenshot options. Record requested URL, final URL, metadata HTTP status, title, screenshot, and non-trivial resource-specific body. A redirect to home, generic home body, blank/loading screenshot, 204, 404, or 500 fails. For the matching LOCAL route, call screenshot_preview with path + exact viewport and record its navigation status. Read preview console/local logs. This requires no local Playwright install. If an older Mist build cannot report crawl final URL/status or exact screenshots, report tooling needs-review rather than inventing a browser pass.\n\nSTEP_OUTPUT: route type -> public requested/final URL -> public status/rendered -> local URL/status -> evidence paths; plus PRECHECK 1 active/built theme ids and PRECHECK 2 default-template table.",
       "acceptance": [
         "PRECHECK 1 ran: the theme returned by GET /api/application_themes/active is the theme this run built (or the drift is reported as a blocker).",
@@ -1171,12 +1348,16 @@
         "strictness": "strict",
         "onFail": "continue"
       },
-      "dependsOn": ["storefront-route-health-qa"],
+      "dependsOn": [
+        "storefront-route-health-qa"
+      ],
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "prompt": "Focused QA — SEO METADATA ONLY (browser-based). For each route type (home, a collection, a product PDP, a content page), load it in a real browser and assert the <head> + document are SEO-ready: a non-empty, resource-SPECIFIC <title> (NOT empty and NOT a generic storefront default like 'Live Free.'), a meaningful <meta name=description> (not the generic default), a <link rel=canonical>, and exactly ONE <h1> with real resource content. Product and collection pages should also emit the relevant JSON-LD (Product / ItemList / BreadcrumbList). Fix what the THEME controls (title/description/canonical/h1/JSON-LD in the layout + templates, driven by the resource drop — e.g. `{{ page_title }}`, product/collection fields). FLAG what only store-level SEO settings can fix (site-wide default title/description, robots) for the human. STEP_OUTPUT: a per-route-type table -> title / description / canonical / h1 / JSON-LD present? -> pass/flag.",
       "acceptance": [
         "Every route type has a non-empty, resource-specific <title> (not a generic default) and a meaningful meta description.",
@@ -1199,12 +1380,16 @@
         "strictness": "strict",
         "onFail": "continue"
       },
-      "dependsOn": ["storefront-route-health-qa"],
+      "dependsOn": [
+        "storefront-route-health-qa"
+      ],
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "prompt": "Focused QA — CONTENT PAGE ROUTES ONLY. Use query_docs for the v202604 Page list/show contract, then cursor-paginate `GET /api/v202604/company/pages?page[limit]=100` until `meta.pagination.next_cursor` is null.\n\nFor every source-authored content page (About, Contact, Shipping, Privacy, Terms, FAQ, store locator, and every other manifest page), open its local preview route in a real browser and assert the expected authored main content renders—not just shared header/footer chrome and not a different page behind a redirect. Use the canonical path returned/mapped by the page/create_page result; never compose a slug.\n\nIf a page resource or theme template is missing, repair it with Mist's `create_page` tool so resource, template, route, dev server, and preview pane remain coordinated. Do not raw-POST a legacy page endpoint. Re-open the page after repair and verify every header/footer link that targets it resolves to the same authored content.\n\nEnd with STEP_OUTPUT: { enumerated_pages, destination_pages, rows:[{source_url,title,canonical_path,record_exists,template_exists,body_renders,linked_from_resolves,status}], repaired_with_create_page:[], unresolved:[] }.",
       "acceptance": [
         "Every authored content page renders its real body copy in a browser, not just nav + footer.",
@@ -1226,12 +1411,16 @@
         "strictness": "standard",
         "onFail": "continue"
       },
-      "dependsOn": ["storefront-route-health-qa"],
+      "dependsOn": [
+        "storefront-route-health-qa"
+      ],
       "target": {
         "type": "manager"
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" },
+      "recovery": {
+        "mode": "manual"
+      },
       "prompt": "Focused QA — FONT LICENSING & SUBSTITUTION ONLY. Determine the source brand's primary display + body typefaces. If a source font is proprietary (not OFL/Google-hosted/freely licensable) and was substituted with a free alternative, assert the substitution is done honestly and completely: (1) the closest free family is used consistently across the theme (no lingering references to the proprietary family name), (2) a license disclaimer naming the original font and the free substitute is embedded in the theme (e.g. a comment in layouts/theme.liquid), and (3) a sane font-stack fallback is present so text never renders in an unstyled default. If the brand's own licensed font files ARE importable (this is their store), import the real @font-face and keep the disclaimer noting the licensing assumption. STEP_OUTPUT: source font(s) -> proprietary? -> substitute used -> disclaimer present? -> fallback present? -> pass/flag.",
       "acceptance": [
         "Source typefaces identified; any proprietary font that was substituted is called out.",

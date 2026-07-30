@@ -63,6 +63,24 @@ so completeness does not force duplicate DAM uploads. Preserve video autoplay,
 loop, muted, playsinline, controls, type, poster, and desktop/mobile source
 behavior.
 
+### Media counts are not stable across captures
+
+Compare media by DISTINCT URL, never by total element-instance count. Measured
+on one real storefront home page, three captures taken minutes apart returned
+34, 35, and 37 `rendered.media` entries while the set of distinct media URLs
+was identical (15) in all three: a decorative animated element is cloned a
+nondeterministic number of times, and srcless entries move with it.
+
+So an instance-count equality holds only against the sidecars retained by the
+same capture, and is meaningless against a recapture. When a reviewer
+recaptures and sees a different total, that is normal animation behavior and
+not a finding. The real invariants are the set of distinct media URLs and the
+presence of every priority item the page contract names — check those instead.
+
+The same caution applies to any other count you might be tempted to assert
+across captures: carousel slides mid-rotation, lazy-loaded grid rows, and
+consent/popup surfaces all vary. Assert on identity and presence, not tallies.
+
 Use Fluid DAM delivery for the clone. If a video is too large, use Mist's
 compression capability and retain the original source-to-delivery receipt;
 never silently replace it with a still image.
