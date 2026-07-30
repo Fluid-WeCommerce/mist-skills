@@ -93,6 +93,17 @@ so completeness does not force duplicate DAM uploads. Preserve video autoplay,
 loop, muted, playsinline, controls, type, poster, and desktop/mobile source
 behavior.
 
+### Verify at a width you did not build against
+
+Build-and-verify at exactly the same two widths hides overflow that a visitor
+hits one pixel away. Observed live: a header and footer stretched 16px wider
+than the page with a negative left margin looked correct at exactly 1440 and
+390, and produced 7px of horizontal scroll at 1441.
+
+So after the declared benchmark viewports pass, probe one width that is NOT a
+width you compared against — 1441 is enough. Compare the reported document
+width against the viewport width; any positive difference is real overflow.
+
 ### Media counts are not stable across captures
 
 Compare media by DISTINCT URL, never by total element-instance count. Measured
