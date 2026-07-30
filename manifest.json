@@ -464,6 +464,15 @@
       "references": [
         "onboarding/onboarding-prefill/references/api-endpoints.md"
       ]
+    },
+    {
+      "slug": "onboarding/launch-setup",
+      "name": "Launch Setup",
+      "description": "Start an onboard: asks quality or speed, then kicks off the matching workflow with the company's website in context. Quality builds the whole store with Fable 5; speed builds the storefront only with Grok 4.5.",
+      "category": "onboarding",
+      "icon": "rocket",
+      "path": "onboarding/launch-setup/SKILL.md",
+      "updated_at": "2026-07-30T10:00:00Z"
     }
   ],
   "workflows": [
