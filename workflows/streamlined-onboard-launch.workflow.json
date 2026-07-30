@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-30-deterministic-product-import",
+  "revision": "2026-07-30-deterministic-product-import+recovery-restored",
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
   "launcherSkill": "onboarding/launch-setup",
@@ -20,7 +20,10 @@
         "enabled": false
       },
       "dependsOn": [],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "business-profile",
@@ -42,7 +45,10 @@
       "dependsOn": [
         "brand"
       ],
-      "maxReworkRounds": 1
+      "maxReworkRounds": 1,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "source-capture",
@@ -59,7 +65,10 @@
         "enabled": false
       },
       "dependsOn": [],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "home-page",
@@ -84,7 +93,10 @@
       "dependsOn": [
         "source-capture"
       ],
-      "maxReworkRounds": 1
+      "maxReworkRounds": 1,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "shop-page",
@@ -108,7 +120,10 @@
       "dependsOn": [
         "home-page"
       ],
-      "maxReworkRounds": 1
+      "maxReworkRounds": 1,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "product-page",
@@ -132,7 +147,10 @@
       "dependsOn": [
         "home-page"
       ],
-      "maxReworkRounds": 1
+      "maxReworkRounds": 1,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "collection-page",
@@ -156,7 +174,10 @@
       "dependsOn": [
         "home-page"
       ],
-      "maxReworkRounds": 1
+      "maxReworkRounds": 1,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "content-pages",
@@ -175,7 +196,10 @@
       "dependsOn": [
         "home-page"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "publish-theme",
@@ -204,7 +228,10 @@
         "collection-page",
         "content-pages"
       ],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "catalog-manifest",
@@ -223,7 +250,10 @@
         "onFail": "continue"
       },
       "dependsOn": [],
-      "maxReworkRounds": 1
+      "maxReworkRounds": 1,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "import-products",
@@ -255,7 +285,10 @@
       "dependsOn": [
         "catalog-manifest"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "import-content",
@@ -272,7 +305,10 @@
       "dependsOn": [
         "import-products"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "media-and-ugc",
@@ -289,7 +325,10 @@
       "dependsOn": [
         "brand"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "storefront-check",
@@ -312,7 +351,10 @@
         "publish-theme",
         "import-products"
       ],
-      "maxReworkRounds": 1
+      "maxReworkRounds": 1,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "handoff",
@@ -332,7 +374,10 @@
         "import-content",
         "media-and-ugc"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     }
   ]
 }

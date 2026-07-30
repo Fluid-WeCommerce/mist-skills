@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-30-speed-import-theme-first-wave+context-budget+publish-gate+launcher-skill",
+  "revision": "2026-07-30-speed-import-theme-first-wave+context-budget+publish-gate+launcher-skill+recovery-restored",
   "slug": "speed-import",
   "name": "Speed Import",
   "launcherSkill": "onboarding/launch-setup",
@@ -20,7 +20,10 @@
         "enabled": false
       },
       "dependsOn": [],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "catalog-manifest",
@@ -35,7 +38,10 @@
         "enabled": false
       },
       "dependsOn": [],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "import-products",
@@ -52,7 +58,10 @@
       "dependsOn": [
         "catalog-manifest"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "source-capture",
@@ -69,7 +78,10 @@
         "enabled": false
       },
       "dependsOn": [],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "home-page",
@@ -88,7 +100,10 @@
       "dependsOn": [
         "source-capture"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "shop-page",
@@ -107,7 +122,10 @@
       "dependsOn": [
         "home-page"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "product-page",
@@ -126,7 +144,10 @@
       "dependsOn": [
         "home-page"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "publish-theme",
@@ -153,7 +174,10 @@
         "shop-page",
         "product-page"
       ],
-      "maxReworkRounds": 2
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "handoff",
@@ -171,7 +195,10 @@
         "publish-theme",
         "import-products"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     }
   ]
 }
