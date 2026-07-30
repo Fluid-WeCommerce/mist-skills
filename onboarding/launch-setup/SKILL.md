@@ -1,26 +1,49 @@
 ---
 name: launch-setup
 description: >-
-  Start an onboard. Asks one question — quality or speed — and kicks off the
-  matching workflow with the company's website already in context. Quality
+  Start an onboard. Gathers the company's website, asks quality or speed when
+  the workflow isn't already chosen, and kicks off the matching workflow with
+  the website in context. Also the launcher the onboarding workflows' Run
+  button starts, so a catalog run never begins without a website URL. Quality
   builds the theme with Fable 5 and covers the whole store; speed builds it
   with Grok 4.5 and covers the storefront only.
 ---
 
 # Launch Setup
 
-The front door for onboarding a company onto Fluid. Ask two things, start the
-right run, get out of the way.
+The front door for onboarding a company onto Fluid. Ask what's missing, start
+the right run, get out of the way.
+
+This skill has two entry points, and the difference decides what you ask:
+
+- **Conversation** — someone asked to onboard/launch a company. You need both
+  facts below.
+- **Run button** — the request itself names a workflow, e.g.
+  `Run the "Streamlined Onboard & Launch" workflow (slug:
+  streamlined-onboard-launch).` That IS the mode choice
+  (`streamlined-onboard-launch` = quality, `speed-import` = speed). Do not
+  re-ask quality vs speed — the only thing missing is the website URL, so ask
+  for that and start the named workflow.
+
+Either way: **never call `run_workflow` without `website_url` in context.**
+Every step of both workflows reads it; a run started without it blocks on its
+very first step ("Set up the brand") with nothing written. If the URL is not
+in the request, asking for it is mandatory, not optional.
 
 ## Step 1 — What you need
 
 You need exactly two facts. Get them in one exchange, not two.
 
 1. **The company's current website.** Take it from the request if it is already
-   there. Confirm the active Fluid company with `GET /api/settings/company` and
-   say which company you are about to onboard — starting a run against the
-   wrong company wastes an hour before anyone notices.
-2. **Quality or speed.** Ask it plainly, with the trade in one line each:
+   there; otherwise ask for it and wait for the answer. Confirm the active
+   Fluid company with `GET /api/settings/company` and say which company you are
+   about to onboard — starting a run against the wrong company wastes an hour
+   before anyone notices. (If that endpoint errors, name the company from
+   `GET /api/settings/companies` or the chat's active-company context instead;
+   never skip saying which company gets written to.)
+2. **Quality or speed.** Skip this question entirely when the request already
+   names a workflow slug (run-button entry — the choice is made). Otherwise
+   ask it plainly, with the trade in one line each:
 
 > **Quality** — builds the whole store: theme with every page, products,
 > collections and content, business profile, media and UGC, then a storefront
@@ -39,6 +62,7 @@ Do not ask anything else. Every remaining decision is the workflow's to make.
 
 | Answer | Workflow slug |
 | --- | --- |
+| workflow named in the request | that slug, verbatim |
 | quality, or no preference | `streamlined-onboard-launch` |
 | speed | `speed-import` |
 
