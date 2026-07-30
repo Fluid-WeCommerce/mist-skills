@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-30-speed-import-theme-first-wave+context-budget+publish-gate+launcher-skill",
+  "revision": "2026-07-30-speed-import-theme-first-wave+context-budget+publish-gate+launcher-skill+grok420-ab",
   "slug": "speed-import",
   "name": "Speed Import",
   "launcherSkill": "onboarding/launch-setup",
@@ -10,7 +10,7 @@
     {
       "id": "brand",
       "name": "Set up the brand",
-      "model": "xai/grok-4.5",
+      "model": "xai/grok-4.20-reasoning",
       "target": {
         "type": "manager"
       },
@@ -25,7 +25,7 @@
     {
       "id": "catalog-manifest",
       "name": "Map the source catalog",
-      "model": "xai/grok-4.5",
+      "model": "xai/grok-4.20-reasoning",
       "target": {
         "type": "manager"
       },
@@ -40,7 +40,7 @@
     {
       "id": "import-products",
       "name": "Import products",
-      "model": "xai/grok-4.5",
+      "model": "xai/grok-4.20-reasoning",
       "target": {
         "type": "manager"
       },
@@ -57,7 +57,7 @@
     {
       "id": "source-capture",
       "name": "Capture the source site",
-      "model": "xai/grok-4.5",
+      "model": "xai/grok-4.20-reasoning",
       "target": {
         "type": "kind",
         "kind": "theme",
@@ -74,7 +74,7 @@
     {
       "id": "home-page",
       "name": "Build the home page",
-      "model": "xai/grok-4.5",
+      "model": "xai/grok-4.20-reasoning",
       "target": {
         "type": "kind",
         "kind": "theme",
@@ -93,7 +93,7 @@
     {
       "id": "shop-page",
       "name": "Build the shop page",
-      "model": "xai/grok-4.5",
+      "model": "xai/grok-4.20-reasoning",
       "target": {
         "type": "kind",
         "kind": "theme",
@@ -112,7 +112,7 @@
     {
       "id": "product-page",
       "name": "Build the product page",
-      "model": "xai/grok-4.5",
+      "model": "xai/grok-4.20-reasoning",
       "target": {
         "type": "kind",
         "kind": "theme",
@@ -131,7 +131,7 @@
     {
       "id": "publish-theme",
       "name": "Publish the theme",
-      "model": "xai/grok-4.5",
+      "model": "xai/grok-4.20-reasoning",
       "target": {
         "type": "kind",
         "kind": "theme",
@@ -158,7 +158,7 @@
     {
       "id": "handoff",
       "name": "What landed, and what needs you",
-      "model": "xai/grok-4.5",
+      "model": "xai/grok-4.20-reasoning",
       "target": {
         "type": "manager"
       },
