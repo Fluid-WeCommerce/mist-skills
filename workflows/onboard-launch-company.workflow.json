@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-29-gate-topology-and-evidence-split",
+  "revision": "2026-07-29-extended-page-specialists",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build source-backed brand and route evidence, run Home, Shop, PDP, and Collection specialists through one universal page-to-Liquid visual-copy core, keep complete catalog migration on its own optional data track, then finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so rendered DOM, durable pixels, interactions, logs, and signed evidence—not one model's self-assessment—decide whether the run passes.",
@@ -906,6 +906,394 @@
       }
     },
     {
+      "id": "theme-blog-page",
+      "name": "Theme — clone the blog index",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "google/gemini-3.6-flash",
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "crawl",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "formats": [
+                "html",
+                "screenshot"
+              ],
+              "only_main_content": false,
+              "capture_page_evidence": true,
+              "screenshot_options": {
+                "full_page": true
+              }
+            },
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 1440,
+              "height": 900,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
+      },
+      "skill": "themes/clone-blog-page",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 4,
+      "recovery": {
+        "mode": "manual"
+      },
+      "acceptance": [
+        "The blog's real location was discovered and recorded along with the discovery method that resolved it (nav link, common path, sitemap, subdomain, or external platform). A source with no blog returns needs_adjudication with the checked routes, which is a correct outcome and not a failure.",
+        "`post_page/default` renders from the scaffold's `main_post_list` section with real Fluid post records. Author, publish date, excerpt, and hero image come from the post data — no hardcoded card rows.",
+        "At least three distinct posts render with the source's exact per-card field ORDER, and the source's date format is reproduced exactly.",
+        "One post card was followed to a live Fluid post route returning 200, and pagination/load-more and category filtering were exercised from inspected selectors wherever the source exposes them.",
+        "Both viewports (1440x900 and 390x844) were compared against signed source evidence captured in THIS step, the preview console and local server logs are clean, and no horizontal overflow was introduced. Media is compared by DISTINCT URL and by the presence of each contract-named priority item — never by total element-instance count, which varies between captures of the same page.",
+        "PAGE_OUTPUT records the resolved blog location, created post IDs, the reusable post-card contract for the post specialist, and any additional blog indexes left unmigrated.",
+        "HARD-FAIL BAR: fail only for hardcoded post rows, a card that resolves to a dead route, placeholder/lorem post content, or a fabricated blog that the source does not have. A source with no blog, or an external blog platform recorded honestly, is not a failure."
+      ],
+      "dependsOn": [
+        "theme-system-pages"
+      ],
+      "runIf": {
+        "flag": "build_extended_theme"
+      },
+      "prompt": "Clone the source blog / journal / news index into the Fluid `post_page` route. Call run_skill(\"themes/clone-blog-page\") and follow it in full, including its universal visual-copy loop via themes/clone-page-to-liquid.\n\nThe blog is the page type most likely to live off the main storefront domain. Discover it in the skill's documented order — rendered navigation, common paths, sitemap, subdomain, external platform — and record which one resolved. If the source genuinely has no blog, return needs_adjudication listing the routes you checked; do NOT retarget this step at a press page or help center, and do not invent posts.\n\nReuse the shell contract from the header/footer and home steps. Create at most three source-backed preview posts if none exist; bulk post migration belongs to content-import."
+    },
+    {
+      "id": "theme-post-page",
+      "name": "Theme — clone one representative post",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "google/gemini-3.6-flash",
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "crawl",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "formats": [
+                "html",
+                "screenshot"
+              ],
+              "only_main_content": false,
+              "capture_page_evidence": true,
+              "screenshot_options": {
+                "full_page": true
+              }
+            },
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 1440,
+              "height": 900,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
+      },
+      "skill": "themes/clone-post-page",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 4,
+      "recovery": {
+        "mode": "manual"
+      },
+      "acceptance": [
+        "A representative post was chosen for FORMATTING COVERAGE with a recorded rationale, not simply the newest or shortest article.",
+        "`post/default` renders via the scaffold's `main_post` section, and the article body renders from the stored Fluid post record rather than markup transcribed into Liquid.",
+        "A SECOND, structurally different post renders correctly in the same template without layout collapse — this is what proves the template is general.",
+        "Body measure and vertical rhythm match the source at both viewports, and the byline and date formatting match exactly. Inline images, captions, and embeds are present and load.",
+        "The back-to-blog link and one related-post card each resolve to live Fluid routes.",
+        "Both viewports (1440x900 and 390x844) were compared against signed source evidence captured in THIS step, the preview console and local server logs are clean, and no horizontal overflow was introduced. Media is compared by DISTINCT URL and by the presence of each contract-named priority item — never by total element-instance count, which varies between captures of the same page.",
+        "HARD-FAIL BAR: fail for a hardcoded article body, a template that only renders the one chosen post, or missing inline media. Comment threads and social embeds are `external` and their absence is not a failure."
+      ],
+      "dependsOn": [
+        "theme-blog-page"
+      ],
+      "runIf": {
+        "flag": "build_extended_theme"
+      },
+      "prompt": "Clone one representative source article into the Fluid `post` route. Call run_skill(\"themes/clone-post-page\") and follow it in full.\n\nChoose a post that exercises the most body formatting the source supports — multiple heading levels, a pull quote, lists, inline images with captions, embeds, product callouts — and record why it was chosen. Reuse the posts and post-card contract from the blog step.\n\nThe body MUST render from the stored post record. Transcribing one article into Liquid produces a template that breaks on every other post and is an automatic failure of this step."
+    },
+    {
+      "id": "theme-cart-page",
+      "name": "Theme — clone the cart",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "google/gemini-3.6-flash",
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "crawl",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "formats": [
+                "html",
+                "screenshot"
+              ],
+              "only_main_content": false,
+              "capture_page_evidence": true,
+              "screenshot_options": {
+                "full_page": true
+              }
+            },
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 1440,
+              "height": 900,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
+      },
+      "skill": "themes/clone-cart-page",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 4,
+      "recovery": {
+        "mode": "manual"
+      },
+      "acceptance": [
+        "Both the POPULATED and EMPTY cart states were built and evidenced at both viewports. The empty state is a real page with its own copy and CTA, not an afterthought.",
+        "At least two distinct line items with different quantities render from real cart state via the scaffold's `main_cart` section. No line item, subtotal, or total is hardcoded.",
+        "Totals RECOMPUTE correctly: a quantity change and a line removal were each performed from an inspected selector, and both the line total and the order total updated correctly. This is the defining proof of a working cart and cannot be satisfied by screenshots.",
+        "Currency and price formatting match the company's market. A wrong currency symbol is a hard failure, not a cosmetic delta.",
+        "The checkout CTA reaches real Fluid checkout — a cart that looks correct and cannot check out is a hard failure. An invalid promo code renders the source's rejected state where the source has promo entry.",
+        "Both viewports (1440x900 and 390x844) were compared against signed source evidence captured in THIS step, the preview console and local server logs are clean, and no horizontal overflow was introduced. Media is compared by DISTINCT URL and by the presence of each contract-named priority item — never by total element-instance count, which varies between captures of the same page.",
+        "HARD-FAIL BAR: fail for hardcoded totals, totals that do not recompute, a wrong-currency cart, a checkout CTA that does not reach Fluid checkout, or a missing empty state. Express payment buttons are `external` and their absence is not a failure."
+      ],
+      "dependsOn": [
+        "theme-post-page"
+      ],
+      "runIf": {
+        "flag": "build_extended_theme"
+      },
+      "prompt": "Clone the source cart into the Fluid `cart_page` route. Call run_skill(\"themes/clone-cart-page\") and follow it in full.\n\nA cart cannot be inspected by loading a URL: an empty cart renders a different page from a populated one. Add a real product through the add-to-cart control proven by the PDP step, capture the POPULATED cart at both viewports, then capture the EMPTY state separately.\n\nRecord which surface the source actually leads with — full page, slide-out drawer, or post-add modal. Build a correct Fluid `cart_page` either way, reproduce a drawer in the shell when the source is drawer-primary, and report the divergence rather than silently shipping one surface."
+    },
+    {
+      "id": "theme-system-pages",
+      "name": "Theme — 404, 503, and the content-page template",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "google/gemini-3.6-flash",
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "crawl",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "formats": [
+                "html",
+                "screenshot"
+              ],
+              "only_main_content": false,
+              "capture_page_evidence": true,
+              "screenshot_options": {
+                "full_page": true
+              }
+            },
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 1440,
+              "height": 900,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
+      },
+      "skill": "themes/clone-system-pages",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 4,
+      "recovery": {
+        "mode": "manual"
+      },
+      "acceptance": [
+        "Requesting a nonexistent path against the local preview returns the themed `error_page/404` with the full shell — global header, working navigation, and footer — not a stack trace, blank page, or unstyled default.",
+        "`error_page/503` renders without error and is shell-consistent. When the source never exposed a 503, it is honestly marked `no_source_evidence`; a fabricated source capture is a hard failure.",
+        "Brand typography, color tokens, and logo on both error pages match the rest of the theme, and no base-theme filler copy or default illustration remains.",
+        "The 404 recovery CTA resolves to a live route, and header navigation works from the error page.",
+        "`page/default` renders from a real Fluid page record via `main_page`, and a SECOND different page record renders correctly in the same template.",
+        "Localization bindings are preserved: `error.status_code` and the `error.*` translated strings are kept rather than replaced with hardcoded English literals to match a screenshot.",
+        "Both viewports (1440x900 and 390x844) were compared against signed source evidence captured in THIS step, the preview console and local server logs are clean, and no horizontal overflow was introduced. Media is compared by DISTINCT URL and by the presence of each contract-named priority item — never by total element-instance count, which varies between captures of the same page."
+      ],
+      "dependsOn": [
+        "theme-collection-page"
+      ],
+      "runIf": {
+        "flag": "build_extended_theme"
+      },
+      "prompt": "Build the Fluid system routes. Call run_skill(\"themes/clone-system-pages\") and follow it in full.\n\nThese pages are not in navigation and usually not in the sitemap. Reach the source 404 by requesting a deliberately nonexistent path and confirming a real 404 rather than a soft-200 redirect to home. A source 503 is almost never observable: build a shell-consistent maintenance page and mark it `no_source_evidence` rather than fabricating a capture.\n\nAn error page without the global header, navigation, and footer is the most common tell that a clone was rushed. Restyle the scaffold defaults; do not leave them."
+    },
+    {
       "id": "theme-content-pages-push",
       "name": "Theme — content/system pages, full audit, and push",
       "model": "openai/gpt-5.6-sol",
@@ -956,7 +1344,7 @@
         "HARD-FAIL BAR: fail when the push did not land (no theme id verifiable via the API), any priority video is absent/substituted, audit violations remain, or the preview is broken after push. A shorter-than-hoped page list or a long remaining_for_refine list is fine — the refine pass exists for that."
       ],
       "dependsOn": [
-        "theme-collection-page"
+        "theme-cart-page"
       ],
       "runIf": {
         "flag": "build_theme"
