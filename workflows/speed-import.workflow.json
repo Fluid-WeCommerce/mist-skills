@@ -1,8 +1,8 @@
 {
-  "revision": "2026-07-30-speed-import-grok",
+  "revision": "2026-07-30-speed-import-theme-first-wave",
   "slug": "speed-import",
   "name": "Speed Import",
-  "description": "The shortest path from a live website to a live Fluid storefront: brand, catalog, home, shop, product, publish. One model \u2014 Grok 4.5 \u2014 end to end, no QA turns, nothing that can stop the run. Deliberately skips the onboarding form, content and collection import, media and UGC, and storefront QA; the handoff says so explicitly. Use Streamlined Onboard & Launch when the company needs to actually launch.",
+  "description": "The shortest path from a live website to a live Fluid storefront: brand, catalog, and source capture open together so the theme starts building in the second wave, then home, shop, product, publish. One model \u2014 Grok 4.5 \u2014 end to end, no QA turns, nothing that can stop the run. Deliberately skips the onboarding form, content and collection import, media and UGC, and storefront QA; the handoff says so explicitly. Use Streamlined Onboard & Launch when the company needs to actually launch.",
   "maxParallel": 6,
   "runTitleTemplate": "Speed import {{website_url}}",
   "steps": [
@@ -33,9 +33,7 @@
       "qa": {
         "enabled": false
       },
-      "dependsOn": [
-        "brand"
-      ],
+      "dependsOn": [],
       "maxReworkRounds": 0
     },
     {
@@ -69,9 +67,7 @@
       "qa": {
         "enabled": false
       },
-      "dependsOn": [
-        "brand"
-      ],
+      "dependsOn": [],
       "maxReworkRounds": 0
     },
     {
@@ -140,8 +136,10 @@
         "kind": "theme",
         "fallbackToManager": true
       },
-      "prompt": "Publish the built theme.\n\n1. Confirm no scaffold filler survived in the touched templates \u2014 placeholder names and starter-theme copy both count.\n2. Record the development theme id and the release target id; they are not the same theme.\n3. Push and activate the release target, then GET /api/application_themes/active and confirm the active id is the one you pushed.\n4. Load the live home URL and one product route and confirm each returns 200 with a real body.\n\nPublish even if a page step left findings; carry them into your output.\n\nEnd with STEP_OUTPUT: { release_theme_id, active_theme_id, live_url, routes_checked: [{route, status}], carried_findings: [...] }.",
-      "acceptance": [],
+      "prompt": "Publish the built theme.\n\n1. Confirm no scaffold filler survived in the touched templates \u2014 placeholder names and starter-theme copy both count.\n2. Record the development theme id and the release target id; they are not the same theme.\n3. Push and activate the release target, then GET /api/application_themes/active and confirm the active id is the one you pushed.\n4. Load the live home URL and one product route and confirm each returns 200 with a real body.\n5. Confirm the header logo and any brand imagery in the templates resolve to Fluid DAM URLs, not the source site's CDN. The theme track builds from the source and does not wait on the brand step, so a source-CDN logo can survive into the templates; those links rot and leak the source domain. Repoint any that slipped through to the DAM URL the brand step persisted.\n\n\nPublish even if a page step left findings; carry them into your output.\n\nEnd with STEP_OUTPUT: { release_theme_id, active_theme_id, live_url, routes_checked: [{route, status}], carried_findings: [...] }.",
+      "acceptance": [
+        "No template references the source site's CDN for the logo or brand imagery; those assets resolve to Fluid DAM URLs."
+      ],
       "qa": {
         "enabled": false
       },

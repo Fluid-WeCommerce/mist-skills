@@ -1,8 +1,8 @@
 {
-  "revision": "2026-07-30-streamlined-parallel-launch",
+  "revision": "2026-07-30-streamlined-theme-first-wave",
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
-  "description": "Get a company live fast. Set up the brand from its own website, then run the theme, catalog, business-profile, and media tracks in parallel instead of one long chain. No step stops the run: QA is off or lenient everywhere, so a rough page or an unmatched review profile becomes a line in the handoff rather than a dead run. Themes are built by Fable 5. For the trimmed single-model version, use Speed Import.",
+  "description": "Get a company live fast. The theme is the long pole, so it starts building in the second wave: source capture, brand, and catalog discovery all open together, then the theme, product, business-profile, and media tracks run beside each other instead of in one chain. No step stops the run \u2014 QA is off or lenient everywhere, so a rough page or an unmatched review profile becomes a line in the handoff rather than a dead run. Themes are built by Fable 5. For the trimmed single-model version, use Speed Import.",
   "maxParallel": 8,
   "runTitleTemplate": "Launch {{website_url}}",
   "steps": [
@@ -57,9 +57,7 @@
       "qa": {
         "enabled": false
       },
-      "dependsOn": [
-        "brand"
-      ],
+      "dependsOn": [],
       "maxReworkRounds": 0
     },
     {
@@ -187,10 +185,11 @@
         "kind": "theme",
         "fallbackToManager": true
       },
-      "prompt": "Publish the built theme so the storefront is live.\n\n1. Re-read the touched templates and confirm no scaffold filler survived \u2014 placeholder names, lorem text, and the starter theme's own copy all count.\n2. Resolve both theme identities and record them: the development theme the preview has been using, and the release target. They are not the same theme.\n3. Push and activate the release target, then GET /api/application_themes/active and confirm the active id is the one you just pushed.\n4. Load the live home URL and one product route in the browser and confirm each returns 200 with a real rendered body, not a redirect to home.\n\nIf a page step earlier in this run finished with findings, publish anyway and carry those findings into your output. Shipping a storefront with a known rough edge beats leaving the company with nothing live.\n\nEnd with STEP_OUTPUT: { development_theme_id, release_theme_id, active_theme_id, live_url, routes_checked: [{route, status}], carried_findings: [...] }.",
+      "prompt": "Publish the built theme so the storefront is live.\n\n1. Re-read the touched templates and confirm no scaffold filler survived \u2014 placeholder names, lorem text, and the starter theme's own copy all count.\n2. Resolve both theme identities and record them: the development theme the preview has been using, and the release target. They are not the same theme.\n3. Push and activate the release target, then GET /api/application_themes/active and confirm the active id is the one you just pushed.\n4. Load the live home URL and one product route in the browser and confirm each returns 200 with a real rendered body, not a redirect to home.\n5. Confirm the header logo and any brand imagery in the templates resolve to Fluid DAM URLs, not the source site's CDN. The theme track builds from the source and does not wait on the brand step, so a source-CDN logo can survive into the templates; those links rot and leak the source domain. Repoint any that slipped through to the DAM URL the brand step persisted.\n\n\nIf a page step earlier in this run finished with findings, publish anyway and carry those findings into your output. Shipping a storefront with a known rough edge beats leaving the company with nothing live.\n\nEnd with STEP_OUTPUT: { development_theme_id, release_theme_id, active_theme_id, live_url, routes_checked: [{route, status}], carried_findings: [...] }.",
       "acceptance": [
         "The active application theme id equals the theme this run built and pushed.",
-        "The live home route and at least one product route were loaded in a browser and returned 200 with a real rendered body."
+        "The live home route and at least one product route were loaded in a browser and returned 200 with a real rendered body.",
+        "No template references the source site's CDN for the logo or brand imagery; those assets resolve to Fluid DAM URLs."
       ],
       "qa": {
         "enabled": true,
@@ -221,9 +220,7 @@
         "strictness": "lenient",
         "onFail": "continue"
       },
-      "dependsOn": [
-        "brand"
-      ],
+      "dependsOn": [],
       "maxReworkRounds": 1
     },
     {
