@@ -103,7 +103,7 @@
     {
       "slug": "themes/theme-clone",
       "name": "Theme Clone",
-      "description": "Clone any website into a pixel-perfect Fluid theme — scrape the source, build sections, push, and visually verify against the original.",
+      "description": "Clone any website into a pixel-perfect Fluid theme \u2014 scrape the source, build sections, push, and visually verify against the original.",
       "category": "themes",
       "icon": "copy",
       "path": "themes/theme-clone/SKILL.md",
@@ -288,7 +288,7 @@
     {
       "slug": "marketing/brand-social-import",
       "name": "Brand Social Content Import",
-      "description": "Import a company's OWN YouTube + TikTok videos into Fluid: find the official accounts, register them in social-media settings, and pull their videos into the DAM + Media. Not UGC — this is the brand's own content.",
+      "description": "Import a company's OWN YouTube + TikTok videos into Fluid: find the official accounts, register them in social-media settings, and pull their videos into the DAM + Media. Not UGC \u2014 this is the brand's own content.",
       "category": "marketing",
       "icon": "video",
       "path": "marketing/brand-social-import.md",
@@ -297,7 +297,7 @@
     {
       "slug": "marketing/brand-setup",
       "name": "Brand Setup",
-      "description": "Interview the company to build a living brand.md — a brand-voice document that Mist, themes, portals, and widgets read to match the company's tone and style. Prefills colors/name from brand guidelines and saves via the update_brand_voice tool. Also use to append a single brand decision later.",
+      "description": "Interview the company to build a living brand.md \u2014 a brand-voice document that Mist, themes, portals, and widgets read to match the company's tone and style. Prefills colors/name from brand guidelines and saves via the update_brand_voice tool. Also use to append a single brand decision later.",
       "category": "marketing",
       "icon": "palette",
       "path": "marketing/brand-setup.md",
@@ -306,7 +306,7 @@
     {
       "slug": "optimize/suggested-changes",
       "name": "Suggested Changes",
-      "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix — approvals are applied and their impact is tracked.",
+      "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
       "category": "optimize",
       "icon": "sparkles",
       "path": "optimize/suggested-changes.md",
@@ -324,7 +324,7 @@
     {
       "slug": "countries/compliance-manager",
       "name": "Country Compliance Manager",
-      "description": "Audit a storefront against a country's legal requirements — disclosure pages, price display, cookie/privacy law, agreements, product labeling, storefront language — using the Country Atlas as the rulebook. Runs standalone and as the final step of the mode finalizers.",
+      "description": "Audit a storefront against a country's legal requirements \u2014 disclosure pages, price display, cookie/privacy law, agreements, product labeling, storefront language \u2014 using the Country Atlas as the rulebook. Runs standalone and as the final step of the mode finalizers.",
       "category": "countries",
       "icon": "scale",
       "path": "countries/compliance-manager/SKILL.md",
@@ -333,7 +333,7 @@
     {
       "slug": "onboarding/onboard-launch-company",
       "name": "Onboard & Launch Company",
-      "description": "Guided end-to-end company onboarding: collect the website URL, auto-detect available Connect integrations (Shopify / Exigo / ByDesign droplets) or fall back to public scraping, then fire the flagship onboard-launch-company workflow — clone the site, iteratively refine the theme against screenshots, import products, tick off Getting Started, discover UGC, and deliver a launch-readiness review.",
+      "description": "Guided end-to-end company onboarding: collect the website URL, auto-detect available Connect integrations (Shopify / Exigo / ByDesign droplets) or fall back to public scraping, then fire the flagship onboard-launch-company workflow \u2014 clone the site, iteratively refine the theme against screenshots, import products, tick off Getting Started, discover UGC, and deliver a launch-readiness review.",
       "category": "onboarding",
       "icon": "rocket",
       "path": "onboarding/onboard-launch-company/SKILL.md",
@@ -351,7 +351,7 @@
     {
       "slug": "mist/smart-dashboard",
       "name": "Smart Dashboard",
-      "description": "Self-fabricate a live business dashboard from real data — gather what every department cares about, render it with show_dashboard, then learn what the user wants front-and-center and remember it.",
+      "description": "Self-fabricate a live business dashboard from real data \u2014 gather what every department cares about, render it with show_dashboard, then learn what the user wants front-and-center and remember it.",
       "category": "mist",
       "icon": "layout-dashboard",
       "path": "mist/smart-dashboard/SKILL.md",
@@ -378,7 +378,7 @@
     {
       "slug": "sales/aov-lever-audit",
       "name": "AOV lever audit",
-      "description": "Find which levers actually move average order value — item count, bundles, discount depth — with a dollar figure per lever.",
+      "description": "Find which levers actually move average order value \u2014 item count, bundles, discount depth \u2014 with a dollar figure per lever.",
       "category": "sales",
       "icon": "trending-up",
       "path": "sales/aov-lever-audit.md",
@@ -392,6 +392,15 @@
       "icon": "users",
       "path": "sales/rep-momentum-scoreboard.md",
       "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "sales/country-club-revenue-engine",
+      "name": "Country Club Revenue Engine",
+      "description": "Identify your highest-value repeat buyers, score their referral influence, and calculate the incremental revenue a structured affiliate tier would unlock \u2014 without any new marketing spend.",
+      "category": "sales",
+      "icon": "zap",
+      "path": "sales/country-club-revenue-engine.md",
+      "updated_at": "2026-07-30T19:00:00Z"
     },
     {
       "slug": "themes/clone-blog-page",
@@ -441,7 +450,7 @@
     {
       "slug": "themes/clone-system-pages",
       "name": "Clone System Pages",
-      "description": "Build the Fluid system routes a source rarely exposes — themed 404 and 503 error pages with full shell, plus the reusable generic content-page template.",
+      "description": "Build the Fluid system routes a source rarely exposes \u2014 themed 404 and 503 error pages with full shell, plus the reusable generic content-page template.",
       "category": "themes",
       "icon": "triangle-alert",
       "path": "themes/clone-system-pages/SKILL.md",
