@@ -468,11 +468,11 @@
     {
       "slug": "onboarding/launch-setup",
       "name": "Launch Setup",
-      "description": "Start an onboard: Streamlined launches collect scope, source website, theme target, and confirmation in chat before running; Speed launches keep the lightweight website-only path.",
+      "description": "Start an onboard: quality launches collect the source website, theme target, and confirmation in an in-chat picker before starting; speed launches keep the lightweight website-only path (it is also the onboarding workflows' Run-button launcher). Quality builds the whole store with Fable 5; speed builds the storefront only with Grok 4.5.",
       "category": "onboarding",
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
-      "updated_at": "2026-07-30T22:07:23Z"
+      "updated_at": "2026-07-30T23:10:00Z"
     }
   ],
   "workflows": [
@@ -504,7 +504,7 @@
     {
       "slug": "streamlined-onboard-launch",
       "path": "workflows/streamlined-onboard-launch.workflow.json",
-      "updated_at": "2026-07-30T22:07:23Z"
+      "updated_at": "2026-07-30T20:46:00Z"
     },
     {
       "slug": "speed-import",
