@@ -46,6 +46,14 @@ For every declared viewport, call `crawl` once with rendered HTML, Markdown,
 full-page screenshot, and page evidence. Retain the exact Mist-generated files
 and receipts.
 
+Read `documents.stylesheet` — the page's own CSS, retained beside the HTML —
+BEFORE you read the screenshot for layout. Spacing, breakpoints, type, tokens,
+and `@keyframes` are declared there; inferring them from pixels is the largest
+source of clone error. Record its path and the counts you found
+(spacing declarations, media queries, keyframes) in the dossier. If it is
+absent, record that explicitly and continue from computed section styles plus
+pixels — never pretend you had it.
+
 Open each retained source image and record `baseline_admissibility`. Repeated
 fixed overlays, duplicated/blank stitched cells, clipping, or pixels that
 cannot be reconciled with signed DOM/landmarks are contaminated. Recapture
@@ -96,6 +104,12 @@ visual skill.
 Inspect the current scaffold and canonical Fluid template/section contracts
 before writing. Reuse Fluid primitives where they express the source; create a
 new section or snippet when they do not.
+
+Take spacing, breakpoints, font stacks, tokens, and motion from the retained
+stylesheet rather than estimating them from the screenshot. Express them
+through Fluid section settings and the theme's own CSS — read the values, do
+not paste the source bundle, which drags in selectors for pages you are not
+building and collides with base-theme globals.
 
 Preserve:
 
@@ -196,7 +210,7 @@ PAGE_OUTPUT: {
   viewports:[],
   template_paths:[],
   data_contract:{required:[],resolved:[],missing:[]},
-  evidence_dossier:{source:[],local:[],comparison_receipts:[]},
+  evidence_dossier:{source:[],local:[],comparison_receipts:[],stylesheet:{path,present,spacing_declarations,media_queries,keyframes}|null},
   baseline_admissibility:[],
   comparison_policy:{geometry,media,copy},
   stable_landmarks:{expected,matched,missing:[],reordered:[]},

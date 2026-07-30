@@ -63,12 +63,20 @@ For each priority route, capture 1440×900 and 390×844 with:
 Repeat with the mobile viewport. Keep the exact crawl-returned local paths for:
 
 - complete Markdown: copy and catalog facts;
-- complete rendered HTML: DOM, stylesheets, tokens, fonts, and media;
+- complete rendered HTML: DOM structure, class names, and media references.
+  It does NOT carry the page's CSS — the provider strips `<style>` blocks and
+  `<link rel=stylesheet>` before returning it, so class names arrive with no
+  declarations attached;
+- the retained stylesheet (`documents.stylesheet`): the page's actual CSS —
+  spacing, `@media` breakpoints, `@font-face` stacks, `:root` tokens, and
+  `@keyframes`. This is where layout is defined. Read it before inferring
+  layout from the screenshot;
 - full-page screenshot: visual order, geometry, crop, and responsive behavior;
 - page-evidence sidecar: rendered text, landmarks, bounded section anchors +
   computed typography/layout styles, media, viewport, route, and screenshot
   receipt, plus Mist-generated `documents.html` and `documents.markdown`
-  path/SHA-256/byte-length receipts for the exact companion files.
+  path/SHA-256/byte-length receipts for the exact companion files, and
+  `documents.stylesheet` when the CSS was recovered.
 
 Do not reconstruct any file from chat output. A successful screenshot without
 all three companion files is an incomplete cell.
@@ -79,6 +87,13 @@ Markdown came from the same crawl.
 Inspect every screenshot with `view_project_image`. Open every HTML file with
 `read_file`; use targeted later offsets or searches when the needed copy/media
 is beyond the first chunk. A leading excerpt alone is not a DOM audit.
+
+Open the retained stylesheet the same way and search it for what you need
+rather than reading it front to back — `padding`/`margin`/`gap` for the section
+you are inventorying, `@media` for the breakpoints, `@font-face` for the type,
+`--` for tokens, `@keyframes` for motion. Record the counts you found. When
+`documents.stylesheet` is absent for a cell, record that explicitly; it means
+every layout value for that route is an estimate from pixels.
 
 ## 4. Build exhaustive inventories
 
