@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-30-streamlined-page-specialists+context-budget+publish-gate+launcher-skill",
+  "revision": "2026-07-30-deterministic-product-import",
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
   "launcherSkill": "onboarding/launch-setup",
@@ -213,7 +213,7 @@
       "target": {
         "type": "manager"
       },
-      "prompt": "Build the complete product source manifest before anything writes to Fluid. Call run_skill(\"fluid-product-admin-import\") and follow its catalog completion contract. This step is read-only against Fluid.\n\nWRITE AS YOU GO \u2014 this step's real constraint is your context window, not the network. Fetching a thousand product pages and holding them in the conversation exceeds the model's prompt limit, and that is a hard turn error: the step fails, its dependents are skipped, and the run dies. It is the single most likely way this workflow ends badly. Measured on a real catalog: 779,638 tokens against a 500,000 limit.\n\nSo stream the work to disk instead of accumulating it in the turn:\n1. Discover identities first and write them immediately \u2014 one JSON object per product per line in a JSONL manifest, holding only URL, source id, handle, and title.\n2. Then enrich in batches of at most 20. For each batch: fetch, extract the fields you need, append the enriched rows to the manifest, and move on. Do not re-read the manifest you just wrote, do not summarize batches back into the conversation, and never keep a fetched page body in context once its fields are extracted.\n3. Report progress as a running count every few batches, not as a list of products.\n\nPrefer cheap, structured sources over full pages: a products JSON endpoint, JSON-LD, or embedded application state carries the same fields at a fraction of the size. When you must fetch a PDP, request markdown rather than html or rawHtml \u2014 you need field values here, not layout. Layout is the theme track's problem and it captures its own evidence.\n\nDiscovery is still a union, not a sample: sitemap.xml and every child sitemap; any structured catalog API, exhausted to its own terminator; every collection and category pagination followed to the end; then every unique product enriched. A batch size is transport chunking, never a completion limit.\n\nRecord for each product: immutable source identity, title, description, price, variants with their own prices and identities, images, and collection membership.\n\nA collection that ended in a network error is not exhausted \u2014 retry it, and if it still will not enumerate, record it in unresolved with the exact error.\n\nIf you are running out of room despite all this, stop enriching, keep every discovered identity in the manifest, and report how many rows are identity-only. A complete identity list with partial fields is recoverable; a dead step is not.\n\nEnd with STEP_OUTPUT: { manifest_path, products: <count>, enriched: <count>, identity_only: <count>, variants: <count>, collections: <count>, completeness_basis: \"\u2026\", unresolved: [...] }.",
+      "prompt": "Build the complete product source manifest before anything writes to Fluid. Call run_skill(\"fluid-product-admin-import\") and follow its catalog completion contract. This step is read-only against Fluid.\n\nWRITE AS YOU GO \u2014 this step's real constraint is your context window, not the network. Fetching a thousand product pages and holding them in the conversation exceeds the model's prompt limit, and that is a hard turn error: the step fails, its dependents are skipped, and the run dies. It is the single most likely way this workflow ends badly. Measured on a real catalog: 779,638 tokens against a 500,000 limit.\n\nSo stream the work to disk instead of accumulating it in the turn:\n1. Discover identities first and write them immediately \u2014 one JSON object per product per line in a JSONL manifest, holding only URL, source id, handle, and title.\n2. Then enrich in batches of at most 20. For each batch: fetch, extract the fields you need, append the enriched rows to the manifest, and move on. Do not re-read the manifest you just wrote, do not summarize batches back into the conversation, and never keep a fetched page body in context once its fields are extracted.\n3. Report progress as a running count every few batches, not as a list of products.\n\nPrefer cheap, structured sources over full pages: a products JSON endpoint, JSON-LD, or embedded application state carries the same fields at a fraction of the size. When you must fetch a PDP, request markdown rather than html or rawHtml \u2014 you need field values here, not layout. Layout is the theme track's problem and it captures its own evidence.\n\nDiscovery is still a union, not a sample: sitemap.xml and every child sitemap; any structured catalog API, exhausted to its own terminator; every collection and category pagination followed to the end; then every unique product enriched. A batch size is transport chunking, never a completion limit.\n\nRecord for each product: immutable source identity, title, description, price, variants with their own prices and identities, images, and collection membership.\n\nA collection that ended in a network error is not exhausted \u2014 retry it, and if it still will not enumerate, record it in unresolved with the exact error.\n\nIf you are running out of room despite all this, stop enriching, keep every discovered identity in the manifest, and report how many rows are identity-only. A complete identity list with partial fields is recoverable; a dead step is not.\n\nEnd with STEP_OUTPUT: { manifest_path, manifest_sha256, products: <count>, enriched: <count>, identity_only: <count>, variants: <count>, collections: <count>, completeness_basis: \"\u2026\", unresolved: [...] }.",
       "acceptance": [
         "Catalog discovery ran as a union of sitemap, API, and pagination sources rather than a top-N sample, and the manifest states how completeness was established."
       ],
@@ -228,24 +228,34 @@
     {
       "id": "import-products",
       "name": "Import products",
-      "model": "anthropic/claude-opus-5",
+      "model": "google/gemini-3.6-flash",
       "target": {
         "type": "manager"
       },
-      "skill": "fluid-product-admin-import",
+      "prompt": "Import every product from the already-approved catalog manifest. Read the exact `manifest_path` and `manifest_sha256` from the `catalog-manifest` STEP_OUTPUT; do not substitute a different path, hash, or catalog.\n\nCall `fluid_product_import({ manifest_path: <exact manifest_path>, manifest_sha256: <exact manifest_sha256> })` exactly once in write mode. Do not set `verify_only:true`. The built-in tool owns manifest validation, market resolution, image uploads, product writes, bounded retries, checkpoint/resume, and complete live reconciliation. Do not invoke lower-level API or DAM tools and do not build a manual product or image loop.\n\nReturn the tool's compact receipt as STEP_OUTPUT without expanding the manifest or per-product results.",
       "acceptance": [
         "Every product in the source manifest resolves to exactly one live Fluid product \u2014 no duplicates, no silent drops \u2014 and the count is proven by paginating the products API rather than by self-report.",
         "Prices, variants, and images match the source record for a sampled set spanning the catalog, including at least one multi-variant product."
       ],
       "qa": {
         "enabled": true,
+        "model": "google/gemini-3.6-flash",
         "strictness": "lenient",
-        "onFail": "continue"
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "fluid_product_import",
+            "input": {
+              "verify_only": true
+            },
+            "minSuccessfulCalls": 1
+          }
+        ]
       },
       "dependsOn": [
         "catalog-manifest"
       ],
-      "maxReworkRounds": 1
+      "maxReworkRounds": 0
     },
     {
       "id": "import-content",
