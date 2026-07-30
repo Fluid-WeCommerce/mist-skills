@@ -18,6 +18,48 @@ Keep source and preview evidence in the owning company/theme project so another
 reviewer can reproduce the decision. Background work may inspect an isolated
 preview, but interactive work should present the route and scroll state in Mist.
 
+## Read the source CSS before inferring anything from pixels
+
+`crawl` retains the page's own stylesheet as `documents.stylesheet` — a `.css`
+file beside the `.html` and `.md`, containing the inline `<style>` bodies and
+the fetched `<link rel=stylesheet>` sheets, each prefixed with a provenance
+comment naming its origin.
+
+**Open it first.** Layout is defined there, not in the screenshot. Measured on
+one real storefront home page it carried 367 padding/margin/gap declarations,
+83 media queries, 35 `@keyframes`, 4 `@font-face` blocks, and 384 custom
+properties. Every one of those is a value you would otherwise be estimating
+from an image.
+
+Take these from the stylesheet rather than the pixels:
+
+- **Spacing** — section padding, margins, and grid/flex `gap`. This is the
+  single biggest source of clone error: sections land in the right order with
+  the right copy and the wrong height, and the page drifts further out of
+  registration the further down you scroll.
+- **Breakpoints** — the actual `@media` widths the source responds at. Do not
+  guess them from two screenshots; the source states them.
+- **Type** — the real `@font-face` families, weights, and fallback stacks.
+- **Tokens** — `:root` custom properties. Map these onto Fluid theme settings
+  instead of hardcoding their resolved values.
+- **Motion** — `@keyframes`, `animation`, and `transition`. Animation is
+  readable source, not something to reverse-engineer from a still frame.
+
+Two cautions:
+
+- The stylesheet is the source's own CSS, not a licence to paste it wholesale
+  into the theme. Read the values, express them through Fluid section settings
+  and the theme's own CSS. Copying a whole bundle drags in selectors for pages
+  you are not building and collides with the base theme's globals.
+- It reflects declared rules, not the resolved cascade. Where a rule's effect
+  is ambiguous, the signed section `style` block in the page-evidence sidecar
+  carries the *computed* value for that element — prefer that for a specific
+  element, and the stylesheet for the system (tokens, breakpoints, motion).
+
+If `documents.stylesheet` is absent — an older capture, or a page whose CSS
+could not be fetched — say so in your output and fall back to computed section
+styles plus pixels. Do not silently proceed as though you had it.
+
 ## Content, DOM, and pixels are separate truth layers
 
 - Markdown/structured data proves copy and product facts.
