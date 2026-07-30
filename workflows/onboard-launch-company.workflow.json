@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-29-gate-topology-and-evidence-split",
+  "revision": "2026-07-29-responsive-sweep",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build source-backed brand and route evidence, run Home, Shop, PDP, and Collection specialists through one universal page-to-Liquid visual-copy core, keep complete catalog migration on its own optional data track, then finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so rendered DOM, durable pixels, interactions, logs, and signed evidence—not one model's self-assessment—decide whether the run passes.",
@@ -294,6 +294,7 @@
         "The theme root `.fluidignore` preserves its prior rules and contains exact entries for `clone-manifest.json`, `fluid-catalog-index.json`, `.mist-desktop/source-baselines/`, `baselines/`, `package.json`, `pnpm-lock.yaml`, and `scripts/`, so a later theme dev watcher cannot upload local discovery/visual-QA, package-manager, or helper-script artifacts as Fluid theme resources.",
         "The manifest has `visual_routes.home`, `visual_routes.shop`, and `visual_routes.pdp`. Home records source_url, built_path, and exactly one ordered landmark mapping per desktop signed `rendered.sections` entry. Shop and PDP record source_url + built_path only. `page_manifest` contains exactly one matching entry per route with the same signed source URL and built path; Home uses `/` (never `/home`) and all three normalized built paths are distinct.",
         "Source discovery used three distinct evidence layers for HOME: AI-friendly Markdown for copy facts, rendered HTML/CSS for DOM/tokens/fonts, and clean managed-browser full-page screenshots at 1440x900 and 390x844. Capture a fresh 2/2 Home matrix during THIS workflow step (desktop + mobile); pre-existing screenshots or manifest cells may inform discovery but never substitute for this run's captures. Shop and PDP cells are intentionally NOT captured here — requiring them is a misreading of this step's scope.",
+        "CAPTURE GEOMETRY GATE: every retained Home cell reports `captureGeometry.status:\"exact\"` with `heightDelta: 0`. A `dynamic-height` cell means the page was still growing while it was captured, and its DOM extraction can be near-empty even though the screenshot looks complete — measured across 30 captures of five storefronts, the 29 `exact` cells averaged 17 sections while the single `dynamic-height` cell (heightDelta 855) returned 4 sections and 1 media element for a page whose desktop twin returned 17 and 66. Do not build the inventory from such a cell: recapture it after waiting for network idle and scrolling to force lazy content. If it stays dynamic after one honest retry, record the exact heightDelta plus section and media counts and mark that viewport's structural inventory unavailable — never report four sections as if they were the page.",
         "`evidence_run_started_at` is an actual current-turn boundary no more than 30 minutes before every retained capture. The worker called Mist's first-class `build_theme_source_inventory` with both exact Home path triples and received `SOURCE_INVENTORY_BUILD: written`; hand-transcribed section/receipt/landmark/media arrays do not satisfy this gate. The worker ran `validate_theme_source_inventory` against `clone-manifest.json`, repaired every reported error, and recorded `SOURCE_INVENTORY_VALIDATION: pass`. Catalog reconciliation and DAM delivery are intentionally not graded here — they belong to the catalog-index and media-inventory steps that follow.",
         "`hero_copy` records the source homepage headline, subheadline, and primary CTA verbatim. The normalized non-null text appears in retained Home desktop Markdown and HTML. `evidence_sources.markdown`, `.html`, and `.screenshot` contain the exact retained local paths, not opaque labels. A field absent from all evidence is null with a non-empty `<field>_reason`; invented or base-theme replacement copy is a hard failure.",
         "`priority_media.items` contains exactly one unique entry per rendered HOME media element per exact `desktop` or `mobile` viewport, including repeated URLs, logos/icons, `<source>` candidates, posters, and CSS media; its item count equals the total `rendered.media` count across the two Home sidecars RETAINED BY THIS STEP. Shop-grid and PDP-gallery media are enumerated by their own page specialists.\n\nCOUNT STABILITY: that equality holds only against the retained sidecars, never against a fresh recapture. Measured on one real storefront home page, three captures minutes apart returned 34, 35, and 37 media entries while the set of DISTINCT media URLs was identical (15) every time — a decorative animated element is cloned a nondeterministic number of times, and srcless entries vary with it. The stable cross-capture invariant is the set of distinct media URLs plus the priority items the page contract names, NOT the total element-instance count. A reviewer who recaptures and finds a different instance count has reproduced normal animation behavior and must not fail the step for it; compare distinct URLs and check that no priority item disappeared.",
@@ -600,6 +601,7 @@
       "acceptance": [
         "The QA reviewer independently ran the universal visual-copy evidence loop for the exact Home source and local routes at 1440x900 and 390x844, opened the durable source/local pixels, and read the local rendered DOM. A screenshot path, worker summary, or prose claim without direct evidence fails.",
         "Every Home landmark is explicitly classified as stable or resource/dynamic/external with source evidence. Stable landmarks occur once in source order and their wording, punctuation, capitalization, CTA labels, link labels, media, and visual hierarchy match. Every variable landmark has a concrete reason and observed source/local values; difficult content was not relabeled dynamic to evade copying.",
+        "SECTION GRANULARITY: the home template composes MULTIPLE named Liquid sections in source order, one per source section, and does NOT wrap the page in a single bespoke page-sized section. QA must `read_file` the built home template and COUNT the `{% section %}` tags. The pristine Fluid base theme already ships `home_page/default/index.liquid` with TEN section mounts at ~1525 bytes, so a template that comes back with one mount has actively REPLACED a correctly granular scaffold with a monolith — strictly worse than leaving the scaffold alone. Reproduced twice on a clean run: two different frontier models each collapsed a 21-section source homepage into a single 22-32KB bespoke section — a template containing one `{% section 'brand_homepage' %}` that pulls in a 20-30KB monolith is a FAIL even when it renders and even when its pixel ratios are good, because it cannot be reordered, toggled, or edited section-by-section in the theme editor. Measured on a real clone, two models produced exactly that monolith while a third built ten discrete sections from the same 21-section source, and no pixel metric separated them. Canonical scaffold sections are preferred where their schema fits; newly authored sections must be individually named and separately mounted.",
         "The independent reviewer produced a current signed compare_preview_to_source receipt for both viewports after the final code change. Receipts bind the exact route, viewport, screenshot, and page-evidence hashes. Each receipt reports source.admissibility.status usable and source.admissibility.eligibleForVisualPass true. A completed tool envelope with isError false does not pass a needs_adjudication source. Pixel/geometry metrics are diagnostic evidence for the Home specialist rather than a universal threshold; material responsive or visual deltas remain blockers unless explicitly adjudicated.",
         "Every homepage priority image and video is DAM-backed and ready in the rendered page. Responsive videos use the manifest's exact desktop/mobile sources, and QA verified currentSrc, semantic alt/context or DAM filename lineage, decoded dimensions/orientation, playback attributes, and zero failed/pending media at both viewports. Image-count parity created with empty filler nodes, generic labels, zero/near-zero opacity, hidden overflow, off-canvas duplication, or unrelated assets is a hard failure; each occurrence must belong to a real source-equivalent tab/carousel state that QA exercised. A poster-only or static substitution fails.",
         "No touched Liquid, CSS, JSON, or JavaScript file embeds binary image/video bytes as a `data:` or base64 fallback. Priority media uses verified delivery URLs from clone-manifest.json or bounded theme assets; a megabyte-scale inline-media workaround is a hard failure because it hides the delivery defect and makes theme-dev updates prohibitively slow.",
@@ -906,6 +908,394 @@
       }
     },
     {
+      "id": "theme-blog-page",
+      "name": "Theme — clone the blog index",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "google/gemini-3.6-flash",
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "crawl",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "formats": [
+                "html",
+                "screenshot"
+              ],
+              "only_main_content": false,
+              "capture_page_evidence": true,
+              "screenshot_options": {
+                "full_page": true
+              }
+            },
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 1440,
+              "height": 900,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
+      },
+      "skill": "themes/clone-blog-page",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 4,
+      "recovery": {
+        "mode": "manual"
+      },
+      "acceptance": [
+        "The blog's real location was discovered and recorded along with the discovery method that resolved it (nav link, common path, sitemap, subdomain, or external platform). A source with no blog returns needs_adjudication with the checked routes, which is a correct outcome and not a failure.",
+        "`post_page/default` renders from the scaffold's `main_post_list` section with real Fluid post records. Author, publish date, excerpt, and hero image come from the post data — no hardcoded card rows.",
+        "At least three distinct posts render with the source's exact per-card field ORDER, and the source's date format is reproduced exactly.",
+        "One post card was followed to a live Fluid post route returning 200, and pagination/load-more and category filtering were exercised from inspected selectors wherever the source exposes them.",
+        "Both viewports (1440x900 and 390x844) were compared against signed source evidence captured in THIS step, the preview console and local server logs are clean, and no horizontal overflow was introduced. Media is compared by DISTINCT URL and by the presence of each contract-named priority item — never by total element-instance count, which varies between captures of the same page.",
+        "PAGE_OUTPUT records the resolved blog location, created post IDs, the reusable post-card contract for the post specialist, and any additional blog indexes left unmigrated.",
+        "HARD-FAIL BAR: fail only for hardcoded post rows, a card that resolves to a dead route, placeholder/lorem post content, or a fabricated blog that the source does not have. A source with no blog, or an external blog platform recorded honestly, is not a failure."
+      ],
+      "dependsOn": [
+        "theme-system-pages"
+      ],
+      "runIf": {
+        "flag": "build_extended_theme"
+      },
+      "prompt": "Clone the source blog / journal / news index into the Fluid `post_page` route. Call run_skill(\"themes/clone-blog-page\") and follow it in full, including its universal visual-copy loop via themes/clone-page-to-liquid.\n\nThe blog is the page type most likely to live off the main storefront domain. Discover it in the skill's documented order — rendered navigation, common paths, sitemap, subdomain, external platform — and record which one resolved. If the source genuinely has no blog, return needs_adjudication listing the routes you checked; do NOT retarget this step at a press page or help center, and do not invent posts.\n\nReuse the shell contract from the header/footer and home steps. Create at most three source-backed preview posts if none exist; bulk post migration belongs to content-import."
+    },
+    {
+      "id": "theme-post-page",
+      "name": "Theme — clone one representative post",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "google/gemini-3.6-flash",
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "crawl",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "formats": [
+                "html",
+                "screenshot"
+              ],
+              "only_main_content": false,
+              "capture_page_evidence": true,
+              "screenshot_options": {
+                "full_page": true
+              }
+            },
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 1440,
+              "height": 900,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
+      },
+      "skill": "themes/clone-post-page",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 4,
+      "recovery": {
+        "mode": "manual"
+      },
+      "acceptance": [
+        "A representative post was chosen for FORMATTING COVERAGE with a recorded rationale, not simply the newest or shortest article.",
+        "`post/default` renders via the scaffold's `main_post` section, and the article body renders from the stored Fluid post record rather than markup transcribed into Liquid.",
+        "A SECOND, structurally different post renders correctly in the same template without layout collapse — this is what proves the template is general.",
+        "Body measure and vertical rhythm match the source at both viewports, and the byline and date formatting match exactly. Inline images, captions, and embeds are present and load.",
+        "The back-to-blog link and one related-post card each resolve to live Fluid routes.",
+        "Both viewports (1440x900 and 390x844) were compared against signed source evidence captured in THIS step, the preview console and local server logs are clean, and no horizontal overflow was introduced. Media is compared by DISTINCT URL and by the presence of each contract-named priority item — never by total element-instance count, which varies between captures of the same page.",
+        "HARD-FAIL BAR: fail for a hardcoded article body, a template that only renders the one chosen post, or missing inline media. Comment threads and social embeds are `external` and their absence is not a failure."
+      ],
+      "dependsOn": [
+        "theme-blog-page"
+      ],
+      "runIf": {
+        "flag": "build_extended_theme"
+      },
+      "prompt": "Clone one representative source article into the Fluid `post` route. Call run_skill(\"themes/clone-post-page\") and follow it in full.\n\nChoose a post that exercises the most body formatting the source supports — multiple heading levels, a pull quote, lists, inline images with captions, embeds, product callouts — and record why it was chosen. Reuse the posts and post-card contract from the blog step.\n\nThe body MUST render from the stored post record. Transcribing one article into Liquid produces a template that breaks on every other post and is an automatic failure of this step."
+    },
+    {
+      "id": "theme-cart-page",
+      "name": "Theme — clone the cart",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "google/gemini-3.6-flash",
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "crawl",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "formats": [
+                "html",
+                "screenshot"
+              ],
+              "only_main_content": false,
+              "capture_page_evidence": true,
+              "screenshot_options": {
+                "full_page": true
+              }
+            },
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 1440,
+              "height": 900,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
+      },
+      "skill": "themes/clone-cart-page",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 4,
+      "recovery": {
+        "mode": "manual"
+      },
+      "acceptance": [
+        "Both the POPULATED and EMPTY cart states were built and evidenced at both viewports. The empty state is a real page with its own copy and CTA, not an afterthought.",
+        "At least two distinct line items with different quantities render from real cart state via the scaffold's `main_cart` section. No line item, subtotal, or total is hardcoded.",
+        "Totals RECOMPUTE correctly: a quantity change and a line removal were each performed from an inspected selector, and both the line total and the order total updated correctly. This is the defining proof of a working cart and cannot be satisfied by screenshots.",
+        "Currency and price formatting match the company's market. A wrong currency symbol is a hard failure, not a cosmetic delta.",
+        "The checkout CTA reaches real Fluid checkout — a cart that looks correct and cannot check out is a hard failure. An invalid promo code renders the source's rejected state where the source has promo entry.",
+        "Both viewports (1440x900 and 390x844) were compared against signed source evidence captured in THIS step, the preview console and local server logs are clean, and no horizontal overflow was introduced. Media is compared by DISTINCT URL and by the presence of each contract-named priority item — never by total element-instance count, which varies between captures of the same page.",
+        "HARD-FAIL BAR: fail for hardcoded totals, totals that do not recompute, a wrong-currency cart, a checkout CTA that does not reach Fluid checkout, or a missing empty state. Express payment buttons are `external` and their absence is not a failure."
+      ],
+      "dependsOn": [
+        "theme-post-page"
+      ],
+      "runIf": {
+        "flag": "build_extended_theme"
+      },
+      "prompt": "Clone the source cart into the Fluid `cart_page` route. Call run_skill(\"themes/clone-cart-page\") and follow it in full.\n\nA cart cannot be inspected by loading a URL: an empty cart renders a different page from a populated one. Add a real product through the add-to-cart control proven by the PDP step, capture the POPULATED cart at both viewports, then capture the EMPTY state separately.\n\nRecord which surface the source actually leads with — full page, slide-out drawer, or post-add modal. Build a correct Fluid `cart_page` either way, reproduce a drawer in the shell when the source is drawer-primary, and report the divergence rather than silently shipping one surface."
+    },
+    {
+      "id": "theme-system-pages",
+      "name": "Theme — 404, 503, and the content-page template",
+      "model": "openai/gpt-5.6-sol",
+      "qa": {
+        "enabled": true,
+        "model": "google/gemini-3.6-flash",
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "crawl",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "formats": [
+                "html",
+                "screenshot"
+              ],
+              "only_main_content": false,
+              "capture_page_evidence": true,
+              "screenshot_options": {
+                "full_page": true
+              }
+            },
+            "distinctBy": [
+              "screenshot_options.viewport.width"
+            ]
+          },
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 1440,
+              "height": 900,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "compare_preview_to_source",
+            "input": {
+              "width": 390,
+              "height": 844,
+              "mode": "full",
+              "copy_mode": "diagnostic",
+              "geometry_mode": "diagnostic",
+              "media_mode": "diagnostic"
+            }
+          },
+          {
+            "tool": "read_preview_dom"
+          },
+          {
+            "tool": "interact_preview"
+          },
+          {
+            "tool": "read_preview_console"
+          },
+          {
+            "tool": "read_local_server_logs"
+          }
+        ]
+      },
+      "skill": "themes/clone-system-pages",
+      "target": {
+        "type": "kind",
+        "kind": "theme"
+      },
+      "maxReworkRounds": 4,
+      "recovery": {
+        "mode": "manual"
+      },
+      "acceptance": [
+        "Requesting a nonexistent path against the local preview returns the themed `error_page/404` with the full shell — global header, working navigation, and footer — not a stack trace, blank page, or unstyled default.",
+        "`error_page/503` renders without error and is shell-consistent. When the source never exposed a 503, it is honestly marked `no_source_evidence`; a fabricated source capture is a hard failure.",
+        "Brand typography, color tokens, and logo on both error pages match the rest of the theme, and no base-theme filler copy or default illustration remains.",
+        "The 404 recovery CTA resolves to a live route, and header navigation works from the error page.",
+        "`page/default` renders from a real Fluid page record via `main_page`, and a SECOND different page record renders correctly in the same template.",
+        "Localization bindings are preserved: `error.status_code` and the `error.*` translated strings are kept rather than replaced with hardcoded English literals to match a screenshot.",
+        "Both viewports (1440x900 and 390x844) were compared against signed source evidence captured in THIS step, the preview console and local server logs are clean, and no horizontal overflow was introduced. Media is compared by DISTINCT URL and by the presence of each contract-named priority item — never by total element-instance count, which varies between captures of the same page."
+      ],
+      "dependsOn": [
+        "theme-collection-page"
+      ],
+      "runIf": {
+        "flag": "build_extended_theme"
+      },
+      "prompt": "Build the Fluid system routes. Call run_skill(\"themes/clone-system-pages\") and follow it in full.\n\nThese pages are not in navigation and usually not in the sitemap. Reach the source 404 by requesting a deliberately nonexistent path and confirming a real 404 rather than a soft-200 redirect to home. A source 503 is almost never observable: build a shell-consistent maintenance page and mark it `no_source_evidence` rather than fabricating a capture.\n\nAn error page without the global header, navigation, and footer is the most common tell that a clone was rushed. Restyle the scaffold defaults; do not leave them."
+    },
+    {
       "id": "theme-content-pages-push",
       "name": "Theme — content/system pages, full audit, and push",
       "model": "openai/gpt-5.6-sol",
@@ -956,7 +1346,7 @@
         "HARD-FAIL BAR: fail when the push did not land (no theme id verifiable via the API), any priority video is absent/substituted, audit violations remain, or the preview is broken after push. A shorter-than-hoped page list or a long remaining_for_refine list is fine — the refine pass exists for that."
       ],
       "dependsOn": [
-        "theme-collection-page"
+        "theme-cart-page"
       ],
       "runIf": {
         "flag": "build_theme"
@@ -1243,7 +1633,7 @@
     },
     {
       "id": "mobile-responsive-qa",
-      "name": "Mobile responsive QA",
+      "name": "Responsive QA — phone, tablet, and small laptop",
       "model": "openai/gpt-5.6-sol",
       "qa": {
         "enabled": true,
@@ -1262,9 +1652,12 @@
       "recovery": {
         "mode": "manual"
       },
-      "prompt": "Focused QA — MOBILE ONLY. Use the fresh-machine Mist preview capabilities, not a local/global Playwright assumption. Call start_preview if needed, confirm local URL with preview_state, then for one of EACH route type — home, collection, category (if any), product PDP, content page, cart — call screenshot_preview with `{mode:\"full\",path:\"<route>\",width:390,height:844}`. Require HTTP 200 and use the reported document width to prove no horizontal overflow. Inspect images/text/tap-target geometry in the screenshots. On the home route, inspect the real mobile-menu button selector, call interact_preview to open it, take a fresh 390x844 screenshot, then close it and recapture; aria-expanded/state and visible menu content must change. Read preview console + local server logs after the route matrix. Flag any overflow, overlap/cutoff, broken mobile nav, unreadable type, or runtime failure. Do NOT check prices/cart wiring/link targets. STEP_OUTPUT: route -> status -> viewport/document width -> screenshot paths -> issues, plus mobile-menu interaction evidence and log status.",
+      "prompt": "Focused QA — RESPONSIVE SWEEP. Use the fresh-machine Mist preview capabilities, not a local/global Playwright assumption. Call start_preview if needed, confirm local URL with preview_state, then for one of EACH route type — home, collection, category (if any), product PDP, content page, cart — call screenshot_preview at THREE widths: `{mode:\"full\",path:\"<route>\",width:390,height:844}` (phone), `{mode:\"full\",path:\"<route>\",width:768,height:1024}` (tablet), and `{mode:\"full\",path:\"<route>\",width:1024,height:768}` (small laptop), plus ONE deliberately OFF-BREAKPOINT width — 1441x900. The rest of this workflow only ever compares 390 and 1440, so 768 and 1024 are the widths where an untested breakpoint first shows up — a nav that has collapsed to a hamburger at 390 and expanded at 1440 can still overflow, overlap, or lose its logo in between, and multi-column grids commonly collapse wrong at exactly these widths. Require HTTP 200 and use the reported document width to prove no horizontal overflow. Inspect images/text/tap-target geometry in the screenshots. On the home route, inspect the real mobile-menu button selector, call interact_preview to open it, take a fresh 390x844 screenshot, then close it and recapture; aria-expanded/state and visible menu content must change. Read preview console + local server logs after the route matrix. Flag any overflow, overlap/cutoff, broken mobile nav, unreadable type, or runtime failure. Do NOT check prices/cart wiring/link targets. STEP_OUTPUT: route -> status -> viewport/document width -> screenshot paths -> issues, plus mobile-menu interaction evidence and log status.",
       "acceptance": [
         "Every sampled route has current screenshot_preview evidence at an exact 390x844 viewport, HTTP 200, and reported document width <= 390px.",
+        "Every checked route was captured at 390x844, 768x1024, AND 1024x768. The two intermediate widths are the point of this step: the rest of the workflow only proves 390 and 1440, so a breakpoint that misbehaves between them is otherwise never exercised. A sweep that captured only 390 does not satisfy this step.",
+        "At each width the reported document width proves no horizontal overflow, navigation is usable in whichever form that width renders (hamburger or expanded), no text or image overlaps or is clipped, and multi-column grids reflow to a sane column count rather than squashing or overflowing. Report the observed nav form and column count per width so the transition is auditable.",
+        "OFF-BREAKPOINT PROBE: at least one capture uses a width that is NOT one of the widths the theme was built and compared against (use 1441x900). Building and verifying at exactly the same two widths hides overflow that a real visitor hits one pixel away. Observed live: a header and footer stretched 16px wider than the page with a negative left margin looked perfect at exactly 1440 and 390, and produced 7px of horizontal scroll at 1441. Report the document width versus the viewport width at this probe; any positive difference is a real overflow finding, not a rounding artifact.",
         "The header navigation has a working mobile state proven by interact_preview plus fresh before/open/closed screenshots and an aria-expanded or equivalent visible state change.",
         "Primary CTAs/tap targets are adequately sized and images scale within the viewport.",
         "Preview console and local server logs are clean after the matrix, and STEP_OUTPUT includes each route's screenshot path, viewport/document width, status, and any flagged issue."

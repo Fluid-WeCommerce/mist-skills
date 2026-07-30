@@ -78,6 +78,19 @@ interaction selectors.
   Fluid resources.
 - Reuse a section only where its schema can express the source at both widths.
 - Give every template section instance a stable unique ID.
+- **One section per source section — never one section for the whole page.**
+  The template must compose MULTIPLE sections in source order. Emitting a
+  single bespoke page-sized section (`{% section 'brand_homepage' %}` wrapping
+  everything) is a failure even when it renders correctly and even when its
+  pixels match: it cannot be reordered, toggled, or edited section-by-section
+  in the theme editor, and it makes every later page skill re-implement
+  anything it needs. Measured on a real clone, two models collapsed a 21-section
+  homepage into one 32KB and one 22KB section while a third built ten discrete,
+  semantically-named ones from the same source — and no pixel metric
+  distinguished them. Prefer canonical scaffold sections (`hero_section`,
+  `intro_section`, `multiple_slider`, `testimonial`, `feature`, `brand`, …)
+  where their schema can express the source; author a new named section only
+  for the source sections they cannot.
 - Remove unrelated starter sections and filler copy.
 - Match desktop and mobile crops independently.
 
@@ -146,6 +159,9 @@ In addition to the shared gate:
   `source_route` while keeping `path:"/"`; source and Fluid pathnames are a
   deliberate mapping, not required to be identical
 - every homepage section is present once and ordered correctly
+- the home template composes MULTIPLE named sections in source order; a
+  single page-sized bespoke section is a fail regardless of pixel score, and
+  the section count is broadly commensurate with the source section inventory
 - hero and all below-the-fold priority media match at both widths
 - no touched Liquid, CSS, JSON, or JavaScript file contains an inline binary
   `data:`/base64 media fallback

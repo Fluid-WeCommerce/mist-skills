@@ -48,6 +48,31 @@ PAGE_QA_MODELS = {
 }
 
 
+def depends_transitively(steps: dict, start: str, target: str) -> bool:
+    """True when `start` cannot run until `target` has run.
+
+    Ordering rules below assert "X waits for Y". Asserting that as a literal
+    dependsOn list makes the chain unextendable: inserting a legitimate step
+    between X and Y breaks a rule that is still satisfied. Walk the graph
+    instead so the invariant survives new steps in the middle.
+    """
+    seen: set[str] = set()
+    frontier = [start]
+    while frontier:
+        current = frontier.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        step = steps.get(current)
+        if not isinstance(step, dict):
+            continue
+        for dependency in step.get("dependsOn") or []:
+            if dependency == target:
+                return True
+            frontier.append(dependency)
+    return False
+
+
 class CatalogValidationError(Exception):
     """A deterministic catalog validation failure."""
 
@@ -636,7 +661,9 @@ def validate_flagship_contracts() -> None:
         raise CatalogValidationError(
             "flagship workflow: theme-content-pages-push step is missing"
         )
-    if content_pages_step.get("dependsOn") != ["theme-collection-page"]:
+    if not depends_transitively(
+        steps, "theme-content-pages-push", "theme-collection-page"
+    ):
         raise CatalogValidationError(
             "flagship workflow: content/push must wait for the collection page"
         )
