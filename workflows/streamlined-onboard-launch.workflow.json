@@ -1,7 +1,8 @@
 {
-  "revision": "2026-07-30-streamlined-page-specialists+context-budget+publish-gate",
+  "revision": "2026-07-30-streamlined-page-specialists+context-budget+publish-gate+launcher-skill",
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
+  "launcherSkill": "onboarding/launch-setup",
   "description": "Get a company live fast. The theme is the long pole, so it starts building in the second wave: source capture, brand, and catalog discovery all open together, then the theme, product, business-profile, and media tracks run beside each other instead of in one chain. No step stops the run \u2014 QA is off or lenient everywhere except the publish gate, which reviews at standard strictness (it is the one place a false PASS costs the launch) but still continues on fail, so a rough page or an unmatched review profile becomes a line in the handoff rather than a dead run. Themes are built by Fable 5. For the trimmed single-model version, use Speed Import.",
   "maxParallel": 8,
   "runTitleTemplate": "Launch {{website_url}}",

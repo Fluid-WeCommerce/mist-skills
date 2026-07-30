@@ -1,7 +1,8 @@
 {
-  "revision": "2026-07-30-speed-import-theme-first-wave+context-budget+publish-gate",
+  "revision": "2026-07-30-speed-import-theme-first-wave+context-budget+publish-gate+launcher-skill",
   "slug": "speed-import",
   "name": "Speed Import",
+  "launcherSkill": "onboarding/launch-setup",
   "description": "The shortest path from a live website to a live Fluid storefront: brand, catalog, and source capture open together so the theme starts building in the second wave, then home, shop, product, publish. One model \u2014 Grok 4.5 \u2014 end to end; the only QA turn is the publish gate, which reworks a dead storefront but still cannot stop the run. Deliberately skips the onboarding form, content and collection import, media and UGC, and storefront QA; the handoff says so explicitly. Use Streamlined Onboard & Launch when the company needs to actually launch.",
   "maxParallel": 6,
   "runTitleTemplate": "Speed import {{website_url}}",
