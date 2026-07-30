@@ -22,6 +22,24 @@ Inside Mist, the active company and credentials are already selected:
 
 This is an execution contract. A row count is not proof of a complete import.
 
+## Work from the workspace, not from the network
+
+If a catalog step already ran, `catalog.jsonl` in the theme root holds one line
+per source product and `.mist-desktop/source-baselines/` holds durable copies
+of pages that were already fetched. Read those instead of re-crawling. Check
+before you fetch, every time.
+
+Read them in slices — grep or offset+limit — and never hold a fetched page body
+in the conversation once its field values are extracted. Exceeding the context
+window is a hard turn error: the step dies, everything depending on it is
+skipped, and the run ends. This has happened on ordinary catalogs of a few
+dozen products, so it is not a large-catalog concern.
+
+Write as you go. Append each mapped product to the workspace file as it
+resolves, and report the file path rather than an inline list. A step that
+holds its whole result in the conversation loses all of it when the turn dies.
+
+
 ## Authoritative API contract
 
 The documented admin catalog surface is the April 2026 storefront API:

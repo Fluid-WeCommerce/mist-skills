@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-30-speed-import-theme-first-wave+context-budget",
+  "revision": "2026-07-30-speed-import-theme-first-wave+workspace-continuity",
   "slug": "speed-import",
   "name": "Speed Import",
   "description": "The shortest path from a live website to a live Fluid storefront: brand, catalog, and source capture open together so the theme starts building in the second wave, then home, shop, product, publish. One model \u2014 Grok 4.5 \u2014 end to end, no QA turns, nothing that can stop the run. Deliberately skips the onboarding form, content and collection import, media and UGC, and storefront QA; the handoff says so explicitly. Use Streamlined Onboard & Launch when the company needs to actually launch.",
@@ -19,7 +19,10 @@
         "enabled": false
       },
       "dependsOn": [],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "catalog-manifest",
@@ -28,13 +31,16 @@
       "target": {
         "type": "manager"
       },
-      "prompt": "Build the product source manifest. Call run_skill(\"fluid-product-admin-import\") and follow its catalog completion contract. Read-only against Fluid.\n\nWRITE AS YOU GO. Your context window is the binding constraint: fetching every product page and holding it in the conversation blows the model's prompt limit, which is a hard turn error that kills this step and everything downstream. Measured on a real catalog: 779,638 tokens against a 500,000 limit.\n\nDiscover identities first and append them to a JSONL manifest as you find them. Then enrich in batches of at most 20 \u2014 fetch, extract, append, drop the page. Never keep a fetched body in context after its fields are out, and never summarize batches back into the conversation. Prefer a products JSON endpoint or JSON-LD over a full page; when you must fetch a page, ask for markdown, not html.\n\nDiscovery is a union of sitemap, any structured catalog API, and every collection pagination followed to its end. Speed matters here, completeness matters more: a product you never discovered is a product the store cannot sell.\n\nIf room runs short, stop enriching and keep every discovered identity. A complete identity list with partial fields is recoverable; a dead step is not.\n\nEnd with STEP_OUTPUT: { manifest_path, products, enriched, identity_only, variants, collections, unresolved: [...] }.",
+      "prompt": "WORKSPACE CONTRACT \u2014 read this first.\n\nThis run shares one workspace. Work accumulates in it; it is not rebuilt per step.\n\n- `clone-manifest.json` in the theme root \u2014 the route map and a pointer to every piece of retained evidence. Read it before you fetch anything.\n- `.mist-desktop/source-baselines/` \u2014 durable copies of source pages that earlier steps already captured: rendered HTML, the site's own CSS labelled by origin, resolved computed styles for every text landmark, and signed screenshots.\n- `catalog.jsonl` in the theme root \u2014 one line per source product.\n\nThree rules, and they are why this run survives:\n\n1. CHECK BEFORE YOU FETCH. If the page you need is already in source-baselines, read it from disk. Re-crawling a page another step already captured costs the same tokens twice and is the main reason a run dies.\n2. READ IN SLICES. Retained documents are hundreds of kilobytes. Search them, or read them with an offset and a limit. Never pull a whole document into the conversation, and never hold a fetched page body after you have taken the values you need out of it.\n3. PASS PATHS, NOT CONTENT. Whatever you produce, write it to the workspace and put the PATH in your STEP_OUTPUT. Downstream steps read your file; they do not read your summary.\n\nExceeding the model's context window is a hard turn error \u2014 the step dies, its dependents are skipped, and the run ends. It is the only remaining way these workflows fail, and it has happened on ordinary catalogs of a few dozen products. Assume it will happen to you if you fetch freely.\n\n---\n\nBuild the product source manifest. Call run_skill(\"fluid-product-admin-import\") and follow its catalog completion contract. Read-only against Fluid.\n\nWRITE AS YOU GO. Your context window is the binding constraint: fetching every product page and holding it in the conversation blows the model's prompt limit, which is a hard turn error that kills this step and everything downstream. Measured on a real catalog: 779,638 tokens against a 500,000 limit.\n\nDiscover identities first and append them to a JSONL manifest as you find them. Then enrich in batches of at most 20 \u2014 fetch, extract, append, drop the page. Never keep a fetched body in context after its fields are out, and never summarize batches back into the conversation. Prefer a products JSON endpoint or JSON-LD over a full page; when you must fetch a page, ask for markdown, not html.\n\nDiscovery is a union of sitemap, any structured catalog API, and every collection pagination followed to its end. Speed matters here, completeness matters more: a product you never discovered is a product the store cannot sell.\n\nIf room runs short, stop enriching and keep every discovered identity. A complete identity list with partial fields is recoverable; a dead step is not.\n\nEnd with STEP_OUTPUT: { manifest_path, products, enriched, identity_only, variants, collections, unresolved: [...] }.",
       "acceptance": [],
       "qa": {
         "enabled": false
       },
       "dependsOn": [],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "import-products",
@@ -51,24 +57,30 @@
       "dependsOn": [
         "catalog-manifest"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "source-capture",
-      "name": "Capture the source site",
+      "name": "Map the source site's routes",
       "model": "xai/grok-4.5",
       "target": {
         "type": "kind",
         "kind": "theme",
         "fallbackToManager": true
       },
-      "prompt": "Capture the source home page once so the page steps build from evidence rather than re-crawling. Call run_skill(\"themes/theme-source-inventory\") and follow it.\n\nHome in full at desktop and at 390 wide, formats [\"html\", \"rawHtml\", \"screenshot\"], capturePageEvidence: true \u2014 that retains the site's own CSS labelled by origin and resolved computed styles for every text landmark. Plus a route inventory: the canonical URL for shop, one product, and the main content pages. Do not deep-capture every route.\n\nWrite clone-manifest.json with the route map and evidence paths.\n\nEnd with STEP_OUTPUT: { routes: {...}, evidence: {...} }.",
+      "prompt": "WORKSPACE CONTRACT \u2014 read this first.\n\nThis run shares one workspace. Work accumulates in it; it is not rebuilt per step.\n\n- `clone-manifest.json` in the theme root \u2014 the route map and a pointer to every piece of retained evidence. Read it before you fetch anything.\n- `.mist-desktop/source-baselines/` \u2014 durable copies of source pages that earlier steps already captured: rendered HTML, the site's own CSS labelled by origin, resolved computed styles for every text landmark, and signed screenshots.\n- `catalog.jsonl` in the theme root \u2014 one line per source product.\n\nThree rules, and they are why this run survives:\n\n1. CHECK BEFORE YOU FETCH. If the page you need is already in source-baselines, read it from disk. Re-crawling a page another step already captured costs the same tokens twice and is the main reason a run dies.\n2. READ IN SLICES. Retained documents are hundreds of kilobytes. Search them, or read them with an offset and a limit. Never pull a whole document into the conversation, and never hold a fetched page body after you have taken the values you need out of it.\n3. PASS PATHS, NOT CONTENT. Whatever you produce, write it to the workspace and put the PATH in your STEP_OUTPUT. Downstream steps read your file; they do not read your summary.\n\nExceeding the model's context window is a hard turn error \u2014 the step dies, its dependents are skipped, and the run ends. It is the only remaining way these workflows fail, and it has happened on ordinary catalogs of a few dozen products. Assume it will happen to you if you fetch freely.\n\n---\n\nMap the source site's routes so the page steps know what exists. Call run_skill(\"themes/theme-source-inventory\") and follow it for the inventory portion.\n\nKeep this step LIGHT. Every page specialist captures its own full evidence for the route it owns, so do not deep-capture pages here \u2014 that duplicates their work, and the heavy two-viewport full-page captures this step used to take were both the slowest thing in the run and the most likely to die mid-stream.\n\nWhat you produce is clone-manifest.json: which routes exist, what each one is, and the canonical URL for home, shop, one representative product, one collection or category, the cart, the blog index and one post, and the main content pages. Read the sitemap and the global navigation to find them. A single lightweight fetch per candidate route to confirm it resolves is enough \u2014 you are building a map, not a replica.\n\nKeep fetched bodies out of your context once you have classified a route.\n\nIf a route type does not exist on this source, say so explicitly. \"No blog\" is a useful finding; a guessed blog URL is not.\n\nEnd with STEP_OUTPUT: { manifest_path, routes: {home, shop, product, collection, category, cart, blog, post, content: [...]}, absent: [...], unresolved: [...] }.",
       "acceptance": [],
       "qa": {
         "enabled": false
       },
       "dependsOn": [],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "home-page",
@@ -84,10 +96,11 @@
       "qa": {
         "enabled": false
       },
-      "dependsOn": [
-        "source-capture"
-      ],
-      "maxReworkRounds": 0
+      "dependsOn": [],
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "shop-page",
@@ -106,7 +119,10 @@
       "dependsOn": [
         "home-page"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "product-page",
@@ -125,7 +141,10 @@
       "dependsOn": [
         "home-page"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "publish-theme",
@@ -136,7 +155,7 @@
         "kind": "theme",
         "fallbackToManager": true
       },
-      "prompt": "Publish the built theme.\n\n1. Confirm no scaffold filler survived in the touched templates \u2014 placeholder names and starter-theme copy both count.\n2. Record the development theme id and the release target id; they are not the same theme.\n3. Push and activate the release target, then GET /api/application_themes/active and confirm the active id is the one you pushed.\n4. Load the live home URL and one product route and confirm each returns 200 with a real body.\n5. Confirm the header logo and any brand imagery in the templates resolve to Fluid DAM URLs, not the source site's CDN. The theme track builds from the source and does not wait on the brand step, so a source-CDN logo can survive into the templates; those links rot and leak the source domain. Repoint any that slipped through to the DAM URL the brand step persisted.\n\n\nPublish even if a page step left findings; carry them into your output.\n\nEnd with STEP_OUTPUT: { release_theme_id, active_theme_id, live_url, routes_checked: [{route, status}], carried_findings: [...] }.",
+      "prompt": "WORKSPACE CONTRACT \u2014 read this first.\n\nThis run shares one workspace. Work accumulates in it; it is not rebuilt per step.\n\n- `clone-manifest.json` in the theme root \u2014 the route map and a pointer to every piece of retained evidence. Read it before you fetch anything.\n- `.mist-desktop/source-baselines/` \u2014 durable copies of source pages that earlier steps already captured: rendered HTML, the site's own CSS labelled by origin, resolved computed styles for every text landmark, and signed screenshots.\n- `catalog.jsonl` in the theme root \u2014 one line per source product.\n\nThree rules, and they are why this run survives:\n\n1. CHECK BEFORE YOU FETCH. If the page you need is already in source-baselines, read it from disk. Re-crawling a page another step already captured costs the same tokens twice and is the main reason a run dies.\n2. READ IN SLICES. Retained documents are hundreds of kilobytes. Search them, or read them with an offset and a limit. Never pull a whole document into the conversation, and never hold a fetched page body after you have taken the values you need out of it.\n3. PASS PATHS, NOT CONTENT. Whatever you produce, write it to the workspace and put the PATH in your STEP_OUTPUT. Downstream steps read your file; they do not read your summary.\n\nExceeding the model's context window is a hard turn error \u2014 the step dies, its dependents are skipped, and the run ends. It is the only remaining way these workflows fail, and it has happened on ordinary catalogs of a few dozen products. Assume it will happen to you if you fetch freely.\n\n---\n\nPublish the built theme.\n\n1. Confirm no scaffold filler survived in the touched templates \u2014 placeholder names and starter-theme copy both count.\n2. Record the development theme id and the release target id; they are not the same theme.\n3. Push and activate the release target, then GET /api/application_themes/active and confirm the active id is the one you pushed.\n4. Load the live home URL and one product route and confirm each returns 200 with a real body.\n5. Confirm the header logo and any brand imagery in the templates resolve to Fluid DAM URLs, not the source site's CDN. The theme track builds from the source and does not wait on the brand step, so a source-CDN logo can survive into the templates; those links rot and leak the source domain. Repoint any that slipped through to the DAM URL the brand step persisted.\n\n\nPublish even if a page step left findings; carry them into your output.\n\nEnd with STEP_OUTPUT: { release_theme_id, active_theme_id, live_url, routes_checked: [{route, status}], carried_findings: [...] }.",
       "acceptance": [
         "No template references the source site's CDN for the logo or brand imagery; those assets resolve to Fluid DAM URLs."
       ],
@@ -147,7 +166,10 @@
         "shop-page",
         "product-page"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "handoff",
@@ -156,7 +178,7 @@
       "target": {
         "type": "manager"
       },
-      "prompt": "Write the handoff. Pull each step's STEP_OUTPUT; re-do nothing.\n\nLead with the live storefront URL and one honest sentence on whether this company could take an order today. Then: what is live, with counts; what is blocking, each with the single action that clears it; and what this run deliberately skipped \u2014 business profile and onboarding form, collections and content pages, media and UGC, and any broad storefront QA. Those are not failures, they are the trade this workflow makes for speed, and the operator needs to know they are outstanding.\n\nCounts, routes, and ids \u2014 not adjectives.\n\nEnd with STEP_OUTPUT: { live_url, can_take_an_order: true|false, live: {...}, blocking: [...], not_attempted: [...] }.",
+      "prompt": "WORKSPACE CONTRACT \u2014 read this first.\n\nThis run shares one workspace. Work accumulates in it; it is not rebuilt per step.\n\n- `clone-manifest.json` in the theme root \u2014 the route map and a pointer to every piece of retained evidence. Read it before you fetch anything.\n- `.mist-desktop/source-baselines/` \u2014 durable copies of source pages that earlier steps already captured: rendered HTML, the site's own CSS labelled by origin, resolved computed styles for every text landmark, and signed screenshots.\n- `catalog.jsonl` in the theme root \u2014 one line per source product.\n\nThree rules, and they are why this run survives:\n\n1. CHECK BEFORE YOU FETCH. If the page you need is already in source-baselines, read it from disk. Re-crawling a page another step already captured costs the same tokens twice and is the main reason a run dies.\n2. READ IN SLICES. Retained documents are hundreds of kilobytes. Search them, or read them with an offset and a limit. Never pull a whole document into the conversation, and never hold a fetched page body after you have taken the values you need out of it.\n3. PASS PATHS, NOT CONTENT. Whatever you produce, write it to the workspace and put the PATH in your STEP_OUTPUT. Downstream steps read your file; they do not read your summary.\n\nExceeding the model's context window is a hard turn error \u2014 the step dies, its dependents are skipped, and the run ends. It is the only remaining way these workflows fail, and it has happened on ordinary catalogs of a few dozen products. Assume it will happen to you if you fetch freely.\n\n---\n\nWrite the handoff. Pull each step's STEP_OUTPUT; re-do nothing.\n\nLead with the live storefront URL and one honest sentence on whether this company could take an order today. Then: what is live, with counts; what is blocking, each with the single action that clears it; and what this run deliberately skipped \u2014 business profile and onboarding form, collections and content pages, media and UGC, and any broad storefront QA. Those are not failures, they are the trade this workflow makes for speed, and the operator needs to know they are outstanding.\n\nCounts, routes, and ids \u2014 not adjectives.\n\nEnd with STEP_OUTPUT: { live_url, can_take_an_order: true|false, live: {...}, blocking: [...], not_attempted: [...] }.",
       "acceptance": [],
       "qa": {
         "enabled": false
@@ -165,7 +187,10 @@
         "publish-theme",
         "import-products"
       ],
-      "maxReworkRounds": 0
+      "maxReworkRounds": 0,
+      "recovery": {
+        "mode": "manual"
+      }
     }
   ]
 }

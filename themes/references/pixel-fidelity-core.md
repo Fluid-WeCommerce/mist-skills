@@ -32,6 +32,36 @@ aggregator listing many unrelated brands, or you are asked to remove the
 source's identity and re-badge its content as a different business. Those are
 different requests from "move our site onto Fluid". Say which signal you saw.
 
+## The workspace already holds most of what you need
+
+You are usually not the first step to look at this site. Before you fetch
+anything, read `clone-manifest.json` in the theme root and list
+`.mist-desktop/source-baselines/`. Earlier steps — and earlier pages — leave
+durable copies there: rendered HTML, the site's own CSS labelled by origin,
+resolved computed styles for every text landmark, and signed screenshots.
+
+Re-crawling a page another step already captured buys nothing and costs the
+tokens twice.
+
+**Read retained evidence in slices.** These documents are large — a real
+storefront's retained CSS runs to hundreds of kilobytes, and its rendered HTML
+can be larger. Search them for the selector, the custom property, or the
+section you care about, or read them with an explicit offset and limit. Reading
+one whole document into the conversation can consume most of a context window
+on its own; doing it twice ends the turn.
+
+That failure is not theoretical and it is not about big catalogs. Runs on
+ordinary storefronts of a few dozen products have died mid-step with
+`maximum prompt length is 500000 but the request contains 779638 tokens`. When
+a turn dies that way the step fails outright, every step depending on it is
+skipped, and the run ends — QA leniency does not apply, because nothing was
+graded.
+
+So: take values out of a document and let the document go. Keep the extracted
+numbers, not the source. And when you produce something another step will
+need, write it into the workspace and report its path, rather than describing
+it in prose that the next step cannot act on.
+
 ## Evidence is a matched pair
 
 A visual claim requires both:
