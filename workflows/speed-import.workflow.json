@@ -1,0 +1,173 @@
+{
+  "revision": "2026-07-30-speed-import-grok",
+  "slug": "speed-import",
+  "name": "Speed Import",
+  "description": "The shortest path from a live website to a live Fluid storefront: brand, catalog, home, shop, product, publish. One model \u2014 Grok 4.5 \u2014 end to end, no QA turns, nothing that can stop the run. Deliberately skips the onboarding form, content and collection import, media and UGC, and storefront QA; the handoff says so explicitly. Use Streamlined Onboard & Launch when the company needs to actually launch.",
+  "maxParallel": 6,
+  "runTitleTemplate": "Speed import {{website_url}}",
+  "steps": [
+    {
+      "id": "brand",
+      "name": "Set up the brand",
+      "model": "xai/grok-4.5",
+      "target": {
+        "type": "manager"
+      },
+      "skill": "onboarding/brand-from-source",
+      "acceptance": [],
+      "qa": {
+        "enabled": false
+      },
+      "dependsOn": [],
+      "maxReworkRounds": 0
+    },
+    {
+      "id": "catalog-manifest",
+      "name": "Map the source catalog",
+      "model": "xai/grok-4.5",
+      "target": {
+        "type": "manager"
+      },
+      "prompt": "Build the product source manifest. Call run_skill(\"fluid-product-admin-import\") and follow its catalog completion contract. Read-only against Fluid.\n\nDiscovery is a union of sitemap, any structured catalog API, and every collection pagination followed to its end \u2014 then fetch each unique PDP for real fields: identity, title, description, price, variants, images, collection membership.\n\nSpeed matters here, completeness matters more: a product you never discovered is a product the store cannot sell. But do not re-verify what you already have.\n\nEnd with STEP_OUTPUT: { manifest_path, products, variants, collections, unresolved: [...] }.",
+      "acceptance": [],
+      "qa": {
+        "enabled": false
+      },
+      "dependsOn": [
+        "brand"
+      ],
+      "maxReworkRounds": 0
+    },
+    {
+      "id": "import-products",
+      "name": "Import products",
+      "model": "xai/grok-4.5",
+      "target": {
+        "type": "manager"
+      },
+      "skill": "fluid-product-admin-import",
+      "acceptance": [],
+      "qa": {
+        "enabled": false
+      },
+      "dependsOn": [
+        "catalog-manifest"
+      ],
+      "maxReworkRounds": 0
+    },
+    {
+      "id": "source-capture",
+      "name": "Capture the source site",
+      "model": "xai/grok-4.5",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "prompt": "Capture the source home page once so the page steps build from evidence rather than re-crawling. Call run_skill(\"themes/theme-source-inventory\") and follow it.\n\nHome in full at desktop and at 390 wide, formats [\"html\", \"rawHtml\", \"screenshot\"], capturePageEvidence: true \u2014 that retains the site's own CSS labelled by origin and resolved computed styles for every text landmark. Plus a route inventory: the canonical URL for shop, one product, and the main content pages. Do not deep-capture every route.\n\nWrite clone-manifest.json with the route map and evidence paths.\n\nEnd with STEP_OUTPUT: { routes: {...}, evidence: {...} }.",
+      "acceptance": [],
+      "qa": {
+        "enabled": false
+      },
+      "dependsOn": [
+        "brand"
+      ],
+      "maxReworkRounds": 0
+    },
+    {
+      "id": "home-page",
+      "name": "Build the home page",
+      "model": "xai/grok-4.5",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "skill": "themes/clone-home-page",
+      "acceptance": [],
+      "qa": {
+        "enabled": false
+      },
+      "dependsOn": [
+        "source-capture"
+      ],
+      "maxReworkRounds": 0
+    },
+    {
+      "id": "shop-page",
+      "name": "Build the shop page",
+      "model": "xai/grok-4.5",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "skill": "themes/clone-shop-page",
+      "acceptance": [],
+      "qa": {
+        "enabled": false
+      },
+      "dependsOn": [
+        "home-page"
+      ],
+      "maxReworkRounds": 0
+    },
+    {
+      "id": "product-page",
+      "name": "Build the product page",
+      "model": "xai/grok-4.5",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "skill": "themes/clone-product-page",
+      "acceptance": [],
+      "qa": {
+        "enabled": false
+      },
+      "dependsOn": [
+        "home-page"
+      ],
+      "maxReworkRounds": 0
+    },
+    {
+      "id": "publish-theme",
+      "name": "Publish the theme",
+      "model": "xai/grok-4.5",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "prompt": "Publish the built theme.\n\n1. Confirm no scaffold filler survived in the touched templates \u2014 placeholder names and starter-theme copy both count.\n2. Record the development theme id and the release target id; they are not the same theme.\n3. Push and activate the release target, then GET /api/application_themes/active and confirm the active id is the one you pushed.\n4. Load the live home URL and one product route and confirm each returns 200 with a real body.\n\nPublish even if a page step left findings; carry them into your output.\n\nEnd with STEP_OUTPUT: { release_theme_id, active_theme_id, live_url, routes_checked: [{route, status}], carried_findings: [...] }.",
+      "acceptance": [],
+      "qa": {
+        "enabled": false
+      },
+      "dependsOn": [
+        "shop-page",
+        "product-page"
+      ],
+      "maxReworkRounds": 0
+    },
+    {
+      "id": "handoff",
+      "name": "What landed, and what needs you",
+      "model": "xai/grok-4.5",
+      "target": {
+        "type": "manager"
+      },
+      "prompt": "Write the handoff. Pull each step's STEP_OUTPUT; re-do nothing.\n\nLead with the live storefront URL and one honest sentence on whether this company could take an order today. Then: what is live, with counts; what is blocking, each with the single action that clears it; and what this run deliberately skipped \u2014 business profile and onboarding form, collections and content pages, media and UGC, and any broad storefront QA. Those are not failures, they are the trade this workflow makes for speed, and the operator needs to know they are outstanding.\n\nCounts, routes, and ids \u2014 not adjectives.\n\nEnd with STEP_OUTPUT: { live_url, can_take_an_order: true|false, live: {...}, blocking: [...], not_attempted: [...] }.",
+      "acceptance": [],
+      "qa": {
+        "enabled": false
+      },
+      "dependsOn": [
+        "publish-theme",
+        "import-products"
+      ],
+      "maxReworkRounds": 0
+    }
+  ]
+}
