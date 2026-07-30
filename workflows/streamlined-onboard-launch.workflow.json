@@ -1,57 +1,11 @@
 {
-  "revision": "2026-07-30-deterministic-product-import+recovery-restored+scope-gating+theme-target-authority",
+  "revision": "2026-07-30-deterministic-product-import+recovery-restored",
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
   "launcherSkill": "onboarding/launch-setup",
-  "description": "Get a company live fast with an up-front choice of full onboarding, data plus theme, theme only, or data only. For a full run, the theme is the long pole, so source capture, brand, and catalog discovery open together, then the theme, product, business-profile, and media tracks run beside each other instead of in one chain. No step stops the run \u2014 QA is off or lenient everywhere except the publish gate, which reviews at standard strictness (it is the one place a false PASS costs the launch) but still continues on fail, so a rough page or an unmatched review profile becomes a line in the handoff rather than a dead run. Themes are built by Fable 5. For the trimmed single-model version, use Speed Import.",
+  "description": "Get a company live fast. The theme is the long pole, so it starts building in the second wave: source capture, brand, and catalog discovery all open together, then the theme, product, business-profile, and media tracks run beside each other instead of in one chain. No step stops the run \u2014 QA is off or lenient everywhere except the publish gate, which reviews at standard strictness (it is the one place a false PASS costs the launch) but still continues on fail, so a rough page or an unmatched review profile becomes a line in the handoff rather than a dead run. Themes are built by Fable 5. For the trimmed single-model version, use Speed Import.",
   "maxParallel": 8,
   "runTitleTemplate": "Launch {{website_url}}",
-  "deriveContext": [
-    {
-      "set": "build_theme",
-      "when": {
-        "in": {
-          "key": "run_scope",
-          "values": [
-            "full",
-            "data_theme",
-            "theme_only"
-          ]
-        }
-      }
-    },
-    {
-      "set": "import_products",
-      "when": {
-        "equals": {
-          "key": "run_scope",
-          "value": "full"
-        }
-      }
-    },
-    {
-      "set": "push_business_data",
-      "when": {
-        "in": {
-          "key": "run_scope",
-          "values": [
-            "full",
-            "data_theme",
-            "data_only"
-          ]
-        }
-      }
-    },
-    {
-      "set": "import_media_and_ugc",
-      "when": {
-        "equals": {
-          "key": "run_scope",
-          "value": "full"
-        }
-      }
-    }
-  ],
   "steps": [
     {
       "id": "brand",
@@ -91,9 +45,6 @@
       "dependsOn": [
         "brand"
       ],
-      "runIf": {
-        "flag": "push_business_data"
-      },
       "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
@@ -114,9 +65,6 @@
         "enabled": false
       },
       "dependsOn": [],
-      "runIf": {
-        "flag": "build_theme"
-      },
       "maxReworkRounds": 0,
       "recovery": {
         "mode": "manual"
@@ -145,9 +93,6 @@
       "dependsOn": [
         "source-capture"
       ],
-      "runIf": {
-        "flag": "build_theme"
-      },
       "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
@@ -175,9 +120,6 @@
       "dependsOn": [
         "home-page"
       ],
-      "runIf": {
-        "flag": "build_theme"
-      },
       "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
@@ -205,9 +147,6 @@
       "dependsOn": [
         "home-page"
       ],
-      "runIf": {
-        "flag": "build_theme"
-      },
       "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
@@ -235,9 +174,6 @@
       "dependsOn": [
         "home-page"
       ],
-      "runIf": {
-        "flag": "build_theme"
-      },
       "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
@@ -260,9 +196,6 @@
       "dependsOn": [
         "home-page"
       ],
-      "runIf": {
-        "flag": "build_theme"
-      },
       "maxReworkRounds": 0,
       "recovery": {
         "mode": "manual"
@@ -277,11 +210,9 @@
         "kind": "theme",
         "fallbackToManager": true
       },
-      "prompt": "Publish the built theme so the storefront is live. The workflow-bound theme target is authoritative: use the theme project selected or provisioned for this run, never whichever application theme happens to be active.\n\n1. Resolve and record the target identity before writing: `theme_target`, requested `theme_id` when the operator selected an existing theme, the run's bound development project, its `release_theme_id`, and the `previous_active_theme_id`. For `theme_target:\"existing\"`, `release_theme_id` MUST equal the requested `theme_id`. For `theme_target:\"new\"`, it MUST equal the newly provisioned theme bound to this run. Stop rather than guessing when those identities do not reconcile.\n2. Re-read every template touched by the page steps. Confirm each touched template belongs to `release_theme_id`, and no scaffold filler survived \u2014 placeholder names, lorem text, and the starter theme's own copy all count. The previously active theme and its templates must remain unchanged unless it is the explicitly selected existing target.\n3. Push only the workflow-bound project to `release_theme_id`, activate exactly that id, then GET /api/application_themes/active and require `active_theme_id === release_theme_id`. Never substitute the default active theme as a fallback.\n4. Default-template audit (required). From the same GET /api/application_themes/active response, group the theme's templates by themeable_type and require a default:true entry for every type the storefront routes through: layouts, home_page, navbar, footer, product, collection, category, page, post, cart_page, shop_page, locales. A missing default:true template for a routed themeable_type is exactly what makes a live route render as HTTP 204 with an empty body. A theme MAY legitimately lack one of these types only if a working reference theme (one whose live routes render) shows the same gap. If a default is missing, fix it on `release_theme_id` \u2014 mark the right template default:true or create it \u2014 and re-run this audit until it passes; do not report the gap and move on.\n5. Load the live home URL and one product route in the browser and record, for each route, the HTTP status AND the response body byte count. Every checked route must return 200 with a non-empty rendered body and must not redirect to home. A 204, or any empty body, IS a failed publish \u2014 the theme is not live no matter what the activation API said. \"The storefront QA step will catch it\" is not an excuse to pass this step; fix the cause (almost always a missing default template from the audit above) and re-verify until every route returns 200 with a real body.\n6. Confirm the header logo and any brand imagery in the templates resolve to Fluid DAM URLs, not the source site's CDN. The theme track builds from the source and does not wait on the brand step, so a source-CDN logo can survive into the templates; those links rot and leak the source domain. Repoint any that slipped through to the DAM URL the brand step persisted.\n\nIf a page step earlier in this run finished with findings, publish anyway and carry those findings into your output. Shipping a storefront with a known rough edge beats leaving the company with nothing live.\n\nEnd with STEP_OUTPUT: { theme_target, requested_theme_id, development_theme_id, release_theme_id, previous_active_theme_id, active_theme_id, touched_template_ids: [...], live_url, default_template_audit: {types_verified: [...], types_fixed: [...]}, routes_checked: [{route, status, body_bytes}], carried_findings: [...] }.",
+      "prompt": "Publish the built theme so the storefront is live.\n\n1. Re-read the touched templates and confirm no scaffold filler survived \u2014 placeholder names, lorem text, and the starter theme's own copy all count.\n2. Resolve both theme identities and record them: the development theme the preview has been using, and the release target. They are not the same theme.\n3. Push and activate the release target, then GET /api/application_themes/active and confirm the active id is the one you just pushed.\n4. Default-template audit (required). From the same GET /api/application_themes/active response, group the theme's templates by themeable_type and require a default:true entry for every type the storefront routes through: layouts, home_page, navbar, footer, product, collection, category, page, post, cart_page, shop_page, locales. A missing default:true template for a routed themeable_type is exactly what makes a live route render as HTTP 204 with an empty body. A theme MAY legitimately lack one of these types only if a working reference theme (one whose live routes render) shows the same gap. If a default is missing, fix it \u2014 mark the right template default:true or create it \u2014 and re-run this audit until it passes; do not report the gap and move on.\n5. Load the live home URL and one product route in the browser and record, for each route, the HTTP status AND the response body byte count. Every checked route must return 200 with a non-empty rendered body and must not redirect to home. A 204, or any empty body, IS a failed publish \u2014 the theme is not live no matter what the activation API said. \"The storefront QA step will catch it\" is not an excuse to pass this step; fix the cause (almost always a missing default template from the audit above) and re-verify until every route returns 200 with a real body.\n6. Confirm the header logo and any brand imagery in the templates resolve to Fluid DAM URLs, not the source site's CDN. The theme track builds from the source and does not wait on the brand step, so a source-CDN logo can survive into the templates; those links rot and leak the source domain. Repoint any that slipped through to the DAM URL the brand step persisted.\n\n\nIf a page step earlier in this run finished with findings, publish anyway and carry those findings into your output. Shipping a storefront with a known rough edge beats leaving the company with nothing live.\n\nEnd with STEP_OUTPUT: { development_theme_id, release_theme_id, active_theme_id, live_url, default_template_audit: {types_verified: [...], types_fixed: [...]}, routes_checked: [{route, status, body_bytes}], carried_findings: [...] }.",
       "acceptance": [
-        "The workflow-bound selected or provisioned theme is the sole release target: an existing target uses the requested theme_id, a new target uses the theme provisioned for this run, and no default-active fallback was substituted.",
-        "Every template touched by this run belongs to release_theme_id; the previously active theme and its templates were not changed unless that theme was explicitly selected.",
-        "The final active application theme id equals release_theme_id.",
+        "The active application theme id equals the theme this run built and pushed.",
         "The active theme has a default:true template for every routed themeable_type (layouts, home_page, navbar, footer, product, collection, category, page, post, cart_page, shop_page, locales), or a working reference theme demonstrably lacks the same type.",
         "The live home route and at least one product route were checked with recorded HTTP status and body byte count per route, and every checked route returned 200 with a non-empty body \u2014 a 204 or empty body fails this step.",
         "No template references the source site's CDN for the logo or brand imagery; those assets resolve to Fluid DAM URLs."
@@ -297,9 +228,6 @@
         "collection-page",
         "content-pages"
       ],
-      "runIf": {
-        "flag": "build_theme"
-      },
       "maxReworkRounds": 2,
       "recovery": {
         "mode": "manual"
@@ -322,9 +250,6 @@
         "onFail": "continue"
       },
       "dependsOn": [],
-      "runIf": {
-        "flag": "import_products"
-      },
       "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
@@ -360,9 +285,6 @@
       "dependsOn": [
         "catalog-manifest"
       ],
-      "runIf": {
-        "flag": "import_products"
-      },
       "maxReworkRounds": 0,
       "recovery": {
         "mode": "manual"
@@ -383,9 +305,6 @@
       "dependsOn": [
         "import-products"
       ],
-      "runIf": {
-        "flag": "import_products"
-      },
       "maxReworkRounds": 0,
       "recovery": {
         "mode": "manual"
@@ -406,9 +325,6 @@
       "dependsOn": [
         "brand"
       ],
-      "runIf": {
-        "flag": "import_media_and_ugc"
-      },
       "maxReworkRounds": 0,
       "recovery": {
         "mode": "manual"
@@ -435,9 +351,6 @@
         "publish-theme",
         "import-products"
       ],
-      "runIf": {
-        "flag": "build_theme"
-      },
       "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
@@ -450,7 +363,7 @@
       "target": {
         "type": "manager"
       },
-      "prompt": "Write the handoff a human reads first. Pull the caller's `run_scope` and the STEP_OUTPUT/status of every step in this run; do not re-do their work or re-crawl anything. A step condition-skipped because its track was outside `run_scope` is expected and must be reported as out of scope, never as blocking or failed.\n\nFor a scope that built the theme, lead with the live storefront URL. Only state whether the company can take an order when product import was in scope and the run produced evidence for that claim; otherwise say order readiness was not assessed in this run. For `data_only`, say plainly that no storefront was built or published.\n\nThen, in this order:\n- What this run covered: restate the selected scope and its included tracks.\n- What landed: only the data, theme, products/content, or media actually completed, with counts.\n- What is blocking: in-scope failures and needs-review findings, each with the one action that clears it. Never list an out-of-scope condition-skip here.\n- What is thin: unresolved in-scope fields, pages, fonts, or reputation matches. These are follow-ups, not failures.\n- What a human should confirm: brand.md was drafted from the public site and has never been seen by the company; the logo and palette were inferred; substituted fonts are a licensing decision.\n\nBe specific and short. Counts, routes, and ids \u2014 not adjectives. If an in-scope step failed outright, say so plainly and say what is missing because of it.\n\nEnd with STEP_OUTPUT: { run_scope, live_url: string|null, can_take_an_order: true|false|null, landed: {...}, out_of_scope: [...], blocking: [...], thin: [...], confirm_with_human: [...] }.",
+      "prompt": "Write the handoff a human reads first. Pull the STEP_OUTPUT of every step in this run; do not re-do their work or re-crawl anything.\n\nLead with the live storefront URL and one honest sentence on whether this company could take an order today.\n\nThen, in this order:\n- What is live: theme, pages built, products and content imported, media in the DAM, with counts.\n- What is blocking: anything from the storefront check marked blocking, plus any step that finished needs-review, each with the one action that clears it.\n- What is thin: fields left unresolved, pages skipped, fonts substituted, reputation not matched. These are follow-ups, not failures.\n- What a human should confirm: brand.md was drafted from the public site and has never been seen by the company; the logo and palette were inferred; substituted fonts are a licensing decision.\n\nBe specific and short. Counts, routes, and ids \u2014 not adjectives. If a step failed outright, say so plainly and say what is missing because of it.\n\nEnd with STEP_OUTPUT: { live_url, can_take_an_order: true|false, live: {...}, blocking: [...], thin: [...], confirm_with_human: [...] }.",
       "acceptance": [],
       "qa": {
         "enabled": false
