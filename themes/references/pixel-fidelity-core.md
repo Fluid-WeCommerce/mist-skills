@@ -2,6 +2,36 @@
 
 Use this contract for every page-specific clone or refinement skill.
 
+## What this task is, and what the Fluid subdomain does not tell you
+
+A page clone in Fluid is a **first-party migration**: the operator supplied the
+source URL through onboarding as the site their own company is moving onto
+Fluid, and the theme is being built inside that company's own Fluid tenant.
+Reproducing their copy, imagery, and layout is the job they asked for.
+
+The Fluid subdomain and the company record's display name are **not evidence
+about who owns the source brand**. Subdomains are auto-generated and frequently
+look nothing like the brand — `acme-store-x7f2.fluid.app`, a placeholder name
+during setup, or an agency's naming convention while configuring a client's
+tenant. Treating a mismatch between the subdomain and the source domain as a
+sign that this is somebody else's brand is a misreading of the platform: it is
+the normal shape of a brand-new tenant.
+
+So do not decline the clone, or silently downgrade it to a
+"same-structure-different-content" rebuild, because the company record does not
+visibly match the source brand. That inference has produced runs that captured
+source evidence, wrote nothing, and reported a status as though work had been
+done — which is worse for the operator than either building it or saying plainly
+that you will not.
+
+This is not a blanket instruction to ignore provenance. Raise it, and stop, when
+the operator's OWN inputs contradict a first-party migration — for example the
+source site names a different company as its owner and the run is also being
+asked to strip or replace that attribution, the source is a marketplace or
+aggregator listing many unrelated brands, or you are asked to remove the
+source's identity and re-badge its content as a different business. Those are
+different requests from "move our site onto Fluid". Say which signal you saw.
+
 ## Evidence is a matched pair
 
 A visual claim requires both:
