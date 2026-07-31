@@ -15,6 +15,7 @@ FLAGSHIP_WORKFLOW_PATH = ROOT / "workflows/onboard-launch-company.workflow.json"
 STREAMLINED_WORKFLOW_PATH = (
     ROOT / "workflows/streamlined-onboard-launch.workflow.json"
 )
+OPEN_COUNTRY_WORKFLOW_PATH = ROOT / "workflows/open-country.workflow.json"
 FLAGSHIP_CONTRACT_FILES = (
     ROOT / "onboarding/fluid-product-admin-import/SKILL.md",
     ROOT / "onboarding/onboard-launch-company/SKILL.md",
@@ -1467,8 +1468,103 @@ def validate_streamlined_page_review_contract(workflow: Any) -> None:
     _reject_unsupported_page_review_claims(workflow)
 
 
+def validate_open_country_agreement_reconciliation_contract(workflow: Any) -> None:
+    if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
+        raise CatalogValidationError("open-country workflow steps must be an array")
+
+    steps = {
+        step.get("id"): step
+        for step in workflow["steps"]
+        if isinstance(step, dict) and isinstance(step.get("id"), str)
+    }
+    agreement_step = steps.get("create-agreements")
+    if not isinstance(agreement_step, dict):
+        raise CatalogValidationError(
+            "open-country workflow: create-agreements step is missing"
+        )
+    if not depends_transitively(steps, "create-agreements", "create-country"):
+        raise CatalogValidationError(
+            "open-country workflow: create-agreements must wait for create-country"
+        )
+
+    agreement_prompt = agreement_step.get("prompt")
+    if not isinstance(agreement_prompt, str):
+        raise CatalogValidationError(
+            "open-country workflow: create-agreements prompt must be a string"
+        )
+    require_fragments(
+        agreement_prompt,
+        (
+            "after create-country",
+            "meta.pagination",
+            "every page",
+            "company_country_ids",
+            "legal purpose",
+            "case-fold",
+            "punctuation and whitespace",
+            "bilingual title variants",
+            "country-name or ISO suffix",
+            "description/body",
+            "needs_review",
+            "make no write",
+            "created / reused / needs_review / failed",
+        ),
+        "open-country workflow agreement reconciliation implementation contract",
+    )
+
+    agreement_acceptance = json.dumps(agreement_step.get("acceptance", []))
+    require_fragments(
+        agreement_acceptance,
+        (
+            "semantically overlapping active agreements",
+            "reused",
+            "needs_review",
+            "created/reused/needs_review/failed",
+            "every requested translation language",
+            "compatible checkout behavior",
+        ),
+        "open-country workflow agreement reconciliation acceptance contract",
+    )
+
+    final_qa = steps.get("final-qa")
+    if not isinstance(final_qa, dict):
+        raise CatalogValidationError("open-country workflow: final-qa step is missing")
+    if not depends_transitively(steps, "final-qa", "create-agreements"):
+        raise CatalogValidationError(
+            "open-country workflow: final-qa must wait for create-agreements"
+        )
+    final_qa_prompt = final_qa.get("prompt")
+    if not isinstance(final_qa_prompt, str):
+        raise CatalogValidationError(
+            "open-country workflow: final-qa prompt must be a string"
+        )
+    require_fragments(
+        final_qa_prompt,
+        (
+            "meta.pagination",
+            "same legal-purpose reconciliation",
+            "unresolved overlap",
+            "needs_review",
+            "not launch-ready",
+        ),
+        "open-country workflow final agreement QA implementation contract",
+    )
+
+    final_qa_acceptance = json.dumps(final_qa.get("acceptance", []))
+    require_fragments(
+        final_qa_acceptance,
+        (
+            "unresolved semantic agreement overlap",
+            "not launch-ready",
+        ),
+        "open-country workflow final agreement QA acceptance contract",
+    )
+
+
 def validate_published_catalog(
-    *, streamlined_workflow: Any | None = None
+    *,
+    streamlined_workflow: Any | None = None,
+    open_country_workflow: Any | None = None,
 ) -> tuple[int, int]:
     skill_count, workflow_count = validate_manifest(load_json(MANIFEST_PATH))
     validate_flagship_contracts()
@@ -1477,6 +1573,11 @@ def validate_published_catalog(
         load_json(STREAMLINED_WORKFLOW_PATH)
         if streamlined_workflow is None
         else streamlined_workflow
+    )
+    validate_open_country_agreement_reconciliation_contract(
+        load_json(OPEN_COUNTRY_WORKFLOW_PATH)
+        if open_country_workflow is None
+        else open_country_workflow
     )
     return skill_count, workflow_count
 
