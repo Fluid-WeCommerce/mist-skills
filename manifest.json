@@ -133,6 +133,20 @@
       ]
     },
     {
+      "slug": "themes/rtl-localization",
+      "name": "RTL localization",
+      "description": "Make a storefront render right-to-left for an RTL-language market (Arabic, Hebrew, Persian, Urdu). Sets dir from the locale, converts CSS to logical properties, fixes carousels/icons/splits, and optionally serves a per-country RTL template via a region rule.",
+      "category": "themes",
+      "icon": "align-right",
+      "path": "themes/rtl-localization/SKILL.md",
+      "updated_at": "2026-07-31T00:00:00Z",
+      "references": [
+        "themes/rtl-localization/references/direction-map.md",
+        "themes/rtl-localization/references/special-sections.md",
+        "themes/rtl-localization/references/fluid.md"
+      ]
+    },
+    {
       "slug": "themes/theme-source-inventory",
       "name": "Theme Source Inventory",
       "description": "Capture a fresh, machine-verifiable Home/Shop/PDP source bundle with exact copy, DOM, screenshots, and exhaustive image/video evidence before a Fluid theme build.",
