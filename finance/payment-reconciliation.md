@@ -352,7 +352,7 @@ END OF REPORT
 After printing the terminal summary, generate a styled HTML report and save it to:
 
 ```
-/tmp/recon_<company_slug>_<YYYYMMDD_HHMMSS>.html
+~/Desktop/recon_<company_slug>_<YYYYMMDD_HHMMSS>.html
 ```
 
 Where `company_slug` is the company name lowercased with spaces replaced by underscores, and the timestamp is the moment the report was generated.
