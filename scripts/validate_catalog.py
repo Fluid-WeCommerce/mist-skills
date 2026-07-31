@@ -1402,9 +1402,14 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
         "streamlined workflow storefront-check implementation contract",
     )
     qa = step.get("qa")
+    # maxReworkRounds must stay 0. This step's own prompt forbids it from
+    # editing anything, so a rework round can only be spent discovering it
+    # cannot act — which is exactly how the TUSHY run ended, with the round
+    # burned and the step terminated BLOCKED instead of handing its findings
+    # to the Theme project that can fix them.
     if (
         step.get("dependsOn") != ["publish-theme", "import-products"]
-        or step.get("maxReworkRounds") != 1
+        or step.get("maxReworkRounds") != 0
         or not isinstance(qa, dict)
         or qa.get("enabled") is not True
         or qa.get("strictness") != "lenient"
@@ -1412,7 +1417,7 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
     ):
         raise CatalogValidationError(
             "streamlined workflow: storefront-check must preserve its lenient "
-            "fail-open contract"
+            "fail-open contract with no rework round"
         )
     if qa.get("requiredTools") != _deterministic_page_qa_tools(
         None,
