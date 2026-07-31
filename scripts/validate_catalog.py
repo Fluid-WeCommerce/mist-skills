@@ -847,6 +847,14 @@ def validate_streamlined_product_import_contract() -> None:
     )
 
 
+def _home_interaction_qa_requirement() -> dict[str, Any]:
+    return {
+        "tool": "interact_preview",
+        "input": {"path": "/"},
+        "minSuccessfulCalls": 1,
+    }
+
+
 def _validate_streamlined_home_review_contract(workflow: Any) -> None:
     if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
         raise CatalogValidationError("streamlined workflow steps must be an array")
@@ -897,6 +905,17 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             'mode: "theme_only"',
             ".mist-desktop/home-catalog-index.json",
             "priority_media.delivery_items",
+            "home_interactions.controls",
+            "source-present visible control",
+            "semantic kind, target, state transition, and keyboard/accessibility behavior",
+            "blank, hash-only, or javascript: links",
+            "action-looking buttons without a real target or state hook",
+            "documented source-equivalent exception",
+            "bounded Home interaction pass",
+            "each distinct source-present interaction family",
+            "representative repeated control",
+            "primary CTA targets",
+            "Do not exhaustively click duplicate controls",
         ),
         "streamlined workflow home-page implementation contract",
     )
@@ -945,6 +964,7 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "input": {"path": "/", "mode": "all"},
             "minSuccessfulCalls": 1,
         },
+        _home_interaction_qa_requirement(),
         {
             "tool": "read_preview_console",
             "minSuccessfulCalls": 1,
@@ -985,6 +1005,15 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "Screenshots are optional source-design context only",
             "completed priority_media reconciliation",
             "verified DAM delivery URLs",
+            "home_interactions.controls",
+            "bounded Home interaction pass",
+            "each distinct source-present interaction family",
+            "representative repeated control",
+            "primary CTA targets",
+            "blank, hash-only, or javascript: links",
+            "action-looking buttons without a real target or state hook",
+            'A source button implemented as a generated href=\\"#\\" is REWORK and leaves this lenient step needs-review.',
+            "post-action URL, DOM, or state transition",
         ),
         "streamlined workflow home-page review acceptance contract",
     )
@@ -1398,6 +1427,16 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
             "Put unprovable behavior in unresolved",
             "Blocking means",
             "Cosmetic means",
+            "home_interactions.controls",
+            "bounded final interaction smoke pass",
+            "interact_preview",
+            "mobile navigation",
+            "each distinct source-present interaction family",
+            "representative repeated controls",
+            "primary CTA targets",
+            "blank, hash-only, or javascript: links",
+            "action-looking buttons without a real target or state hook",
+            "post-action URL, DOM, or state transition",
         ),
         "streamlined workflow storefront-check implementation contract",
     )
@@ -1419,12 +1458,14 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
             "streamlined workflow: storefront-check must preserve its lenient "
             "fail-open contract with no rework round"
         )
-    if qa.get("requiredTools") != _deterministic_page_qa_tools(
+    expected_tools = _deterministic_page_qa_tools(
         None,
         minimum_reads=10,
         minimum_searches=6,
         minimum_routes=5,
-    ):
+    )
+    expected_tools.insert(-2, _home_interaction_qa_requirement())
+    if qa.get("requiredTools") != expected_tools:
         raise CatalogValidationError(
             "streamlined workflow: storefront-check must require only its "
             "deterministic QA evidence floor"
@@ -1447,6 +1488,14 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
             "interaction behavior",
             "API-value parity",
             "blocking, cosmetic, and unresolved",
+            "home_interactions.controls",
+            "bounded final interaction smoke pass",
+            "each distinct source-present interaction family",
+            "representative repeated controls",
+            "primary CTA targets",
+            "blank, hash-only, or javascript: links",
+            "action-looking buttons without a real target or state hook",
+            "post-action URL, DOM, or state transition",
         ),
         "streamlined workflow storefront-check review acceptance contract",
     )
