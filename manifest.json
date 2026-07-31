@@ -232,6 +232,24 @@
       ]
     },
     {
+      "slug": "themes/holy-grail-pdp",
+      "name": "Holy Grail PDP",
+      "description": "Audit, redesign, compare, or locally build high-converting Fluid PDPs using verified product facts, live page evidence, buyer psychology, offer and subscription clarity, credible proof, conversion experiments, and mobile-first QA; use Clone Product Page for exact 1:1 copying.",
+      "category": "themes",
+      "icon": "shopping-bag",
+      "path": "themes/holy-grail-pdp/SKILL.md",
+      "updated_at": "2026-07-31T16:44:52Z",
+      "references": [
+        "themes/holy-grail-pdp/references/art-direction-and-copy.md",
+        "themes/holy-grail-pdp/references/audit-and-experimentation.md",
+        "themes/holy-grail-pdp/references/deliverable-contract.md",
+        "themes/holy-grail-pdp/references/pdp-page-brief.md",
+        "themes/holy-grail-pdp/references/research-patterns.md",
+        "themes/holy-grail-pdp/references/section-psychology.md"
+      ],
+      "assets": ["themes/holy-grail-pdp/assets/pdp-holy-grail-wireframe.html"]
+    },
+    {
       "slug": "themes/clone-category-page",
       "name": "Clone Category Page",
       "description": "Recreate a source category index or detail page as Fluid Liquid with bounded real preview data, category-specific templates, responsive list behavior, and visual evidence.",
