@@ -53,6 +53,16 @@ against.
    free shipping" state. Show the products from step 3 with quick add-to-cart.
    Reuse the theme's existing cart data and section/component conventions
    rather than inventing a new pattern.
+
+   Before assuming the theme's server-side `cart` Liquid drop is usable,
+   verify it's actually populated (check `cart.items` and `cart.sub_total`
+   against what the rendered page visibly shows). Some themes hydrate the
+   real cart entirely client-side via an SDK call, leaving the Liquid `cart`
+   drop empty — a silent failure mode, not an error. If that's the case here,
+   build the section to read from the same client-side cart object the
+   theme's own cart page already uses, and observe its rendered subtotal
+   element for mutations to stay in sync — never fork or patch the existing
+   cart script to get there.
 5. Verify before calling it done — use `screenshot_preview` on the cart page
    at three real cart states: well below the threshold, just under it, and
    at/above it. Confirm the copy, the math, and the recommended products all
