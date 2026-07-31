@@ -99,6 +99,151 @@ def load_json(path: Path) -> Any:
         raise CatalogValidationError(f"{path.relative_to(ROOT)}: {error}") from error
 
 
+def normalize_streamlined_catalog_artifacts(
+    identity_index_jsonl: str,
+    enriched_records: list[dict[str, Any]],
+    *,
+    source_market_iso: str,
+) -> dict[str, Any]:
+    """Normalize the workflow's separate discovery and enrichment artifacts.
+
+    The runtime workflow uses the same invariant when it finalizes its import
+    manifest: discovery rows are an ordered denominator, while enriched
+    records are one-per-identity state. They are not two event shapes appended
+    to one JSONL stream.
+    """
+
+    identities: list[dict[str, Any]] = []
+    seen_identities: set[str] = set()
+    seen_handles: set[str] = set()
+    for line_number, line in enumerate(identity_index_jsonl.splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            identity = json.loads(line, object_pairs_hook=reject_duplicate_keys)
+        except (json.JSONDecodeError, CatalogValidationError) as error:
+            raise CatalogValidationError(
+                f"catalog identity index line {line_number}: {error}"
+            ) from error
+        if not isinstance(identity, dict):
+            raise CatalogValidationError(
+                f"catalog identity index line {line_number} must be an object"
+            )
+        source_id = identity.get("source_id")
+        source_handle = identity.get("source_handle")
+        if not isinstance(source_id, str) or not source_id.strip():
+            raise CatalogValidationError(
+                f"catalog identity index line {line_number} has no source_id"
+            )
+        if not isinstance(source_handle, str) or not source_handle.strip():
+            raise CatalogValidationError(
+                f"catalog identity index line {line_number} has no source_handle"
+            )
+        if source_id in seen_identities:
+            raise CatalogValidationError(
+                f"duplicate catalog identity index row: {source_id}"
+            )
+        if source_handle in seen_handles:
+            raise CatalogValidationError(
+                f"duplicate catalog identity handle: {source_handle}"
+            )
+        seen_identities.add(source_id)
+        seen_handles.add(source_handle)
+        identities.append(identity)
+
+    required_product_fields = {
+        "source_id",
+        "source_url",
+        "source_handle",
+        "title",
+        "description",
+        "price",
+        "currency",
+        "image_urls",
+        "option_axes",
+        "variants",
+    }
+    records_by_identity: dict[str, dict[str, Any]] = {}
+    record_handles: set[str] = set()
+    for record in enriched_records:
+        if not isinstance(record, dict):
+            raise CatalogValidationError("enriched catalog record must be an object")
+        source_id = record.get("source_id")
+        if not isinstance(source_id, str) or not source_id.strip():
+            raise CatalogValidationError("enriched catalog record has no source_id")
+        if source_id in records_by_identity:
+            raise CatalogValidationError(
+                f"duplicate enriched record for source identity: {source_id}"
+            )
+        missing_fields = sorted(required_product_fields - record.keys())
+        variants = record.get("variants")
+        image_urls = record.get("image_urls")
+        source_handle = record.get("source_handle")
+        if (
+            missing_fields
+            or not isinstance(record.get("source_url"), str)
+            or not isinstance(source_handle, str)
+            or not isinstance(record.get("title"), str)
+            or not isinstance(record.get("description"), str)
+            or not isinstance(record.get("price"), str)
+            or not isinstance(record.get("currency"), str)
+            or not isinstance(record.get("option_axes"), dict)
+            or not isinstance(variants, list)
+            or not variants
+            or not isinstance(image_urls, list)
+            or not all(isinstance(image_url, str) for image_url in image_urls)
+            or not all(
+                isinstance(variant, dict)
+                and isinstance(variant.get("source_variant_id"), str)
+                and isinstance(variant.get("options"), list)
+                and isinstance(variant.get("price"), str)
+                for variant in variants
+            )
+        ):
+            detail = (
+                f"; missing fields: {', '.join(missing_fields)}"
+                if missing_fields
+                else ""
+            )
+            raise CatalogValidationError(
+                f"enriched record {source_id} is not importer-complete{detail}"
+            )
+        if source_handle in record_handles:
+            raise CatalogValidationError(
+                f"duplicate enriched source handle: {source_handle}"
+            )
+        record_handles.add(source_handle)
+        records_by_identity[source_id] = record
+
+    index_ids = [identity["source_id"] for identity in identities]
+    missing_records = [
+        source_id for source_id in index_ids if source_id not in records_by_identity
+    ]
+    extra_records = sorted(set(records_by_identity) - set(index_ids))
+    if missing_records or extra_records:
+        raise CatalogValidationError(
+            "catalog artifact identities do not balance: "
+            f"missing={missing_records}, extra={extra_records}"
+        )
+
+    for identity in identities:
+        source_id = identity["source_id"]
+        record = records_by_identity[source_id]
+        for identity_field in ("source_url", "source_handle"):
+            if record.get(identity_field) != identity.get(identity_field):
+                raise CatalogValidationError(
+                    f"enriched record {source_id} disagrees with identity index "
+                    f"field {identity_field}"
+                )
+
+    return {
+        "source_market_iso": source_market_iso,
+        "products": [records_by_identity[source_id] for source_id in index_ids],
+        "excluded": [],
+        "unresolved": [],
+    }
+
+
 def require_string(entry: dict[str, Any], key: str, label: str) -> str:
     value = entry.get(key)
     if not isinstance(value, str) or not value.strip():
@@ -759,9 +904,9 @@ def validate_streamlined_product_import_contract() -> None:
         raise CatalogValidationError(
             "streamlined workflow: import-products step is missing"
         )
-    if products_import.get("dependsOn") != ["catalog-closure"]:
+    if products_import.get("dependsOn") != ["catalog-manifest"]:
         raise CatalogValidationError(
-            "streamlined workflow: import-products must wait for catalog-closure"
+            "streamlined workflow: import-products must wait for catalog-manifest"
         )
     if products_import.get("model") != "google/gemini-3.6-flash":
         raise CatalogValidationError(
@@ -785,14 +930,13 @@ def validate_streamlined_product_import_contract() -> None:
     require_fragments(
         prompt,
         (
-            "closed_manifest_path",
-            "closed_manifest_sha256",
+            "manifest_path",
+            "manifest_sha256",
             "exactly once",
             "write mode",
             "compact receipt",
             "status: complete",
-            "preview_product_ledger_path",
-            "fluid_product_id",
+            "catalog-manifest STEP_OUTPUT",
         ),
         "streamlined workflow import-products",
     )
@@ -843,10 +987,10 @@ def validate_streamlined_product_import_contract() -> None:
         (
             "exactly one live Fluid product",
             "no duplicates, no silent drops",
-            "Prices, variants, and images match",
-            "multi-variant product",
+            "identity-level verification",
+            "does not prove full field fidelity",
         ),
-        "streamlined workflow import-products fidelity",
+        "streamlined workflow import-products verification boundary",
     )
 
 
@@ -884,14 +1028,15 @@ def validate_streamlined_catalog_closure_contract(workflow: Any) -> None:
     )
     ledger_qa = ledger.get("qa")
     if (
-        ledger.get("dependsOn") != []
+        ledger.get("dependsOn") != ["import-products"]
         or not isinstance(ledger_qa, dict)
         or ledger_qa.get("enabled") is not True
         or ledger_qa.get("strictness") != "standard"
         or ledger_qa.get("onFail") != "stop"
     ):
         raise CatalogValidationError(
-            "streamlined workflow: preview-product-ledger must be a fail-closed root gate"
+            "streamlined workflow: preview-product-ledger must wait for import-products "
+            "and fail closed"
         )
 
     home = steps.get("home-page")
@@ -921,71 +1066,25 @@ def validate_streamlined_catalog_closure_contract(workflow: Any) -> None:
         ),
         "streamlined workflow catalog-manifest source-union contract",
     )
-
-    closure = steps.get("catalog-closure")
-    if not isinstance(closure, dict):
-        raise CatalogValidationError(
-            "streamlined workflow: catalog-closure step is missing"
-        )
-    if set(closure.get("dependsOn") or []) != {
-        "catalog-manifest",
-        "shop-page",
-        "product-page",
-        "collection-page",
-    }:
-        raise CatalogValidationError(
-            "streamlined workflow: catalog-closure must wait for the manifest and every product-capable page step"
-        )
-    closure_prompt = closure.get("prompt")
-    if not isinstance(closure_prompt, str):
-        raise CatalogValidationError(
-            "streamlined workflow: catalog-closure prompt must be a string"
-        )
     require_fragments(
-        closure_prompt,
+        str(catalog_manifest.get("prompt", "")),
         (
-            "baseline_product_ids",
-            "/api/v202604/company/products?page[limit]=100",
-            "meta.pagination.next_cursor",
-            "both directions",
-            "source_identity",
-            "fluid_product_id",
-            "closed_manifest_path",
-            "closed_manifest_sha256",
-            "preview_product_ledger_path",
-            "catalog-closure-receipt.json",
-            "status: BLOCKED",
-            "Do not call fluid_product_import",
+            "catalog-identities.jsonl",
+            "catalog-records/",
+            "catalog-manifest.json",
+            "Never append an enriched product row to catalog-identities.jsonl",
+            "one importer-complete record per identity",
+            "atomically",
         ),
-        "streamlined workflow two-way catalog closure contract",
-    )
-    closure_qa = closure.get("qa")
-    if (
-        not isinstance(closure_qa, dict)
-        or closure_qa.get("enabled") is not True
-        or closure_qa.get("strictness") != "standard"
-        or closure_qa.get("onFail") != "stop"
-    ):
-        raise CatalogValidationError(
-            "streamlined workflow: catalog-closure must be a fail-closed gate"
-        )
-    require_fragments(
-        json.dumps(closure.get("acceptance", [])),
-        (
-            "every product id absent from the baseline",
-            "exactly one source identity",
-            "importer-valid closed manifest",
-            "active preview product is excluded",
-        ),
-        "streamlined workflow catalog-closure acceptance contract",
+        "streamlined workflow catalog artifact separation contract",
     )
 
     products_import = steps.get("import-products")
     if not isinstance(products_import, dict) or products_import.get(
         "dependsOn"
-    ) != ["catalog-closure"]:
+    ) != ["catalog-manifest"]:
         raise CatalogValidationError(
-            "streamlined workflow: import-products must wait for catalog-closure"
+            "streamlined workflow: import-products must wait for catalog-manifest"
         )
     import_qa = products_import.get("qa")
     if not isinstance(import_qa, dict) or import_qa.get("onFail") != "stop":
@@ -993,10 +1092,95 @@ def validate_streamlined_catalog_closure_contract(workflow: Any) -> None:
             "streamlined workflow: import-products must stop publication when QA fails"
         )
 
-    publish = steps.get("publish-theme")
-    if not isinstance(publish, dict) or "import-products" not in (
-        publish.get("dependsOn") or []
+    gate = steps.get("preview-product-gate")
+    if not isinstance(gate, dict):
+        raise CatalogValidationError(
+            "streamlined workflow: preview-product-gate step is missing"
+        )
+    if set(gate.get("dependsOn") or []) != {
+        "preview-product-ledger",
+        "shop-page",
+        "product-page",
+        "collection-page",
+        "content-pages",
+    }:
+        raise CatalogValidationError(
+            "streamlined workflow: preview-product-gate must wait for the ledger "
+            "and every product-capable page step"
+        )
+    gate_prompt = gate.get("prompt")
+    if not isinstance(gate_prompt, str):
+        raise CatalogValidationError(
+            "streamlined workflow: preview-product-gate prompt must be a string"
+        )
+    require_fragments(
+        gate_prompt,
+        (
+            "baseline_product_ids",
+            "/api/v202604/company/products?page[limit]=100",
+            "meta.pagination.next_cursor",
+            "fluid_product_id",
+            "preview_product_ledger_path",
+            "preview-product-remediation-plan.json",
+            "status: BLOCKED",
+            "any run-created product",
+            "run_created_products == 0",
+            "Do not call fluid_product_import",
+            "do not create, update, publish, unpublish, or delete products",
+        ),
+        "streamlined workflow zero-tolerance preview-product gate contract",
+    )
+    for banned_claim in (
+        "both directions",
+        "closed_manifest_path",
+        "closed_manifest_sha256",
+        "fully enrich it",
     ):
+        if banned_claim in gate_prompt:
+            raise CatalogValidationError(
+                "streamlined workflow: preview-product-gate must not claim "
+                f"unsupported reconciliation via {banned_claim!r}"
+            )
+    gate_qa = gate.get("qa")
+    if (
+        not isinstance(gate_qa, dict)
+        or gate_qa.get("enabled") is not True
+        or gate_qa.get("strictness") != "standard"
+        or gate_qa.get("onFail") != "stop"
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: preview-product-gate must be a fail-closed gate"
+        )
+    require_fragments(
+        json.dumps(gate.get("acceptance", [])),
+        (
+            "every product id absent from the post-import baseline",
+            "blocks publication",
+            "zero run-created products",
+            "remediation plan",
+        ),
+        "streamlined workflow preview-product-gate acceptance contract",
+    )
+
+    for page_step_id in (
+        "home-page",
+        "shop-page",
+        "product-page",
+        "collection-page",
+        "content-pages",
+    ):
+        if not depends_transitively(steps, page_step_id, "import-products"):
+            raise CatalogValidationError(
+                f"streamlined workflow: {page_step_id} must wait for canonical product import"
+            )
+
+    publish = steps.get("publish-theme")
+    publish_dependencies = publish.get("dependsOn") if isinstance(publish, dict) else []
+    if "preview-product-gate" not in (publish_dependencies or []):
+        raise CatalogValidationError(
+            "streamlined workflow: publish-theme must wait for preview-product-gate"
+        )
+    if "import-products" not in (publish_dependencies or []):
         raise CatalogValidationError(
             "streamlined workflow: publish-theme must wait for import-products"
         )

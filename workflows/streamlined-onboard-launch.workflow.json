@@ -1,9 +1,9 @@
 {
-  "revision": "2026-07-31-catalog-closure",
+  "revision": "2026-07-31-preview-product-gate+content-body-fallback+theme-remediation-routing+live-handoff-counts",
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
   "launcherSkill": "onboarding/launch-setup",
-  "description": "Get a company live fast without letting page-created preview products escape catalog reconciliation. Source capture, brand, and a run-scoped destination-product baseline open together; page work stays parallel, then a two-way catalog closure and verified product import must pass before theme publication. Page-review findings still flow to the handoff, but catalog closure is fail-closed because a false 100% result can activate incomplete products. Themes are built by Fable 5. For the trimmed single-model version, use Speed Import.",
+  "description": "Get a company live fast without letting page-created preview products escape into production. Source discovery finalizes and canonically imports the product catalog before any page work starts. A post-import destination baseline then detects every product created by page steps; any new product blocks theme publication and emits a remediation plan because the current importer cannot prove full equivalence when adopting an existing preview. Page-review findings still flow to the handoff. Themes are built by Fable 5. For the trimmed single-model version, use Speed Import.",
   "maxParallel": 8,
   "runTitleTemplate": "Launch {{website_url}}",
   "steps": [
@@ -72,14 +72,15 @@
     },
     {
       "id": "preview-product-ledger",
-      "name": "Start the preview-product ledger",
+      "name": "Baseline products after canonical import",
       "model": "openai/gpt-5.6-sol",
       "target": {
         "type": "manager"
       },
-      "prompt": "Create the read-only, run-scoped baseline that lets the later catalog gate identify every product created while page steps run. Do not create, update, or delete a Fluid product.\n\nGenerate a fresh UUID as run_id and create `.mist-desktop/streamlined-preview-products/<run_id>/`. Cursor-paginate GET /api/v202604/company/products?page[limit]=100 through every exact meta.pagination.next_cursor until it is null. Preserve each API-returned product id exactly; reject a duplicate id, repeated cursor, missing terminator, or truncated page.\n\nWrite `baseline.json` in that directory with version, run_id, captured_at, destination_pages, baseline_product_ids, product_count, and final_cursor:null. Re-read it, require product_count to equal the number of unique baseline_product_ids, and compute its SHA-256. This artifact is the denominator for a later before/after difference, not a claim that the source catalog is complete.\n\nEnd with STEP_OUTPUT: { run_id, preview_product_ledger_dir, baseline_path, baseline_sha256, destination_pages, baseline_products, final_cursor: null }.",
+      "prompt": "Create the read-only, run-scoped product baseline after canonical import succeeds and before any page step can run. This ordering is the safety boundary: a later gate treats every product absent from this baseline as page-created and blocks publication. Do not create, update, or delete a Fluid product.\n\nRead import-products STEP_OUTPUT and require status: complete, coverage_percent: 100, and zero failures. This is only identity-level completion; do not claim that the importer verified full title, description, price, option, variant-topology, or product-image equivalence.\n\nGenerate a fresh UUID as run_id and create `.mist-desktop/streamlined-preview-products/<run_id>/`. Cursor-paginate GET /api/v202604/company/products?page[limit]=100 through every exact meta.pagination.next_cursor until it is null. Preserve each API-returned product id exactly; reject a duplicate id, repeated cursor, missing terminator, or truncated page.\n\nWrite `baseline.json` in that directory with version, run_id, captured_at, import_manifest_sha256, destination_pages, baseline_product_ids, product_count, and final_cursor:null. Re-read it, require product_count to equal the number of unique baseline_product_ids, and compute its SHA-256.\n\nEnd with STEP_OUTPUT: { run_id, preview_product_ledger_dir, baseline_path, baseline_sha256, import_manifest_sha256, destination_pages, baseline_products, final_cursor: null }.",
       "acceptance": [
-        "The baseline cursor-paginated the complete destination product list to meta.pagination.next_cursor == null and recorded every exact unique product id.",
+        "Canonical import completed before the baseline, and no product-capable page step can start until this baseline succeeds.",
+        "The baseline cursor-paginated the complete post-import destination product list to meta.pagination.next_cursor == null and recorded every exact unique product id.",
         "The run-scoped baseline file was re-read, its count reconciles with baseline_product_ids, and STEP_OUTPUT records its path and SHA-256."
       ],
       "qa": {
@@ -87,7 +88,9 @@
         "strictness": "standard",
         "onFail": "stop"
       },
-      "dependsOn": [],
+      "dependsOn": [
+        "import-products"
+      ],
       "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
@@ -582,7 +585,8 @@
         "product-page",
         "collection-page",
         "content-pages",
-        "import-products"
+        "import-products",
+        "preview-product-gate"
       ],
       "maxReworkRounds": 2,
       "recovery": {
@@ -596,14 +600,15 @@
       "target": {
         "type": "manager"
       },
-      "prompt": "Build the complete product source manifest before anything writes to Fluid. Call run_skill(\"fluid-product-admin-import\") and follow its catalog completion contract. This step is read-only against Fluid.\n\nRead clone-manifest.json before discovery. Treat every distinct product or shop origin in its route inventory as a catalog root. Discovery across those roots is one union: do not narrow the denominator to the launcher website's host when the source inventory found a separate shop or PDP host.\n\nWRITE AS YOU GO \u2014 this step's real constraint is your context window, not the network. Fetching a thousand product pages and holding them in the conversation exceeds the model's prompt limit, and that is a hard turn error: the step fails, its dependents are skipped, and the run dies. It is the single most likely way this workflow ends badly. Measured on a real catalog: 779,638 tokens against a 500,000 limit.\n\nSo stream the work to disk instead of accumulating it in the turn:\n1. Discover identities first and write them immediately \u2014 one JSON object per product per line in a JSONL manifest, holding only URL, source id, handle, and title.\n2. Then enrich in batches of at most 20. For each batch: fetch, extract the fields you need, append the enriched rows to the manifest, and move on. Do not re-read the manifest you just wrote, do not summarize batches back into the conversation, and never keep a fetched page body in context once its fields are extracted.\n3. Report progress as a running count every few batches, not as a list of products.\n\nPrefer cheap, structured sources over full pages: a products JSON endpoint, JSON-LD, or embedded application state carries the same fields at a fraction of the size. When you must fetch a PDP, request markdown rather than html or rawHtml \u2014 you need field values here, not layout. Layout is the theme track's problem and it captures its own evidence.\n\nDiscovery is still a union, not a sample: sitemap.xml and every child sitemap; any structured catalog API, exhausted to its own terminator; every collection and category pagination followed to the end; then every unique product enriched. A batch size is transport chunking, never a completion limit.\n\nRecord for each product: immutable source identity, title, description, price, variants with their own prices and identities, images, and collection membership.\n\nA collection that ended in a network error is not exhausted \u2014 retry it, and if it still will not enumerate, record it in unresolved with the exact error.\n\nIf you are running out of room despite all this, stop enriching, keep every discovered identity in the manifest, and report how many rows are identity-only. A complete identity list with partial fields is recoverable; a dead step is not.\n\nEnd with STEP_OUTPUT: { manifest_path, manifest_sha256, products: <count>, enriched: <count>, identity_only: <count>, variants: <count>, collections: <count>, completeness_basis: \"\u2026\", unresolved: [...] }.",
+      "prompt": "Build and finalize the complete product source manifest before anything writes to Fluid. Call run_skill(\"fluid-product-admin-import\") and follow its catalog completion contract. This step is read-only against Fluid.\n\nRead clone-manifest.json before discovery. Treat every distinct product or shop origin in its route inventory as a catalog root. Discovery across those roots is one union: do not narrow the denominator to the launcher website's host when the source inventory found a separate shop or PDP host.\n\nWRITE AS YOU GO \u2014 this step's real constraint is your context window, not the network. Fetching a thousand product pages and holding them in the conversation exceeds the model's prompt limit, and that is a hard turn error. Persist discovery and enrichment as separate state, never as duplicate event rows in one manifest.\n\nUse three distinct artifacts:\n1. Discover identities first and write each exactly once to `catalog-identities.jsonl`, holding only source_url, source_id, source_handle, and title. This ordered identity index is the denominator. Never append an enriched product row to catalog-identities.jsonl. Reject duplicate source identities and handles while writing it.\n2. Enrich in batches of at most 20. After extracting one complete product, write one importer-complete record per identity atomically to `catalog-records/<sha256(source_id)>.json`; a retry replaces that identity's record atomically instead of appending another event. Include title, description, price, currency, image_urls, option_axes, every variant identity/options/price/SKU, and collection membership. Never keep a fetched page body in context once its fields are extracted.\n3. Only after discovery is exhausted, stream the ordered identity index and its records into a new immutable importer-valid JSON object at `catalog-manifest.json`. Each index identity must resolve to exactly one record; missing, extra, identity-only, duplicate-identity, duplicate-handle, malformed, or unresolved records make status: BLOCKED. Include source_market_iso, products, excluded, discovery evidence, and unresolved. Re-read the finalized manifest, validate its counts and uniqueness, then compute manifest_sha256. Never append to the finalized manifest.\n\nPrefer cheap, structured sources over full pages: a products JSON endpoint, JSON-LD, or embedded application state carries the same fields at a fraction of the size. When you must fetch a PDP, request markdown rather than html or rawHtml \u2014 you need field values here, not layout. Layout is the theme track's problem and it captures its own evidence.\n\nDiscovery is still a union, not a sample: sitemap.xml and every child sitemap; any structured catalog API, exhausted to its own terminator; every collection and category pagination followed to the end; then every unique product enriched. A batch size is transport chunking, never a completion limit. A collection that ended in a network error is not exhausted \u2014 retry it, and if it still will not enumerate, record it in unresolved with the exact error.\n\nIf context is running out, leave catalog-identities.jsonl and the atomic catalog-records/ checkpoints intact and return status: BLOCKED. Do not fabricate a complete manifest and do not permit import to start.\n\nEnd with STEP_OUTPUT: { status: complete|BLOCKED, identity_index_path, records_dir, manifest_path, manifest_sha256, products: <count>, enriched: <count>, identity_only: <count>, variants: <count>, collections: <count>, completeness_basis: \"\u2026\", unresolved: [...] }.",
       "acceptance": [
-        "Catalog discovery ran as a union of sitemap, API, and pagination sources rather than a top-N sample, and the manifest states how completeness was established."
+        "Catalog discovery ran as a union of sitemap, API, and pagination sources rather than a top-N sample, and the manifest states how completeness was established.",
+        "catalog-identities.jsonl contains one identity row per discovered product, catalog-records/ contains one importer-complete atomic record per identity, and catalog-manifest.json contains each identity exactly once with no unresolved or identity-only rows."
       ],
       "qa": {
         "enabled": true,
         "strictness": "lenient",
-        "onFail": "continue"
+        "onFail": "stop"
       },
       "dependsOn": [
         "source-capture"
@@ -614,18 +619,18 @@
       }
     },
     {
-      "id": "catalog-closure",
-      "name": "Close the run-created product catalog",
+      "id": "preview-product-gate",
+      "name": "Block page-created preview products",
       "model": "openai/gpt-5.6-sol",
       "target": {
         "type": "manager"
       },
-      "prompt": "Close the product catalog in both directions before any import or theme publication. This is a read-only Fluid audit plus local artifact write; Do not call fluid_product_import and do not create, update, publish, unpublish, or delete products.\n\nRead the exact run_id, preview_product_ledger_dir, baseline_path, and baseline SHA-256 from preview-product-ledger STEP_OUTPUT. Read the initial manifest_path and manifest_sha256 from catalog-manifest STEP_OUTPUT plus clone-manifest.json and the Shop, Product, and Collection STEP_OUTPUT values. Recompute both input hashes and stop on drift.\n\nCursor-paginate GET /api/v202604/company/products?page[limit]=100 through every exact meta.pagination.next_cursor until null. Compute the exact destination-id difference against baseline_product_ids. Every product id absent from the baseline is a run-created candidate. GET each candidate's detail and write preview-products.json in preview_product_ledger_dir with run_id, exact source_identity, source_url, fluid_product_id, returned slug/canonical route, raw lifecycle/public fields, and the page-output evidence used to attribute it. Never match by title alone, list position, fuzzy URL, or neighboring product. An unattributable new id makes status: BLOCKED.\n\nNormalize the initial JSON or JSONL source artifact into a new immutable importer-valid JSON object; never rewrite the initial manifest. Preserve source_market_iso, currency, products, excluded, discovery evidence, and unresolved. Reconcile both directions: every live source-manifest identity must remain exactly once in products or have an evidence-backed source exclusion, and every run-created ledger identity must appear exactly once in products or have an evidence-backed exclusion that also proves the Fluid product is not active/public. No active preview product may be excluded. If a ledger source is missing from the initial manifest, fully enrich it from the exact source PDP into the same product schema before adding it; a minimal preview record or incomplete variant topology is not importable closure. Duplicate source identities, duplicate handles, duplicate Fluid ids, identity-only rows, unresolved discovery roots, ambiguous mappings, or an active excluded candidate make status: BLOCKED.\n\nWrite the closed manifest beside the ledger, re-read it, validate the same required schema and count reconciliation that fluid_product_import accepts, then compute closed_manifest_sha256. Write catalog-closure-receipt.json with run_id, input hashes, baseline/current/new counts, preview_product_ledger_path, included/excluded mappings, two-way counts, closed_manifest_path, closed_manifest_sha256, and status. Report complete only when all unresolved arrays are empty and both directions balance exactly.\n\nEnd with STEP_OUTPUT: { status: complete|BLOCKED, run_id, preview_product_ledger_path, run_created_products, included, excluded_inactive, closed_manifest_path, closed_manifest_sha256, source_products, unresolved: [...] }.",
+      "prompt": "Fail closed before theme publication if any page step created a product after canonical import. This is a read-only Fluid audit plus local evidence write. Do not call fluid_product_import and do not create, update, publish, unpublish, or delete products. The current importer can adopt a slug/SKU match without proving full field, option, variant-topology, or product-image equivalence, so this workflow must never ask it to reconcile a page-created preview.\n\nRead the exact run_id, preview_product_ledger_dir, baseline_path, and baseline SHA-256 from preview-product-ledger STEP_OUTPUT. Recompute the baseline hash and stop on drift. Read the Shop, Product, and Collection STEP_OUTPUT values only as attribution evidence; they cannot authorize adoption or repair.\n\nCursor-paginate GET /api/v202604/company/products?page[limit]=100 through every exact meta.pagination.next_cursor until null. Reject repeated cursors, duplicate ids, a missing terminator, or a truncated page. Compute the exact destination-id difference against baseline_product_ids. Every product id absent from the post-import baseline is a run-created candidate. GET each candidate's detail and write `preview-products.json` in preview_product_ledger_dir with run_id, fluid_product_id, returned slug/canonical route, raw lifecycle/public fields, and page-output attribution evidence when available. Never match by title alone, list position, fuzzy URL, or neighboring product.\n\nThe policy is zero tolerance: any run-created product makes status: BLOCKED, regardless of attribution, lifecycle status, apparent completeness, or source match. Do not exclude, adopt, enrich, repair, delete, or pass through a candidate. Write `preview-product-remediation-plan.json` beside the ledger with run_id, baseline/current/new counts, preview_product_ledger_path, exact Fluid ids, observed fields, attribution evidence, and the required human/cross-repository follow-up. Publication may proceed only when run_created_products == 0.\n\nWrite `preview-product-gate-receipt.json`, re-read it, and require its counts to balance. Report status: complete only for a cursor-complete destination audit with zero run-created products and zero unresolved evidence errors.\n\nEnd with STEP_OUTPUT: { status: complete|BLOCKED, run_id, preview_product_ledger_path, run_created_products, remediation_plan_path, baseline_products, current_products, unresolved: [...] }.",
       "acceptance": [
-        "The destination was cursor-paginated to null and every product id absent from the baseline is recorded in the run-scoped preview ledger with exactly one source identity and exact Fluid id.",
-        "Two-way reconciliation proves every source-manifest product is included or evidence-excluded and every run-created product is included or proven non-active; no active preview product is excluded.",
-        "The importer-valid closed manifest is immutable, re-read, schema-valid, hash-bound, and has zero duplicate, identity-only, ambiguous, or unresolved rows.",
-        "catalog-closure-receipt.json records the input and output hashes, counts, mappings, and a complete verdict only when both directions balance."
+        "The destination was cursor-paginated to null and every product id absent from the post-import baseline is recorded in the run-scoped preview ledger with its exact Fluid id.",
+        "Any page-created candidate blocks publication; attribution, inactive status, or apparent source parity never turns a run-created product into a pass.",
+        "The gate reports complete only with zero run-created products, balanced counts, an unchanged baseline hash, and no unresolved evidence errors.",
+        "A blocked gate writes a remediation plan with exact Fluid ids and evidence but performs no product mutation or importer call."
       ],
       "qa": {
         "enabled": true,
@@ -633,10 +638,11 @@
         "onFail": "stop"
       },
       "dependsOn": [
-        "catalog-manifest",
+        "preview-product-ledger",
         "shop-page",
         "product-page",
-        "collection-page"
+        "collection-page",
+        "content-pages"
       ],
       "maxReworkRounds": 1,
       "recovery": {
@@ -650,10 +656,10 @@
       "target": {
         "type": "manager"
       },
-      "prompt": "Import every product from the two-way-closed catalog. Read the exact closed_manifest_path, closed_manifest_sha256, and preview_product_ledger_path from catalog-closure STEP_OUTPUT and require its status: complete with zero unresolved; do not substitute the earlier catalog-manifest path, a different hash, or a narrower catalog.\n\nCall `fluid_product_import({ manifest_path: <exact closed_manifest_path>, manifest_sha256: <exact closed_manifest_sha256> })` exactly once in write mode. Do not set `verify_only:true`. The built-in tool owns manifest validation, market resolution, image uploads, product writes, bounded retries, checkpoint/resume, and complete live reconciliation. Do not invoke lower-level API or DAM tools and do not build a manual product or image loop.\n\nRead the compact receipt. Require status: complete, coverage_percent: 100, zero failures, and exactly one outcome for every closed-manifest identity. For each included run-created ledger row, require the matching source identity's outcome to report the same fluid_product_id; an adopted minimal preview whose fields or variants fail verification is not complete. Return the compact receipt plus these two-way ledger counts as STEP_OUTPUT without expanding the manifest.",
+      "prompt": "Canonically import the finalized source catalog before any product-capable page step runs. Read the exact manifest_path and manifest_sha256 from catalog-manifest STEP_OUTPUT and require its status: complete, identity_only: 0, and zero unresolved; do not substitute an identity index, records directory, different hash, or narrower catalog.\n\nCall `fluid_product_import({ manifest_path: <exact manifest_path>, manifest_sha256: <exact manifest_sha256> })` exactly once in write mode. Do not set `verify_only:true`. The built-in tool owns manifest validation, market resolution, image uploads, product writes, bounded retries, checkpoint/resume, and identity-level live reconciliation. Do not invoke lower-level API or DAM tools and do not build a manual product or image loop.\n\nRead the compact receipt. Require status: complete, coverage_percent: 100, zero failures, and exactly one outcome for every finalized-manifest identity. This receipt proves identity-level completion only: current duplicate adoption and verify-only behavior do not prove full title, description, price, option, variant-topology, or product-image equivalence for a pre-existing match. Return the compact receipt as STEP_OUTPUT without expanding the manifest.",
       "acceptance": [
-        "Every product in the source manifest resolves to exactly one live Fluid product \u2014 no duplicates, no silent drops \u2014 and the count is proven by paginating the products API rather than by self-report.",
-        "Prices, variants, and images match the source record for a sampled set spanning the catalog, including at least one multi-variant product."
+        "Every product in the source manifest resolves to exactly one live Fluid product \u2014 no duplicates, no silent drops \u2014 and the identity-level verification count is proven by paginating the products API rather than by self-report.",
+        "The receipt explicitly states that identity-level verification does not prove full field fidelity for a pre-existing match; strengthening that importer contract is separate cross-repository work."
       ],
       "qa": {
         "enabled": true,
@@ -671,7 +677,7 @@
         ]
       },
       "dependsOn": [
-        "catalog-closure"
+        "catalog-manifest"
       ],
       "maxReworkRounds": 0,
       "recovery": {
