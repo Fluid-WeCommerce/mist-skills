@@ -340,6 +340,15 @@
       "updated_at": "2026-07-04T00:00:00Z"
     },
     {
+      "slug": "compliance/claim-integrity-guard",
+      "name": "Claim Integrity Guard",
+      "description": "Audit a storefront for orphaned claim-footnote markers, missing or misplaced regulatory disclosures, unattributed trademarks, candidate disease-claim language, and leftover migration residue — then recover or draft the missing disclosure page. Built for regulated consumer-health copy, where a superscript symbol is a legal promise that migration tooling routinely breaks.",
+      "category": "compliance",
+      "icon": "shield-check",
+      "path": "compliance/claim-integrity-guard.md",
+      "updated_at": "2026-07-31T00:00:00Z"
+    },
+    {
       "slug": "themes/iterative-theme-refine",
       "name": "Iterative Theme Refine",
       "description": "Evidence-driven theme refinement after clone: each round compares semantic home/shop/PDP source landmarks against desktop and mobile previews, fixes the highest-impact root causes, and exits with a strict pass or itemized needs-review report.",
