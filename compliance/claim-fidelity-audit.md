@@ -57,7 +57,11 @@ substantiation*, not *altered wording*.
    - **Superiority** — `#1`, `number one`, `best`, `leading`, `most recommended`, `top-rated`
    - **Efficacy statistics** — any `NN%`, `n=`, `X out of Y`, `saw improvement`, `saw less`
    - **Clinical** — `clinically proven`, `clinically tested`, `randomized`, `placebo-controlled`,
-     `double-blind`, `dermatologist-recommended`, `physician-formulated`
+     `double-blind`
+   - **Credentialed endorsement** — a profession asserted as backing, e.g.
+     `dermatologist-recommended`, `physician-formulated`, `doctor-approved`,
+     `vet-recommended`, `pharmacist-recommended`. Match the *pattern*
+     (`<profession>-recommended|-formulated|-approved|-developed`), not a fixed list
    - **Timeframe** — `in N months`, `by month N`, `within N weeks`, `results in`
    - **Disease/health verbs** — `cures`, `treats`, `heals`, `prevents`, `reverses`, `fights`,
      `combats`, `eliminates`, `restores`, `blocks`
@@ -67,7 +71,13 @@ substantiation*, not *altered wording*.
 5. Detect **substantiation** in the same resource. Any of:
    - A footnote marker — `*`, `†`, `‡`, `§`, or a superscript digit adjacent to the claim
    - An FDA disclaimer — match on `have not been evaluated by the Food and Drug Administration`
-   - A named source — `IQVIA`, `ProVoice`, `study`, `trial`, `clinical`, `(20NN)`, `et al`
+   - A named source — a proper noun credited as the evidence, plus the generic markers
+     `study`, `trial`, `survey`, `data on file`, `(20NN)`, `et al`, `J. <journal abbrev>`.
+     **Do not hard-code a list of research firms.** Brands cite whoever surveyed them —
+     a market-research company, a journal, a university, their own data. Look for the
+     *shape*: a capitalised organisation or author name adjacent to the claim, or a
+     year in parentheses. Read the company's own footer once (step 8) and learn which
+     sources this brand actually uses, then match those.
    - A typicality statement — `results vary`, `individual results`, `not typical`
 
    ⚠️ **Exclude the claim's own span before testing for substantiation.** `clinical` appears in
