@@ -394,6 +394,16 @@
       "updated_at": "2026-07-23T00:00:00Z"
     },
     {
+      "slug": "sales/refill-cliff",
+      "name": "Refill Cliff",
+      "description": "Find the billing cycle where subscribers actually churn, explain what happens at that cycle, size the recoverable revenue in each at-risk segment, and hand back a ranked save list with a dollar figure per play.",
+      "category": "sales",
+      "icon": "trending-down",
+      "path": "sales/refill-cliff/SKILL.md",
+      "updated_at": "2026-07-31T22:30:00Z",
+      "references": ["sales/refill-cliff/references/cohort-sql.md"]
+    },
+    {
       "slug": "themes/clone-blog-page",
       "name": "Clone Blog Page",
       "description": "Recreate a source blog/journal index as the Fluid post_page route with real posts, author and date metadata, category filtering, and pagination. Finds blogs on subdomains, subpaths, or external platforms.",
