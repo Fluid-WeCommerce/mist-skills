@@ -892,6 +892,11 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "read the rendered DOM",
             "browser console",
             "local server logs",
+            "priority_media.items",
+            "theme_media_reconcile",
+            'mode: "theme_only"',
+            ".mist-desktop/home-catalog-index.json",
+            "priority_media.delivery_items",
         ),
         "streamlined workflow home-page implementation contract",
     )
@@ -978,6 +983,8 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "local rendered DOM for / in all mode",
             "preview console and local server logs",
             "Screenshots are optional source-design context only",
+            "completed priority_media reconciliation",
+            "verified DAM delivery URLs",
         ),
         "streamlined workflow home-page review acceptance contract",
     )
