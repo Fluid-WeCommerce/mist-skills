@@ -68,7 +68,7 @@
     {
       "id": "compliance-review",
       "name": "Full OTG compliance review",
-      "skill": "countries/compliance-manager",
+      "skill": "compliance/compliance-manager",
       "target": {
         "type": "manager"
       },

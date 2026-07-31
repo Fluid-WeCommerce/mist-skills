@@ -36,7 +36,7 @@ mist-skills/
 ├── mist/
 │   ├── scaffold-droplet.md
 │   └── env-vars-audit.md
-├── countries/
+├── compliance/
 │   ├── open-a-country.md          ← flat skill (front-end steps flow)
 │   └── compliance-manager/        ← folder skill
 │       └── SKILL.md
@@ -171,7 +171,7 @@ The desktop pulls `manifest.json` first, diffs it against its cached copy, and r
 
 ## Workflows
 
-A **skill** is a prompt the user reads and runs. A **workflow** is a declarative, multi-step chain the desktop's orchestrator runs across dedicated agent chats — each step gets QA-reviewed against acceptance criteria and reworked automatically on failure. Skills and workflows compose: an interactive skill (e.g. `countries/open-a-country`) collects the user's answers through the steps panel, then hands off to a workflow (`open-country`) that does the writes.
+A **skill** is a prompt the user reads and runs. A **workflow** is a declarative, multi-step chain the desktop's orchestrator runs across dedicated agent chats — each step gets QA-reviewed against acceptance criteria and reworked automatically on failure. Skills and workflows compose: an interactive skill (e.g. `compliance/open-a-country`) collects the user's answers through the steps panel, then hands off to a workflow (`open-country`) that does the writes.
 
 Workflows live in `workflows/` as **plain JSON** (`<slug>.workflow.json`) and are listed in `manifest.json` under a `workflows` array (separate from `skills`). The desktop syncs them into its cache exactly like skill bodies and loads them with this precedence, most-specific winning:
 
@@ -192,7 +192,7 @@ set only `id`, `name`, one of `prompt`/`skill`, and `acceptance`.
   "slug": "open-country",                      // matches the manifest entry; a user file of the same slug overrides this one
   "name": "Open a Country",
   "description": "…",
-  "launcherSkill": "countries/open-a-country", // optional vetted skill that gathers run context before run_workflow
+  "launcherSkill": "compliance/open-a-country", // optional vetted skill that gathers run context before run_workflow
   "maxParallel": 5,                            // 1-10, default 5. How many dependency-satisfied steps may run at once
   "steps": [
     {
@@ -201,7 +201,7 @@ set only `id`, `name`, one of `prompt`/`skill`, and `acceptance`.
 
       // Exactly ONE of prompt / skill:
       "prompt": "…",                           // inline instructions for this step's agent turn
-      // "skill": "countries/compliance-manager",  ← or delegate to a skill by slug
+      // "skill": "compliance/compliance-manager",  ← or delegate to a skill by slug
 
       "target": { "type": "manager" },         // where it runs. "manager" = the project the run was started from
       // "target": { "type": "kind", "kind": "theme", "fallbackToManager": true }

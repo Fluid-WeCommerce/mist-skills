@@ -52,7 +52,7 @@
     {
       "id": "compliance-review",
       "name": "Digital-focused compliance review",
-      "skill": "countries/compliance-manager",
+      "skill": "compliance/compliance-manager",
       "target": {
         "type": "manager"
       },

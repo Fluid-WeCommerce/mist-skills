@@ -50,7 +50,7 @@
     {
       "id": "compliance-review",
       "name": "Light NFR compliance review",
-      "skill": "countries/compliance-manager",
+      "skill": "compliance/compliance-manager",
       "target": {
         "type": "manager"
       },
