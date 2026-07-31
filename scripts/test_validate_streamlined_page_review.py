@@ -198,27 +198,24 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
 
     def test_requires_signed_source_denominator_tool_floors(self) -> None:
         for step_id in ("home-page", "storefront-check"):
-            for tool in ("file_sha256", "validate_theme_source_inventory"):
-                with self.subTest(step_id=step_id, tool=tool):
-                    workflow = self.load_workflow()
-                    step = next(
-                        step
-                        for step in workflow["steps"]
-                        if step.get("id") == step_id
-                    )
-                    step["qa"]["requiredTools"] = [
-                        requirement
-                        for requirement in step["qa"]["requiredTools"]
-                        if requirement.get("tool") != tool
-                    ]
+            with self.subTest(step_id=step_id):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                step["qa"]["requiredTools"] = [
+                    requirement
+                    for requirement in step["qa"]["requiredTools"]
+                    if requirement.get("tool") != "file_sha256"
+                ]
 
-                    with self.assertRaisesRegex(
-                        validate_catalog.CatalogValidationError,
-                        "deterministic QA evidence",
-                    ):
-                        validate_catalog.validate_streamlined_page_review_contract(
-                            workflow
-                        )
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "deterministic QA evidence",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(workflow)
 
     def test_requires_inventory_linked_interaction_receipts(self) -> None:
         required_fragments = (
@@ -244,6 +241,77 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
                     validate_catalog.validate_streamlined_page_review_contract(
                         workflow
                     )
+
+    def test_rejects_full_catalog_validator_for_home_only_evidence(self) -> None:
+        for step_id in ("home-page", "storefront-check"):
+            with self.subTest(step_id=step_id):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                step["qa"]["requiredTools"].append(
+                    {
+                        "tool": "validate_theme_source_inventory",
+                        "input": {"manifest_path": "clone-manifest.json"},
+                        "minSuccessfulCalls": 1,
+                    }
+                )
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "Home-only workflow must not require the full-catalog source validator",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(workflow)
+
+    def test_rejects_full_catalog_validator_call_in_home_only_prompt(self) -> None:
+        for step_id in ("home-page", "storefront-check"):
+            with self.subTest(step_id=step_id):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                step["prompt"] += (
+                    " Call validate_theme_source_inventory with manifest_path "
+                    "clone-manifest.json."
+                )
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "Home-only workflow must not call the full-catalog source validator",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(workflow)
+
+    def test_requires_current_3009_dynamic_path_binding_disclosure(self) -> None:
+        required_fragments = (
+            "CURRENT-3009",
+            "read_file/file_sha256 receipts",
+            "cannot machine-bind",
+            "requiredTools alone is not proof",
+        )
+        for step_id in ("home-page", "storefront-check"):
+            for fragment in required_fragments:
+                with self.subTest(step_id=step_id, fragment=fragment):
+                    workflow = self.load_workflow()
+                    step = next(
+                        step
+                        for step in workflow["steps"]
+                        if step.get("id") == step_id
+                    )
+                    step["acceptance"] = [
+                        item.replace(fragment, "") for item in step["acceptance"]
+                    ]
+
+                    with self.assertRaisesRegex(
+                        validate_catalog.CatalogValidationError,
+                        "review acceptance contract",
+                    ):
+                        validate_catalog.validate_streamlined_page_review_contract(
+                            workflow
+                        )
 
     def test_requires_bounded_home_and_storefront_interaction_tools(self) -> None:
         for step_id in ("home-page", "storefront-check"):

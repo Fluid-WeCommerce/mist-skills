@@ -871,12 +871,26 @@ def _signed_source_hash_qa_requirement() -> dict[str, Any]:
     }
 
 
-def _source_inventory_validation_qa_requirement() -> dict[str, Any]:
-    return {
-        "tool": "validate_theme_source_inventory",
-        "input": {"manifest_path": "clone-manifest.json"},
-        "minSuccessfulCalls": 1,
-    }
+def _reject_full_catalog_source_validator(step: dict[str, Any]) -> None:
+    prompt = step.get("prompt")
+    if isinstance(prompt, str) and "validate_theme_source_inventory" in prompt:
+        raise CatalogValidationError(
+            "streamlined workflow: Home-only workflow must not call the "
+            "full-catalog source validator"
+        )
+    qa = step.get("qa")
+    required_tools = qa.get("requiredTools", []) if isinstance(qa, dict) else []
+    if not isinstance(required_tools, list):
+        return
+    if any(
+        isinstance(requirement, dict)
+        and requirement.get("tool") == "validate_theme_source_inventory"
+        for requirement in required_tools
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: Home-only workflow must not require the "
+            "full-catalog source validator"
+        )
 
 
 def _validate_streamlined_home_review_contract(workflow: Any) -> None:
@@ -963,6 +977,7 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
         "streamlined workflow home-page implementation contract",
     )
     qa = home_step.get("qa")
+    _reject_full_catalog_source_validator(home_step)
     if (
         home_step.get("dependsOn") != ["source-capture"]
         or home_step.get("maxReworkRounds") != 1
@@ -1008,7 +1023,6 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "minSuccessfulCalls": 1,
         },
         _signed_source_hash_qa_requirement(),
-        _source_inventory_validation_qa_requirement(),
         _home_cta_route_qa_requirement(),
         _home_interaction_qa_requirement(),
         {
@@ -1070,6 +1084,10 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "no source-present control family or individual non-repeated control was omitted",
             "stateful interaction families",
             "navigational and submission targets",
+            "CURRENT-3009",
+            "read_file/file_sha256 receipts",
+            "cannot machine-bind",
+            "requiredTools alone is not proof",
         ),
         "streamlined workflow home-page review acceptance contract",
     )
@@ -1508,6 +1526,7 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
         "streamlined workflow storefront-check implementation contract",
     )
     qa = step.get("qa")
+    _reject_full_catalog_source_validator(step)
     # maxReworkRounds must stay 0. This step's own prompt forbids it from
     # editing anything, so a rework round can only be spent discovering it
     # cannot act — which is exactly how the TUSHY run ended, with the round
@@ -1532,7 +1551,6 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
         minimum_routes=5,
     )
     expected_tools.insert(-2, _signed_source_hash_qa_requirement())
-    expected_tools.insert(-2, _source_inventory_validation_qa_requirement())
     expected_tools.insert(-2, _home_cta_route_qa_requirement())
     expected_tools.insert(-2, _home_interaction_qa_requirement())
     if qa.get("requiredTools") != expected_tools:
@@ -1576,6 +1594,10 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
             "signed source evidence path, hash, viewport, and selector or locator",
             "home_interactions.stateful_receipts",
             "home_interactions.route_receipts",
+            "CURRENT-3009",
+            "read_file/file_sha256 receipts",
+            "cannot machine-bind",
+            "requiredTools alone is not proof",
         ),
         "streamlined workflow storefront-check review acceptance contract",
     )
