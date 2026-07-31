@@ -135,7 +135,7 @@
     {
       "slug": "themes/rtl-localization",
       "name": "RTL localization",
-      "description": "Make a storefront render right-to-left for an RTL-language market (Arabic, Hebrew, Persian, Urdu). Sets dir from the locale, converts CSS to logical properties, fixes carousels/icons/splits, and optionally serves a per-country RTL template via a region rule.",
+      "description": "Localize a file-based Fluid theme for an RTL-language market (Arabic, Hebrew, Persian, Urdu). Always mirrors the layout via dir + CSS logical properties on the shared theme and fixes directional sections in place; asks the user whether the market also needs different content before creating any variant template. No section copies.",
       "category": "themes",
       "icon": "align-right",
       "path": "themes/rtl-localization/SKILL.md",

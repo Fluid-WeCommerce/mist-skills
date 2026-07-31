@@ -1,94 +1,63 @@
-# Fluid API Appendix (public-facing)
+# Fluid File-Based Theme Appendix
 
-This skill runs against the **exposed Fluid company API** — everything below is callable by an
-external client with a company token. Work against the active company: base URL
-`{{company.api_base}}`, `Authorization: Bearer <token>`, `Content-Type: application/json`.
-Do NOT rely on editing repo files or the Rails console — use these endpoints. Verify against
-the OpenAPI specs (`docs/openapi/themes-v0.yaml`, `docs/openapi/admin-v2025-06.yaml`) if a
-field is unclear.
+This skill operates on a **file-based** Fluid theme (the `product/default/index.liquid` +
+`sections/*` layout), not the API-managed template API. If the company's theme is API-managed,
+STOP — creating a file-based artifact against an API theme leaves an orphan.
 
-## Scopes required
+## Theme layout
 
-- Templates + region rules: `application_themes:view` (read), `application_themes:update` (write).
-- Sitemap: `sitemap:view` (read), `sitemap:update` (write).
-
-## Key facts
-
-- The theme layout ships with no `dir` attribute today — Phase 2 adds it. Both the Liquid
-  `content` and the `stylesheet` (CSS) of a template are editable through the template API, so
-  the direction-aware markup and logical-property CSS go through the same endpoint.
-- A template's `content` is locale-translatable, but template selection is **not** locale-aware.
-  Serving a different template per **country** is done with a region rule.
-- Region is resolved from `?region=`, the `fluid_locale` cookie, or geo headers — not a URL path.
-
-## Phase 2 & 4 — edit / clone the template
-
-List, read, and write templates via `/api/application_theme_templates`.
-
-- **Find the target template:** `GET {{company.api_base}}/api/application_theme_templates`
-  (filter by `themeable_type`, e.g. `home_page`, `product`, `page`).
-- **Clone into an RTL variant** (preferred over editing the shared template):
-  `POST {{company.api_base}}/api/application_theme_templates/:id/clone`
-- **Edit the variant's markup/CSS** (add `dir`, convert to logical properties):
-  `PATCH {{company.api_base}}/api/application_theme_templates/:id`
-
-```json
-{
-  "application_theme_template": {
-    "name": "Home — RTL (ar)",
-    "content": "…Liquid with dir-aware layout…",
-    "stylesheet": "…CSS using logical properties…",
-    "status": "draft"
-  }
-}
+```
+layouts/theme.liquid          ← the <html> shell; where `dir` goes
+sections/<name>/index.liquid  ← shared, reusable sections (with {% schema %})
+product/default/index.liquid  ← a page template: composes sections via {% section %}
+product/<variant>/index.liquid← a slug/variant template (only for different structure)
 ```
 
-- **Publish when approved:** `POST {{company.api_base}}/api/application_theme_templates/:id/publish`
-- Create-from-scratch (if not cloning): `POST {{company.api_base}}/api/application_theme_templates?application_theme_id=:id`
-  with `application_theme_template: { name, themeable_type, content, stylesheet, variables, translations }`.
-- Other useful ops: `POST …/:id/set_default`, `POST …/:id/render_page` (preview),
-  `GET …/:id/available_variables`.
+A page template composes shared sections and carries a `{% schema %}` with `sections` + `order`.
+It holds no page copy and does not recreate section blocks. Every RTL-locale visitor renders the
+same templates — so mirroring belongs in the shared layout/CSS, applied once.
 
-## Phase 5 — assign the template to a country (the "router")
+## Phase 2 — where direction localization goes
 
-Bind country → template with a region rule. This is the mechanism behind "assign it per country".
+- **`dir` attribute:** in `layouts/theme.liquid`, on the `<html>` tag, driven by the locale:
+  ```liquid
+  <html lang="{{ localization.language.iso_code }}" dir="{% if localization.language.rtl %}rtl{% else %}ltr{% endif %}">
+  ```
+  If the theme exposes no `rtl` flag, resolve it by testing `localization.language.iso` against
+  the RTL set in `references/direction-map.md` (a small `{% case %}`/`{% if contains %}` check).
+  `localization.language`, `localization.country`, and `localization.available_countries` are
+  available in every template.
+- **Logical CSS:** convert physical properties to logical ones in the theme's shared CSS so the
+  whole layout mirrors under `dir="rtl"`. Do this in the shared stylesheets/section CSS — not in
+  per-market copies.
 
-`POST {{company.api_base}}/api/theme_region_rules`
+## Phase 3 — special sections
 
-```json
-{
-  "theme_region_rule": {
-    "route_path": "/",
-    "region_code": "SA",
-    "application_theme_template_id": 12345,
-    "route_kind": "page",
-    "redirect_type": "template",
-    "priority": 0,
-    "active": true
-  }
-}
-```
+Fix directional components in the **existing shared** `sections/*` with `[dir=rtl]` overrides
+(see `references/special-sections.md`). Never fork a section into an RTL twin.
 
-- `region_code` is the country ISO (e.g. `SA`) or `default`.
-- `application_theme_id` is optional (defaults to the company's current theme).
-- Manage with `GET /api/theme_region_rules`, `PUT /api/theme_region_rules/:id`,
-  `DELETE /api/theme_region_rules/:id`.
+## Phase 4 — variant template (only for different content)
 
-## Phase 6 — SEO / sitemap (what the API actually allows)
+Repo rule: *"Only create a slug/variant template when the source truly uses a different
+structure."* Mirroring is never a reason to create one. When the user has asked for different
+content:
+- Create `product/<variant>/index.liquid` (or the relevant resource) that **reuses the shared
+  sections** with a different `order`/settings, plus at most one new market section.
+- Give every section instance a unique `id`; keep blocks in the section presets, not the template.
 
-`/api/v2025-06/sitemap` exposes **visibility only**:
+## Phase 5 — push + verify
 
-- `GET {{company.api_base}}/api/v2025-06/sitemap` — list URLs + visibility state.
-- `PATCH {{company.api_base}}/api/v2025-06/sitemap` — `{ "url": "...", "active": true|false }`,
-  or `{ "url": "hide-all"|"show-all", "active": ... }`.
+Push the theme with the project's normal mechanism (e.g. `fluid theme push`, or the Mist theme
+tooling). Then load the storefront in the target locale/region and run the Phase 5 checks. Take
+before/after screenshots.
 
-**Known limitation (do not overpromise):** there is **no exposed API** to emit per-country
-`hreflang` alternates or path-based localized URLs. hreflang is emitted per-language via a
-`?lang=<iso>` param in the storefront head, and the sitemap only hides/shows URLs. Ship RTL
-with the template + region rule, set language `hreflang` where available, and flag deeper
-per-country SEO indexing as a backend follow-up rather than implementing it here.
+## Country routing & SEO — what to know
 
-## Verify
-
-Preview with `POST …/:id/render_page`, then load the storefront with the target region
-(`?region=SA`) and run the Phase 7 checks.
+- Pure mirroring needs **no** per-country routing: `dir` is locale-driven, so any RTL-locale
+  visitor gets the mirrored layout automatically once the shared theme is pushed.
+- A *different-content* variant that must be served to a specific country relies on region
+  routing (a region rule keyed on country ISO). That is an API/config concern outside the theme
+  files — confirm the mechanism with the user before wiring it, to avoid an orphan mapping.
+- **SEO limitation (don't overpromise):** there is no exposed way to emit per-country `hreflang`
+  alternates or path-based localized URLs; `hreflang` is per-language via a `?lang=<iso>` param.
+  Flag deeper per-country indexing as a backend follow-up.
