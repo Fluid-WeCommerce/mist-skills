@@ -76,6 +76,30 @@ class StreamlinedCatalogClosureContractTest(unittest.TestCase):
         ):
             validate_catalog.validate_streamlined_catalog_closure_contract(workflow)
 
+    def test_source_capture_requires_evidence_backed_catalog_root_qa(self) -> None:
+        workflow = self.load_workflow()
+        source_capture = self.step(workflow, "source-capture")
+        source_capture["qa"]["requiredTools"] = []
+
+        with self.assertRaisesRegex(
+            validate_catalog.CatalogValidationError,
+            "source-capture evidence QA contract",
+        ):
+            validate_catalog.validate_streamlined_catalog_closure_contract(workflow)
+
+    def test_catalog_root_denominator_disclaims_web_completeness(self) -> None:
+        workflow = self.load_workflow()
+        catalog_manifest = self.step(workflow, "catalog-manifest")
+        catalog_manifest["prompt"] = catalog_manifest["prompt"].replace(
+            "does not prove web completeness", "proves web completeness"
+        )
+
+        with self.assertRaisesRegex(
+            validate_catalog.CatalogValidationError,
+            "bounded source denominator contract",
+        ):
+            validate_catalog.validate_streamlined_catalog_closure_contract(workflow)
+
     def test_catalog_producer_separates_identity_index_from_final_manifest(self) -> None:
         workflow = self.load_workflow()
         catalog_manifest = self.step(workflow, "catalog-manifest")
@@ -131,7 +155,20 @@ class StreamlinedCatalogClosureContractTest(unittest.TestCase):
 
         with self.assertRaisesRegex(
             validate_catalog.CatalogValidationError,
-            "preview-product-gate must be a fail-closed gate",
+            "preview-product-gate must stop on QA failure",
+        ):
+            validate_catalog.validate_streamlined_catalog_closure_contract(workflow)
+
+    def test_workflow_discloses_qa_containment_is_not_machine_proof(self) -> None:
+        workflow = self.load_workflow()
+        workflow["description"] = workflow["description"].replace(
+            "does not provide machine-level fail-closed proof",
+            "provides machine-level fail-closed proof",
+        )
+
+        with self.assertRaisesRegex(
+            validate_catalog.CatalogValidationError,
+            "QA containment disclosure",
         ):
             validate_catalog.validate_streamlined_catalog_closure_contract(workflow)
 
@@ -158,7 +195,7 @@ class StreamlinedCatalogClosureContractTest(unittest.TestCase):
 
                 with self.assertRaisesRegex(
                     validate_catalog.CatalogValidationError,
-                    "deterministic QA evidence floor",
+                    "supported QA evidence floor",
                 ):
                     validate_catalog.validate_streamlined_catalog_closure_contract(
                         workflow
@@ -261,6 +298,129 @@ class StreamlinedCatalogClosureContractTest(unittest.TestCase):
                 [enriched],
                 source_market_iso="US",
             )
+
+    def test_normalization_rejects_empty_identity_url_or_title(self) -> None:
+        for field in ("source_url", "title"):
+            for empty_value in ("", "   "):
+                with self.subTest(field=field, empty_value=repr(empty_value)):
+                    identity = {
+                        "source_id": "watch",
+                        "source_url": "https://source.example/products/watch",
+                        "source_handle": "watch",
+                        "title": "Watch",
+                    }
+                    identity[field] = empty_value
+
+                    with self.assertRaisesRegex(
+                        validate_catalog.CatalogValidationError,
+                        f"has no {field}",
+                    ):
+                        validate_catalog.normalize_streamlined_catalog_artifacts(
+                            json.dumps(identity),
+                            [
+                                product(
+                                    "watch",
+                                    "watch",
+                                    title="Watch",
+                                    sku="WATCH-ONE",
+                                )
+                            ],
+                            source_market_iso="US",
+                        )
+
+    def test_normalization_rejects_empty_required_product_values(self) -> None:
+        identity = {
+            "source_id": "watch",
+            "source_url": "https://source.example/products/watch",
+            "source_handle": "watch",
+            "title": "Watch",
+        }
+        for field in ("source_url", "title", "price", "currency"):
+            for empty_value in ("", "   "):
+                with self.subTest(field=field, empty_value=repr(empty_value)):
+                    enriched = product(
+                        "watch", "watch", title="Watch", sku="WATCH-ONE"
+                    )
+                    enriched[field] = empty_value
+
+                    with self.assertRaisesRegex(
+                        validate_catalog.CatalogValidationError,
+                        "is not importer-complete",
+                    ):
+                        validate_catalog.normalize_streamlined_catalog_artifacts(
+                            json.dumps(identity),
+                            [enriched],
+                            source_market_iso="US",
+                        )
+
+    def test_normalization_rejects_empty_image_url(self) -> None:
+        identity = {
+            "source_id": "watch",
+            "source_url": "https://source.example/products/watch",
+            "source_handle": "watch",
+            "title": "Watch",
+        }
+        for empty_value in ("", "   "):
+            with self.subTest(empty_value=repr(empty_value)):
+                enriched = product(
+                    "watch", "watch", title="Watch", sku="WATCH-ONE"
+                )
+                enriched["image_urls"] = [empty_value]
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "is not importer-complete",
+                ):
+                    validate_catalog.normalize_streamlined_catalog_artifacts(
+                        json.dumps(identity),
+                        [enriched],
+                        source_market_iso="US",
+                    )
+
+    def test_normalization_rejects_empty_variant_id_or_price(self) -> None:
+        identity = {
+            "source_id": "watch",
+            "source_url": "https://source.example/products/watch",
+            "source_handle": "watch",
+            "title": "Watch",
+        }
+        for field in ("source_variant_id", "price"):
+            for empty_value in ("", "   "):
+                with self.subTest(field=field, empty_value=repr(empty_value)):
+                    enriched = product(
+                        "watch", "watch", title="Watch", sku="WATCH-ONE"
+                    )
+                    enriched["variants"][0][field] = empty_value
+
+                    with self.assertRaisesRegex(
+                        validate_catalog.CatalogValidationError,
+                        "is not importer-complete",
+                    ):
+                        validate_catalog.normalize_streamlined_catalog_artifacts(
+                            json.dumps(identity),
+                            [enriched],
+                            source_market_iso="US",
+                        )
+
+    def test_normalization_rejects_empty_market_iso(self) -> None:
+        identity = {
+            "source_id": "watch",
+            "source_url": "https://source.example/products/watch",
+            "source_handle": "watch",
+            "title": "Watch",
+        }
+
+        for empty_value in ("", "   "):
+            with self.subTest(empty_value=repr(empty_value)):
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "source_market_iso must be a non-empty string",
+                ):
+                    validate_catalog.normalize_streamlined_catalog_artifacts(
+                        json.dumps(identity),
+                        [product("watch", "watch", title="Watch", sku="WATCH-ONE")],
+                        source_market_iso=empty_value,
+                    )
 
 
 if __name__ == "__main__":
