@@ -59,12 +59,139 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
 
     def test_requires_home_source_control_inventory_contract(self) -> None:
         required_fragments = (
+            "home_interactions.source_html_path",
             "home_interactions.controls",
+            "controls array must be non-empty",
             "source-present visible control",
             "semantic kind, target, state transition, and keyboard/accessibility behavior",
+            "expected_outcome.type is route, submission, or state",
+            "repeated is a boolean",
+            "retained source HTML path plus a selector or locator",
             "blank, hash-only, or javascript: links",
             "action-looking buttons without a real target or state hook",
             "documented source-equivalent exception",
+        )
+        for fragment in required_fragments:
+            with self.subTest(fragment=fragment):
+                workflow = self.load_workflow()
+                home_step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == "home-page"
+                )
+                home_step["prompt"] = home_step["prompt"].replace(fragment, "")
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "home-page implementation contract",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(
+                        workflow
+                    )
+
+    def test_requires_independent_source_control_denominator_review(self) -> None:
+        required_fragments = (
+            "independently enumerated every visible actionable element in the retained Home HTML",
+            "non-empty controls array",
+            "source evidence path and selector or locator",
+            "no source-present control family or individual non-repeated control was omitted",
+        )
+        for fragment in required_fragments:
+            with self.subTest(fragment=fragment):
+                workflow = self.load_workflow()
+                home_step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == "home-page"
+                )
+                home_step["acceptance"] = [
+                    item.replace(fragment, "") for item in home_step["acceptance"]
+                ]
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "home-page review acceptance contract",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(
+                        workflow
+                    )
+
+    def test_separates_route_checks_from_stateful_interactions(self) -> None:
+        required_fragments = (
+            "Use interact_preview only for stateful controls",
+            "Do not call interact_preview on links, navigational CTAs, or form submissions",
+            "Verify primary CTA targets in code and rendered DOM",
+            "load each representative resolved route with read_preview_dom",
+        )
+        for step_id in ("home-page", "storefront-check"):
+            for fragment in required_fragments:
+                with self.subTest(step_id=step_id, fragment=fragment):
+                    workflow = self.load_workflow()
+                    step = next(
+                        step
+                        for step in workflow["steps"]
+                        if step.get("id") == step_id
+                    )
+                    step["prompt"] = step["prompt"].replace(fragment, "")
+
+                    with self.assertRaisesRegex(
+                        validate_catalog.CatalogValidationError,
+                        "implementation contract",
+                    ):
+                        validate_catalog.validate_streamlined_page_review_contract(
+                            workflow
+                        )
+
+    def test_requires_mobile_stateful_interaction_and_route_tool_floors(self) -> None:
+        for step_id in ("home-page", "storefront-check"):
+            with self.subTest(step_id=step_id, tool="interact_preview"):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                interaction_requirement = next(
+                    requirement
+                    for requirement in step["qa"]["requiredTools"]
+                    if requirement.get("tool") == "interact_preview"
+                )
+                self.assertEqual(
+                    interaction_requirement.get("input"),
+                    {"path": "/", "width": 390, "height": 844},
+                )
+
+            with self.subTest(step_id=step_id, tool="route read_preview_dom"):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                step["qa"]["requiredTools"] = [
+                    requirement
+                    for requirement in step["qa"]["requiredTools"]
+                    if not (
+                        requirement.get("tool") == "read_preview_dom"
+                        and requirement.get("minSuccessfulCalls") == 2
+                        and requirement.get("distinctBy") == ["path"]
+                    )
+                ]
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "deterministic QA evidence",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(
+                        workflow
+                    )
+
+    def test_requires_inventory_linked_interaction_receipts(self) -> None:
+        required_fragments = (
+            "home_interactions.stateful_receipts",
+            "control id, family, source evidence, selector, viewport, pre-state, action, post-state, and result",
+            "home_interactions.route_receipts",
+            "control id, resolved href or action, loaded route, status, and DOM evidence",
         )
         for fragment in required_fragments:
             with self.subTest(fragment=fragment):

@@ -850,8 +850,17 @@ def validate_streamlined_product_import_contract() -> None:
 def _home_interaction_qa_requirement() -> dict[str, Any]:
     return {
         "tool": "interact_preview",
-        "input": {"path": "/"},
+        "input": {"path": "/", "width": 390, "height": 844},
         "minSuccessfulCalls": 1,
+    }
+
+
+def _home_route_qa_requirement() -> dict[str, Any]:
+    return {
+        "tool": "read_preview_dom",
+        "input": {"mode": "all"},
+        "minSuccessfulCalls": 2,
+        "distinctBy": ["path"],
     }
 
 
@@ -905,9 +914,14 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             'mode: "theme_only"',
             ".mist-desktop/home-catalog-index.json",
             "priority_media.delivery_items",
+            "home_interactions.source_html_path",
             "home_interactions.controls",
+            "controls array must be non-empty",
             "source-present visible control",
             "semantic kind, target, state transition, and keyboard/accessibility behavior",
+            "expected_outcome.type is route, submission, or state",
+            "repeated is a boolean",
+            "retained source HTML path plus a selector or locator",
             "blank, hash-only, or javascript: links",
             "action-looking buttons without a real target or state hook",
             "documented source-equivalent exception",
@@ -916,6 +930,14 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "representative repeated control",
             "primary CTA targets",
             "Do not exhaustively click duplicate controls",
+            "Use interact_preview only for stateful controls",
+            "Do not call interact_preview on links, navigational CTAs, or form submissions",
+            "Verify primary CTA targets in code and rendered DOM",
+            "load each representative resolved route with read_preview_dom",
+            "home_interactions.stateful_receipts",
+            "control id, family, source evidence, selector, viewport, pre-state, action, post-state, and result",
+            "home_interactions.route_receipts",
+            "control id, resolved href or action, loaded route, status, and DOM evidence",
         ),
         "streamlined workflow home-page implementation contract",
     )
@@ -964,6 +986,7 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "input": {"path": "/", "mode": "all"},
             "minSuccessfulCalls": 1,
         },
+        _home_route_qa_requirement(),
         _home_interaction_qa_requirement(),
         {
             "tool": "read_preview_console",
@@ -1014,6 +1037,12 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "action-looking buttons without a real target or state hook",
             'A source button implemented as a generated href=\\"#\\" is REWORK and leaves this lenient step needs-review.',
             "post-action URL, DOM, or state transition",
+            "independently enumerated every visible actionable element in the retained Home HTML",
+            "non-empty controls array",
+            "source evidence path and selector or locator",
+            "no source-present control family or individual non-repeated control was omitted",
+            "stateful interaction families",
+            "navigational and submission targets",
         ),
         "streamlined workflow home-page review acceptance contract",
     )
@@ -1437,6 +1466,13 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
             "blank, hash-only, or javascript: links",
             "action-looking buttons without a real target or state hook",
             "post-action URL, DOM, or state transition",
+            "Use interact_preview only for stateful controls",
+            "Do not call interact_preview on links, navigational CTAs, or form submissions",
+            "Verify primary CTA targets in code and rendered DOM",
+            "load each representative resolved route with read_preview_dom",
+            "independently enumerate the retained Home HTML",
+            "home_interactions.stateful_receipts",
+            "home_interactions.route_receipts",
         ),
         "streamlined workflow storefront-check implementation contract",
     )
@@ -1464,6 +1500,7 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
         minimum_searches=6,
         minimum_routes=5,
     )
+    expected_tools.insert(-2, _home_route_qa_requirement())
     expected_tools.insert(-2, _home_interaction_qa_requirement())
     if qa.get("requiredTools") != expected_tools:
         raise CatalogValidationError(
@@ -1496,6 +1533,11 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
             "blank, hash-only, or javascript: links",
             "action-looking buttons without a real target or state hook",
             "post-action URL, DOM, or state transition",
+            "stateful interaction families",
+            "navigational and submission targets",
+            "retained Home HTML",
+            "home_interactions.stateful_receipts",
+            "home_interactions.route_receipts",
         ),
         "streamlined workflow storefront-check review acceptance contract",
     )
