@@ -313,6 +313,16 @@
       "updated_at": "2026-07-13T00:00:00Z"
     },
     {
+      "slug": "marketing/persona-consultation-builder",
+      "name": "Persona Consultation Builder",
+      "description": "Spin up a persona-scoped Liquid consultation — 2 questions instead of 19, because the persona pre-answers texture and scalp — plus the rep-facing Portal share screen. Use for \"build a consultation for X\", \"add a persona funnel\", \"spin up a curly-hair quiz\", or when a rep wants a persona-scoped mini-quiz that credits them on conversion.",
+      "category": "marketing",
+      "icon": "sparkles",
+      "preview": "hero,header,panel,share,cards3,cta",
+      "path": "marketing/persona-consultation-builder/SKILL.md",
+      "updated_at": "2026-07-31T00:00:00Z"
+    },
+    {
       "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix — approvals are applied and their impact is tracked.",
