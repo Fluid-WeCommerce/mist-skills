@@ -403,6 +403,15 @@
       "updated_at": "2026-07-23T00:00:00Z"
     },
     {
+      "slug": "sales/non-renewed-subscriptions-summary",
+      "name": "Non-Renewed Subscriptions Summary",
+      "description": "It provides a summary of subscriptions that were not renewed for various reasons",
+      "category": "sales",
+      "icon": "credit-card",
+      "path": "sales/non-renewed-subscriptions-summary.md",
+      "updated_at": "2026-07-31T15:01:18Z"
+    },
+    {
       "slug": "themes/clone-blog-page",
       "name": "Clone Blog Page",
       "description": "Recreate a source blog/journal index as the Fluid post_page route with real posts, author and date metadata, category filtering, and pagination. Finds blogs on subdomains, subpaths, or external platforms.",
