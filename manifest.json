@@ -286,6 +286,15 @@
       "updated_at": "2026-07-25T19:00:00Z"
     },
     {
+      "slug": "onboarding/import-fidelity-auditor",
+      "name": "Import Fidelity Auditor",
+      "description": "Audit a completed Fluid onboarding import against its source storefront when product identity, variants, prices, subscriptions, inventory, images, or regional availability may not have carried over faithfully.",
+      "category": "onboarding",
+      "icon": "scan-search",
+      "path": "onboarding/import-fidelity-auditor.md",
+      "updated_at": "2026-07-31T20:00:00Z"
+    },
+    {
       "slug": "marketing/ugc-discovery",
       "name": "UGC Discovery",
       "description": "Find the 20-30 most engaging, FTC/FDA-compliant UGC posts about a brand or product across TikTok, Instagram, YouTube, and Pinterest, let the user pick, and pull the picks into the DAM.",
