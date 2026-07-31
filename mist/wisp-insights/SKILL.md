@@ -7,8 +7,8 @@ category: mist
 
 # Answer a question about {{company.name}}'s storefront, from the sessions
 
-Wisp records every storefront page as a replayable session, detects frustration signals in cron, and
-exposes the whole corpus through an MCP server. This skill is the analyst's half of that: it takes a
+Wisp records every storefront page as a replayable session and detects frustration signals in cron.
+This skill is the analyst's half of that: it takes a
 question a merchant would actually ask — *"why are people bouncing on the product page?"*, *"did last
 week's redesign help?"*, *"where is the worst friction?"* — and walks it down to an answer that is
 **grounded in many sessions and carries the recordings that prove it.**
@@ -27,33 +27,30 @@ Today is {{today}}. To *install* Wisp on a company that doesn't have it, use the
 Desktop. **Merchants do not need it and should never be sent here.** A merchant asks Wisp questions
 from the **Ask panel inside the Wisp droplet** (Fluid admin → Droplets → Wisp → Ask), which is
 authenticated by the panel session they already have: no token, no MCP server, no settings dialog.
-The MCP exists so Wisp can also be reached from outside Fluid — this skill, Claude Desktop, Cursor,
-Claude Code — and that is a deliberate power-user opt-in, not something an end user is asked to set
-up.
+Wisp's MCP server exists so the corpus can also be reached from outside Fluid — Claude Desktop,
+Cursor, Claude Code — a deliberate power-user opt-in, not something an end user is asked to set up.
+**This skill does not use it**: inside Mist Desktop the database is right there.
 
 **This skill is read-only.** It queries. It never changes a setting, never rotates the write key or
 the MCP token, never touches the Global Embed. Rotating a token invalidates a merchant's working
 configuration; there is no read-only question worth that.
 
-> ### Safe Mode must be OFF, or this skill cannot run at all
+> ### You are querying the database directly. No token, no MCP, no setup.
 >
-> Mist Desktop refuses **every** MCP tool call while Safe Mode is on — not a degraded subset, all of
-> them, and the server's *Trusted* checkbox does not override it. Mist treats third-party MCP servers
-> as opaque and fails closed
-> (`fluid-mono/apps/mist-desktop/src/main/tools/safe-mode-policy.ts:219-223`, which refuses any tool
-> whose name starts with `mcp__`).
+> On a Mist app project — which is what Wisp is — `db_query` targets that project's own database,
+> and Wisp's tables are in it. That is the whole connection story: **nothing to configure.**
 >
-> **The symptom:** every single `wisp` call comes back as a Safe Mode refusal, immediately, with no
-> network request — while the rest of Mist keeps working normally. If you see that, do not debug the
-> token or the host. Say: *"Safe Mode is on, which blocks all MCP tools. Turn it off in the titlebar
-> and I'll re-run."* Then stop and wait. Nothing in this skill works until it is off.
+> It also keeps working under **Safe Mode**, because `db_query` is read-only enforced by its own SQL
+> gate. (Safe Mode refuses every `mcp__*` tool outright, which is one reason this skill does not use
+> them.) The MCP route still exists for reaching Wisp from OUTSIDE Mist Desktop — Claude Desktop,
+> Cursor, Claude Code — and lives in an appendix at the bottom. You will not need it here.
 
 ## Before you start
 
 | Reference | Read it when |
 | --- | --- |
-| [references/sql-path.md](references/sql-path.md) | **Start here inside Mist Desktop** — answer with `db_query` and no token, no MCP, no setup |
-| [references/connect-and-troubleshoot.md](references/connect-and-troubleshoot.md) | Step 0 — the MCP isn't configured, a call 401s, or the corpus comes back empty |
+| [references/sql-path.md](references/sql-path.md) | **The path you are taking.** Canonical SQL for every question below — read it before Step 0 |
+| [references/connect-and-troubleshoot.md](references/connect-and-troubleshoot.md) | The corpus comes back empty, or you are on the MCP route from another host |
 | [references/signals-and-thresholds.md](references/signals-and-thresholds.md) | Step 3 onward — you need what a signal actually means before you explain it |
 | [references/what-wisp-cannot-know.md](references/what-wisp-cannot-know.md) | Step 6 — the question is drifting into a blind spot, or you're about to write a causal sentence |
 
@@ -62,126 +59,43 @@ thresholds, and a merchant who hears two different definitions in two answers st
 
 ---
 
-## Step 0: Pick a path, then confirm the corpus is real
+## Step 0: Resolve the company, then confirm the corpus is real
 
-**On a Wisp Mist project inside Mist Desktop, prefer SQL.** `db_query` targets that project's own
-database, where Wisp's tables live — so you can answer with **no token, no MCP server and no
-Settings dialog**, and it keeps working under Safe Mode where every `mcp__*` tool is refused.
-Finish with `sql_answer_card` so the merchant gets a saveable card and an editor tab rather than a
-wall of chat text. Full runbook and canonical queries: **[references/sql-path.md](references/sql-path.md)**.
+**Get the company id, and never query without it.** One Wisp database holds every company that
+installed the droplet. The MCP derives the tenant from a token so it *cannot* read the wrong one;
+**raw SQL has no such protection**, and an unfiltered `SELECT` reads another merchant's customers'
+recordings. That is the worst thing this product can do.
 
-One rule that path does not enforce for you: **every query filters on `company_id`.** The MCP takes
-the tenant from the token so it cannot read another merchant; raw SQL will happily read all of them.
-Resolve the company first and carry it through every statement.
+```sql
+SELECT id, name, fluid_company_id FROM companies WHERE active = true ORDER BY created_at;
+```
 
-Use the MCP instead when you are **outside Mist Desktop** (Claude Desktop, Cursor, Claude Code), or
-when you want the computed extras SQL does not have — the frustration score, `sufficient` guards,
-`playerUrl`s built for you, and the checkout `blindSpot` annotation.
+Run it with `db_query`. One row → that is your `companyId`, and it goes into **every** statement
+from here on. More than one row → **ask which company before you query anything else.** Never
+assume, and never answer across all of them.
 
-### If you are going the MCP route
+Everything below is `db_query` with `params: [companyId, from, to]` against the `$1/$2/$3` SQL in
+**[references/sql-path.md](references/sql-path.md)**. On a Mist app `db_query` defaults to
+`side: "production"` — the real corpus, which is what you want. Use `db_schema` if a column
+surprises you rather than guessing.
 
-1. **Check the `wisp` MCP tools are available in this session.** In Mist Desktop, MCP tools are
-   namespaced `mcp__<server>__<tool>` — so a server the user named `wisp` surfaces as
-   `mcp__wisp__signal_stats`, `mcp__wisp__list_sessions`, `mcp__wisp__get_session`,
-   `mcp__wisp__top_friction_paths`, `mcp__wisp__funnel_summary`, `mcp__wisp__compare_periods`,
-   `mcp__wisp__daily_rollups`. (The prefix is built by `mcpToolName()` in
-   `fluid-mono/apps/mist-desktop/src/main/services/mcp.service.ts:89-91`; the server name is
-   lowercased and non-alphanumerics collapse to `_`, so a server named "Wisp Sessions" gives you
-   `mcp__wisp_sessions__…`. Read the actual name off the list rather than assuming.)
+> **Do not reach for `sql_answer_card`.** It refuses on Mist app projects — it is gated on
+> `projectInfo.kind === "database"` and a Mist app's kind is `"mist"`. Here `db_query` does both the
+> exploring and the final answer, and you write that answer as prose plus small tables in Step 7.
+> That is the intended shape on a Mist app, not a downgrade.
 
-   Not there? You have TWO ways forward. Offer the second one first — it is faster and it works in
-   situations where the first cannot.
+**Then probe the corpus before you plan anything.** Run the signal-rate query over the last 7 days
+and read the denominator first:
 
-   **Path B — no server registration at all (works under Safe Mode).** Ask the user for their
-   `wmcp_…` token and call the endpoint directly with `web_fetch`. MCP's Streamable HTTP transport
-   is plain JSON-RPC over POST, and `web_fetch` is one of the few tools Safe Mode allows, so this
-   is the ONLY path when Safe Mode is on. Verified against production:
-
-   ```
-   web_fetch({
-     url: "https://<mist-host>.wecommerce.dev/api/mcp",
-     method: "POST",
-     headers: {
-       "Authorization": "Bearer wmcp_…",
-       "Content-Type": "application/json",
-       "Accept": "application/json, text/event-stream"
-     },
-     body: '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"signal_stats","arguments":{"from":"2026-07-25","to":"2026-08-01"}}}'
-   })
-   ```
-
-   Three things that will bite you, all verified:
-   - **`Accept` MUST list both** `application/json` and `text/event-stream`. Send only JSON and
-     every call is refused with `Not Acceptable`. That is an MCP protocol rule, not a Wisp one.
-   - **No handshake needed.** Wisp is stateless — a cold `tools/call` works with no `initialize`
-     and no session id. (It has to be: `web_fetch` cannot read response headers, so a client could
-     never echo an `Mcp-Session-Id` back.)
-   - **Parse twice.** The tool's JSON arrives as a string inside `result.content[0].text`.
-
-   Everywhere below that says "call `signal_stats`", either invocation is fine — use the registered
-   tool if it exists, otherwise this. Do not make the user register a server just to answer one
-   question.
-
-   **Path A — register the server once** (nicer ergonomics afterwards: real typed tools, schemas,
-   no hand-rolled JSON-RPC). **You cannot do this for them — it is a UI action in Mist Desktop.**
-   Walk them through it in one message:
-
-   > **Settings** (gear icon in the titlebar) → **MCP servers** → **Manage MCP servers…** → **Add server**
-   >
-   > | Field | Value |
-   > | --- | --- |
-   > | Name | `wisp` |
-   > | Scope | *Global*, or *Project* to scope it to this company's project |
-   > | Streamable HTTP URL | `https://<mist-host>.wecommerce.dev/api/mcp` |
-   > | Authentication | **Bearer token** |
-   > | Bearer token | the `wmcp_…` token from the Wisp panel |
-   > | Trusted | see step 2 below — recommend ticking it |
-   >
-   > **Save server**, then click **Test** on the row. Test connects and lists the tools; the row
-   > expands to show each `mcp__wisp__…` name it discovered.
-
-   Mist sends the token as `Authorization: Bearer <token>` on the HTTP transport, and stores it in
-   the OS keychain (`safeStorage`) under a `secretRef` — never in a plaintext config file, never
-   displayed again after you save it. Transport is **Streamable HTTP only**; Mist Desktop has no
-   stdio MCP support.
-
-   The token is minted in the Wisp droplet panel (Fluid admin → Droplets → Wisp) and is **shown
-   once** — it is stored as a hash, so a lost token is re-minted, never recovered. Full walkthrough,
-   including what to do about a `401`, in `references/connect-and-troubleshoot.md`.
-
-2. **Set the approval expectation before you start calling things.** Unless the server is marked
-   **Trusted**, Mist prompts the user to approve **every individual tool call** — a modal showing the
-   tool name and its arguments, with *Allow once* and *Deny*. There is no "allow for this session"
-   button; an unanswered prompt **auto-denies after 60 seconds**. This skill makes a dozen-plus calls
-   in a normal run, so on an untrusted server the user will be clicking *Allow once* a dozen-plus
-   times and any moment they look away costs you a call.
-
-   So: if the server is untrusted, say so up front — *"Wisp isn't marked Trusted, so you'll get an
-   approval prompt for each call. Tick Trusted in Settings → MCP servers to skip them, or stay
-   nearby."* Their call, but they should make it knowingly rather than discovering it at call four.
-
-   *From here on this skill writes the tools by their short names — `signal_stats`, `list_sessions`
-   and so on — for readability. Call them by whatever fully-namespaced name the session actually
-   exposes.*
-
-3. **Probe the corpus before you plan anything.** Call `signal_stats` over the last 7 days and read
-   the **denominator** — how many sessions are in scope. This single call tells you whether the
-   question is answerable at all:
-
-   - **Healthy denominator** → continue to Step 1.
-   - **Zero sessions** → the pixel is not recording, recording is disabled, or the window is wrong.
-     **Say that plainly and stop.** Do not answer the merchant's question from the product docs, from
-     general ecommerce knowledge, or from anything other than their sessions. An answer Wisp did not
-     earn is worse than no answer. Triage table in `references/connect-and-troubleshoot.md`.
-   - **A handful of sessions** (single digits) → say so now, before doing the work. The honest
-     outcome of this run may be "the corpus is too small to support a conclusion", and the merchant
-     should hear that in the first message rather than the last.
-
-4. **Note the sampling rate** if the merchant has one below 1. Everything downstream is a sample of a
-   sample, and rates stay valid while absolute counts do not.
-
----
-
+- **Zero sessions** → the pixel is not recording, recording is disabled, or your window is wrong.
+  **Say that plainly and stop.** Do not answer the merchant's question from the product docs, from
+  general ecommerce knowledge, or from anything other than their sessions. An answer Wisp did not
+  earn is worse than no answer. Triage table in
+  [references/connect-and-troubleshoot.md](references/connect-and-troubleshoot.md).
+- **Single digits** → say so now, before doing the work. The honest outcome of this run may be "the
+  corpus is too small to support a conclusion", and the merchant should get to decide whether to
+  spend the time.
+- **Enough to work with** → carry the denominator into every rate you quote from here on.
 ## Step 1: Pin the question, and pick the baseline before you look
 
 A vague question answered vaguely is the failure mode this skill exists to prevent. Convert it, and
@@ -374,3 +288,26 @@ would close the gap — usually more time, sometimes a different window, occasio
 install itself (`mist/wisp-install`). Then stop.
 
 The credibility of every future answer is spent from the same account as this one.
+
+---
+
+## Appendix: reaching Wisp from another host
+
+You do not need this inside Mist Desktop — Step 0's `db_query` is the path. It is here for when the
+same questions get asked from **Claude Desktop, Cursor, or Claude Code**, where there is no
+`db_query` and no Mist database connection.
+
+Wisp exposes the same aggregations over MCP at `https://<mist-host>.wecommerce.dev/api/mcp`,
+authenticated with a per-company `wmcp_…` bearer token minted in the Wisp droplet panel (shown
+once). Tools: `list_sessions`, `get_session`, `signal_stats`, `top_friction_paths`,
+`funnel_summary`, `compare_periods`, `daily_rollups` — every session-naming result carries a
+`playerUrl`, and the token *is* the tenant, so no tool can read another merchant.
+
+Two ways to attach it, both covered in
+**[references/connect-and-troubleshoot.md](references/connect-and-troubleshoot.md)**: register the
+server in the host's MCP settings, or POST JSON-RPC at it directly (`Accept` must list **both**
+`application/json` and `text/event-stream`, or every call is refused).
+
+**One thing that path buys you that SQL does not:** the computed extras — the real frustration
+score, `sufficient` guards, `playerUrl`s built for you, and the checkout `blindSpot` annotation on
+the funnel. On the SQL path those are yours to remember.

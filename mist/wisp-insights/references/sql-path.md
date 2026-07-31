@@ -14,11 +14,24 @@ rather than remembered.
 - **Survives Safe Mode.** `db_query` is read-only enforced by its own SQL gate — SELECT, EXPLAIN,
   SHOW and SELECT-only CTEs; anything mutating is rejected — so Safe Mode permits it. Every
   `mcp__*` tool is refused outright under Safe Mode, which makes SQL the only path there.
-- **Better output.** Finish with **`sql_answer_card`**, not a Markdown code block. It renders a card
-  with the SQL, its purpose, a row preview and a Save button, and opens the query in the SQL editor
-  as a new tab. The merchant keeps something. Use `db_query` for exploration, `sql_answer_card` for
-  the answer.
 - `db_schema` first if you are unsure of a column. Do not guess and let the error teach you.
+
+> ### `sql_answer_card` does NOT work here — do not reach for it
+>
+> On a **Mist app project** — which is what Wisp is — `sql_answer_card` refuses every call with
+> *"sql_answer_card only works on database projects. On a Mist app, use db_query."* It is gated on
+> `projectInfo.kind === "database"` and a Mist app's kind is `"mist"`
+> (`fluid-mono/apps/mist-desktop/src/main/tools/index.ts:11336-11350`). The card opens its result in
+> the SQL editor tab, and that tab only exists on database projects.
+>
+> So on this path **`db_query` does everything** — exploration *and* the final answer — and you write
+> the answer as prose plus the tables in Step 7. That is the intended shape on a Mist app, not a
+> degradation. Do not paste a wall of raw rows either: query, read, and report the numbers.
+
+`db_query` **does** bind parameters — pass `params: [companyId, from, to]` alongside the `$1/$2/$3`
+SQL below. It also takes `side: "local" | "production"`, and on a Mist app it **defaults to
+`production`** (the Neon database), which is the corpus you want. Pass `side: "local"` only if you
+deliberately want the PGlite dev copy — it holds seed data, not real shoppers.
 
 ## The one rule you cannot get wrong
 
