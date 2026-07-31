@@ -26,16 +26,18 @@ the tool is the canonical, transactional implementation.
    Company Theme generated from the company's brand colors, and a Default
    Profile linking them. It will not publish or activate a version.
 3. Ask for confirmation immediately before the write: present the plan via
-   `human_in_the_loop` with `source` set to `agent`, `suggestion_id` set to
-   `portal-create:<display name>` (the exact display name), the portal name as
-   the title, and the creation described above as the proposed action — then
-   end your turn. Only proceed after the user approves. Mist verifies this
-   exact approval when the tool runs, so the `source` and `suggestion_id`
-   values must match precisely.
+   `human_in_the_loop` with `source` set to `agent`, the exact display name as
+   the `title`, the creation described above as the proposed action, and a
+   FRESH `suggestion_id` of the form `portal-create:<display name>:<short
+   random suffix>` (new suffix for every attempt) — then end your turn. Only
+   proceed after the user approves. Mist verifies this exact approval when the
+   tool runs: the `source`, `title`, and `suggestion_id` must match, the
+   approval must be less than 15 minutes old, and each approval is single-use.
 4. Call the `create_portal_app` tool with `display_name` set to the exact
-   display name and `confirm_create: true` (allowed only because the user just
-   approved via `human_in_the_loop`). If the user dismissed the approval, stop
-   — do not re-propose or retry.
+   display name, `approval_id` set to the exact `suggestion_id` from step 3,
+   and `confirm_create: true`. If the user dismissed the approval, stop — do
+   not re-propose or retry. If the tool reports the approval as used or stale,
+   a retry requires a brand-new proposal (fresh suffix) and a fresh Approve.
 5. Read the tool's structured JSON result:
 
    - `status: "duplicate"` — a portal with the same display name already
@@ -62,8 +64,9 @@ the tool is the canonical, transactional implementation.
 - Never create a portal without explicit user invocation and confirmation.
   `confirm_create: true` may only be passed after the user approved via
   `human_in_the_loop` in this conversation; Mist independently checks that
-  the `portal-create:<display name>` suggestion was approved and refuses
-  otherwise.
+  the `portal-create:…` suggestion passed as `approval_id` was approved for
+  this exact portal name, consumes it on use, and refuses reused, stale, or
+  mismatched approvals.
 - Never publish a portal version as part of this skill.
 - Never create GitHub repositories, install a GitHub App, or change company
   Git integration settings.
