@@ -126,22 +126,17 @@ owns it. One item per unique required media element:
 
 Write the inventory to the manifest; do not paste it into chat prose.
 
-`theme_media_reconcile` always reads a catalog index. If
-`fluid-catalog-index.json` is not present in the project sandbox, write
-`{"products":[],"complete":true,"next_cursor":null,"product_count":0}` to
-`.mist-desktop/home-catalog-index.json`. That stub declares catalog matching
-out of scope for this step — streamlined runs import products deterministically
-elsewhere. It is not a claim the company has no products, and **it must never
-be written to the default `fluid-catalog-index.json` path.**
-
 Then call `theme_media_reconcile` exactly once with
-`manifest_path: "clone-manifest.json"`, `catalog_index_path` set to the real
-index when it exists and the stub path otherwise, `mode: "theme_only"`, and
-`verify_only: false`. It uploads missing assets in batches, HEAD-verifies every
-delivery URL, and checkpoints the manifest as it goes. If the call is
-interrupted or reports a transient upload failure, call it again with identical
-input — it resumes from verified receipts and does not re-upload completed
-sources.
+`manifest_path: "clone-manifest.json"`, `mode: "theme_only"`, and
+`verify_only: false`. Do not fabricate a catalog index: in `theme_only` mode an
+absent `fluid-catalog-index.json` is treated as an empty catalog — product
+matching is simply out of scope for this step, since streamlined runs import
+products deterministically elsewhere. When a real index does exist in the
+sandbox, the tool uses it. The tool uploads missing assets in batches,
+HEAD-verifies every delivery URL, and checkpoints the manifest as it goes. If
+the call is interrupted or reports a transient upload failure, call it again
+with identical input — it resumes from verified receipts and does not
+re-upload completed sources.
 
 Reference homepage media in Liquid through the verified delivery URLs the tool
 records back into `priority_media.delivery_items`.
