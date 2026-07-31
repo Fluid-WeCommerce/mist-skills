@@ -26,11 +26,16 @@ the tool is the canonical, transactional implementation.
    Company Theme generated from the company's brand colors, and a Default
    Profile linking them. It will not publish or activate a version.
 3. Ask for confirmation immediately before the write: present the plan via
-   `human_in_the_loop` (title: the portal name; proposed action: the creation
-   described above) and end your turn. Only proceed after the user approves.
+   `human_in_the_loop` with `source` set to `agent`, `suggestion_id` set to
+   `portal-create:<display name>` (the exact display name), the portal name as
+   the title, and the creation described above as the proposed action — then
+   end your turn. Only proceed after the user approves. Mist verifies this
+   exact approval when the tool runs, so the `source` and `suggestion_id`
+   values must match precisely.
 4. Call the `create_portal_app` tool with `display_name` set to the exact
    display name and `confirm_create: true` (allowed only because the user just
-   approved via `human_in_the_loop`).
+   approved via `human_in_the_loop`). If the user dismissed the approval, stop
+   — do not re-propose or retry.
 5. Read the tool's structured JSON result:
 
    - `status: "duplicate"` — a portal with the same display name already
@@ -56,7 +61,9 @@ the tool is the canonical, transactional implementation.
 
 - Never create a portal without explicit user invocation and confirmation.
   `confirm_create: true` may only be passed after the user approved via
-  `human_in_the_loop` in this conversation.
+  `human_in_the_loop` in this conversation; Mist independently checks that
+  the `portal-create:<display name>` suggestion was approved and refuses
+  otherwise.
 - Never publish a portal version as part of this skill.
 - Never create GitHub repositories, install a GitHub App, or change company
   Git integration settings.
