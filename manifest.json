@@ -482,6 +482,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "support/order-triage",
+      "name": "Diagnose an order",
+      "description": "Trace what actually went wrong with one specific order — a declined payment, a back-office sync that failed silently, wrong totals, stuck fulfillment, the wrong rep credited, a fraud hold, or a blocked refund. Opens a pick-one support menu, then reads the transaction logs and pipeline states the admin order page cannot show.",
+      "category": "support",
+      "icon": "stethoscope",
+      "path": "support/order-triage/SKILL.md",
+      "updated_at": "2026-07-31T00:00:00Z"
     }
   ],
   "workflows": [
