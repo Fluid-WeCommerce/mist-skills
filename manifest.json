@@ -473,6 +473,24 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "marketing/partner-campaign-launch",
+      "name": "Professional Partner Campaign Launch",
+      "description": "Prepare an invite-only professional partner campaign for coaches, gyms, clinics, and creators by validating an optional existing partner page and generating a local, reviewable Portal block and storefront banner package—without changing live Fluid surfaces.",
+      "category": "marketing",
+      "icon": "megaphone",
+      "path": "marketing/partner-campaign-launch/SKILL.md",
+      "updated_at": "2026-07-31T22:50:22Z",
+      "references": [
+        "marketing/partner-campaign-launch/references/company-profile.example.json",
+        "marketing/partner-campaign-launch/references/company-profile.schema.json",
+        "marketing/partner-campaign-launch/references/contract-v1.md",
+        "marketing/partner-campaign-launch/references/partner-page.md"
+      ],
+      "assets": [
+        "marketing/partner-campaign-launch/scripts/validate_profile.py"
+      ]
     }
   ],
   "workflows": [
@@ -505,6 +523,11 @@
       "slug": "speed-import",
       "path": "workflows/speed-import.workflow.json",
       "updated_at": "2026-07-30T18:00:00Z"
+    },
+    {
+      "slug": "partner-campaign-preview",
+      "path": "workflows/partner-campaign-preview.workflow.json",
+      "updated_at": "2026-07-31T22:50:22Z"
     }
   ]
 }
