@@ -734,8 +734,9 @@ def validate_flagship_contracts() -> None:
     )
 
 
-def validate_streamlined_product_import_contract() -> None:
-    workflow = load_json(STREAMLINED_WORKFLOW_PATH)
+def validate_streamlined_product_import_contract(workflow: Any | None = None) -> None:
+    if workflow is None:
+        workflow = load_json(STREAMLINED_WORKFLOW_PATH)
     if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
         raise CatalogValidationError("streamlined workflow steps must be an array")
 
@@ -771,6 +772,11 @@ def validate_streamlined_product_import_contract() -> None:
     if products_import.get("maxReworkRounds") != 0:
         raise CatalogValidationError(
             "streamlined workflow: deterministic product imports must not rework"
+        )
+    if products_import.get("allowedTools") != ["fluid_product_import"]:
+        raise CatalogValidationError(
+            "streamlined workflow: import-products worker tool allowlist must "
+            "contain only fluid_product_import"
         )
     if "skill" in products_import:
         raise CatalogValidationError(
