@@ -9,11 +9,44 @@ import validate_catalog
 
 ROOT = Path(__file__).resolve().parent.parent
 WORKFLOW_PATH = ROOT / "workflows/streamlined-onboard-launch.workflow.json"
+MANIFEST_PATH = ROOT / "manifest.json"
+EXPECTED_UPDATED_AT = "2026-07-31T18:16:00Z"
 
 
 class StreamlinedAllowedToolsContractTest(unittest.TestCase):
     def load_workflow(self) -> dict:
         return json.loads(WORKFLOW_PATH.read_text(encoding="utf-8"))
+
+    def load_manifest(self) -> dict:
+        return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+
+    def test_published_manifest_advances_the_workflow_cache_key(self) -> None:
+        manifest = self.load_manifest()
+        workflow_entry = next(
+            entry
+            for entry in manifest["workflows"]
+            if entry.get("slug") == "streamlined-onboard-launch"
+        )
+
+        self.assertEqual(workflow_entry["updated_at"], EXPECTED_UPDATED_AT)
+
+    def test_rejects_a_stale_workflow_cache_key(self) -> None:
+        workflow = self.load_workflow()
+        manifest = self.load_manifest()
+        workflow_entry = next(
+            entry
+            for entry in manifest["workflows"]
+            if entry.get("slug") == "streamlined-onboard-launch"
+        )
+        workflow_entry["updated_at"] = "2026-07-31T06:38:34Z"
+
+        with self.assertRaisesRegex(
+            validate_catalog.CatalogValidationError,
+            "cache key",
+        ):
+            validate_catalog.validate_streamlined_product_import_contract(
+                workflow, manifest
+            )
 
     def test_published_import_worker_is_restricted_to_the_importer(self) -> None:
         workflow = self.load_workflow()

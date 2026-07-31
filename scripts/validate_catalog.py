@@ -15,6 +15,7 @@ FLAGSHIP_WORKFLOW_PATH = ROOT / "workflows/onboard-launch-company.workflow.json"
 STREAMLINED_WORKFLOW_PATH = (
     ROOT / "workflows/streamlined-onboard-launch.workflow.json"
 )
+STREAMLINED_WORKFLOW_UPDATED_AT = "2026-07-31T18:16:00Z"
 FLAGSHIP_CONTRACT_FILES = (
     ROOT / "onboarding/fluid-product-admin-import/SKILL.md",
     ROOT / "onboarding/onboard-launch-company/SKILL.md",
@@ -734,9 +735,31 @@ def validate_flagship_contracts() -> None:
     )
 
 
-def validate_streamlined_product_import_contract(workflow: Any | None = None) -> None:
+def validate_streamlined_product_import_contract(
+    workflow: Any | None = None, manifest: Any | None = None
+) -> None:
     if workflow is None:
         workflow = load_json(STREAMLINED_WORKFLOW_PATH)
+    if manifest is None:
+        manifest = load_json(MANIFEST_PATH)
+    workflow_entries = manifest.get("workflows") if isinstance(manifest, dict) else None
+    manifest_entry = next(
+        (
+            entry
+            for entry in workflow_entries or []
+            if isinstance(entry, dict)
+            and entry.get("slug") == "streamlined-onboard-launch"
+        ),
+        None,
+    )
+    if (
+        not isinstance(manifest_entry, dict)
+        or manifest_entry.get("updated_at") != STREAMLINED_WORKFLOW_UPDATED_AT
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: manifest cache key must advance with the "
+            "import worker policy"
+        )
     if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
         raise CatalogValidationError("streamlined workflow steps must be an array")
 
