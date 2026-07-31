@@ -1,0 +1,236 @@
+{
+  "revision": "2026-07-31-initial",
+  "slug": "catalog-launch-guard",
+  "name": "Catalog Launch Guard",
+  "description": "Audit every catalog record before launch, separate confirmed blockers from legitimate merchandising structures, and publish an evidence-backed red/amber/green dashboard plus CEO page brief. Read-only against Fluid; no automatic merge, delete, repricing, or publish action.",
+  "maxParallel": 2,
+  "finalGate": {
+    "stepId": "launch-gate-review",
+    "allowNeedsReview": false
+  },
+  "steps": [
+    {
+      "id": "catalog-evidence",
+      "name": "Capture complete catalog",
+      "prompt": "Capture a fresh, complete, read-only catalog evidence set for the active company. This is a launch audit, not an import.\n\n1. Read optional caller `context.catalog_expectations` when present. Supported expectations are `minimum_bundle_count`, `required_phrases` (array), `allowed_zero_price_title_patterns` (array), and `minimum_subscription_product_count`. Treat absent keys as `not specified`, never as zero. These are merchant expectations, not universal rules.\n2. Call `query_docs` for the April 2026 company Product list/detail response before assuming fields. Then call `fluid_catalog_index` once with `output_path: \"catalog-launch-guard-index.json\"` and `verify_only: false`. Require `complete: true`, `next_cursor: null`, zero duplicate ids, first/middle/last detail receipts, and the file SHA-256.\n3. Independently cursor-paginate `GET /api/v202604/company/products?page[limit]=20` with `fluid_api`, following every returned `meta.pagination.next_cursor` until null. Do not stop from a page count or `total_count`. Capture every returned product id and the available lifecycle, title, SKU, canonical URL, image, pricing/currency, variant/option, subscription-plan, and bundle relationship fields. Use the documented detail endpoint for fields omitted by the list and for every later-flagged id; do not probe undocumented paths.\n4. Reconcile the paginated unique-id set to `catalog-launch-guard-index.json`. A count or identity mismatch is a hard evidence failure. Record source timestamp/freshness and the exact fields unavailable in this company's response.\n5. Do not change products, variants, prices, bundles, plans, images, or lifecycle. Do not infer a missing business concept from an absent response field.\n\nEnd with `STEP_OUTPUT:` containing `index_path`, `index_sha256`, `observed_at`, `pages`, `row_count`, `unique_id_count`, `duplicate_id_count`, `reconciliation_delta`, `available_fields`, `unavailable_fields`, `expectations`, and `evidence_ready: true|false`.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "`fluid_catalog_index` independently proves a terminal null cursor, complete identity set, zero duplicate ids, first/middle/last detail receipts, and a SHA-256 for `catalog-launch-guard-index.json`.",
+        "A separate cursor walk of the documented v202604 company-products endpoint reaches a null cursor and reconciles its unique-id count to the index with a reported delta of zero.",
+        "The report names observation freshness, every available audit field, every unavailable field, and optional merchant expectations without turning absent expectations into failures.",
+        "The evidence capture is read-only against Fluid and claims no product, variant, price, bundle, plan, image, or lifecycle change."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "strict",
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "fluid_catalog_index",
+            "minSuccessfulCalls": 1,
+            "input": {
+              "output_path": "catalog-launch-guard-index.json",
+              "verify_only": true
+            }
+          },
+          {
+            "tool": "fluid_api",
+            "minSuccessfulCalls": 2,
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
+          }
+        ]
+      },
+      "dependsOn": [],
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
+    },
+    {
+      "id": "structural-audit",
+      "name": "Audit catalog structure",
+      "prompt": "Audit every catalog record from `catalog-evidence` and classify structural risk without assuming every unusual record is wrong. Stay read-only.\n\nRe-open `catalog-launch-guard-index.json` in bounded ranges and use the documented v202604 list/detail GETs to analyze all unique ids. Build these inventories:\n- exact normalized-title groups and near-title candidates, retaining every id, lifecycle, price/currency, SKU, variant count, and distinguishing field;\n- duplicate non-empty SKU assignments;\n- active/public/sellable records with missing or zero price, missing currency, no purchasable variant, missing primary image, blank title, or unusable canonical route;\n- price divergence inside an exact-title group, separated by currency, subscription vs one-time price, interval, variant/options, and package quantity when those fields exist;\n- option axes and variant combinations, flagging only explicit duplicate combinations or missing required values; never synthesize a Cartesian product;\n- bundle markers/components and subscription-plan relationships when the documented response exposes them; otherwise report the audit dimension unavailable;\n- optional `catalog_expectations`: minimum counts and required phrases apply only when supplied. Search required phrases only in documented product copy fields, case-insensitively, and report field coverage.\n\nClassify each finding:\n- `confirmed_blocker_candidate`: mechanically unlaunchable evidence such as a sellable record with no usable price/currency or purchasable variant, a duplicate non-empty SKU on simultaneously sellable records, or an unusable canonical route;\n- `merchant_review`: exact/near duplicate titles, divergent prices, zero prices, missing images, bundle/plan absence, or required-text misses that may be deliberate;\n- `informational`: lifecycle and coverage facts with no failure claim.\n\nA duplicate title, zero price, missing bundle marker, or price difference is NEVER automatically a confirmed blocker. Preserve distinct product ids; do not merge, delete, archive, reprice, or publish anything. Never assign avoided-revenue dollars without order/conversion evidence.\n\nEnd with `STEP_OUTPUT:` containing `audited_ids`, `coverage_percent`, `confirmed_blocker_candidates`, `merchant_review`, `informational`, `dimension_coverage`, `expectation_results`, `currency_blocks`, `data_gaps`, and `fluid_writes_performed: false`.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Every reconciled unique product id is audited exactly once and coverage is 100%; each finding carries the source id and exact observed fields that triggered it.",
+        "Duplicate titles, price divergence, zero prices, missing images, bundle/plan absence, and required-text misses remain merchant-review findings unless independent evidence proves a mechanically unlaunchable state.",
+        "Price comparisons stay within currency and distinguish one-time/subscription, cadence, variants/options, and package quantity whenever those fields exist; unavailable dimensions are reported.",
+        "No merge, delete, archive, reprice, publish, bundle, plan, media, or other Fluid mutation occurred, and no unsupported avoided-revenue estimate is present."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "fluid_catalog_index",
+            "minSuccessfulCalls": 1,
+            "input": {
+              "output_path": "catalog-launch-guard-index.json",
+              "verify_only": true
+            }
+          },
+          {
+            "tool": "fluid_api",
+            "minSuccessfulCalls": 3,
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "catalog-evidence"
+      ],
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
+    },
+    {
+      "id": "flag-review",
+      "name": "Review flagged records",
+      "prompt": "Independently validate the structural audit's flags against product detail records and produce the approval-safe launch queue. Stay read-only.\n\nRead the complete `structural-audit` output. Build a deterministic review set of at most 20 products: include every confirmed-blocker candidate when there are 20 or fewer; otherwise take the 20 highest-severity candidates sorted by stable product id. Fill remaining slots with a stratified sample across exact-title duplicates, divergent prices, zero/missing price, missing image, SKU reuse, variant/options, bundle/plan, required-text, and informational clean records. Record the selection rule.\n\nFor every selected id, GET the documented v202604 Product detail and re-check the exact trigger in context. Where a canonical route exists, use one bounded read-only `crawl` for each confirmed-blocker candidate up to a maximum of five routes; a route that renders the wrong product, errors, or is blank confirms a route blocker, while a correctly rendered PDP may clear only that route finding.\n\nClassify every sampled flag as:\n- `confirmed_blocker`: live detail/route proves the sellable record cannot be purchased or reliably identified;\n- `merchant_decision`: the structure is real but intent cannot be known from data;\n- `cleared_false_positive`: detail evidence disproves the trigger;\n- `unverifiable`: missing field, route, or access prevents judgment.\n\nCalculate sample false-positive rate as `cleared_false_positive / reviewed_flags`. A launch gate may be GREEN only with zero confirmed blockers, zero unverifiable critical candidates, complete evidence, and false-positive rate <=10%. AMBER means merchant decisions/data gaps remain but nothing mechanically blocks launch. RED means one or more confirmed blockers, incomplete catalog evidence, an unverifiable critical candidate, or false-positive rate above 10%.\n\nNever repair findings in this workflow. Produce an approval queue with product id, title, evidence, recommended review action, risk of acting incorrectly, and the exact future write type that would require explicit approval.\n\nEnd with `STEP_OUTPUT:` containing `selection_rule`, `reviewed_products`, `reviewed_flags`, `confirmed_blockers`, `merchant_decisions`, `cleared_false_positives`, `unverifiable`, `false_positive_rate`, `gate`, `approval_queue`, and `fluid_writes_performed: false`.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The deterministic review set contains at most 20 products, covers every critical candidate when possible plus stratified anomaly and clean cases, and records the exact selection rule.",
+        "Each reviewed finding is re-opened by documented Product detail GET and classified as confirmed blocker, merchant decision, cleared false positive, or unverifiable with evidence; up to five critical canonical routes are read-only crawled when available.",
+        "The false-positive formula and GREEN/AMBER/RED rules are applied exactly, including the <=10% GREEN threshold and RED for incomplete evidence or unverifiable critical candidates.",
+        "The approval queue names future write types and risk of acting incorrectly, while this run performs no catalog repair or Fluid mutation."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "fluid_api",
+            "minSuccessfulCalls": 3,
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "structural-audit"
+      ],
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
+    },
+    {
+      "id": "publish-launch-dashboard",
+      "name": "Publish launch dashboard",
+      "prompt": "Publish a CEO-ready Catalog Launch Guard dashboard and a page-ready More-for-Less brief from the verified flag review.\n\nRead `catalog-evidence`, `structural-audit`, and `flag-review`, preserving every needs-review finding and data gap. Call `list_dashboards`, then call `show_dashboard` with one descriptor:\n- title `Catalog Launch Guard`; subtitle names the observation timestamp and says `Read-only audit`; `dataAsOf` equals evidence freshness;\n- headline `stat_tiles`: rows audited, coverage percent, confirmed blockers, merchant decisions, and false-positive rate;\n- a prominent GREEN/AMBER/RED `insight_banner` containing the exact gate reason;\n- a risk breakdown `donut_chart` or `stat_rows` for blocker candidates, merchant review, cleared false positives, and unverifiable flags;\n- a `mini_table` of confirmed blockers and highest-priority merchant decisions with product id, finding, evidence, and recommended approval action;\n- a dimension-coverage card for lifecycle, price/currency, variants/options, SKU, image, route, bundle, subscription plan, and configured expectations, marking unavailable rather than silently dropping a dimension;\n- an assumptions/data-quality banner saying anomalies are not automatically errors and no repairs were made.\n\nUse raw numeric metrics with `number`, `compact`, `percent`, or `ratio_percent`; do not pre-format numeric strings or invent revenue. If dashboard validation fails, repair only its descriptor.\n\nThen render a `## CEO value page brief` under 350 words with exactly: `Headline`, `What Mist checked`, `Launch decision`, `What needs approval`, `More for less`, `Controls`, and `Evidence limits`. The headline must use verified coverage and gate counts, not avoided-revenue dollars. In `More for less`, report the completed automated audit's runtime only when measured; otherwise say `runtime not yet measured` and do not invent a speed multiplier. State that no product, variant, price, bundle, plan, image, or lifecycle record changed.\n\nSaving/showing the local dashboard is the only state change. End with `STEP_OUTPUT:` containing `dashboard_title`, `dashboard_id` when returned, `data_as_of`, `gate`, `coverage`, `confirmed_blockers`, `merchant_decisions`, `false_positive_rate`, `approval_queue`, `ceo_value_page_brief`, `data_gaps`, and `fluid_writes_performed: false`.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "`list_dashboards` shows a saved `Catalog Launch Guard` dashboard with the exact evidence freshness, audit coverage, gate, blocker/decision counts, and false-positive rate from the reviewed live evidence.",
+        "The dashboard includes a visible gate reason, risk breakdown, approval table, full dimension-coverage card, and data-quality warning without exposing invented revenue or hiding unavailable evidence.",
+        "The under-350-word CEO brief contains all seven required sections, reports measured runtime only when available, uses verified coverage/counts, and does not claim anomalies are errors or repairs are complete.",
+        "The deliverable states that the local dashboard was the only state change and `fluid_writes_performed` is false."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "list_dashboards",
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "fluid_catalog_index",
+            "minSuccessfulCalls": 1,
+            "input": {
+              "output_path": "catalog-launch-guard-index.json",
+              "verify_only": true
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "catalog-evidence",
+        "structural-audit",
+        "flag-review"
+      ],
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
+    },
+    {
+      "id": "launch-gate-review",
+      "name": "Review launch gate",
+      "prompt": "Perform the final independent, read-only launch-gate review. Do not redo the whole audit and do not repair records.\n\nRead all completed outputs and QA findings. Call `fluid_catalog_index` with `output_path: \"catalog-launch-guard-index.json\"` and `verify_only: true`; use bounded documented Product GETs to reproduce the unique-id count, every confirmed blocker, and a deterministic sample of at least five merchant decisions or all of them when fewer. Call `list_dashboards` to confirm the saved artifact.\n\nFail when catalog/index reconciliation is incomplete, audit coverage is below 100%, a blocker lacks live evidence, a merchant-review anomaly was promoted to an error without proof, currencies/price types were mixed, unavailable fields were hidden, the false-positive calculation/gate is wrong, a Fluid mutation occurred, or the dashboard/CEO brief misstates the evidence.\n\nReturn a presenter handoff:\n- `Decision`: GREEN, AMBER, or RED plus one sentence;\n- `Live proof`: observed timestamp, indexed rows, unique ids, coverage, and SHA-256;\n- `Confirmed blockers`: count and ids;\n- `Needs merchant decision`: count and top items;\n- `Approval boundary`: future write types, with no action taken;\n- `Demo path`: dashboard gate -> one evidence-backed flag -> approval queue;\n- `CEO page copy`: repeat the final under-350-word brief verbatim;\n- `Unresolved`: all data/QA gaps.\n\nEnd with `STEP_OUTPUT:` containing `ready: true|false`, `gate`, `dashboard_id`, `live_proof`, `confirmed_blockers`, `merchant_decisions`, `false_positive_rate`, `approval_boundary`, `demo_path`, `ceo_page_copy`, `fluid_writes_performed: false`, and `unresolved`.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The catalog index re-verifies complete with the same SHA-256, unique-id count, terminal cursor, and zero reconciliation delta, and live Product GETs reproduce every confirmed blocker plus at least five merchant decisions when available.",
+        "The final GREEN/AMBER/RED decision follows the authored thresholds exactly, preserves all unavailable dimensions and QA findings, and never elevates a duplicate title, zero price, price difference, or missing relationship into a confirmed error without evidence.",
+        "The saved dashboard and under-350-word CEO copy agree with the live proof, provide the three-beat demo path and approval queue, claim no invented revenue/runtime/repair, and contain no hidden data gap.",
+        "`fluid_writes_performed` is false and the handoff requires explicit approval before any product, variant, price, bundle, plan, media, or lifecycle write."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "strict",
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "fluid_catalog_index",
+            "minSuccessfulCalls": 1,
+            "input": {
+              "output_path": "catalog-launch-guard-index.json",
+              "verify_only": true
+            }
+          },
+          {
+            "tool": "fluid_api",
+            "minSuccessfulCalls": 3,
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "list_dashboards",
+            "minSuccessfulCalls": 1
+          }
+        ]
+      },
+      "dependsOn": [
+        "catalog-evidence",
+        "structural-audit",
+        "flag-review",
+        "publish-launch-dashboard"
+      ],
+      "maxReworkRounds": 2,
+      "recovery": {
+        "mode": "manual"
+      }
+    }
+  ]
+}
