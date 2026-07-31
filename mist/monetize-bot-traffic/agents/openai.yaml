@@ -1,0 +1,4 @@
+interface:
+  display_name: "Monetize Bot Traffic"
+  short_description: "Turn bot demand into metered revenue"
+  default_prompt: "Use $monetize-bot-traffic to audit this storefront for pay-per-request opportunities."
