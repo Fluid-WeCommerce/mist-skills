@@ -482,6 +482,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "compliance/claim-fidelity-audit",
+      "name": "Claim fidelity audit",
+      "description": "Find claims that survived a site clone, a new market, or a translation while the footnote, citation, or FDA disclaimer that substantiated them did not.",
+      "category": "compliance",
+      "icon": "shield-check",
+      "path": "compliance/claim-fidelity-audit.md",
+      "updated_at": "2026-07-31T00:00:00Z"
     }
   ],
   "workflows": [
