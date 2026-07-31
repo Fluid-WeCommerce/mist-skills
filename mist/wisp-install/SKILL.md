@@ -48,23 +48,43 @@ on a fully-installed company should change nothing and report "already installed
 the Global Embed are merchant-visible or destructive. Each one stops, states the blast radius in
 one line, and waits for an explicit yes. Do not batch them into one question.
 
+**This skill is Mist Desktop only.** It runs on `fluid_api` and `db_query`, which are Mist Desktop
+tools; there is no Claude Code equivalent, so do not try to translate it into `curl` and a Fluid
+token — the write-key step (Step 3) is unreachable that way regardless.
+
+> ### Safe Mode must be OFF before Step 1
+>
+> Mist blocks `fluid_api` for **any method other than `GET`** while Safe Mode is on
+> (`fluid-mono/apps/mist-desktop/src/main/tools/safe-mode-policy.ts`, the `fluid_api` case). This
+> install does `POST /api/droplet_installations`, `POST /api/global_embeds`, and `PUT` for both the
+> activation and any `embed_url` fix. All of them are refused.
+>
+> **The failure mode is the nasty kind: a clean half-success.** Step 0's permission probes are GETs,
+> so they pass. Step 1's "is it installed?" check is a GET, so it passes. Then the very first write
+> is refused and you are standing in the middle of an install with a green preflight behind you.
+>
+> So check it first, not when it bites: if the user has Safe Mode on, say *"Safe Mode blocks every
+> write this install needs — turn it off in the titlebar and I'll start"* and wait. Read-only
+> reconnaissance (Steps 0–2's checks, and Step 5a's verification fetch) is genuinely safe to run
+> either way, and saying which half works keeps the diagnosis honest.
+
 ---
 
 ## Step 0: Preflight
 
 Establish who you are and what you're allowed to do **before** you start writing.
 
-1. `fluid_api("/api/me", "GET")` — confirm the active company is the one the user means. Capture
+1. `fluid_api({ path: "/api/me", method: "GET" })` — confirm the active company is the one the user means. Capture
    `company.id`, `company.name`, and the storefront domain. Say the company name back to the user.
    If it isn't the company they asked for, stop: Mist Desktop's active company is what the token is
    scoped to, and you cannot install onto a different one.
-2. **Permission probe — `developer`.** `fluid_api("/api/global_embeds?per_page=1", "GET")`.
+2. **Permission probe — `developer`.** `fluid_api({ path: "/api/global_embeds?per_page=1", method: "GET" })`.
    - `200` → you have `developer:view`. Assume `developer:update` too, but Step 4 confirms it for real.
    - `403` → **stop and report**: "This Fluid token lacks the `developer` permission. Global Embeds
      require it (`view` for read, `update` for create/update/delete). A company admin has to grant
      `developer` on this user's role before Wisp can be installed." Do not continue — Steps 1–3
      would leave a half-built install with no pixel.
-3. **Permission probe — `droplets`.** `fluid_api("/api/droplet_installations?per_page=100", "GET")`.
+3. **Permission probe — `droplets`.** `fluid_api({ path: "/api/droplet_installations?per_page=100", method: "GET" })`.
    A `403` here means the token lacks `droplets:view`; same remedy, different permission.
 
 ---
@@ -83,14 +103,14 @@ Paginate — `per_page` defaults to **10** on this endpoint.
 - **Found and `active: true`** → say "Wisp is already installed" and go to Step 2. Do not reinstall.
 - **Not found** → install it:
 
-1. Find it in the catalog: `fluid_api("/api/droplets?per_page=100", "GET")` and match on `name`.
+1. Find it in the catalog: `fluid_api({ path: "/api/droplets?per_page=100", method: "GET" })` and match on `name`.
    Capture its `uuid` (which is the droplet's stable **slug** — Fluid aliases the two) and its
    `embed_url`, you need that in Step 2. Not in the list? The droplet isn't publicly available and
    isn't owned by this company; the droplet owner has to publish it or add this company. Stop and say so.
 2. **PAUSE.** Ask: *"Install the Wisp droplet on {{company.name}}? This adds a Wisp panel to their
    Fluid admin and lets it read their admin session — it does not start recording yet."* Wait for a
    clear yes.
-3. `fluid_api("/api/droplet_installations", "POST", { "droplet_uuid": "<uuid from step 1>" })`
+3. `fluid_api({ path: "/api/droplet_installations", method: "POST", body: { "droplet_uuid": "<uuid from step 1>" } })`
    - `201` → installed. The response carries `droplet_installation_uuid` — keep it.
    - `409 { "droplet_uuid": ["already installed"] }` → someone installed it between your check and
      your write. Treat as success and continue.
@@ -124,11 +144,11 @@ comes from the verified token, never from a caller-supplied id.)
 
 Check it:
 
-1. `fluid_api("/api/droplets?per_page=100", "GET")`, find Wisp, read `embed_url`. It must look like
+1. `fluid_api({ path: "/api/droplets?per_page=100", method: "GET" })`, find Wisp, read `embed_url`. It must look like
    `https://<mist-host>.wecommerce.dev/integrations/wisp`.
 2. **Path contains `/integrations/`** → good, continue.
 3. **It does not** → **stop and report loudly.** The fix is
-   `fluid_api("/api/droplets/<uuid>", "PUT", { "droplet": { "embed_url": "https://<mist-host>/integrations/wisp" } })`
+   `fluid_api({ path: "/api/droplets/<uuid>", method: "PUT", body: { "droplet": { "embed_url": "https://<mist-host>/integrations/wisp" } } })`
    — but `embed_url` lives on the **droplet record, not the per-company installation**, so:
    - it can only be changed by the droplet's **owner company** (or a root admin), not by {{company.name}}; and
    - changing it changes the panel URL for **every company that has Wisp installed**.
@@ -202,7 +222,7 @@ matters here:
 
 Steps:
 
-1. **Idempotency check.** `fluid_api("/api/global_embeds?per_page=100", "GET")` (paginate — default
+1. **Idempotency check.** `fluid_api({ path: "/api/global_embeds?per_page=100", method: "GET" })` (paginate — default
    `per_page` is 10). Look for an existing Wisp embed: name matching `Wisp`, or `content` containing
    `/pixel/v1`.
    - **Found and `status: "active"`** → report the existing embed's `id`, `status`, `placement`,
@@ -213,13 +233,17 @@ Steps:
 2. **Create as a draft.** A draft is inert — it exists, nothing renders it, nothing is merchant-visible:
 
    ```
-   fluid_api("/api/global_embeds", "POST", {
-     "global_embed": {
-       "name": "Wisp session replay",
-       "content": "<script async src=\"https://<mist-host>.wecommerce.dev/pixel/v1\" data-wisp-key=\"wk_…\" data-wisp-sampling=\"1\"></script>",
-       "status": "draft",
-       "placement": "head",
-       "target": "storefront"
+   fluid_api({
+     path: "/api/global_embeds",
+     method: "POST",
+     body: {
+       "global_embed": {
+         "name": "Wisp session replay",
+         "content": "<script async src=\"https://<mist-host>.wecommerce.dev/pixel/v1\" data-wisp-key=\"wk_…\" data-wisp-sampling=\"1\"></script>",
+         "status": "draft",
+         "placement": "head",
+         "target": "storefront"
+       }
      }
    })
    ```
@@ -236,7 +260,7 @@ Steps:
    CDN cache window."* Wait for a clear yes. Then:
 
    ```
-   fluid_api("/api/global_embeds/<id>", "PUT", { "global_embed": { "status": "active" } })
+   fluid_api({ path: "/api/global_embeds/<id>", method: "PUT", body: { "global_embed": { "status": "active" } } })
    ```
 
 If the merchant isn't ready to record real traffic yet, stop here with the draft in place and point
@@ -249,13 +273,21 @@ them at `references/dev-install-and-privacy.md` § *Record without touching the 
 An install you haven't verified is a rumor. Do all three.
 
 **5a — the snippet is in the live storefront HTML.** Storefront HTML is CDN-cached ~30+ minutes, so
-a plain fetch will happily hand you the pre-embed page. **Always cache-bust:**
+a plain fetch will happily hand you the pre-embed page. **Always cache-bust** — put a unique query
+param on the URL every time you check:
 
-```bash
-curl -s "https://<storefront-domain>/?wispcheck=$(date +%s)" | grep -o 'pixel/v1[^"]*'
+```
+web_fetch({ url: "https://<storefront-domain>/?wispcheck=<unix-timestamp>" })
 ```
 
-No shell? `fluid_api("/api/v202604/util/fetch?url=<url-encoded storefront URL with a unique query param>", "GET")`.
+Then search the returned body for `pixel/v1`. `web_fetch` is unauthenticated, which is exactly right
+here: you want the anonymous shopper's view of the page, not an admin's.
+
+Two things **not** to reach for. `run_cli` will not run that `curl … | grep` one-liner — its
+allowlist is `fluid`, `pnpm`, `npm`, `git` only, and it does no shell interpretation, so there are no
+pipes either. And `fluid_api({ path: "/api/v202604/util/fetch?url=…", method: "GET" })` fetches
+through Fluid rather than directly; keep it as the fallback if `web_fetch` is blocked by egress
+rules, not as the first move.
 
 - **Hit** → the embed is live. Check the `data-wisp-key` in the served HTML matches the key you hold.
 - **Miss** → do not conclude failure yet. Re-run with a *different* cache-buster after 60s. Still
@@ -312,14 +344,14 @@ Recommend they tell the merchant, and point them at the privacy posture in
 Reverse order of install. Each step is independently useful — stopping recording does not require
 uninstalling the droplet.
 
-1. **Stop recording, keep everything.** `fluid_api("/api/global_embeds/<id>", "PUT", { "global_embed": { "status": "draft" } })`.
+1. **Stop recording, keep everything.** `fluid_api({ path: "/api/global_embeds/<id>", method: "PUT", body: { "global_embed": { "status": "draft" } } })`.
    Instant at origin; live for up to the CDN window (~30+ min) on already-cached pages. Reversible
    with one `PUT` back to `active` — the key stays valid.
-2. **Remove the snippet entirely.** `fluid_api("/api/global_embeds/<id>", "DELETE")`. Same cache
+2. **Remove the snippet entirely.** `fluid_api({ path: "/api/global_embeds/<id>", method: "DELETE" })`. Same cache
    caveat. Verify with the cache-busted grep from Step 5a.
 3. **Invalidate the key.** Rotate it from the panel and discard the new value — any stale copy of
    the snippet still in a cached page or a theme file stops ingesting.
-4. **Uninstall the droplet.** `fluid_api("/api/droplet_installations/<installation-uuid>", "DELETE")`.
+4. **Uninstall the droplet.** `fluid_api({ path: "/api/droplet_installations/<installation-uuid>", method: "DELETE" })`.
    Fires Wisp's uninstall webhook.
 
 **What happens to recorded data:** nothing automatic. Sessions, chunks, and counters already written

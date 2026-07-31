@@ -27,6 +27,19 @@ Today is {{today}}. To *install* Wisp on a company that doesn't have it, use the
 the MCP token, never touches the Global Embed. Rotating a token invalidates a merchant's working
 configuration; there is no read-only question worth that.
 
+> ### Safe Mode must be OFF, or this skill cannot run at all
+>
+> Mist Desktop refuses **every** MCP tool call while Safe Mode is on — not a degraded subset, all of
+> them, and the server's *Trusted* checkbox does not override it. Mist treats third-party MCP servers
+> as opaque and fails closed
+> (`fluid-mono/apps/mist-desktop/src/main/tools/safe-mode-policy.ts:219-223`, which refuses any tool
+> whose name starts with `mcp__`).
+>
+> **The symptom:** every single `wisp` call comes back as a Safe Mode refusal, immediately, with no
+> network request — while the rest of Mist keeps working normally. If you see that, do not debug the
+> token or the host. Say: *"Safe Mode is on, which blocks all MCP tools. Turn it off in the titlebar
+> and I'll re-run."* Then stop and wait. Nothing in this skill works until it is off.
+
 ## Before you start
 
 | Reference | Read it when |
@@ -42,20 +55,57 @@ thresholds, and a merchant who hears two different definitions in two answers st
 
 ## Step 0: Connect, and confirm the corpus is real
 
-1. **Check the `wisp` MCP tools are available in this session** — `signal_stats`, `list_sessions`,
-   `get_session`, `top_friction_paths`, `funnel_summary`, `compare_periods`, `daily_rollups`.
-   Not there? Stop and give the user the one line that fixes it:
+1. **Check the `wisp` MCP tools are available in this session.** In Mist Desktop, MCP tools are
+   namespaced `mcp__<server>__<tool>` — so a server the user named `wisp` surfaces as
+   `mcp__wisp__signal_stats`, `mcp__wisp__list_sessions`, `mcp__wisp__get_session`,
+   `mcp__wisp__top_friction_paths`, `mcp__wisp__funnel_summary`, `mcp__wisp__compare_periods`,
+   `mcp__wisp__daily_rollups`. (The prefix is built by `mcpToolName()` in
+   `fluid-mono/apps/mist-desktop/src/main/services/mcp.service.ts:89-91`; the server name is
+   lowercased and non-alphanumerics collapse to `_`, so a server named "Wisp Sessions" gives you
+   `mcp__wisp_sessions__…`. Read the actual name off the list rather than assuming.)
 
-   ```
-   claude mcp add --transport http wisp https://<mist-host>.wecommerce.dev/api/mcp \
-     --header "Authorization: Bearer wmcp_…"
-   ```
+   Not there? **You cannot add it for them — it is a UI action in Mist Desktop.** Walk them through
+   it in one message:
+
+   > **Settings** (gear icon in the titlebar) → **MCP servers** → **Manage MCP servers…** → **Add server**
+   >
+   > | Field | Value |
+   > | --- | --- |
+   > | Name | `wisp` |
+   > | Scope | *Global*, or *Project* to scope it to this company's project |
+   > | Streamable HTTP URL | `https://<mist-host>.wecommerce.dev/api/mcp` |
+   > | Authentication | **Bearer token** |
+   > | Bearer token | the `wmcp_…` token from the Wisp panel |
+   > | Trusted | see step 2 below — recommend ticking it |
+   >
+   > **Save server**, then click **Test** on the row. Test connects and lists the tools; the row
+   > expands to show each `mcp__wisp__…` name it discovered.
+
+   Mist sends the token as `Authorization: Bearer <token>` on the HTTP transport, and stores it in
+   the OS keychain (`safeStorage`) under a `secretRef` — never in a plaintext config file, never
+   displayed again after you save it. Transport is **Streamable HTTP only**; Mist Desktop has no
+   stdio MCP support.
 
    The token is minted in the Wisp droplet panel (Fluid admin → Droplets → Wisp) and is **shown
    once** — it is stored as a hash, so a lost token is re-minted, never recovered. Full walkthrough,
    including what to do about a `401`, in `references/connect-and-troubleshoot.md`.
 
-2. **Probe the corpus before you plan anything.** Call `signal_stats` over the last 7 days and read
+2. **Set the approval expectation before you start calling things.** Unless the server is marked
+   **Trusted**, Mist prompts the user to approve **every individual tool call** — a modal showing the
+   tool name and its arguments, with *Allow once* and *Deny*. There is no "allow for this session"
+   button; an unanswered prompt **auto-denies after 60 seconds**. This skill makes a dozen-plus calls
+   in a normal run, so on an untrusted server the user will be clicking *Allow once* a dozen-plus
+   times and any moment they look away costs you a call.
+
+   So: if the server is untrusted, say so up front — *"Wisp isn't marked Trusted, so you'll get an
+   approval prompt for each call. Tick Trusted in Settings → MCP servers to skip them, or stay
+   nearby."* Their call, but they should make it knowingly rather than discovering it at call four.
+
+   *From here on this skill writes the tools by their short names — `signal_stats`, `list_sessions`
+   and so on — for readability. Call them by whatever fully-namespaced name the session actually
+   exposes.*
+
+3. **Probe the corpus before you plan anything.** Call `signal_stats` over the last 7 days and read
    the **denominator** — how many sessions are in scope. This single call tells you whether the
    question is answerable at all:
 
@@ -68,7 +118,7 @@ thresholds, and a merchant who hears two different definitions in two answers st
      outcome of this run may be "the corpus is too small to support a conclusion", and the merchant
      should hear that in the first message rather than the last.
 
-3. **Note the sampling rate** if the merchant has one below 1. Everything downstream is a sample of a
+4. **Note the sampling rate** if the merchant has one below 1. Everything downstream is a sample of a
    sample, and rates stay valid while absolute counts do not.
 
 ---

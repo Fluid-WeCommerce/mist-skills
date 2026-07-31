@@ -42,8 +42,13 @@ Routed as `resources :global_embeds` inside the `api` namespace
 | `PUT` / `PATCH` | `/api/global_embeds/:id` | update |
 | `DELETE` | `/api/global_embeds/:id` | destroy |
 
-Auth is `Authorization: Bearer <token>` — in Mist Desktop, just `fluid_api(path, method, body)`;
-the token is injected and scoped to the active company.
+Auth is `Authorization: Bearer <token>` — in Mist Desktop, just
+`fluid_api({ path, method, body })`. It takes **one object argument**: `path` required, `method`
+optional and defaulting to `GET`, `body` a JSON object for `POST`/`PATCH`/`PUT`. The token is
+injected and scoped to the active company.
+
+**Every write on this page needs Safe Mode off.** Mist blocks `fluid_api` for any method other than
+`GET` while Safe Mode is on, so the reads below work and the `POST`/`PUT`/`DELETE` are refused.
 
 **Index defaults to `per_page: 10`** (`~/fluid/app/services/api/global_embeds/index_action.rb`).
 Pass `per_page=100` or paginate, or your "is Wisp already installed?" check will miss an embed that
@@ -143,8 +148,9 @@ Two layers sit between your `POST` and the HTML you fetch:
    version component changes whenever the collection changes, so a create/update/delete effectively
    misses the old entry immediately. (`GlobalEmbed::CacheInvalidator` deletes the *unversioned* key
    and is therefore vestigial — don't rely on it, and don't be surprised it appears to do nothing.)
-2. **CDN cache on storefront HTML, ~30+ minutes.** This is the one that will fool you. A crawl or a
-   plain `curl` can keep returning the pre-embed page long after the embed is live at origin.
+2. **CDN cache on storefront HTML, ~30+ minutes.** This is the one that will fool you. A `crawl` or
+   a plain `web_fetch` of the bare URL can keep returning the pre-embed page long after the embed is
+   live at origin.
 
 **Always verify with a unique query param** (`?wispcheck=<epoch>`) and re-check with a *different*
 value before concluding the embed didn't land.
