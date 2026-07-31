@@ -23,6 +23,14 @@ a recording to is not a finding — it is a hypothesis, and it gets labelled as 
 Today is {{today}}. To *install* Wisp on a company that doesn't have it, use the sibling skill
 **[`mist/wisp-install`](../wisp-install/SKILL.md)** — this one assumes recording is already live.
 
+**Who this is for.** This is an *operator's* tool — someone working a Fluid company from Mist
+Desktop. **Merchants do not need it and should never be sent here.** A merchant asks Wisp questions
+from the **Ask panel inside the Wisp droplet** (Fluid admin → Droplets → Wisp → Ask), which is
+authenticated by the panel session they already have: no token, no MCP server, no settings dialog.
+The MCP exists so Wisp can also be reached from outside Fluid — this skill, Claude Desktop, Cursor,
+Claude Code — and that is a deliberate power-user opt-in, not something an end user is asked to set
+up.
+
 **This skill is read-only.** It queries. It never changes a setting, never rotates the write key or
 the MCP token, never touches the Global Embed. Rotating a token invalidates a merchant's working
 configuration; there is no read-only question worth that.
