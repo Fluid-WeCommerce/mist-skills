@@ -131,8 +131,12 @@ class PartnerCampaignContractTest(unittest.TestCase):
             set(steps["write-campaign-package"]["allowedTools"]),
             {"list_dir", "read_file", "write_file", "file_sha256"},
         )
+        self.assertFalse(steps["write-campaign-package"]["qa"]["enabled"])
         prompts = "\n".join(step["prompt"] for step in steps.values())
         self.assertNotIn("/api/", prompts)
+        self.assertNotIn("expected_portal_project_path/name/id", prompts)
+        self.assertIn("expected_portal_definition_name", prompts)
+        self.assertIn("product_request_id", prompts)
         self.assertIn("NO_REMOTE_TOOLS", prompts)
         self.assertIn("Never read or edit portal/screens", prompts)
 
