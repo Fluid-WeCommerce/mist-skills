@@ -367,6 +367,20 @@
       "updated_at": "2026-07-23T00:00:00Z"
     },
     {
+      "slug": "mist/wisp-install",
+      "name": "Install Wisp session replay",
+      "description": "Install and configure Wisp session replay on a Fluid company from zero — droplet install, write key, Global Embed pixel, and proof that a real session recorded.",
+      "category": "mist",
+      "icon": "monitor-play",
+      "path": "mist/wisp-install/SKILL.md",
+      "updated_at": "2026-07-31T22:00:00Z",
+      "references": [
+        "mist/wisp-install/references/global-embed-api.md",
+        "mist/wisp-install/references/verify-and-troubleshoot.md",
+        "mist/wisp-install/references/dev-install-and-privacy.md"
+      ]
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
