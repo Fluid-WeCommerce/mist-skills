@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-31",
+  "revision": "2026-07-31.2",
   "slug": "launch-portal",
   "name": "Launch the Portal",
   "description": "Stand up a company's logged-in FluidOS portal in one run: resolve the portal app, build the chosen pages in parallel from working component trees, reconcile navigation, publish a version, and verify the published state against the API. The Day-1 counterpart to speed-import — that one builds the storefront, this one builds the portal behind the login. Expects a caller `context` with definition_id, navigation_id, pages, page_positions, and optionally company_id, portal_url and audience.",
@@ -8,37 +8,64 @@
   "deriveContext": [
     {
       "set": "build_partner_home",
-      "when": { "includes": { "key": "pages", "value": "partner-home" } }
+      "when": {
+        "includes": {
+          "key": "pages",
+          "value": "partner-home"
+        }
+      }
     },
     {
       "set": "build_customer_home",
-      "when": { "includes": { "key": "pages", "value": "customer-home" } }
+      "when": {
+        "includes": {
+          "key": "pages",
+          "value": "customer-home"
+        }
+      }
     },
     {
       "set": "build_partner_dashboard",
       "when": {
-        "includes": { "key": "pages", "value": "partner-dashboard" }
+        "includes": {
+          "key": "pages",
+          "value": "partner-dashboard"
+        }
       }
     },
     {
       "set": "build_affiliate",
-      "when": { "includes": { "key": "pages", "value": "affiliate" } }
+      "when": {
+        "includes": {
+          "key": "pages",
+          "value": "affiliate"
+        }
+      }
     },
     {
       "set": "build_home_alternate",
-      "when": { "includes": { "key": "pages", "value": "home-alternate" } }
+      "when": {
+        "includes": {
+          "key": "pages",
+          "value": "home-alternate"
+        }
+      }
     }
   ],
   "steps": [
     {
       "id": "resolve-app",
       "name": "Resolve the portal app and inventory it",
-      "prompt": "Establish — and prove — the portal app every later step writes into. Do not create any screens here.\n\n1. Read `context.definition_id` and `context.navigation_id` from the `## Context from caller` block. When `definition_id` is the string `NEW`, create a definition first (`POST {{company.api_base}}/api/company/fluid_os/definitions` with `{ \"definition\": { \"name\": \"<company name> Portal\" } }`) and use the id it returns.\n2. `GET {{company.api_base}}/api/company/fluid_os/definitions` and confirm the id resolves to a real definition. Record its `name` and `active` flag.\n3. `GET {{company.api_base}}/api/company/fluid_os/definitions/<DEF_ID>/screens` — the CURRENT screens. Record every existing `id`, `name` and `slug`. Later steps must not silently overwrite one of these; a page whose slug already exists should update that screen rather than create a duplicate.\n4. Resolve the navigation. If `context.navigation_id` is absent, `GET .../definitions/<DEF_ID>/navigations` and pick the primary one. Record its id and every existing navigation item (`id`, `label`, `slug`, `position`).\n5. Inventory the content the page builders will need, so five parallel steps don't each re-discover it:\n   - `GET {{company.api_base}}/api/company/media?per_page=200` — real media (id + URL) to replace `picsum.photos` placeholders.\n   - `GET {{company.api_base}}/api/company/v1/products` — real products (id, title, price, URL) to replace `REPLACE_PRODUCT_*` placeholders.\n   - `GET {{company.api_base}}/api/droplet_installations` — installed droplets and their `droplet_uuid`s. The page templates embed droplet nodes whose UUIDs belong to the company they were exported from; each builder must remap or delete those nodes.\n\nEnd with `STEP_OUTPUT:` carrying, as compact JSON the parallel builders can read directly: `definition_id`, `definition_name`, `navigation_id`, `existing_screens` (id/name/slug), `existing_nav_items` (id/label/slug/position), `company_id`, a `media` sample (up to 30 id+url), a `products` sample (up to 30 id/title/price/url), and `installed_droplets` (uuid + name). If any inventory call fails, say so explicitly rather than reporting an empty list as if it were empty upstream.",
-      "target": { "type": "manager" },
+      "prompt": "Establish — and prove — the portal app every later step writes into. Do not create any screens here.\n\n1. Read `context.definition_id` and `context.navigation_id` from the `## Context from caller` block. When `definition_id` is the string `NEW`, create a definition first (`POST {{company.api_base}}/api/company/fluid_os/definitions` with `{ \"definition\": { \"name\": \"<company name> Portal\" } }`) and use the id it returns.\n2. `GET {{company.api_base}}/api/company/fluid_os/definitions` and confirm the id resolves to a real definition. Record its `name` and `active` flag.\n3. `GET {{company.api_base}}/api/company/fluid_os/definitions/<DEF_ID>/screens` — the CURRENT screens. Record every existing `id`, `name` and `slug`.\n   **Flag slug collisions explicitly.** A definition often already carries a screen on `home` — the slug the partner/customer home pages want. For every page in `context.pages` whose target slug already exists, say so in STEP_OUTPUT and state how `context.on_slug_collision` resolves it: `update` means the builder edits that existing screen in place; `alongside` means it must pick a non-colliding slug (`home-partner`, `home-customer`) and leave the existing screen untouched. Never silently overwrite a screen this run did not create.\n4. Resolve the navigation. `GET .../definitions/<DEF_ID>/navigations` and handle what you actually find — do not assume exactly one:\n   - **Exactly one** — use it.\n   - **Several** — a definition commonly carries both a `Main Navigation` and a `Mobile Navigation`. The MAIN one is the target; record the others by id and name so the reconcile step knows to leave them alone. `context.navigation_id` wins when the caller supplied it.\n   - **None** — a brand-new definition can have zero navigations. Try `POST .../definitions/<DEF_ID>/navigations` with `{ \"navigation\": { \"name\": \"Main Navigation\" } }` and re-`GET` to confirm. If that shape is rejected, do NOT guess variants: end with `STEP_OUTPUT: BLOCKED — definition <id> has no navigation and POST .../navigations was rejected (<exact error>); a navigation must exist before pages can be linked.`\n   Record the chosen navigation id and every existing item (`id`, `label`, `slug`, `position`).\n5. Inventory the content the page builders will need, so five parallel steps don't each re-discover it:\n   - `GET {{company.api_base}}/api/company/media?per_page=200` — real media (id + URL) to replace `picsum.photos` placeholders.\n   - `GET {{company.api_base}}/api/company/v1/products` — real products (id, title, price, URL) to replace `REPLACE_PRODUCT_*` placeholders.\n   - `GET {{company.api_base}}/api/droplet_installations` — installed droplets and their `droplet_uuid`s. The page templates embed droplet nodes whose UUIDs belong to the company they were exported from; each builder must remap or delete those nodes.\n\nEnd with `STEP_OUTPUT:` carrying, as compact JSON the parallel builders can read directly: `definition_id`, `definition_name`, `navigation_id`, `existing_screens` (id/name/slug), `existing_nav_items` (id/label/slug/position), `company_id`, a `media` sample (up to 30 id+url), a `products` sample (up to 30 id/title/price/url), and `installed_droplets` (uuid + name). If any inventory call fails, say so explicitly rather than reporting an empty list as if it were empty upstream.",
+      "target": {
+        "type": "manager"
+      },
       "acceptance": [
         "The definition id used is confirmed to exist by a GET against /api/company/fluid_os/definitions, and STEP_OUTPUT names it.",
         "STEP_OUTPUT lists the definition's CURRENT screens (id, name, slug) — an empty list is acceptable only if the GET actually returned none.",
-        "A navigation id is resolved and its existing items (id, label, slug, position) are reported.",
+        "Any collision between an existing screen slug and a requested page is flagged, with the on_slug_collision resolution stated.",
+        "A navigation id is resolved and its existing items reported. If the definition had none, the step either created one and verified it by re-GET, or reported BLOCKED — it did not proceed as though a navigation existed.",
+        "When several navigations exist, the chosen one is named and the others are listed as out of scope.",
         "Media, product and droplet-installation inventories were each fetched; any call that failed is reported as failed rather than as an empty result.",
         "No screen was created, updated or deleted by this step."
       ],
@@ -50,8 +77,12 @@
           {
             "tool": "fluid_api",
             "minSuccessfulCalls": 3,
-            "input": { "method": "GET" },
-            "distinctBy": ["path"]
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
           }
         ]
       },
@@ -61,9 +92,15 @@
       "id": "partner-home",
       "name": "Build the partner home page",
       "skill": "portal/portal-page-partner-home",
-      "target": { "type": "manager" },
-      "dependsOn": ["resolve-app"],
-      "runIf": { "flag": "build_partner_home" },
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "resolve-app"
+      ],
+      "runIf": {
+        "flag": "build_partner_home"
+      },
       "acceptance": [
         "A screen exists on the resolved definition whose component_tree is the template's full array — verified by GET .../screens/<id>, not by assertion.",
         "Every top-level section sits inside the single page-wrapper LayoutWidget; no section was lifted out of it.",
@@ -80,21 +117,33 @@
           {
             "tool": "fluid_api",
             "minSuccessfulCalls": 2,
-            "input": { "method": "GET" },
-            "distinctBy": ["path"]
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
           }
         ]
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" }
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "customer-home",
       "name": "Build the customer home page",
       "skill": "portal/portal-page-customer-home",
-      "target": { "type": "manager" },
-      "dependsOn": ["resolve-app"],
-      "runIf": { "flag": "build_customer_home" },
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "resolve-app"
+      ],
+      "runIf": {
+        "flag": "build_customer_home"
+      },
       "acceptance": [
         "A screen exists on the resolved definition whose component_tree is the template's full array — verified by GET .../screens/<id>, not by assertion.",
         "Every top-level section sits inside the single page-wrapper LayoutWidget; no section was lifted out of it.",
@@ -111,21 +160,33 @@
           {
             "tool": "fluid_api",
             "minSuccessfulCalls": 2,
-            "input": { "method": "GET" },
-            "distinctBy": ["path"]
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
           }
         ]
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" }
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "partner-dashboard",
       "name": "Build the partner dashboard (Today)",
       "skill": "portal/portal-page-partner-dashboard",
-      "target": { "type": "manager" },
-      "dependsOn": ["resolve-app"],
-      "runIf": { "flag": "build_partner_dashboard" },
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "resolve-app"
+      ],
+      "runIf": {
+        "flag": "build_partner_dashboard"
+      },
       "acceptance": [
         "A screen exists on the resolved definition whose component_tree is the template's full array — verified by GET .../screens/<id>, not by assertion.",
         "Every top-level section sits inside the single page-wrapper LayoutWidget; no section was lifted out of it.",
@@ -142,21 +203,33 @@
           {
             "tool": "fluid_api",
             "minSuccessfulCalls": 2,
-            "input": { "method": "GET" },
-            "distinctBy": ["path"]
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
           }
         ]
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" }
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "affiliate",
       "name": "Build the affiliate page",
       "skill": "portal/portal-page-affiliate",
-      "target": { "type": "manager" },
-      "dependsOn": ["resolve-app"],
-      "runIf": { "flag": "build_affiliate" },
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "resolve-app"
+      ],
+      "runIf": {
+        "flag": "build_affiliate"
+      },
       "acceptance": [
         "A screen exists on the resolved definition whose component_tree is the template's full array — verified by GET .../screens/<id>, not by assertion.",
         "Every top-level section sits inside the single page-wrapper LayoutWidget; no section was lifted out of it.",
@@ -173,21 +246,33 @@
           {
             "tool": "fluid_api",
             "minSuccessfulCalls": 2,
-            "input": { "method": "GET" },
-            "distinctBy": ["path"]
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
           }
         ]
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" }
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "home-alternate",
       "name": "Build the alternate home page",
       "skill": "portal/portal-page-home-alternate",
-      "target": { "type": "manager" },
-      "dependsOn": ["resolve-app"],
-      "runIf": { "flag": "build_home_alternate" },
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "resolve-app"
+      ],
+      "runIf": {
+        "flag": "build_home_alternate"
+      },
       "acceptance": [
         "A screen exists on the resolved definition whose component_tree is the template's full array — verified by GET .../screens/<id>, not by assertion.",
         "Every top-level section sits inside the single page-wrapper LayoutWidget; no section was lifted out of it.",
@@ -204,19 +289,27 @@
           {
             "tool": "fluid_api",
             "minSuccessfulCalls": 2,
-            "input": { "method": "GET" },
-            "distinctBy": ["path"]
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
           }
         ]
       },
       "maxReworkRounds": 2,
-      "recovery": { "mode": "manual" }
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "navigation",
       "name": "Reconcile the portal navigation",
-      "prompt": "The page builders ran in parallel and each added its own navigation item, so positions can collide and a rerun can leave duplicates. Reconcile the navigation into one clean, intentional menu.\n\n1. `GET {{company.api_base}}/api/company/fluid_os/definitions/<DEF_ID>/navigations` and the items on the navigation resolved by `resolve-app`.\n2. **Delete duplicates.** Two items pointing at the same `screen_id`, or sharing a slug, are a collision — keep the one with the better label and `DELETE .../navigation_items/<id>` the rest.\n3. **Every item needs a non-empty `slug`.** An item without one renders as a non-clickable ALL-CAPS section header instead of a link. This is the single most common way a portal page ships invisible — check every item, not just the ones you created.\n4. **Assign deliberate positions.** Use `context.page_positions` when the caller supplied it; otherwise order by audience — the everyday home first, then the dashboard, then affiliate/share tools, then any alternate layout last. Positions must be unique and contiguous starting at 1. `PUT .../navigation_items/<id>` to set each.\n5. **Every built screen is reachable.** Cross-check the screens created by this run against the final item list; a screen with no navigation item is invisible to users. Add the missing item rather than reporting it as a limitation.\n\nEnd with `STEP_OUTPUT:` listing the final navigation as an ordered table of position, label, slug and screen_id, plus a line for every duplicate you deleted.",
-      "target": { "type": "manager" },
+      "prompt": "The page builders ran in parallel and each added its own navigation item, so positions can collide and a rerun can leave duplicates. Reconcile the navigation into one clean, intentional menu.\n\n1. `GET {{company.api_base}}/api/company/fluid_os/definitions/<DEF_ID>/navigations` and the items on the navigation resolved by `resolve-app`. Work ONLY on that navigation — if the definition also carries a `Mobile Navigation` or any other, leave it exactly as it is and say which you skipped. Silently rewriting a second menu is a worse failure than leaving one unsynced.\n2. **Delete duplicates.** Two items pointing at the same `screen_id`, or sharing a slug, are a collision — keep the one with the better label and `DELETE .../navigation_items/<id>` the rest.\n3. **Every item needs a non-empty `slug`.** An item without one renders as a non-clickable ALL-CAPS section header instead of a link. This is the single most common way a portal page ships invisible — check every item, not just the ones you created.\n4. **Assign deliberate positions.** Use `context.page_positions` when the caller supplied it; otherwise order by audience — the everyday home first, then the dashboard, then affiliate/share tools, then any alternate layout last. Positions must be unique and contiguous starting at 1. `PUT .../navigation_items/<id>` to set each.\n5. **Every built screen is reachable.** Cross-check the screens created by this run against the final item list; a screen with no navigation item is invisible to users. Add the missing item rather than reporting it as a limitation.\n\nEnd with `STEP_OUTPUT:` listing the final navigation as an ordered table of position, label, slug and screen_id, plus a line for every duplicate you deleted.",
+      "target": {
+        "type": "manager"
+      },
       "dependsOn": [
         "partner-home",
         "customer-home",
@@ -229,6 +322,7 @@
         "Every navigation item has a non-empty slug.",
         "Positions are unique and contiguous starting at 1.",
         "Every screen created by this run has exactly one navigation item pointing at it.",
+        "Navigations other than the one resolved by resolve-app were left untouched, and the step names which were skipped.",
         "STEP_OUTPUT reports the final ordered navigation and names every item deleted."
       ],
       "qa": {
@@ -239,8 +333,12 @@
           {
             "tool": "fluid_api",
             "minSuccessfulCalls": 2,
-            "input": { "method": "GET" },
-            "distinctBy": ["path"]
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
           }
         ]
       },
@@ -250,8 +348,12 @@
       "id": "publish",
       "name": "Publish a portal version",
       "prompt": "Publish the definition so the work becomes visible to real users.\n\n1. `POST {{company.api_base}}/api/company/fluid_os/definitions/<DEF_ID>/versions` with an empty body `{}`. There is NO `/publish` endpoint — it 404s. Do not go looking for one.\n2. Re-`GET .../definitions` and confirm the definition no longer reports `has_pending_changes: true`. If it still does, the publish did not take — report that plainly instead of assuming success.\n3. Note the version the POST returned so the QA step and the operator can refer to it.\n\nEnd with `STEP_OUTPUT:` naming the definition id, the created version, and the post-publish `has_pending_changes` value read back from the API.",
-      "target": { "type": "manager" },
-      "dependsOn": ["navigation"],
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "navigation"
+      ],
       "acceptance": [
         "A POST to .../definitions/<DEF_ID>/versions with an empty body succeeded and the created version is named in STEP_OUTPUT.",
         "The definition was re-read after publishing and its has_pending_changes value is reported from that read, not assumed.",
@@ -265,19 +367,27 @@
           {
             "tool": "fluid_api",
             "minSuccessfulCalls": 1,
-            "input": { "method": "GET" }
+            "input": {
+              "method": "GET"
+            }
           }
         ]
       },
       "maxReworkRounds": 1,
-      "recovery": { "mode": "manual" }
+      "recovery": {
+        "mode": "manual"
+      }
     },
     {
       "id": "portal-qa",
       "name": "Verify the published portal",
       "prompt": "Independently verify the PUBLISHED portal against the live API. You are checking the state a real user would load, not the summaries earlier steps wrote about themselves. Read only — do not fix anything here; report what is wrong and let rework handle it.\n\nFor the definition this run targeted:\n\n1. `GET .../definitions/<DEF_ID>/screens` — for EVERY screen this run created, fetch it individually and check the saved `component_tree`:\n   - it is the array form, not an empty hash left over from the shell POST;\n   - the whole tree sits inside one page-wrapper LayoutWidget;\n   - a full-text scan of the serialized tree finds no `picsum.photos`, no `REPLACE_`, no `YOUR_COMPANY_ID`;\n   - every `droplet.` node's UUID segment appears in this company's `GET /api/droplet_installations`.\n2. `GET` the navigation — every item has a slug, positions are unique and contiguous, and every created screen has exactly one item.\n3. `GET .../definitions` — the definition exists and `has_pending_changes` is false.\n4. Count what actually shipped versus `context.pages`. A page that was requested and is missing is a FAIL, not a note.\n\nEnd with `STEP_OUTPUT:` as a per-page table — page, screen id, slug, nav position, placeholders found (should be zero), unresolved droplet nodes (should be zero) — followed by an explicit `PORTAL READY` or `PORTAL NOT READY — <reasons>`.",
-      "target": { "type": "manager" },
-      "dependsOn": ["publish"],
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "publish"
+      ],
       "acceptance": [
         "Every screen created by this run was fetched individually and its saved component_tree inspected — not inferred from an earlier step's summary.",
         "A full-text scan of each saved tree finds zero `picsum.photos`, `REPLACE_` and `YOUR_COMPANY_ID` occurrences, and any hit is reported per page.",
@@ -295,8 +405,12 @@
           {
             "tool": "fluid_api",
             "minSuccessfulCalls": 4,
-            "input": { "method": "GET" },
-            "distinctBy": ["path"]
+            "input": {
+              "method": "GET"
+            },
+            "distinctBy": [
+              "path"
+            ]
           }
         ]
       },
@@ -306,8 +420,12 @@
       "id": "handoff",
       "name": "Hand off to the operator",
       "prompt": "Write the operator's handoff. Short, honest, and useful to someone who did not watch the run.\n\nCover:\n1. **What shipped** — each page, its slug, its navigation position, and the portal-builder link `https://admin.fluid.app/portal-builder/<DEF_ID>`.\n2. **What to look at first** — the pages carrying the most placeholder-swapped content, since those are where a wrong product or image will show.\n3. **What is still generic** — every place you used an honest empty state or generic copy because the company had no real data. Name them; this is the operator's to-do list, and it is the most valuable part of this handoff.\n4. **What needs a human decision** — anything a page implies the business must choose (which products to feature, whether the alternate home replaces the primary, which droplets to install).\n5. **Anything QA flagged** that was accepted rather than fixed.\n\nDo not pad it. If the run was clean, say so in two lines and list the to-dos.",
-      "target": { "type": "manager" },
-      "dependsOn": ["portal-qa"],
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "portal-qa"
+      ],
       "acceptance": [
         "Every page that shipped is listed with its slug and navigation position.",
         "The portal-builder link includes the real definition id.",
@@ -322,5 +440,8 @@
       "maxReworkRounds": 1
     }
   ],
-  "finalGate": { "stepId": "portal-qa", "allowNeedsReview": true }
+  "finalGate": {
+    "stepId": "portal-qa",
+    "allowNeedsReview": true
+  }
 }
