@@ -147,7 +147,7 @@ Every included module must answer one spine question. Omit modules with no job o
 3. **Convince:** mechanism, demonstration, proof, comparison, and specificity.
 4. **Resolve:** objections, guarantee, delivery, terms, preserved state, and close.
 
-Choose one ownable visual thesis and apply it to the hero, mechanism, and strongest proof story. Use the materialized `assets/pdp-holy-grail-wireframe.html` only when `run_skill` reports its runtime path, and only as an annotated reference. Never ship that HTML as the storefront or copy its placeholder claims.
+Choose one ownable visual thesis and apply it to the hero, mechanism, and strongest proof story.
 
 ### 3D. Design the offer without hiding the math
 

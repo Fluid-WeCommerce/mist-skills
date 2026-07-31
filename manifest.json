@@ -238,7 +238,7 @@
       "category": "themes",
       "icon": "shopping-bag",
       "path": "themes/holy-grail-pdp/SKILL.md",
-      "updated_at": "2026-07-31T16:44:52Z",
+      "updated_at": "2026-07-31T16:51:13Z",
       "references": [
         "themes/holy-grail-pdp/references/art-direction-and-copy.md",
         "themes/holy-grail-pdp/references/audit-and-experimentation.md",
@@ -246,8 +246,7 @@
         "themes/holy-grail-pdp/references/pdp-page-brief.md",
         "themes/holy-grail-pdp/references/research-patterns.md",
         "themes/holy-grail-pdp/references/section-psychology.md"
-      ],
-      "assets": ["themes/holy-grail-pdp/assets/pdp-holy-grail-wireframe.html"]
+      ]
     },
     {
       "slug": "themes/clone-category-page",
