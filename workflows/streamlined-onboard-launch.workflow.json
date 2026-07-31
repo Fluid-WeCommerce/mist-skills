@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-30-deterministic-product-import+recovery-restored",
+  "revision": "2026-07-31-home-code-review",
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
   "launcherSkill": "onboarding/launch-setup",
@@ -79,16 +79,76 @@
         "kind": "theme",
         "fallbackToManager": true
       },
-      "skill": "themes/clone-home-page",
+      "prompt": "Build the home page from the retained source evidence and the existing theme code. This step implements the page; screenshots are not a correctness gate.\n\nRead clone-manifest.json first, then read the retained source HTML, source CSS, resolved landmark styles, and exact stable copy for Home. Retained source screenshots are optional, non-authoritative design input only. You may open only the retained source screenshot paths from clone-manifest.json with view_project_image as design context. Do not capture new or local screenshots and do not call screenshot_preview or compare_preview_to_source.\n\nInspect the existing layout, shared header, shared footer, tokens, sections, blocks, components, and assets before editing. Reuse the shared shell and existing canonical components where they fit. Build the source order as multiple named Liquid sections mounted separately in home_page/default/index.liquid; never replace it with one monolithic page-sized section.\n\nCopy every stable source heading, paragraph, label, and CTA exactly. Bind products, collections, prices, images, routes, cart controls, and other resource/dynamic content through Fluid Liquid data and existing Fluid hooks rather than hardcoding the observed example. Keep editor-manageable section schemas and normal responsive document flow.\n\nReject base-theme scaffold filler, lorem text, placeholder products or images, inline binary media (data: or base64), hardcoded development theme ids, generated company hostnames, localhost ports, query-triggered QA shortcuts, and absolute environment-specific asset URLs. Do not use fixed or absolute whole-section relocation, page-height clamps, overflow clipping, hidden/cropped source content, transparent duplicates, or other layout-hiding hacks to simulate correctness.\n\nRun fluid theme lint --json and fix every error. Use the local preview only for deterministic runtime checks: read the rendered DOM for `/`, browser console, and local server logs. Verify HTTP success, source-ordered sections and stable copy, Fluid-bound dynamic content, shared-shell reuse, and no runtime/resource failures. Do not take or compare local screenshots.\n\nEnd with STEP_OUTPUT: { files_read: [...], files_changed: [...], sections: [...], stable_copy_checked: [...], dynamic_bindings: [...], lint: {...}, dom_checks: [...], console_errors: [...], server_errors: [...], unresolved: [...] }.",
       "acceptance": [
-        "The home route renders in the local preview at 1440 and 390 wide with no horizontal overflow and no scaffold placeholder text left behind.",
-        "Section structure follows the source's own section boundaries rather than one monolithic template.",
-        "Spacing, type, and color values were taken from the retained source CSS and resolved landmark styles where those exist, not estimated from the screenshot alone."
+        "The independent reviewer read clone-manifest.json plus at least three distinct implementation files, including home_page/default/index.liquid and the separately mounted section or shared-shell files it references.",
+        "The independent reviewer ran fluid theme lint --json in read-only mode and it returned zero errors.",
+        "Targeted code searches found multiple named section mounts in source order, exact stable source copy, Fluid-backed resource/dynamic bindings, and shared-shell reuse.",
+        "Targeted code searches found no base-theme scaffold filler, inline binary media, hardcoded environment identity, monolithic page-sized section, or layout-hiding workaround.",
+        "The independent reviewer read the local rendered DOM for / in all mode and confirmed HTTP success, multiple source-ordered sections, stable copy, dynamic bindings, and shared shell output.",
+        "The independent reviewer read the preview console and local server logs and found no unresolved Liquid, runtime, resource, or browser errors.",
+        "Screenshots are optional source-design context only. The reviewer did not use screenshot_preview, compare_preview_to_source, view_project_image, or screenshot-producing interaction checks as correctness evidence."
       ],
       "qa": {
         "enabled": true,
         "strictness": "lenient",
-        "onFail": "continue"
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "run_cli",
+            "input": {
+              "command": "fluid",
+              "args": [
+                "theme",
+                "lint",
+                "--json"
+              ]
+            },
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "clone-manifest.json"
+            }
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "home_page/default/index.liquid"
+            }
+          },
+          {
+            "tool": "read_file",
+            "minSuccessfulCalls": 4,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "search_files",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "query"
+            ]
+          },
+          {
+            "tool": "read_preview_dom",
+            "input": {
+              "path": "/",
+              "mode": "all"
+            },
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_preview_console",
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_local_server_logs",
+            "minSuccessfulCalls": 1
+          }
+        ]
       },
       "dependsOn": [
         "source-capture"
