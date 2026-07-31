@@ -381,6 +381,20 @@
       ]
     },
     {
+      "slug": "mist/wisp-insights",
+      "name": "Wisp insights across sessions",
+      "description": "Turn a vague question about the storefront into a grounded answer across the whole Wisp session corpus — every claim carrying a session the merchant can watch.",
+      "category": "mist",
+      "icon": "telescope",
+      "path": "mist/wisp-insights/SKILL.md",
+      "updated_at": "2026-07-31T23:30:00Z",
+      "references": [
+        "mist/wisp-insights/references/connect-and-troubleshoot.md",
+        "mist/wisp-insights/references/signals-and-thresholds.md",
+        "mist/wisp-insights/references/what-wisp-cannot-know.md"
+      ]
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
