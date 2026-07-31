@@ -387,11 +387,12 @@
       "category": "mist",
       "icon": "telescope",
       "path": "mist/wisp-insights/SKILL.md",
-      "updated_at": "2026-07-31T23:55:00Z",
+      "updated_at": "2026-08-01T00:30:00Z",
       "references": [
         "mist/wisp-insights/references/connect-and-troubleshoot.md",
         "mist/wisp-insights/references/signals-and-thresholds.md",
-        "mist/wisp-insights/references/what-wisp-cannot-know.md"
+        "mist/wisp-insights/references/what-wisp-cannot-know.md",
+        "mist/wisp-insights/references/sql-path.md"
       ]
     },
     {

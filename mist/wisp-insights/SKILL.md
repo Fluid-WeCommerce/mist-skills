@@ -52,6 +52,7 @@ configuration; there is no read-only question worth that.
 
 | Reference | Read it when |
 | --- | --- |
+| [references/sql-path.md](references/sql-path.md) | **Start here inside Mist Desktop** — answer with `db_query` and no token, no MCP, no setup |
 | [references/connect-and-troubleshoot.md](references/connect-and-troubleshoot.md) | Step 0 — the MCP isn't configured, a call 401s, or the corpus comes back empty |
 | [references/signals-and-thresholds.md](references/signals-and-thresholds.md) | Step 3 onward — you need what a signal actually means before you explain it |
 | [references/what-wisp-cannot-know.md](references/what-wisp-cannot-know.md) | Step 6 — the question is drifting into a blind spot, or you're about to write a causal sentence |
@@ -61,7 +62,23 @@ thresholds, and a merchant who hears two different definitions in two answers st
 
 ---
 
-## Step 0: Connect, and confirm the corpus is real
+## Step 0: Pick a path, then confirm the corpus is real
+
+**On a Wisp Mist project inside Mist Desktop, prefer SQL.** `db_query` targets that project's own
+database, where Wisp's tables live — so you can answer with **no token, no MCP server and no
+Settings dialog**, and it keeps working under Safe Mode where every `mcp__*` tool is refused.
+Finish with `sql_answer_card` so the merchant gets a saveable card and an editor tab rather than a
+wall of chat text. Full runbook and canonical queries: **[references/sql-path.md](references/sql-path.md)**.
+
+One rule that path does not enforce for you: **every query filters on `company_id`.** The MCP takes
+the tenant from the token so it cannot read another merchant; raw SQL will happily read all of them.
+Resolve the company first and carry it through every statement.
+
+Use the MCP instead when you are **outside Mist Desktop** (Claude Desktop, Cursor, Claude Code), or
+when you want the computed extras SQL does not have — the frustration score, `sufficient` guards,
+`playerUrl`s built for you, and the checkout `blindSpot` annotation.
+
+### If you are going the MCP route
 
 1. **Check the `wisp` MCP tools are available in this session.** In Mist Desktop, MCP tools are
    namespaced `mcp__<server>__<tool>` — so a server the user named `wisp` surfaces as
