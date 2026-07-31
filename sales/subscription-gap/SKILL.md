@@ -1,0 +1,35 @@
+---
+name: Subscription gap audit
+description: Find the products that run out and get rebought but that no customer can put on a schedule, size the missing recurring revenue against real repeat-purchase data, and rank the add-on that closes it.
+icon: repeat
+---
+
+# Goal
+
+Find what {{company.name}} sells that **runs out and gets rebought** but that a customer cannot put on a schedule — then size it and propose the plans that close it. Most merchants run half a razor-and-blades business: the refill is on subscription and every other consumable is one-time-only. That gap is recurring revenue already in the catalog.
+
+# Steps
+
+1. Call `fluid_api("/api/products", "GET")` on the shop host and paginate fully. Read prices from `variants[].variant_countries[]` (prefer the US/USD entry) — the product-level `price` is frequently `0.0` and means nothing. Note that `/api/company/products` returns `{error}` for a company token, and `api.fluid.app` serves HTML 404s for both product paths; it must be the shop host. Open your output with a data-source block: endpoint called, product count, variant count, and the timestamp. If the catalog can't be reached, stop and say what you tried rather than continuing against anything stale.
+
+2. Classify every product as **replenishable**, **durable**, or **bundle**. Check structure first — if `is_bundle`, `bundle`, `product_bundles` or `bundle_config` is set, it is a bundle and no wording overrides that. Otherwise classify from title and description, because Fluid returns `category: null` and `tags: []` on a real import; do not wait for metadata that isn't coming. See `references/replenishment-classes.md` for the term lists and the two matching rules that make them work.
+
+3. Score text matches so ties resolve correctly: a term found in the **title** outranks one found only in the description, and a **longer** term outranks a shorter one. A product's name is what it *is*; its description is what it *mentions*. This is why "wax kit" must beat the bare token "kit", and why a "Razor Starter Kit" whose copy mentions refill cartridges is a kit and not a refill. Match on word boundaries and treat acronyms as case-sensitive, or you will find "TENS" inside "softens" and tell a skincare merchant their lip balm is a medical device.
+
+4. When nothing in the **title** decided it AND either several consumable categories are in play or a bundle word appeared anywhere, mark the product **NEEDS REVIEW** and list it by name. Do not guess — that pattern is exactly how an unflagged multi-product set reads ("Razor, shave cream and ultimate skin solution"). If more than a third of the catalog lands unclassified, say the classification isn't reliable instead of reporting a confident split.
+
+5. Determine what is already subscribable. A product counts as covered if **any** of these is true, and you must check all four because a plan attaches at product level or at variant level: `has_subscription_plans === true`, `product_subscription_plans` non-empty, `variants[].allow_subscription === true`, `variants[].subscription_only === true`. **The gap = replenishable AND not covered.**
+
+6. Report one of three outcomes, honestly. **NO GAP** — every replenishable product already has a plan; say so and stop, do not manufacture work. **GAP** — report the count, its share of the catalog, and its total list price. **CANNOT ASSESS** — catalog unreachable or classification unreliable; refuse and say what you'd need. Separately, flag any **durable with no matching refill product anywhere in the catalog** — that is an entry device that can never produce a second order, and it is often the bigger finding.
+
+7. Get real replenishment cadence if the data exists. With a reporting database connected, compute per product the **median** days between consecutive orders of the same product by the same customer — median, not mean, because repurchase intervals have a long right tail and the customer returning after 400 days is real but is not the cadence. Require at least 30 repeat pairs before trusting a median; below that keep a category default and label it an assumption. Report p25/p75 too: if they're far apart the product has no single cadence and the honest answer is a customer-selectable interval. See `references/measuring-cadence.md` for the queries.
+
+8. If `404 No database-enabled reporting connector` comes back, that is a permanent-looking condition, not a transient error. Do not substitute anything that looks close. Say cadence is a category assumption, and tell the merchant that **Settings → Reporting Databases** converts every assumption in the analysis into a measurement.
+
+9. Size it only where the inputs are real: `annual = Σ price × (365 / cadence_days) × buyers × attach_rate`. The attach rate must come from this merchant's own subscription orders — the observed rate on products that already offer one. Never borrow an industry figure without labelling it borrowed. Compute the total only over products having **both** a trustworthy cadence and a buyer count, exclude the rest rather than backfilling them with defaults, and state what share of the gap your number covers. If you can't compute it, say so plainly and give the defensible version instead: "N products, $X of list price, that no customer can currently buy on a schedule."
+
+10. Propose plans grouped by category, flagged where cadence is assumed. Never propose one on a bundle, kit or durable — subscribing a bundle re-ships a durable the customer already owns, and that is how a subscription earns a cancellation rather than a renewal. Then ask for exactly two things in a single exchange: **the discount percentage** (a margin decision that is not yours to make) and **a ruling on the NEEDS REVIEW products**. Ask nothing else; everything else you can read.
+
+11. Rank the attach offer — the cheapest gap product that clears the merchant's free-shipping threshold from a subscriber's current order value, because that is the offer a customer accepts without doing arithmetic. If nothing clears it, say so; two smaller items or a subscriber-only shipping rule may be the honest answer. Order it so the add-on comes **before** any skip or pause option: only adding an item creates incremental revenue, and a flow that opens with "want to skip?" reduces the merchant's revenue very efficiently.
+
+12. Close with ONE recommendation grounded in the numbers — e.g. "13 of 24 products can only be bought one at a time, and the four with the strongest repeat-purchase data are worth $X a year at your own observed attach rate — start with those and leave the rest until there's data behind them," or "no gap: every replenishable product already has a plan, so the opportunity here is retention, not coverage," or "I can't size this until the reporting database is connected — what I can tell you is 13 products and $132 of list price sit outside any schedule." Never present a category-convention cadence as though it were measured, and never quote a revenue figure without the assumptions inside it stated in the same breath.
