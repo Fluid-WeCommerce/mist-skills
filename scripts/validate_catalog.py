@@ -11,13 +11,11 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = ROOT / "manifest.json"
-FLAGSHIP_WORKFLOW_PATH = ROOT / "workflows/onboard-launch-company.workflow.json"
 STREAMLINED_WORKFLOW_PATH = (
     ROOT / "workflows/streamlined-onboard-launch.workflow.json"
 )
-FLAGSHIP_CONTRACT_FILES = (
+SHARED_CONTRACT_FILES = (
     ROOT / "onboarding/fluid-product-admin-import/SKILL.md",
-    ROOT / "onboarding/onboard-launch-company/SKILL.md",
     ROOT / "onboarding/onboarding-prefill/SKILL.md",
     ROOT / "onboarding/onboarding-prefill/references/api-endpoints.md",
     ROOT / "onboarding/onboarding-prefill/references/brand-md.md",
@@ -31,7 +29,6 @@ FLAGSHIP_CONTRACT_FILES = (
     ROOT / "themes/clone-product-page/SKILL.md",
     ROOT / "themes/clone-category-page/SKILL.md",
     ROOT / "themes/clone-collection-page/SKILL.md",
-    FLAGSHIP_WORKFLOW_PATH,
 )
 
 
@@ -197,7 +194,7 @@ def require_fragments(text: str, fragments: tuple[str, ...], label: str) -> None
             )
 
 
-def validate_flagship_contracts() -> None:
+def validate_shared_skill_contracts() -> None:
     banned_fragments = (
         "/api/company/v1/products",
         "/api/company/v1/collections",
@@ -210,7 +207,7 @@ def validate_flagship_contracts() -> None:
         "Suisse Intl",
     )
 
-    for path in FLAGSHIP_CONTRACT_FILES:
+    for path in SHARED_CONTRACT_FILES:
         text = path.read_text(encoding="utf-8")
         for fragment in banned_fragments:
             if fragment in text:
@@ -405,333 +402,6 @@ def validate_flagship_contracts() -> None:
             f"{relative_path} specialist contract",
         )
 
-    workflow = load_json(FLAGSHIP_WORKFLOW_PATH)
-    if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
-        raise CatalogValidationError("flagship workflow steps must be an array")
-
-    steps = {
-        step.get("id"): step
-        for step in workflow["steps"]
-        if isinstance(step, dict) and isinstance(step.get("id"), str)
-    }
-    theme_discovery = steps.get("theme-scrape-inventory")
-    if not isinstance(theme_discovery, dict):
-        raise CatalogValidationError(
-            "flagship workflow: theme-scrape-inventory step is missing"
-        )
-    theme_discovery_acceptance = json.dumps(
-        theme_discovery.get("acceptance", [])
-    )
-    # Source discovery is the heaviest-context step in the workflow: it opens
-    # rendered ecommerce HTML plus durable screenshots and must hold them while
-    # building a signed inventory. Pinning it to the cheapest model produced 13
-    # hard failures and 5 context overflows across 58 recorded runs, so the gate
-    # is an allowlist of models known to hold that context, not a single id.
-    if theme_discovery.get("model") not in SOURCE_DISCOVERY_MODELS:
-        raise CatalogValidationError(
-            "flagship workflow: bounded source discovery must use one of "
-            f"{sorted(SOURCE_DISCOVERY_MODELS)}; catalog indexing is now a "
-            "separate server-paginated step, so this gate cannot infer product ids"
-        )
-    require_fragments(
-        theme_discovery_acceptance,
-        (
-            "priority_media",
-            "deferred-to-page-specialist",
-            "SOURCE_INVENTORY_VALIDATION: pass",
-            "Catalog reconciliation and DAM delivery are intentionally not graded here",
-        ),
-        "flagship workflow source discovery",
-    )
-    require_fragments(
-        str(theme_discovery.get("prompt", "")),
-        (
-            'run_skill("themes/theme-source-inventory")',
-            "build_theme_source_inventory",
-            "validate_theme_source_inventory",
-            "Do not load the all-phases theme-clone skill",
-        ),
-        "flagship workflow source discovery skill boundary",
-    )
-
-    theme_catalog = steps.get("theme-catalog-index")
-    theme_media = steps.get("theme-media-inventory")
-    theme_tokens = steps.get("theme-tokens-skeleton")
-    if (
-        not isinstance(theme_catalog, dict)
-        or not isinstance(theme_media, dict)
-        or not isinstance(theme_tokens, dict)
-    ):
-        raise CatalogValidationError(
-            "flagship workflow: split catalog, media, and token steps are required"
-        )
-    if theme_catalog.get("dependsOn") != ["theme-scrape-inventory"]:
-        raise CatalogValidationError(
-            "flagship workflow: catalog index must wait for source discovery"
-        )
-    if theme_media.get("dependsOn") != ["theme-catalog-index"]:
-        raise CatalogValidationError(
-            "flagship workflow: media delivery must wait for the complete catalog index"
-        )
-    if theme_tokens.get("dependsOn") != ["theme-media-inventory"]:
-        raise CatalogValidationError(
-            "flagship workflow: theme tokens must wait for media delivery"
-        )
-    require_fragments(
-        json.dumps(theme_catalog),
-        (
-            "fluid-catalog-index.json",
-            "page[limit]=100",
-            "meta.pagination.next_cursor",
-            "complete:true",
-            "first, middle, and last",
-            "No product id or continuation was inferred",
-        ),
-        "flagship workflow catalog index",
-    )
-    require_fragments(
-        json.dumps(theme_media),
-        (
-            "dam_upload(url=<exact public source>,create_media=true)",
-            "external_asset_url",
-            "compress_media",
-            "theme_dam_fidelity_fallback",
-            "video content type",
-            "No id was inferred",
-        ),
-        "flagship workflow media delivery",
-    )
-
-    home_step = steps.get("theme-homepage")
-    shop_step = steps.get("theme-shop-page")
-    if not isinstance(home_step, dict) or not isinstance(shop_step, dict):
-        raise CatalogValidationError(
-            "flagship workflow: home and shop golden-route steps are required"
-        )
-    if home_step.get("skill") != "themes/clone-home-page":
-        raise CatalogValidationError(
-            "flagship workflow: theme-homepage must use themes/clone-home-page"
-        )
-    if shop_step.get("skill") != "themes/clone-shop-page":
-        raise CatalogValidationError(
-            "flagship workflow: theme-shop-page must use themes/clone-shop-page"
-        )
-    if shop_step.get("dependsOn") != ["theme-homepage"]:
-        raise CatalogValidationError(
-            "flagship workflow: shop must wait for home without blocking on "
-            "the complete product import"
-        )
-    for step_id, step in (
-        ("theme-homepage", home_step),
-        ("theme-shop-page", shop_step),
-    ):
-        required_tools = json.dumps(step.get("qa", {}).get("requiredTools", []))
-        require_fragments(
-            required_tools,
-            (
-                '"tool": "crawl"',
-                '"minSuccessfulCalls": 2',
-                '"formats": ["html", "screenshot"]',
-                '"screenshot_options.viewport.width"',
-                '"tool": "read_preview_dom"',
-                '"tool": "compare_preview_to_source"',
-                '"width": 1440',
-                '"height": 900',
-                '"width": 390',
-                '"height": 844',
-                '"mode": "full"',
-                '"copy_mode": "diagnostic"',
-                '"geometry_mode": "diagnostic"',
-                '"media_mode": "diagnostic"',
-                '"tool": "view_project_image"',
-                '"tool": "interact_preview"',
-            ),
-            f"flagship workflow {step_id} evidence floor",
-        )
-        image_requirements = [
-            requirement
-            for requirement in step.get("qa", {}).get("requiredTools", [])
-            if requirement.get("tool") == "view_project_image"
-        ]
-        if not any(
-            requirement.get("minSuccessfulCalls") == 2
-            and requirement.get("distinctBy") == ["path"]
-            for requirement in image_requirements
-        ):
-            raise CatalogValidationError(
-                f"flagship workflow: {step_id} QA must open two distinct "
-                "durable source images"
-            )
-        if step.get("qa", {}).get("model") not in PAGE_QA_MODELS:
-            raise CatalogValidationError(
-                f"flagship workflow: {step_id} bounded page QA must use one of "
-                f"{sorted(PAGE_QA_MODELS)}"
-            )
-        require_fragments(
-            json.dumps(step.get("acceptance", [])),
-            (
-                "stable",
-                "resource/dynamic/external",
-                "signed compare_preview_to_source",
-                "independent",
-                "needs_adjudication",
-                "blocked",
-            ),
-            f"flagship workflow {step_id} specialist gate",
-        )
-
-    product_page_step = steps.get("theme-product-page")
-    collection_page_step = steps.get("theme-collection-page")
-    if not isinstance(product_page_step, dict) or not isinstance(
-        collection_page_step, dict
-    ):
-        raise CatalogValidationError(
-            "flagship workflow: separate product and collection page steps "
-            "are required"
-        )
-    if product_page_step.get("skill") != "themes/clone-product-page":
-        raise CatalogValidationError(
-            "flagship workflow: product page must use themes/clone-product-page"
-        )
-    if collection_page_step.get("skill") != "themes/clone-collection-page":
-        raise CatalogValidationError(
-            "flagship workflow: collection page must use "
-            "themes/clone-collection-page"
-        )
-    if product_page_step.get("dependsOn") != ["theme-shop-page"]:
-        raise CatalogValidationError(
-            "flagship workflow: PDP must wait for shop without blocking on "
-            "the complete product import"
-        )
-    if collection_page_step.get("dependsOn") != ["theme-product-page"]:
-        raise CatalogValidationError(
-            "flagship workflow: collection page must wait for the PDP page step"
-        )
-
-    for step_id, theme_step in (
-        ("theme-product-page", product_page_step),
-        ("theme-collection-page", collection_page_step),
-    ):
-        required_tools = json.dumps(theme_step.get("qa", {}).get("requiredTools", []))
-        require_fragments(
-            required_tools,
-            (
-                '"tool": "crawl"',
-                '"minSuccessfulCalls": 2',
-                '"tool": "compare_preview_to_source"',
-                '"copy_mode": "diagnostic"',
-                '"geometry_mode": "diagnostic"',
-                '"media_mode": "diagnostic"',
-                '"tool": "view_project_image"',
-                '"tool": "read_preview_dom"',
-                '"tool": "interact_preview"',
-            ),
-            f"flagship workflow {step_id} evidence floor",
-        )
-        image_requirements = [
-            requirement
-            for requirement in theme_step.get("qa", {}).get("requiredTools", [])
-            if requirement.get("tool") == "view_project_image"
-        ]
-        if not any(
-            requirement.get("minSuccessfulCalls") == 2
-            and requirement.get("distinctBy") == ["path"]
-            for requirement in image_requirements
-        ):
-            raise CatalogValidationError(
-                f"flagship workflow: {step_id} QA must open two distinct "
-                "durable source images"
-            )
-        if theme_step.get("qa", {}).get("model") != "google/gemini-3.6-flash":
-            raise CatalogValidationError(
-                f"flagship workflow: {step_id} bounded page QA must use "
-                "google/gemini-3.6-flash"
-            )
-        require_fragments(
-            json.dumps(theme_step.get("acceptance", [])),
-            (
-                "stable",
-                "resource/dynamic/external",
-                "signed compare_preview_to_source",
-                "needs_adjudication",
-                "blocked",
-            ),
-            f"flagship workflow {step_id} specialist gate",
-        )
-
-    content_pages_step = steps.get("theme-content-pages-push")
-    if not isinstance(content_pages_step, dict):
-        raise CatalogValidationError(
-            "flagship workflow: theme-content-pages-push step is missing"
-        )
-    if not depends_transitively(
-        steps, "theme-content-pages-push", "theme-collection-page"
-    ):
-        raise CatalogValidationError(
-            "flagship workflow: content/push must wait for the collection page"
-        )
-    require_fragments(
-        json.dumps(content_pages_step.get("acceptance", [])),
-        (
-            "priority",
-            "video",
-            "HARD-FAIL BAR",
-        ),
-        "flagship workflow theme-content-pages-push",
-    )
-
-    for removed_step_id in ("theme-product-collection",):
-        if removed_step_id in steps:
-            raise CatalogValidationError(
-                f"flagship workflow: obsolete combined step {removed_step_id} "
-                "must be split into page-type specialists"
-            )
-
-    products_import = steps.get("products-import")
-    if not isinstance(products_import, dict):
-        raise CatalogValidationError("flagship workflow: products-import step is missing")
-    product_prompt = products_import.get("prompt")
-    if not isinstance(product_prompt, str):
-        raise CatalogValidationError(
-            "flagship workflow: products-import prompt must be a string"
-        )
-    require_fragments(
-        product_prompt,
-        (
-            'run_skill("fluid-product-admin-import")',
-            "/api/v202604/company/products",
-            "meta.pagination.next_cursor",
-            'status:"active"',
-            "external_asset_url",
-            "manifest_sha256",
-        ),
-        "flagship workflow products-import",
-    )
-    product_acceptance = json.dumps(products_import.get("acceptance", []))
-    require_fragments(
-        product_acceptance,
-        ('product_subscription_plans_attributes:[{\\"_destroy\\":true}]',),
-        "flagship workflow products-import acceptance",
-    )
-
-    content_import = steps.get("content-import")
-    if not isinstance(content_import, dict):
-        raise CatalogValidationError("flagship workflow: content-import step is missing")
-    content_prompt = content_import.get("prompt")
-    if not isinstance(content_prompt, str):
-        raise CatalogValidationError(
-            "flagship workflow: content-import prompt must be a string"
-        )
-    require_fragments(
-        content_prompt,
-        (
-            'run_skill("fluid-product-admin-import")',
-            "/api/v202604/company/collections",
-            "create_page",
-            "meta.pagination.next_cursor",
-        ),
-        "flagship workflow content-import",
-    )
 
 
 def validate_streamlined_product_import_contract() -> None:
@@ -1562,7 +1232,7 @@ def validate_published_catalog(
     *, streamlined_workflow: Any | None = None
 ) -> tuple[int, int]:
     skill_count, workflow_count = validate_manifest(load_json(MANIFEST_PATH))
-    validate_flagship_contracts()
+    validate_shared_skill_contracts()
     validate_streamlined_product_import_contract()
     validate_streamlined_page_review_contract(
         load_json(STREAMLINED_WORKFLOW_PATH)
