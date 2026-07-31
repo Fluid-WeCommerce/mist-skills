@@ -42,6 +42,21 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
         except validate_catalog.CatalogValidationError as error:
             self.fail(f"published workflow violates its contract: {error}")
 
+    def test_rejects_home_page_without_bulk_media_reconcile(self) -> None:
+        workflow = self.load_workflow()
+        home_step = next(
+            step for step in workflow["steps"] if step.get("id") == "home-page"
+        )
+        home_step["prompt"] = home_step["prompt"].replace(
+            "theme_media_reconcile", "a manual dam_upload loop"
+        )
+
+        with self.assertRaisesRegex(
+            validate_catalog.CatalogValidationError,
+            "home-page implementation contract",
+        ):
+            validate_catalog.validate_streamlined_page_review_contract(workflow)
+
     def test_rejects_the_shared_visual_product_skill(self) -> None:
         workflow = self.load_workflow()
         product_step = next(
