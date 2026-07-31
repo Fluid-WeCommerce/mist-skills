@@ -482,6 +482,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "mist/summary-mist-apps-on-company",
+      "name": "Summary Mist apps on company",
+      "description": "Audit every Mist app a company owns across all states and flag where creating a new one would be redundant.",
+      "category": "mist",
+      "icon": "layers",
+      "path": "mist/summary-mist-apps-on-company.md",
+      "updated_at": "2026-07-31T17:55:00Z"
     }
   ],
   "workflows": [
