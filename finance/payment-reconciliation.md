@@ -347,17 +347,25 @@ END OF REPORT
 
 ---
 
-## 6 — Save report to file
+## 6 — Save report as HTML
 
-After printing, save the identical report text to:
+After printing the terminal summary, generate a styled HTML report and save it to:
 
 ```
-/tmp/recon_<company_slug>_<YYYYMMDD_HHMMSS>.txt
+/tmp/recon_<company_slug>_<YYYYMMDD_HHMMSS>.html
 ```
 
 Where `company_slug` is the company name lowercased with spaces replaced by underscores, and the timestamp is the moment the report was generated.
 
-Print the full file path so the user can open it.
+The HTML report should:
+- Use a clean, modern design with a white card layout on a light grey background
+- Show a header with company name, period, environment, generated timestamp, and run-by
+- Display summary stats (Fluid count/total, PSP count/total, discrepancy count) as prominent stat cards
+- Render each discrepancy section (in Fluid not PSP, in PSP not Fluid, amount mismatches, status mismatches, orphans) as a styled table with alternating row colors
+- Use green for clean/success indicators, amber for warnings, red for errors
+- Be self-contained (inline CSS only, no external dependencies)
+
+Print the full file path so the user can open it in a browser.
 
 ---
 
