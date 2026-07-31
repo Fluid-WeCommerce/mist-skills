@@ -1,0 +1,1185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>__REPORT_TITLE__</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --black: #f3f4f1;
+      --white: #181816;
+      --gray-1: #666660;
+      --gray-2: #9a9a93;
+      --gray-3: #ddddd7;
+      --line: rgba(24, 24, 22, .14);
+      --surface: #ffffff;
+      --surface-2: #f8f8f5;
+      --positive: #16a34a;
+      --positive-text: #14833b;
+      --negative: #e5484d;
+      --type-caption: 12px;
+      --type-body: 15px;
+      --type-title: 20px;
+      --type-heading: clamp(30px, 3vw, 40px);
+      --type-display: clamp(40px, 4vw, 52px);
+      --radius: 20px;
+      --radius-small: 12px;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--black); }
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      background: var(--black);
+      color: var(--white);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: var(--type-body);
+      font-variant-numeric: tabular-nums;
+    }
+    button { color: inherit; font: inherit; }
+    a { color: inherit; text-underline-offset: 4px; }
+    .shell { width: min(1280px, 100%); margin: 0 auto; padding: 0 28px 80px; }
+    .rule { border-top: 1px solid var(--line); }
+    .hero {
+      margin-top: 0;
+      padding: clamp(44px, 6vw, 72px) 4px clamp(24px, 3vw, 38px);
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+    }
+    .hero-copy { min-width: 0; max-width: 960px; }
+    h1 {
+      margin: 0;
+      font-size: var(--type-display);
+      font-weight: 700;
+      letter-spacing: -.04em;
+      line-height: 1.05;
+    }
+    .hero-thesis {
+      max-width: 780px;
+      margin: 16px 0 0;
+      color: var(--gray-1);
+      font-size: var(--type-body);
+      line-height: 1.5;
+    }
+    .project-meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-top: 12px;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .meta-item { min-height: 76px; padding: 16px 18px; }
+    .meta-item + .meta-item { padding-left: 18px; border-left: 1px solid var(--line); }
+    .meta-label { color: var(--gray-1); font-size: var(--type-caption); }
+    .meta-value { margin-top: 7px; font-size: var(--type-body); line-height: 1.3; }
+    .scenario-band {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 68px;
+      margin-top: 16px;
+      padding: 12px 14px;
+      background: rgba(243, 244, 241, .94);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      backdrop-filter: blur(14px);
+    }
+    .scenario-copy { display: flex; flex-wrap: wrap; gap: 6px; font-size: var(--type-body); }
+    .scenario-copy span { color: var(--gray-1); }
+    .segments {
+      display: flex;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-small);
+    }
+    .segment {
+      min-width: 92px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      background: transparent;
+      cursor: pointer;
+      padding: 11px 18px;
+      font-size: var(--type-caption);
+      font-weight: 600;
+    }
+    .segment:last-child { border-right: 0; }
+    .segment[aria-pressed="true"] { background: var(--white); color: var(--black); }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+      margin-top: 16px;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .stat {
+      display: flex;
+      min-height: 128px;
+      padding: 26px 30px;
+      background: transparent;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .stat + .stat { border-left: 1px solid var(--line); }
+    .stat.is-primary {
+      border: 0;
+      background: transparent;
+      color: var(--white);
+    }
+    .stat.is-primary .stat-detail { color: var(--gray-1); }
+    .stat.is-primary .stat-value { color: var(--positive); }
+    .stat.is-contribution {
+      background: transparent;
+    }
+    .stat.is-contribution .stat-value { color: var(--positive); }
+    .stat.is-contribution.is-negative .stat-value { color: var(--negative); }
+    .stat.is-exposure .stat-value { color: var(--negative); }
+    .stat.is-exposure.is-positive .stat-value { color: var(--positive); }
+    .stat-value {
+      margin-top: 0;
+      font-size: var(--type-display);
+      letter-spacing: -.045em;
+      line-height: 1;
+    }
+    .stat-detail { margin-top: 11px; color: var(--gray-1); font-size: var(--type-body); }
+    .section {
+      margin-top: 20px;
+      padding: clamp(34px, 5vw, 52px);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .section-head {
+      max-width: 900px;
+      margin-bottom: 40px;
+    }
+    h2 {
+      margin: 0;
+      font-size: var(--type-heading);
+      font-weight: 700;
+      letter-spacing: -.035em;
+      line-height: 1.08;
+    }
+    .section-head p {
+      max-width: 720px;
+      margin: 14px 0 0;
+      color: var(--gray-1);
+      font-size: var(--type-body);
+      line-height: 1.55;
+    }
+    .lift-chart { width: 100%; overflow-x: auto; }
+    .lift-chart,
+    .driver-chart {
+      padding: 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    .lift-chart svg { display: block; width: 100%; min-width: 860px; height: auto; }
+    .chart-axis { stroke: var(--gray-3); }
+    .chart-zero { stroke: var(--gray-2); stroke-width: 1.4; }
+    .chart-tick {
+      fill: var(--gray-1);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: var(--type-caption);
+    }
+    .chart-label { fill: var(--white); font-size: var(--type-body); font-weight: 700; }
+    .chart-range { stroke: var(--gray-2); stroke-width: 2; }
+    .chart-progress { stroke: var(--positive); stroke-width: 3; }
+    .chart-break { fill: var(--black); stroke: var(--white); stroke-width: 1.5; }
+    .chart-point { fill: var(--positive); }
+    .chart-point-fail { fill: var(--negative); stroke: var(--surface); stroke-width: 2; }
+    .chart-value {
+      fill: var(--white);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: var(--type-caption);
+      font-weight: 700;
+    }
+    .chart-gap {
+      fill: var(--gray-1);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: var(--type-caption);
+    }
+    .inline-key {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      margin-top: 28px;
+      color: var(--gray-1);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: var(--type-caption);
+    }
+    .inline-key span { display: inline-flex; align-items: center; gap: 10px; }
+    .key-line { width: 24px; height: 2px; background: var(--positive); }
+    .key-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--positive); }
+    .key-diamond { width: 8px; height: 8px; border: 1px solid var(--white); transform: rotate(45deg); }
+    .inverse {
+      margin-inline: 0;
+      padding-inline: clamp(34px, 5vw, 52px);
+      background: var(--surface);
+      color: inherit;
+      border-bottom: 1px solid var(--line);
+    }
+    .inverse .section-head p { color: var(--gray-1); }
+    .driver-chart { overflow-x: auto; }
+    .driver-chart svg { display: block; width: 100%; min-width: 760px; height: auto; }
+    .driver-axis { stroke: var(--gray-2); stroke-width: 1.25; }
+    .driver-guide { stroke: var(--gray-3); stroke-width: 1; }
+    .driver-bar { fill: var(--positive); }
+    .driver-bar.is-negative { fill: var(--negative); }
+    .driver-label { fill: var(--white); font-size: var(--type-body); font-weight: 700; }
+    .driver-value { fill: var(--white); font-size: var(--type-body); font-weight: 700; }
+    .driver-tick { fill: var(--gray-1); font-size: var(--type-caption); }
+    .primary-results {
+      margin-top: 0;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+    }
+    .opportunity-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .opportunity-card {
+      min-width: 0;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .product-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: clamp(220px, 23vw, 310px);
+      padding: 22px;
+      background: #f1f2ee;
+      border-bottom: 1px solid var(--line);
+    }
+    .product-thumb {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .product-visual.is-empty {
+      color: var(--gray-2);
+      font-size: var(--type-caption);
+    }
+    .opportunity-body { padding: 22px; }
+    .product-flag {
+      display: block;
+      width: max-content;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+      font-size: 24px;
+      line-height: 1;
+    }
+    .product-copy { min-width: 0; margin-top: 9px; }
+    .product-copy strong {
+      display: block;
+      min-height: 2.4em;
+      font-size: var(--type-title);
+      line-height: 1.2;
+    }
+    .product-copy span,
+    .price-option span,
+    .result-label,
+    .recommendation span {
+      color: var(--gray-1);
+      font-size: var(--type-caption);
+    }
+    .price-option {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+    .price-option strong {
+      display: block;
+      margin-top: 7px;
+      font-size: var(--type-title);
+      letter-spacing: -.025em;
+    }
+    .price-option small {
+      display: block;
+      margin-top: 7px;
+      color: var(--gray-1);
+      font-size: var(--type-caption);
+      font-weight: 700;
+    }
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      margin-top: 18px;
+    }
+    .result {
+      min-width: 0;
+      padding-right: 14px;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+    }
+    .result + .result {
+      padding-right: 0;
+      padding-left: 14px;
+      border-left: 1px solid var(--line);
+    }
+    .result strong {
+      display: block;
+      margin-top: 8px;
+      font-size: var(--type-title);
+      line-height: 1;
+    }
+    .result.is-positive strong { color: var(--positive); }
+    .result.is-risk strong { color: var(--negative); }
+    .recommendation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+    .recommendation strong {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--white);
+      font-size: var(--type-caption);
+    }
+    .recommendation strong::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      flex: 0 0 auto;
+      background: var(--gray-2);
+      border-radius: 50%;
+    }
+    .recommendation.is-strong strong { color: var(--positive-text); }
+    .recommendation.is-strong strong::before { background: var(--positive); }
+    .recommendation span { text-align: right; line-height: 1.35; }
+    .projection {
+      display: grid;
+      grid-template-columns: minmax(260px, .72fr) minmax(0, 1.28fr);
+      gap: clamp(32px, 5vw, 72px);
+      align-items: center;
+      margin-top: 16px;
+      padding: clamp(30px, 4vw, 48px);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .projection-copy h2 { font-size: var(--type-heading); }
+    .projection-copy > p {
+      max-width: 440px;
+      margin: 12px 0 0;
+      color: var(--gray-1);
+      font-size: var(--type-body);
+      line-height: 1.5;
+    }
+    .control-stack {
+      margin-top: 28px;
+      border-top: 1px solid var(--line);
+    }
+    .projection-control {
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .projection-control label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      font-size: var(--type-body);
+      font-weight: 700;
+    }
+    .projection-control output {
+      color: var(--positive-text);
+      font-variant-numeric: tabular-nums;
+    }
+    .projection-control input {
+      width: 100%;
+      margin: 14px 0 0;
+      accent-color: var(--positive);
+      cursor: pointer;
+    }
+    .control-scale {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 7px;
+      color: var(--gray-1);
+      font-size: var(--type-caption);
+    }
+    .projection-visual { min-width: 0; }
+    .projection-chart svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .projection-grid { stroke: var(--gray-3); stroke-width: 1; }
+    .projection-zero { stroke: var(--gray-2); stroke-width: 1.25; }
+    .projection-line {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2.5;
+    }
+    .projection-line.is-baseline { stroke: var(--gray-2); }
+    .projection-line.is-conservative {
+      stroke: var(--negative);
+      stroke-dasharray: 7 6;
+    }
+    .projection-line.is-strong {
+      stroke: var(--positive);
+      stroke-dasharray: 3 7;
+      opacity: .55;
+    }
+    .projection-line.is-selected {
+      stroke: var(--positive);
+      stroke-width: 3.5;
+    }
+    .projection-guide {
+      stroke: var(--gray-2);
+      stroke-dasharray: 4 5;
+      stroke-width: 1;
+    }
+    .projection-anchor {
+      fill: var(--surface);
+      stroke: var(--positive);
+      stroke-width: 2;
+    }
+    .projection-point {
+      fill: var(--positive);
+      stroke: var(--surface);
+      stroke-width: 3;
+    }
+    .projection-axis-label {
+      fill: var(--gray-1);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: var(--type-caption);
+    }
+    .projection-value-label {
+      fill: var(--white);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: var(--type-caption);
+      font-weight: 700;
+    }
+    .projection-series-label {
+      fill: var(--gray-1);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: var(--type-caption);
+      font-weight: 700;
+    }
+    .projection-note {
+      margin: 10px 0 0;
+      color: var(--gray-1);
+      font-size: var(--type-caption);
+      line-height: 1.45;
+    }
+    .empty-opportunity {
+      grid-column: 1 / -1;
+      padding: 42px;
+      color: var(--gray-1);
+      text-align: center;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .analysis-details {
+      margin-top: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+    .analysis-details > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 62px;
+      padding: 18px 22px;
+      cursor: pointer;
+      font-size: var(--type-body);
+      font-weight: 700;
+      list-style: none;
+    }
+    .analysis-details > summary::-webkit-details-marker { display: none; }
+    .analysis-details > summary::after {
+      content: "";
+      width: 8px;
+      height: 8px;
+      flex: 0 0 auto;
+      margin: -4px 4px 0 10px;
+      border-right: 1.5px solid var(--gray-1);
+      border-bottom: 1.5px solid var(--gray-1);
+      transform: rotate(45deg);
+    }
+    .analysis-details[open] > summary::after {
+      margin-top: 4px;
+      transform: rotate(225deg);
+    }
+    .analysis-details[open] > summary { border-bottom: 1px solid var(--line); }
+    .analysis-detail-copy {
+      margin-left: auto;
+      color: var(--gray-1);
+      font-size: var(--type-caption);
+      font-weight: 400;
+    }
+    .analysis-body { padding: 0 12px 12px; }
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    table { width: 100%; min-width: 1080px; border-collapse: collapse; }
+    th, td { padding: 17px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th {
+      color: var(--gray-1);
+      font-size: var(--type-caption);
+      font-weight: 700;
+    }
+    td.num, th.num { text-align: right; }
+    .basis { font-size: var(--type-caption); }
+    .note { display: block; max-width: 240px; margin-top: 6px; color: var(--gray-1); font-size: var(--type-caption); }
+    .sources {
+      display: grid;
+      grid-template-columns: minmax(220px, .4fr) minmax(0, 1fr);
+      gap: 60px;
+      margin-top: 20px;
+      padding: 36px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .sources h2 { font-size: var(--type-heading); }
+    .source-list { border-top: 1px solid var(--line); }
+    .source {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .source span { color: var(--gray-1); font-size: var(--type-caption); }
+    .disclaimer {
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      color: var(--gray-1);
+      font-size: var(--type-caption);
+      line-height: 1.4;
+    }
+    @media (max-width: 980px) {
+      .sources { grid-template-columns: 1fr; }
+      .project-meta { grid-template-columns: 1fr 1fr; }
+      .meta-item:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); }
+      .meta-item:nth-child(4) { border-top: 1px solid var(--line); }
+      .opportunity-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .projection { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .shell { padding-inline: 18px; }
+      .scenario-band { align-items: flex-start; flex-direction: column; padding-block: 18px; }
+      .scenario-band { position: static; }
+      .segments { width: 100%; }
+      .segment { min-width: 0; flex: 1; }
+      .summary { grid-template-columns: 1fr; }
+      .stat { min-height: 132px; padding: 24px; }
+      .stat + .stat { border-top: 1px solid var(--line); border-left: 0; }
+      .stat.is-primary { padding-inline: 24px; margin-inline: 0; }
+      .inverse { margin-inline: 0; padding-inline: 24px; }
+      .opportunity-list { grid-template-columns: 1fr; }
+      .product-visual { height: 280px; }
+      .analysis-detail-copy { display: none; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .segment { transition: background-color .25s ease, color .25s ease; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <h1 id="report-title"></h1>
+        <p class="hero-thesis" id="hero-outcome"></p>
+      </div>
+    </section>
+
+    <section class="section primary-results">
+      <div class="opportunity-list" id="opportunity-list"></div>
+    </section>
+
+    <section class="projection" aria-labelledby="projection-title">
+      <div class="projection-copy">
+        <h2 id="projection-title">What happens if we run a small test?</h2>
+        <p>Size the customer response, eligible traffic, and planning horizon before exposing the whole market.</p>
+        <div class="control-stack">
+          <div class="projection-control">
+            <label for="response-slider">
+              <span>Customer response</span>
+              <output id="response-output" for="response-slider">Base</output>
+            </label>
+            <input id="response-slider" type="range" min="0" max="100" value="50" step="1" aria-describedby="projection-assumption-note">
+            <div class="control-scale" aria-hidden="true">
+              <span>Conservative</span>
+              <span>Base</span>
+              <span>Strong</span>
+            </div>
+          </div>
+          <div class="projection-control">
+            <label for="reach-slider">
+              <span>Test reach</span>
+              <output id="reach-output" for="reach-slider"></output>
+            </label>
+            <input id="reach-slider" type="range" min="5" max="100" value="10" step="5" aria-describedby="projection-assumption-note">
+            <div class="control-scale" aria-hidden="true">
+              <span>5% of traffic</span>
+              <span>Full rollout</span>
+            </div>
+          </div>
+          <div class="projection-control">
+            <label for="horizon-slider">
+              <span>Time horizon</span>
+              <output id="horizon-output" for="horizon-slider"></output>
+            </label>
+            <input id="horizon-slider" type="range" min="1" max="4" value="4" step="1" aria-describedby="projection-assumption-note">
+            <div class="control-scale" aria-hidden="true">
+              <span>Q1</span>
+              <span>Q4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="projection-visual">
+        <div class="projection-chart" id="projection-chart"></div>
+        <p class="projection-note" id="projection-assumption-note">Cumulative first-order contribution versus keeping current prices. This is a constant-run-rate scenario, not a demand forecast.</p>
+      </div>
+    </section>
+
+    <section class="summary" aria-label="Selected test projection summary" aria-live="polite">
+      <div class="stat is-contribution" id="summary-impact">
+        <div class="stat-value" id="summary-selected-impact"></div>
+        <div class="stat-detail" id="summary-impact-caption"></div>
+      </div>
+      <div class="stat is-exposure">
+        <div class="stat-value" id="summary-conservative-exposure"></div>
+        <div class="stat-detail" id="summary-exposure-caption"></div>
+      </div>
+      <div class="stat is-primary">
+        <div class="stat-value" id="summary-additional-orders"></div>
+        <div class="stat-detail" id="summary-orders-caption"></div>
+      </div>
+    </section>
+
+    <details class="analysis-details">
+      <summary>
+        <span>See the math</span>
+        <span class="analysis-detail-copy" id="analysis-detail-copy"></span>
+      </summary>
+      <div class="analysis-body">
+        <section class="project-meta" id="project-meta" aria-label="Project details"></section>
+
+        <div class="scenario-band">
+          <div class="scenario-copy"><span>Inspect the model:</span> <strong id="scenario-label">Base</strong> <span>· Charts below update together</span></div>
+          <div class="segments" aria-label="Revenue scenario">
+            <button class="segment" data-scenario="low" aria-pressed="false">Low</button>
+            <button class="segment" data-scenario="base" aria-pressed="true">Base</button>
+            <button class="segment" data-scenario="high" aria-pressed="false">High</button>
+          </div>
+        </div>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Conversion lift vs. break-even</h2>
+            </div>
+            <p>Each recommended test still needs enough additional orders to offset its lower price. The filled point is the selected assumption; the outlined diamond is break-even.</p>
+          </div>
+          <div class="lift-chart" id="lift-chart"></div>
+          <div class="inline-key" aria-label="Chart key">
+            <span><i class="key-line"></i> Low to high range</span>
+            <span><i class="key-dot"></i> Selected assumption</span>
+            <span><i class="key-diamond"></i> Break-even</span>
+          </div>
+        </section>
+
+        <section class="section inverse">
+          <div class="section-head">
+            <div>
+              <h2>Contribution drivers</h2>
+            </div>
+            <p>Lower prices reduce contribution first; additional orders must recover that loss. The net bar shows the remaining modeled change across the recommended tests.</p>
+          </div>
+          <div class="driver-chart" id="driver-chart"></div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h2>Assumptions behind these recommendations</h2>
+            </div>
+            <p>These are modeled experiments, not guarantees. Review the break-even requirement and evidence quality before changing a live price.</p>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Product and market</th>
+                  <th>Current → candidate</th>
+                  <th class="num">Conversion</th>
+                  <th class="num">Break-even lift</th>
+                  <th class="num" id="scenario-table-head">Base lift</th>
+                  <th class="num">Safety gap</th>
+                  <th class="num">Orders to break even</th>
+                  <th class="num">Contribution Δ</th>
+                  <th>Evidence</th>
+                  <th>Next action</th>
+                </tr>
+              </thead>
+              <tbody id="market-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="sources">
+          <h2>Sources</h2>
+          <div class="source-list" id="source-list"></div>
+        </section>
+      </div>
+    </details>
+
+    <footer class="disclaimer">Modeled estimates only. No live prices changed.</footer>
+  </main>
+
+  <script type="application/json" id="report-data">__REPORT_DATA__</script>
+  <script>
+    (() => {
+      const report = JSON.parse(document.getElementById("report-data").textContent);
+      const markets = report.markets;
+      const candidates = markets.filter(market => market.decision !== "control");
+      const opportunities = candidates.filter(market => market.scenarios.base.clears_break_even);
+      let scenario = "base";
+      let response = 50;
+      let testReach = Number(report.config.default_test_reach_pct || 10);
+      let horizonQuarters = Number(report.config.default_horizon_quarters || 4);
+      const $ = selector => document.querySelector(selector);
+      const sum = (rows, getter) => rows.reduce((total, row) => total + getter(row), 0);
+      const money = value => new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: report.config.base_currency,
+        maximumFractionDigits: 0
+      }).format(value);
+      const signedMoney = value => `${value > 0 ? "+" : ""}${money(value)}`;
+      const signedInteger = value => {
+        const rounded = Math.round(value);
+        return `${rounded > 0 ? "+" : ""}${rounded.toLocaleString()}`;
+      };
+      const percent = (value, signed = false) => `${signed && value > 0 ? "+" : ""}${(value * 100).toFixed(value === 0 ? 0 : 1)}%`;
+      const localMoney = (value, currency) => new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: value >= 100 ? 0 : 2
+      }).format(value);
+      const safe = value => String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+      })[char]);
+      const titleCase = value => value.charAt(0).toUpperCase() + value.slice(1);
+      const countryFlag = value => {
+        const code = String(value).trim().toUpperCase();
+        return /^[A-Z]{2}$/.test(code)
+          ? String.fromCodePoint(...[...code].map(character => 127397 + character.charCodeAt(0)))
+          : "🌐";
+      };
+
+      $("#project-meta").innerHTML = [
+        ["Scope", report.config.product],
+        ["Cohort", report.config.cohort],
+        ["Basis", report.config.revenue_basis],
+        ["Dated", report.config.analysis_date]
+      ].map(([label, value]) => `<div class="meta-item"><div class="meta-label">${safe(label)}</div><div class="meta-value">${safe(value)}</div></div>`).join("");
+      function selectedTotals(selectedScenario = "base") {
+        const current = sum(opportunities, market => market.current_contribution);
+        const priceOnly = sum(opportunities, market => market.price_only_contribution);
+        const scenarioTotal = sum(opportunities, market => market.scenarios[selectedScenario].contribution);
+        return {
+          current,
+          priceOnly,
+          scenarioTotal,
+          delta: scenarioTotal - current,
+          priceEffect: priceOnly - current,
+          volumeEffect: scenarioTotal - priceOnly
+        };
+      }
+
+      function projectionAt(position) {
+        const lowerHalf = position <= 50;
+        const from = lowerHalf ? "low" : "base";
+        const to = lowerHalf ? "base" : "high";
+        const mix = lowerHalf ? position / 50 : (position - 50) / 50;
+        const currentOrders = sum(opportunities, market => market.orders);
+        const currentContribution = sum(opportunities, market => market.current_contribution);
+        const projectedOrders = sum(opportunities, market => {
+          const start = market.scenarios[from].orders;
+          const end = market.scenarios[to].orders;
+          return start + (end - start) * mix;
+        });
+        const projectedContribution = sum(opportunities, market => {
+          const start = market.scenarios[from].contribution;
+          const end = market.scenarios[to].contribution;
+          return start + (end - start) * mix;
+        });
+        return {
+          currentOrders,
+          projectedOrders,
+          additionalOrders: projectedOrders - currentOrders,
+          contributionDelta: projectedContribution - currentContribution
+        };
+      }
+
+      function renderProjection() {
+        if (!opportunities.length) {
+          $(".projection").hidden = true;
+          $(".summary").hidden = true;
+          return;
+        }
+        const width = 760;
+        const height = 360;
+        const left = 72;
+        const right = 112;
+        const top = 28;
+        const bottom = 48;
+        const periodsPerQuarter = Number(report.config.periods_per_quarter || 3);
+        const reachShare = testReach / 100;
+        const months = horizonQuarters * 3;
+        const selected = projectionAt(response);
+        const conservative = projectionAt(0);
+        const strong = projectionAt(100);
+        const monthMultiplier = periodsPerQuarter / 3 * reachShare;
+        const cumulativeAt = (projection, month) =>
+          projection.contributionDelta * monthMultiplier * month;
+        const selectedImpact = cumulativeAt(selected, months);
+        const conservativeExposure = cumulativeAt(conservative, months);
+        const strongImpact = cumulativeAt(strong, months);
+        const additionalOrders =
+          selected.additionalOrders * monthMultiplier * months;
+        const plotWidth = width - left - right;
+        const plotHeight = height - top - bottom;
+        const values = [0, conservativeExposure, strongImpact, selectedImpact];
+        const minimum = Math.min(...values);
+        const maximum = Math.max(...values);
+        const spread = Math.max(1, maximum - minimum);
+        const domainMin = Math.min(0, minimum - spread * .12);
+        const domainMax = Math.max(0, maximum + spread * .12);
+        const x = month => left + month / months * plotWidth;
+        const y = value => top + (domainMax - value) / (domainMax - domainMin) * plotHeight;
+        const pathFor = projection => Array.from({ length: months + 1 }, (_, month) =>
+          `${month ? "L" : "M"} ${x(month)} ${y(cumulativeAt(projection, month))}`
+        ).join(" ");
+        const baselinePath = `M ${x(0)} ${y(0)} L ${x(months)} ${y(0)}`;
+        const ticks = Array.from({ length: 5 }, (_, index) => {
+          const value = domainMin + (domainMax - domainMin) * index / 4;
+          const yPos = y(value);
+          return `<line class="${Math.abs(value) < .001 ? "projection-zero" : "projection-grid"}" x1="${left}" x2="${width - right}" y1="${yPos}" y2="${yPos}"></line>
+            <text class="projection-axis-label" x="${left - 10}" y="${yPos + 4}" text-anchor="end">${signedMoney(value)}</text>`;
+        }).join("");
+        const quarterTicks = Array.from({ length: horizonQuarters }, (_, index) => {
+          const quarter = index + 1;
+          return `<text class="projection-axis-label" x="${x(quarter * 3)}" y="${height - 16}" text-anchor="middle">Q${quarter}</text>`;
+        }).join("");
+        const responseLabel = response === 0
+          ? "Conservative"
+          : response === 50
+            ? "Base"
+            : response === 100
+              ? "Strong"
+              : response < 50
+                ? "Conservative → base"
+                : "Base → strong";
+        $("#response-output").textContent = `${responseLabel} · ${response}%`;
+        $("#reach-output").textContent = `${testReach}%`;
+        $("#horizon-output").textContent = `${horizonQuarters} ${horizonQuarters === 1 ? "quarter" : "quarters"}`;
+        $("#response-slider").setAttribute("aria-valuetext", `${responseLabel}, ${response} percent`);
+        $("#reach-slider").setAttribute("aria-valuetext", `${testReach} percent of eligible traffic`);
+        $("#horizon-slider").setAttribute("aria-valuetext", `${horizonQuarters} ${horizonQuarters === 1 ? "quarter" : "quarters"}`);
+        $("#summary-selected-impact").textContent = signedMoney(selectedImpact);
+        $("#summary-impact-caption").textContent = `${responseLabel} contribution at ${testReach}% reach over ${horizonQuarters} ${horizonQuarters === 1 ? "quarter" : "quarters"}`;
+        $("#summary-impact").classList.toggle("is-negative", selectedImpact < 0);
+        $("#summary-conservative-exposure").textContent = signedMoney(conservativeExposure);
+        $("#summary-exposure-caption").textContent = "Conservative exposure at the same test size";
+        $(".stat.is-exposure").classList.toggle("is-positive", conservativeExposure >= 0);
+        $("#summary-additional-orders").textContent = signedInteger(additionalOrders);
+        $("#summary-orders-caption").textContent = "Additional first orders in the selected response";
+        $("#projection-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Cumulative contribution change versus current prices over ${horizonQuarters} quarters at ${testReach} percent reach. Selected customer response is ${responseLabel}.">
+          <title>Cumulative contribution change for a controlled regional-pricing test</title>
+          ${ticks}
+          <path class="projection-line is-baseline" d="${baselinePath}"></path>
+          <path class="projection-line is-conservative" d="${pathFor(conservative)}"></path>
+          <path class="projection-line is-strong" d="${pathFor(strong)}"></path>
+          <path class="projection-line is-selected" d="${pathFor(selected)}"></path>
+          <text class="projection-series-label" x="${x(months) + 10}" y="${y(conservativeExposure) + 4}">Conservative ${signedMoney(conservativeExposure)}</text>
+          <text class="projection-series-label" x="${x(months) + 10}" y="${y(strongImpact) + 4}">Strong ${signedMoney(strongImpact)}</text>
+          <circle class="projection-point" cx="${x(months)}" cy="${y(selectedImpact)}" r="6"></circle>
+          <text class="projection-value-label" x="${x(months) - 8}" y="${y(selectedImpact) - 13}" text-anchor="end">Selected ${signedMoney(selectedImpact)}</text>
+          ${quarterTicks}
+        </svg>`;
+      }
+
+      function renderOverview() {
+        const productCount = new Set(opportunities.map(market => market.product_id)).size;
+        const excludedCount = candidates.length - opportunities.length;
+        const strongCount = opportunities.filter(market => market.recommendation_key === "strong-candidate").length;
+        const smallCount = opportunities.filter(market => market.recommendation_key === "small-test").length;
+        const defaultReach = Number(report.config.default_test_reach_pct || 10);
+        const firstQuarterExposure = sum(
+          opportunities,
+          market => market.scenarios.low.delta
+        ) * defaultReach / 100 * Number(report.config.periods_per_quarter || 3);
+        if (!opportunities.length) {
+          $("#report-title").textContent = "No regional price is ready to test";
+          $("#hero-outcome").textContent = "Keep current prices and gather stronger country-level demand evidence.";
+        } else if (strongCount === opportunities.length) {
+          $("#report-title").textContent = opportunities.length === 1
+            ? "1 strong regional-pricing test"
+            : `${opportunities.length} strong regional-pricing tests`;
+          $("#hero-outcome").textContent = `Even the conservative response clears break-even. Start with ${defaultReach}% of eligible traffic and validate the result before expanding.`;
+        } else if (smallCount === opportunities.length) {
+          $("#report-title").textContent = opportunities.length === 1
+            ? "1 regional price needs a small test"
+            : `${opportunities.length} regional prices need small tests`;
+          $("#hero-outcome").textContent = `The base response clears break-even across ${productCount} ${productCount === 1 ? "product" : "products"}, but the conservative case could cost ${money(Math.abs(firstQuarterExposure))} in one quarter at ${defaultReach}% reach. Keep the exposure controlled.`;
+        } else {
+          $("#report-title").textContent = `${opportunities.length} controlled regional-pricing tests`;
+          $("#hero-outcome").textContent = `${strongCount} ${strongCount === 1 ? "candidate clears" : "candidates clear"} the conservative case; ${smallCount} ${smallCount === 1 ? "needs" : "need"} a smaller evidence-building test.`;
+        }
+        $("#analysis-detail-copy").textContent = excludedCount
+          ? `${excludedCount} other price ${excludedCount === 1 ? "change didn't" : "changes didn't"} clear the bar`
+          : "Every candidate cleared the recommendation bar";
+      }
+
+      function renderScenarioState() {
+        $("#scenario-label").textContent = titleCase(scenario);
+      }
+
+      function renderLiftChart() {
+        const width = 1180;
+        const left = 250;
+        const right = 148;
+        const top = 56;
+        const rowHeight = 76;
+        const bottom = 54;
+        const chartMarkets = opportunities;
+        const values = chartMarkets.flatMap(market => [
+          market.break_even_lift,
+          market.scenarios.low.lift,
+          market.scenarios.high.lift,
+          market.scenarios[scenario].lift
+        ]);
+        const minimum = Math.min(-.05, ...values);
+        const maximum = Math.max(.1, ...values);
+        const padding = (maximum - minimum) * .08 || .1;
+        const domainMin = minimum - padding;
+        const domainMax = maximum + padding;
+        const plotWidth = width - left - right;
+        const x = value => left + ((value - domainMin) / (domainMax - domainMin)) * plotWidth;
+        const height = top + Math.max(1, chartMarkets.length) * rowHeight + bottom;
+        const ticks = 5;
+        const axis = Array.from({ length: ticks + 1 }, (_, index) => {
+          const value = domainMin + (domainMax - domainMin) * index / ticks;
+          const xPos = x(value);
+          return `<line class="${Math.abs(value) < .001 ? "chart-zero" : "chart-axis"}" x1="${xPos}" x2="${xPos}" y1="${top - 24}" y2="${height - bottom + 5}"></line>
+            <text class="chart-tick" x="${xPos}" y="${height - 14}" text-anchor="middle">${percent(value, true)}</text>`;
+        }).join("");
+        const rows = chartMarkets.map((market, index) => {
+          const y = top + index * rowHeight + 18;
+          const selected = market.scenarios[scenario];
+          const lowX = x(market.scenarios.low.lift);
+          const highX = x(market.scenarios.high.lift);
+          const selectedX = x(selected.lift);
+          const breakX = x(market.break_even_lift);
+          const progressStart = Math.min(lowX, selectedX);
+          const progressEnd = Math.max(lowX, selectedX);
+          return `<g>
+            <text class="chart-label" x="0" y="${y - 3}">${safe(market.product_name)}</text>
+            <text class="chart-gap" x="0" y="${y + 16}">${safe(market.market_name)}</text>
+            <line class="chart-range" x1="${lowX}" x2="${highX}" y1="${y}" y2="${y}"></line>
+            <line class="chart-progress" x1="${progressStart}" x2="${progressEnd}" y1="${y}" y2="${y}"></line>
+            <rect class="chart-break" x="${breakX - 5}" y="${y - 5}" width="10" height="10" transform="rotate(45 ${breakX} ${y})"></rect>
+            <circle class="${selected.clears_break_even ? "chart-point" : "chart-point-fail"}" cx="${selectedX}" cy="${y}" r="6"></circle>
+            <text class="chart-value" x="${selectedX}" y="${y - 15}" text-anchor="middle">${percent(selected.lift, true)}</text>
+            <text class="chart-gap" x="${width - right + 18}" y="${y + 4}">${selected.margin_of_safety >= 0 ? "Clear +" : "Short "}${percent(selected.margin_of_safety)}</text>
+          </g>`;
+        }).join("");
+        $("#lift-chart").innerHTML = chartMarkets.length
+          ? `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${titleCase(scenario)} assumed conversion lift compared with break-even lift for recommended tests">
+              <title>${titleCase(scenario)} assumed conversion lift compared with break-even</title>
+              ${axis}${rows}
+            </svg>`
+          : `<div class="empty-opportunity">No recommended tests to chart.</div>`;
+      }
+
+      function renderDrivers() {
+        const totals = selectedTotals(scenario);
+        const rows = [
+          ["Price effect", totals.priceEffect],
+          ["Volume recovery", totals.volumeEffect],
+          ["Net change", totals.delta]
+        ];
+        const width = 1180;
+        const left = 210;
+        const right = 130;
+        const top = 38;
+        const rowHeight = 84;
+        const bottom = 42;
+        const plotWidth = width - left - right;
+        const maxAbs = Math.max(1, ...rows.map(([, value]) => Math.abs(value)));
+        const padded = maxAbs * 1.12;
+        const x = value => left + ((value + padded) / (padded * 2)) * plotWidth;
+        const zeroX = x(0);
+        const height = top + rows.length * rowHeight + bottom;
+        const marks = rows.map(([label, value], index) => {
+          const y = top + index * rowHeight + 12;
+          const valueX = x(value);
+          const barX = Math.min(zeroX, valueX);
+          const barWidth = Math.max(2, Math.abs(valueX - zeroX));
+          const anchor = value < 0 ? "end" : "start";
+          const labelX = value < 0 ? valueX - 10 : valueX + 10;
+          return `<g>
+            <text class="driver-label" x="0" y="${y + 20}">${safe(label)}</text>
+            <rect class="driver-bar ${value < 0 ? "is-negative" : ""}" x="${barX}" y="${y}" width="${barWidth}" height="30" rx="5"></rect>
+            <text class="driver-value" x="${labelX}" y="${y + 20}" text-anchor="${anchor}">${signedMoney(value)}</text>
+          </g>`;
+        }).join("");
+        $("#driver-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Signed bar chart comparing price effect, volume recovery, and net contribution change for recommended tests in the ${safe(scenario)} scenario">
+          <title>Contribution drivers for recommended tests in the ${safe(titleCase(scenario))} scenario</title>
+          <line class="driver-guide" x1="${left}" x2="${width - right}" y1="${height - bottom + 4}" y2="${height - bottom + 4}"></line>
+          <line class="driver-axis" x1="${zeroX}" x2="${zeroX}" y1="${top - 12}" y2="${height - bottom + 4}"></line>
+          <text class="driver-tick" x="${left}" y="${height - 10}" text-anchor="start">${signedMoney(-padded)}</text>
+          <text class="driver-tick" x="${zeroX}" y="${height - 10}" text-anchor="middle">$0</text>
+          <text class="driver-tick" x="${width - right}" y="${height - 10}" text-anchor="end">${signedMoney(padded)}</text>
+          ${marks}
+        </svg>`;
+      }
+
+      function renderOpportunities() {
+        const ranked = [...opportunities].sort((a, b) => b.scenarios.base.delta - a.scenarios.base.delta);
+        if (!ranked.length) {
+          $("#opportunity-list").innerHTML = `<div class="empty-opportunity">No current proposal clears the modeled break-even requirement. Keep present prices and collect better country-level evidence.</div>`;
+          return;
+        }
+        $("#opportunity-list").innerHTML = ranked.map(market => {
+          const base = market.scenarios.base;
+          const productImage = market.product_image?.src
+            ? `<img class="product-thumb" src="${safe(market.product_image.src)}" alt="${safe(market.product_image.alt)}">`
+            : `<span>No catalog image</span>`;
+          const defaultReach = Number(report.config.default_test_reach_pct || 10);
+          const oneQuarterExposure = market.scenarios.low.delta
+            * defaultReach / 100
+            * Number(report.config.periods_per_quarter || 3);
+          return `<article class="opportunity-card">
+            <div class="product-visual ${market.product_image?.src ? "" : "is-empty"}">${productImage}</div>
+            <div class="opportunity-body">
+              <span class="product-flag" role="img" aria-label="${safe(market.market_name)}">${countryFlag(market.market_id)}</span>
+              <div class="product-copy"><strong>${safe(market.product_name)}</strong></div>
+              <div class="price-option"><span>Test this price</span><strong>${localMoney(market.current_local_price, market.currency)} → ${localMoney(market.proposed_local_price, market.currency)}</strong><small>${percent(market.price_change_pct, true)}</small></div>
+              <div class="result-grid">
+                <div class="result is-positive"><span class="result-label">Modeled base</span><strong>${signedMoney(base.delta)}</strong></div>
+                <div class="result is-risk"><span class="result-label">Weak response</span><strong>${signedMoney(market.scenarios.low.delta)}</strong></div>
+              </div>
+              <div class="recommendation ${market.recommendation_key === "strong-candidate" ? "is-strong" : ""}"><strong>${safe(market.recommendation_label)}</strong><span>1-quarter conservative: ${signedMoney(oneQuarterExposure)} at ${defaultReach}% reach</span></div>
+            </div>
+          </article>`;
+        }).join("");
+      }
+
+      function renderTable() {
+        $("#scenario-table-head").textContent = `${titleCase(scenario)} lift`;
+        $("#market-table").innerHTML = opportunities.map(market => {
+          const result = market.scenarios[scenario];
+          return `<tr>
+            <td><strong>${safe(market.product_name)}</strong><span class="note">${safe(market.market_name)} · ${safe(market.market_id)}</span></td>
+            <td>${localMoney(market.current_local_price, market.currency)} → ${localMoney(market.proposed_local_price, market.currency)}<span class="note">${percent(market.price_change_pct, true)}</span></td>
+            <td class="num">${percent(market.conversion_rate)}</td>
+            <td class="num">${percent(market.break_even_lift, true)}</td>
+            <td class="num">${percent(result.lift, true)}</td>
+            <td class="num">${percent(result.margin_of_safety, true)}</td>
+            <td class="num">+${Math.max(0, Math.ceil(market.incremental_orders_to_break_even)).toLocaleString()}</td>
+            <td class="num">${signedMoney(result.delta)}</td>
+            <td><span class="basis">${safe(market.assumption_basis)}</span><span class="note">${safe(market.assumption_note)}</span></td>
+            <td class="basis">${safe(market.recommendation_label)}</td>
+          </tr>`;
+        }).join("");
+      }
+
+      function renderSources() {
+        const sources = report.config.sources.length ? report.config.sources : [{
+          label: "No external sources registered",
+          url: "",
+          accessed: "Add sources before a real recommendation"
+        }];
+        $("#source-list").innerHTML = sources.map(source => `<div class="source">
+          <div>${source.url ? `<a href="${safe(source.url)}" rel="noreferrer">${safe(source.label)}</a>` : safe(source.label)}</div>
+          <span>${safe(source.accessed || "")}</span>
+        </div>`).join("");
+      }
+
+      function render() {
+        renderScenarioState();
+        renderLiftChart();
+        renderDrivers();
+        renderTable();
+        document.querySelectorAll(".segment").forEach(button => {
+          button.setAttribute("aria-pressed", String(button.dataset.scenario === scenario));
+        });
+      }
+
+      document.querySelectorAll(".segment").forEach(button => {
+        button.addEventListener("click", () => {
+          scenario = button.dataset.scenario;
+          render();
+        });
+      });
+
+      $("#response-slider").value = String(response);
+      $("#reach-slider").value = String(testReach);
+      $("#horizon-slider").value = String(horizonQuarters);
+
+      $("#response-slider").addEventListener("input", event => {
+        response = Number(event.currentTarget.value);
+        renderProjection();
+      });
+      $("#reach-slider").addEventListener("input", event => {
+        testReach = Number(event.currentTarget.value);
+        renderProjection();
+      });
+      $("#horizon-slider").addEventListener("input", event => {
+        horizonQuarters = Number(event.currentTarget.value);
+        renderProjection();
+      });
+
+      renderSources();
+      renderOverview();
+      renderOpportunities();
+      renderProjection();
+      render();
+    })();
+  </script>
+</body>
+</html>
