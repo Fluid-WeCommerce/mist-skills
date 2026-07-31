@@ -2,6 +2,15 @@
   "version": 1,
   "skills": [
     {
+      "slug": "finance/payment-reconciliation",
+      "name": "Payment Reconciliation",
+      "description": "Compare Fluid's payment ledger against each connected PSP/gateway/APM for a given company and timeframe. Surfaces discrepancies in count, amount, and status between what Fluid recorded and what each provider recorded.",
+      "category": "finance",
+      "icon": "shield-check",
+      "path": "finance/payment-reconciliation.md",
+      "updated_at": "2026-07-31T00:00:00Z"
+    },
+    {
       "slug": "finance/promo-code-summary",
       "name": "Promo code summary",
       "description": "Summarize orders that used a given promo code over the last 30 days.",
