@@ -394,6 +394,15 @@
       "updated_at": "2026-07-23T00:00:00Z"
     },
     {
+      "slug": "sales/free-shipping-cart-nudge",
+      "name": "Free Shipping Cart Nudge",
+      "description": "Finds a company's real free-shipping threshold and cart gap, then builds a live cart-nudge section with product recommendations to close it.",
+      "category": "sales",
+      "icon": "shopping-cart",
+      "path": "sales/free-shipping-cart-nudge.md",
+      "updated_at": "2026-07-31T00:00:00Z"
+    },
+    {
       "slug": "sales/rep-momentum-scoreboard",
       "name": "Rep signup momentum scoreboard",
       "description": "Track rep/enrollment signup momentum by week and market, and surface the newest reps already active enough to be worth a personal spotlight.",
