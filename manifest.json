@@ -83,6 +83,15 @@
       "updated_at": "2026-06-20T00:00:00Z"
     },
     {
+      "slug": "mist/create-portal-app",
+      "name": "Create Portal App",
+      "description": "Create a new Fluid portal using the same default screens, navigation, theme, and profile as fluid-admin.",
+      "category": "mist",
+      "icon": "panels-top-left",
+      "path": "mist/create-portal-app.md",
+      "updated_at": "2026-07-30T00:00:00Z"
+    },
+    {
       "slug": "mist/env-vars-audit",
       "name": "Audit env vars across all live Mists",
       "description": "Check every live Mist for missing or inconsistent env vars (Stripe keys, webhook secrets, etc.).",
