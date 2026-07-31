@@ -172,24 +172,6 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
                     {"path": "/", "width": 390, "height": 844},
                 )
 
-            with self.subTest(step_id=step_id, tool="selector-distinct interactions"):
-                workflow = self.load_workflow()
-                step = next(
-                    step
-                    for step in workflow["steps"]
-                    if step.get("id") == step_id
-                )
-                family_requirement = next(
-                    requirement
-                    for requirement in step["qa"]["requiredTools"]
-                    if requirement.get("tool") == "interact_preview"
-                    and requirement.get("distinctBy") == ["selector"]
-                )
-                self.assertEqual(family_requirement.get("input"), {"path": "/"})
-                self.assertGreaterEqual(
-                    family_requirement.get("minSuccessfulCalls", 0), 2
-                )
-
             with self.subTest(step_id=step_id, tool="CTA read_preview_dom"):
                 workflow = self.load_workflow()
                 step = next(

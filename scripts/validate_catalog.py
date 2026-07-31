@@ -855,15 +855,6 @@ def _home_interaction_qa_requirement() -> dict[str, Any]:
     }
 
 
-def _home_stateful_family_qa_requirement() -> dict[str, Any]:
-    return {
-        "tool": "interact_preview",
-        "input": {"path": "/"},
-        "minSuccessfulCalls": 2,
-        "distinctBy": ["selector"],
-    }
-
-
 def _home_cta_route_qa_requirement() -> dict[str, Any]:
     return {
         "tool": "read_preview_dom",
@@ -1020,7 +1011,6 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
         _source_inventory_validation_qa_requirement(),
         _home_cta_route_qa_requirement(),
         _home_interaction_qa_requirement(),
-        _home_stateful_family_qa_requirement(),
         {
             "tool": "read_preview_console",
             "minSuccessfulCalls": 1,
@@ -1545,7 +1535,6 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
     expected_tools.insert(-2, _source_inventory_validation_qa_requirement())
     expected_tools.insert(-2, _home_cta_route_qa_requirement())
     expected_tools.insert(-2, _home_interaction_qa_requirement())
-    expected_tools.insert(-2, _home_stateful_family_qa_requirement())
     if qa.get("requiredTools") != expected_tools:
         raise CatalogValidationError(
             "streamlined workflow: storefront-check must require only its "
