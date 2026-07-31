@@ -19,8 +19,8 @@ This skill supports two modes:
 - **Single page clone** — clone one specific URL
 - **Full site clone** — systematically clone all key pages of a website
 
-**Workflow mode (phased execution).** When you were launched by the
-`onboard-launch-company` workflow, the clone is split into individually-QA'd
+**Workflow mode (phased execution).** When a workflow launches you with a
+page-scoped step prompt, the clone is split into individually-QA'd
 discovery, shell, page-archetype, and final-integration gates. The home golden
 route must pass before shop; the shop golden list route must pass before the
 remaining catalog/detail pages. Your step prompt or page skill names the ONLY
