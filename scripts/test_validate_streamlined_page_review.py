@@ -59,14 +59,20 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
 
     def test_requires_home_source_control_inventory_contract(self) -> None:
         required_fragments = (
-            "home_interactions.source_html_path",
+            "home_interactions.source_html_paths",
+            "home_interactions.source_html_sha256",
+            "visual_routes.home.source_evidence.desktop.documents.html",
+            "visual_routes.home.source_evidence.mobile.documents.html",
             "home_interactions.controls",
             "controls array must be non-empty",
+            "ids are unique non-empty strings",
+            "required keys and types",
             "source-present visible control",
             "semantic kind, target, state transition, and keyboard/accessibility behavior",
             "expected_outcome.type is route, submission, or state",
             "repeated is a boolean",
-            "retained source HTML path plus a selector or locator",
+            "viewport, path, sha256, and selector_or_locator",
+            "matching signed desktop or mobile HTML cell",
             "blank, hash-only, or javascript: links",
             "action-looking buttons without a real target or state hook",
             "documented source-equivalent exception",
@@ -91,9 +97,13 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
 
     def test_requires_independent_source_control_denominator_review(self) -> None:
         required_fragments = (
-            "independently enumerated every visible actionable element in the retained Home HTML",
+            "opened both signed desktop and mobile Home HTML files",
+            "matched both hashes",
+            "independently enumerated every visible actionable element in each viewport",
             "non-empty controls array",
-            "source evidence path and selector or locator",
+            "unique control ids",
+            "required keys and types",
+            "signed source evidence path, hash, viewport, and selector or locator",
             "no source-present control family or individual non-repeated control was omitted",
         )
         for fragment in required_fragments:
@@ -155,13 +165,32 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
                     requirement
                     for requirement in step["qa"]["requiredTools"]
                     if requirement.get("tool") == "interact_preview"
+                    and requirement.get("input", {}).get("width") == 390
                 )
                 self.assertEqual(
                     interaction_requirement.get("input"),
                     {"path": "/", "width": 390, "height": 844},
                 )
 
-            with self.subTest(step_id=step_id, tool="route read_preview_dom"):
+            with self.subTest(step_id=step_id, tool="selector-distinct interactions"):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                family_requirement = next(
+                    requirement
+                    for requirement in step["qa"]["requiredTools"]
+                    if requirement.get("tool") == "interact_preview"
+                    and requirement.get("distinctBy") == ["selector"]
+                )
+                self.assertEqual(family_requirement.get("input"), {"path": "/"})
+                self.assertGreaterEqual(
+                    family_requirement.get("minSuccessfulCalls", 0), 2
+                )
+
+            with self.subTest(step_id=step_id, tool="CTA read_preview_dom"):
                 workflow = self.load_workflow()
                 step = next(
                     step
@@ -173,8 +202,7 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
                     for requirement in step["qa"]["requiredTools"]
                     if not (
                         requirement.get("tool") == "read_preview_dom"
-                        and requirement.get("minSuccessfulCalls") == 2
-                        and requirement.get("distinctBy") == ["path"]
+                        and requirement.get("input") == {"mode": "html"}
                     )
                 ]
 
@@ -186,12 +214,36 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
                         workflow
                     )
 
+    def test_requires_signed_source_denominator_tool_floors(self) -> None:
+        for step_id in ("home-page", "storefront-check"):
+            for tool in ("file_sha256", "validate_theme_source_inventory"):
+                with self.subTest(step_id=step_id, tool=tool):
+                    workflow = self.load_workflow()
+                    step = next(
+                        step
+                        for step in workflow["steps"]
+                        if step.get("id") == step_id
+                    )
+                    step["qa"]["requiredTools"] = [
+                        requirement
+                        for requirement in step["qa"]["requiredTools"]
+                        if requirement.get("tool") != tool
+                    ]
+
+                    with self.assertRaisesRegex(
+                        validate_catalog.CatalogValidationError,
+                        "deterministic QA evidence",
+                    ):
+                        validate_catalog.validate_streamlined_page_review_contract(
+                            workflow
+                        )
+
     def test_requires_inventory_linked_interaction_receipts(self) -> None:
         required_fragments = (
             "home_interactions.stateful_receipts",
-            "control id, family, source evidence, selector, viewport, pre-state, action, post-state, and result",
+            "control id, family, expected outcome type, source evidence, selector, viewport, pre-state, action, post-state, and result",
             "home_interactions.route_receipts",
-            "control id, resolved href or action, loaded route, status, and DOM evidence",
+            "control id, expected outcome type, resolved href or action, loaded route, status, and DOM evidence",
         )
         for fragment in required_fragments:
             with self.subTest(fragment=fragment):

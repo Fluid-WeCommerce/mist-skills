@@ -855,12 +855,36 @@ def _home_interaction_qa_requirement() -> dict[str, Any]:
     }
 
 
-def _home_route_qa_requirement() -> dict[str, Any]:
+def _home_stateful_family_qa_requirement() -> dict[str, Any]:
+    return {
+        "tool": "interact_preview",
+        "input": {"path": "/"},
+        "minSuccessfulCalls": 2,
+        "distinctBy": ["selector"],
+    }
+
+
+def _home_cta_route_qa_requirement() -> dict[str, Any]:
     return {
         "tool": "read_preview_dom",
-        "input": {"mode": "all"},
-        "minSuccessfulCalls": 2,
+        "input": {"mode": "html"},
+        "minSuccessfulCalls": 1,
         "distinctBy": ["path"],
+    }
+
+
+def _signed_source_hash_qa_requirement() -> dict[str, Any]:
+    return {
+        "tool": "file_sha256",
+        "minSuccessfulCalls": 1,
+    }
+
+
+def _source_inventory_validation_qa_requirement() -> dict[str, Any]:
+    return {
+        "tool": "validate_theme_source_inventory",
+        "input": {"manifest_path": "clone-manifest.json"},
+        "minSuccessfulCalls": 1,
     }
 
 
@@ -914,14 +938,20 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             'mode: "theme_only"',
             ".mist-desktop/home-catalog-index.json",
             "priority_media.delivery_items",
-            "home_interactions.source_html_path",
+            "home_interactions.source_html_paths",
+            "home_interactions.source_html_sha256",
+            "visual_routes.home.source_evidence.desktop.documents.html",
+            "visual_routes.home.source_evidence.mobile.documents.html",
             "home_interactions.controls",
             "controls array must be non-empty",
+            "ids are unique non-empty strings",
+            "required keys and types",
             "source-present visible control",
             "semantic kind, target, state transition, and keyboard/accessibility behavior",
             "expected_outcome.type is route, submission, or state",
             "repeated is a boolean",
-            "retained source HTML path plus a selector or locator",
+            "viewport, path, sha256, and selector_or_locator",
+            "matching signed desktop or mobile HTML cell",
             "blank, hash-only, or javascript: links",
             "action-looking buttons without a real target or state hook",
             "documented source-equivalent exception",
@@ -935,9 +965,9 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "Verify primary CTA targets in code and rendered DOM",
             "load each representative resolved route with read_preview_dom",
             "home_interactions.stateful_receipts",
-            "control id, family, source evidence, selector, viewport, pre-state, action, post-state, and result",
+            "control id, family, expected outcome type, source evidence, selector, viewport, pre-state, action, post-state, and result",
             "home_interactions.route_receipts",
-            "control id, resolved href or action, loaded route, status, and DOM evidence",
+            "control id, expected outcome type, resolved href or action, loaded route, status, and DOM evidence",
         ),
         "streamlined workflow home-page implementation contract",
     )
@@ -986,8 +1016,11 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "input": {"path": "/", "mode": "all"},
             "minSuccessfulCalls": 1,
         },
-        _home_route_qa_requirement(),
+        _signed_source_hash_qa_requirement(),
+        _source_inventory_validation_qa_requirement(),
+        _home_cta_route_qa_requirement(),
         _home_interaction_qa_requirement(),
+        _home_stateful_family_qa_requirement(),
         {
             "tool": "read_preview_console",
             "minSuccessfulCalls": 1,
@@ -1037,9 +1070,13 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "action-looking buttons without a real target or state hook",
             'A source button implemented as a generated href=\\"#\\" is REWORK and leaves this lenient step needs-review.',
             "post-action URL, DOM, or state transition",
-            "independently enumerated every visible actionable element in the retained Home HTML",
+            "opened both signed desktop and mobile Home HTML files",
+            "matched both hashes",
+            "independently enumerated every visible actionable element in each viewport",
             "non-empty controls array",
-            "source evidence path and selector or locator",
+            "unique control ids",
+            "required keys and types",
+            "signed source evidence path, hash, viewport, and selector or locator",
             "no source-present control family or individual non-repeated control was omitted",
             "stateful interaction families",
             "navigational and submission targets",
@@ -1470,7 +1507,11 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
             "Do not call interact_preview on links, navigational CTAs, or form submissions",
             "Verify primary CTA targets in code and rendered DOM",
             "load each representative resolved route with read_preview_dom",
-            "independently enumerate the retained Home HTML",
+            "home_interactions.source_html_paths",
+            "home_interactions.source_html_sha256",
+            "open both signed desktop and mobile Home HTML files",
+            "match both hashes",
+            "Independently enumerate every visible actionable element in each viewport",
             "home_interactions.stateful_receipts",
             "home_interactions.route_receipts",
         ),
@@ -1500,8 +1541,11 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
         minimum_searches=6,
         minimum_routes=5,
     )
-    expected_tools.insert(-2, _home_route_qa_requirement())
+    expected_tools.insert(-2, _signed_source_hash_qa_requirement())
+    expected_tools.insert(-2, _source_inventory_validation_qa_requirement())
+    expected_tools.insert(-2, _home_cta_route_qa_requirement())
     expected_tools.insert(-2, _home_interaction_qa_requirement())
+    expected_tools.insert(-2, _home_stateful_family_qa_requirement())
     if qa.get("requiredTools") != expected_tools:
         raise CatalogValidationError(
             "streamlined workflow: storefront-check must require only its "
@@ -1535,7 +1579,12 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
             "post-action URL, DOM, or state transition",
             "stateful interaction families",
             "navigational and submission targets",
-            "retained Home HTML",
+            "both signed desktop and mobile Home HTML files",
+            "matched both hashes",
+            "each viewport",
+            "unique control id",
+            "required keys and types",
+            "signed source evidence path, hash, viewport, and selector or locator",
             "home_interactions.stateful_receipts",
             "home_interactions.route_receipts",
         ),
