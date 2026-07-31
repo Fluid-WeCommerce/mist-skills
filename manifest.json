@@ -482,6 +482,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "mist/interactive-drop-zones",
+      "name": "Interactive Drop Zone Experiences",
+      "description": "Build games and ambient interactive widgets into Fluid checkout and order-confirmation drop zones — placement, install-time zone registration, tenant-safe token verification, and the rendering traps that only appear inside the embed.",
+      "category": "mist",
+      "icon": "gamepad-2",
+      "path": "mist/interactive-drop-zones.md",
+      "updated_at": "2026-07-31T18:00:00Z"
     }
   ],
   "workflows": [
