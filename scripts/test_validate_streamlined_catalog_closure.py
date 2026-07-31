@@ -135,6 +135,35 @@ class StreamlinedCatalogClosureContractTest(unittest.TestCase):
         ):
             validate_catalog.validate_streamlined_catalog_closure_contract(workflow)
 
+    def test_blocked_preview_gate_must_be_a_failing_qa_outcome(self) -> None:
+        workflow = self.load_workflow()
+        gate = self.step(workflow, "preview-product-gate")
+        gate["acceptance"] = [
+            criterion.replace("QA_VERDICT: FAIL", "QA_REVIEW: BLOCKED")
+            for criterion in gate["acceptance"]
+        ]
+
+        with self.assertRaisesRegex(
+            validate_catalog.CatalogValidationError,
+            "blocked preview-product gate QA contract",
+        ):
+            validate_catalog.validate_streamlined_catalog_closure_contract(workflow)
+
+    def test_product_safety_steps_require_deterministic_qa_evidence(self) -> None:
+        for step_id in ("preview-product-ledger", "preview-product-gate"):
+            with self.subTest(step_id=step_id):
+                workflow = self.load_workflow()
+                step = self.step(workflow, step_id)
+                step["qa"]["requiredTools"] = []
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "deterministic QA evidence floor",
+                ):
+                    validate_catalog.validate_streamlined_catalog_closure_contract(
+                        workflow
+                    )
+
     def test_normalizes_realistic_separate_artifacts_in_identity_order(self) -> None:
         identity_index = "\n".join(
             [

@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-31-preview-product-gate+content-body-fallback+theme-remediation-routing+live-handoff-counts",
+  "revision": "2026-07-31-preview-product-gate-qa-evidence+content-body-fallback+theme-remediation-routing+live-handoff-counts",
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
   "launcherSkill": "onboarding/launch-setup",
@@ -77,16 +77,36 @@
       "target": {
         "type": "manager"
       },
-      "prompt": "Create the read-only, run-scoped product baseline after canonical import succeeds and before any page step can run. This ordering is the safety boundary: a later gate treats every product absent from this baseline as page-created and blocks publication. Do not create, update, or delete a Fluid product.\n\nRead import-products STEP_OUTPUT and require status: complete, coverage_percent: 100, and zero failures. This is only identity-level completion; do not claim that the importer verified full title, description, price, option, variant-topology, or product-image equivalence.\n\nGenerate a fresh UUID as run_id and create `.mist-desktop/streamlined-preview-products/<run_id>/`. Cursor-paginate GET /api/v202604/company/products?page[limit]=100 through every exact meta.pagination.next_cursor until it is null. Preserve each API-returned product id exactly; reject a duplicate id, repeated cursor, missing terminator, or truncated page.\n\nWrite `baseline.json` in that directory with version, run_id, captured_at, import_manifest_sha256, destination_pages, baseline_product_ids, product_count, and final_cursor:null. Re-read it, require product_count to equal the number of unique baseline_product_ids, and compute its SHA-256.\n\nEnd with STEP_OUTPUT: { run_id, preview_product_ledger_dir, baseline_path, baseline_sha256, import_manifest_sha256, destination_pages, baseline_products, final_cursor: null }.",
+      "prompt": "Create the read-only, run-scoped product baseline after canonical import succeeds and before any page step can run. This ordering is the safety boundary: a later gate treats every product absent from this baseline as page-created and blocks publication. Do not create, update, or delete a Fluid product.\n\nRead import-products STEP_OUTPUT and require status: complete, coverage_percent: 100, and zero failures. This is only identity-level completion; do not claim that the importer verified full title, description, price, option, variant-topology, or product-image equivalence.\n\nGenerate a fresh UUID as run_id and create `.mist-desktop/streamlined-preview-products/<run_id>/`. Set baseline_catalog_index_path to `<that-directory>/baseline-catalog-index.json`, then call `fluid_catalog_index({ output_path: <exact baseline_catalog_index_path>, verify_only: false })` exactly once. This built-in capability cursor-paginates GET /api/v202604/company/products?page[limit]=100 through every exact meta.pagination.next_cursor until null, rejects duplicate ids and repeated cursors, writes a complete index atomically, and spot-checks product details without loading every page into model context. Do not replace it with manual page calls.\n\nRead its compact receipt and require status: written_and_verified, complete: true, next_cursor: null, duplicate_count: 0, and matching page/product counts. Re-read the index, preserve each API-returned product id exactly as baseline_product_ids, and require product_count to equal the number of unique ids.\n\nWrite `baseline.json` in that directory with version, run_id, captured_at, import_manifest_sha256, baseline_catalog_index_path, baseline_catalog_index_sha256, destination_pages, baseline_product_ids, product_count, and final_cursor:null. Re-read both files and use one `file_sha256` call to compute their raw SHA-256 digests.\n\nEnd with STEP_OUTPUT: { run_id, preview_product_ledger_dir, baseline_path, baseline_sha256, baseline_catalog_index_path, baseline_catalog_index_sha256, import_manifest_sha256, destination_pages, baseline_products, final_cursor: null }.",
       "acceptance": [
         "Canonical import completed before the baseline, and no product-capable page step can start until this baseline succeeds.",
-        "The baseline cursor-paginated the complete post-import destination product list to meta.pagination.next_cursor == null and recorded every exact unique product id.",
-        "The run-scoped baseline file was re-read, its count reconciles with baseline_product_ids, and STEP_OUTPUT records its path and SHA-256."
+        "The worker used one fluid_catalog_index write call for the run-scoped baseline; its receipt proves every v202604 cursor was followed to null, counts balance, no duplicate id or repeated cursor was accepted, and every exact product id is recorded.",
+        "The reviewer independently re-read baseline.json and baseline-catalog-index.json, hashed both with file_sha256, and called fluid_catalog_index with verify_only:true against the exact baseline_catalog_index_path. A missing/drifted file, incomplete cursor walk, identity mismatch, or failed spot-check is QA_VERDICT: FAIL."
       ],
       "qa": {
         "enabled": true,
         "strictness": "standard",
-        "onFail": "stop"
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "read_file",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "file_sha256",
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "fluid_catalog_index",
+            "input": {
+              "verify_only": true
+            },
+            "minSuccessfulCalls": 1
+          }
+        ]
       },
       "dependsOn": [
         "import-products"
@@ -625,17 +645,38 @@
       "target": {
         "type": "manager"
       },
-      "prompt": "Fail closed before theme publication if any page step created a product after canonical import. This is a read-only Fluid audit plus local evidence write. Do not call fluid_product_import and do not create, update, publish, unpublish, or delete products. The current importer can adopt a slug/SKU match without proving full field, option, variant-topology, or product-image equivalence, so this workflow must never ask it to reconcile a page-created preview.\n\nRead the exact run_id, preview_product_ledger_dir, baseline_path, and baseline SHA-256 from preview-product-ledger STEP_OUTPUT. Recompute the baseline hash and stop on drift. Read the Shop, Product, and Collection STEP_OUTPUT values only as attribution evidence; they cannot authorize adoption or repair.\n\nCursor-paginate GET /api/v202604/company/products?page[limit]=100 through every exact meta.pagination.next_cursor until null. Reject repeated cursors, duplicate ids, a missing terminator, or a truncated page. Compute the exact destination-id difference against baseline_product_ids. Every product id absent from the post-import baseline is a run-created candidate. GET each candidate's detail and write `preview-products.json` in preview_product_ledger_dir with run_id, fluid_product_id, returned slug/canonical route, raw lifecycle/public fields, and page-output attribution evidence when available. Never match by title alone, list position, fuzzy URL, or neighboring product.\n\nThe policy is zero tolerance: any run-created product makes status: BLOCKED, regardless of attribution, lifecycle status, apparent completeness, or source match. Do not exclude, adopt, enrich, repair, delete, or pass through a candidate. Write `preview-product-remediation-plan.json` beside the ledger with run_id, baseline/current/new counts, preview_product_ledger_path, exact Fluid ids, observed fields, attribution evidence, and the required human/cross-repository follow-up. Publication may proceed only when run_created_products == 0.\n\nWrite `preview-product-gate-receipt.json`, re-read it, and require its counts to balance. Report status: complete only for a cursor-complete destination audit with zero run-created products and zero unresolved evidence errors.\n\nEnd with STEP_OUTPUT: { status: complete|BLOCKED, run_id, preview_product_ledger_path, run_created_products, remediation_plan_path, baseline_products, current_products, unresolved: [...] }.",
+      "prompt": "Fail closed before theme publication if any page step created a product after canonical import. This is a read-only Fluid audit plus local evidence write. Do not call fluid_product_import and do not create, update, publish, unpublish, or delete products. The current importer can adopt a slug/SKU match without proving full field, option, variant-topology, or product-image equivalence, so this workflow must never ask it to reconcile a page-created preview.\n\nRead the exact run_id, preview_product_ledger_dir, baseline_path, baseline_sha256, baseline_catalog_index_path, and baseline_catalog_index_sha256 from preview-product-ledger STEP_OUTPUT. Re-read both baseline files, recompute both hashes with file_sha256, and stop on drift. Read the Shop, Product, and Collection STEP_OUTPUT values only as attribution evidence; they cannot authorize adoption or repair.\n\nSet current_catalog_index_path to `<preview_product_ledger_dir>/gate-current-catalog-index.json`, then call `fluid_catalog_index({ output_path: <exact current_catalog_index_path>, verify_only: false })` exactly once. Read its compact receipt and require status: written_and_verified, complete: true, next_cursor: null, duplicate_count: 0, and balanced page/product counts. The capability cursor-paginates GET /api/v202604/company/products?page[limit]=100 through every exact meta.pagination.next_cursor until null and rejects repeated cursors, duplicate ids, a missing terminator, or a truncated page. Do not replace it with manual page calls.\n\nRe-read the current index and compute the exact destination-id difference against baseline_product_ids. Every product id absent from the post-import baseline is a run-created candidate. GET each candidate's detail and write `preview-products.json` in preview_product_ledger_dir with run_id, fluid_product_id, returned slug/canonical route, raw lifecycle/public fields, and page-output attribution evidence when available. Never match by title alone, list position, fuzzy URL, or neighboring product.\n\nThe policy is zero tolerance: any run-created product makes status: BLOCKED, regardless of attribution, lifecycle status, apparent completeness, or source match. Do not exclude, adopt, enrich, repair, delete, or pass through a candidate. For a blocked result, write `preview-product-remediation-plan.json` beside the ledger with run_id, baseline/current/new counts, preview_product_ledger_path, exact Fluid ids, observed fields, attribution evidence, and the required human/cross-repository follow-up. Publication may proceed only when run_created_products == 0; a complete result has remediation_plan_path: null.\n\nWrite `preview-product-gate-receipt.json` with the baseline and current index paths/hashes, status, counts, and unresolved evidence errors. Re-read the baseline, current index, receipt, and any remediation plan, require the counts to balance, then hash the current index and receipt with file_sha256. Report status: complete only for a cursor-complete destination audit with zero run-created products and zero unresolved evidence errors.\n\nEnd with STEP_OUTPUT: { status: complete|BLOCKED, run_id, preview_product_ledger_path, baseline_sha256, baseline_catalog_index_path, baseline_catalog_index_sha256, current_catalog_index_path, current_catalog_index_sha256, gate_receipt_path, gate_receipt_sha256, run_created_products, remediation_plan_path: null|<path>, baseline_products, current_products, unresolved: [...] }.",
       "acceptance": [
-        "The destination was cursor-paginated to null and every product id absent from the post-import baseline is recorded in the run-scoped preview ledger with its exact Fluid id.",
+        "The reviewer re-read the exact run-scoped baseline, current catalog index, and gate receipt, verified their recorded hashes with file_sha256, and independently called fluid_catalog_index with verify_only:true against the exact current_catalog_index_path; the live v202604 catalog is cursor-complete to null with balanced counts and no duplicate id or repeated cursor.",
+        "Every product id absent from the post-import baseline is recorded in the run-scoped preview ledger with its exact Fluid id.",
         "Any page-created candidate blocks publication; attribution, inactive status, or apparent source parity never turns a run-created product into a pass.",
-        "The gate reports complete only with zero run-created products, balanced counts, an unchanged baseline hash, and no unresolved evidence errors.",
-        "A blocked gate writes a remediation plan with exact Fluid ids and evidence but performs no product mutation or importer call."
+        "PASS BAR: QA_VERDICT: PASS requires STEP_OUTPUT status: complete, zero run-created products (run_created_products == 0), unresolved: [], balanced counts, unchanged baseline hashes, and remediation_plan_path: null. Any status: BLOCKED, nonzero candidate count, unresolved entry, or remediation result containing a product id is QA_VERDICT: FAIL and onFail: stop prevents publication.",
+        "A blocked gate writes a remediation plan with exact Fluid ids and evidence but performs no product mutation or importer call; correct remediation evidence does not turn the required QA_VERDICT: FAIL into a pass."
       ],
       "qa": {
         "enabled": true,
         "strictness": "standard",
-        "onFail": "stop"
+        "onFail": "stop",
+        "requiredTools": [
+          {
+            "tool": "read_file",
+            "minSuccessfulCalls": 3,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "file_sha256",
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "fluid_catalog_index",
+            "input": {
+              "verify_only": true
+            },
+            "minSuccessfulCalls": 1
+          }
+        ]
       },
       "dependsOn": [
         "preview-product-ledger",

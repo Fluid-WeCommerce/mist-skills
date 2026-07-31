@@ -1003,6 +1003,19 @@ def validate_streamlined_catalog_closure_contract(workflow: Any) -> None:
         for step in workflow["steps"]
         if isinstance(step, dict) and isinstance(step.get("id"), str)
     }
+    expected_product_safety_required_tools = [
+        {
+            "tool": "read_file",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["path"],
+        },
+        {"tool": "file_sha256", "minSuccessfulCalls": 1},
+        {
+            "tool": "fluid_catalog_index",
+            "input": {"verify_only": True},
+            "minSuccessfulCalls": 1,
+        },
+    ]
     ledger = steps.get("preview-product-ledger")
     if not isinstance(ledger, dict):
         raise CatalogValidationError(
@@ -1021,6 +1034,10 @@ def validate_streamlined_catalog_closure_contract(workflow: Any) -> None:
             "run_id",
             "baseline_product_ids",
             "preview_product_ledger_dir",
+            "baseline_catalog_index_path",
+            "fluid_catalog_index",
+            "verify_only: false",
+            "file_sha256",
             "SHA-256",
             "read-only",
         ),
@@ -1037,6 +1054,12 @@ def validate_streamlined_catalog_closure_contract(workflow: Any) -> None:
         raise CatalogValidationError(
             "streamlined workflow: preview-product-ledger must wait for import-products "
             "and fail closed"
+        )
+    if ledger_qa.get("requiredTools") != expected_product_safety_required_tools:
+        raise CatalogValidationError(
+            "streamlined workflow: preview-product-ledger deterministic QA evidence floor "
+            "must require two distinct file reads, one file_sha256 call, and one "
+            "verify-only fluid_catalog_index call"
         )
 
     home = steps.get("home-page")
@@ -1122,6 +1145,11 @@ def validate_streamlined_catalog_closure_contract(workflow: Any) -> None:
             "fluid_product_id",
             "preview_product_ledger_path",
             "preview-product-remediation-plan.json",
+            "current_catalog_index_path",
+            "preview-product-gate-receipt.json",
+            "fluid_catalog_index",
+            "verify_only: false",
+            "file_sha256",
             "status: BLOCKED",
             "any run-created product",
             "run_created_products == 0",
@@ -1151,15 +1179,41 @@ def validate_streamlined_catalog_closure_contract(workflow: Any) -> None:
         raise CatalogValidationError(
             "streamlined workflow: preview-product-gate must be a fail-closed gate"
         )
+    expected_gate_required_tools = [
+        {
+            **expected_product_safety_required_tools[0],
+            "minSuccessfulCalls": 3,
+        },
+        *expected_product_safety_required_tools[1:],
+    ]
+    if gate_qa.get("requiredTools") != expected_gate_required_tools:
+        raise CatalogValidationError(
+            "streamlined workflow: preview-product-gate deterministic QA evidence floor "
+            "must require three distinct file reads, one file_sha256 call, and one "
+            "verify-only fluid_catalog_index call"
+        )
     require_fragments(
         json.dumps(gate.get("acceptance", [])),
         (
-            "every product id absent from the post-import baseline",
+            "Every product id absent from the post-import baseline",
             "blocks publication",
             "zero run-created products",
             "remediation plan",
         ),
         "streamlined workflow preview-product-gate acceptance contract",
+    )
+    require_fragments(
+        json.dumps(gate.get("acceptance", [])),
+        (
+            "QA_VERDICT: PASS",
+            "status: complete",
+            "run_created_products == 0",
+            "unresolved: []",
+            "QA_VERDICT: FAIL",
+            "status: BLOCKED",
+            "onFail: stop",
+        ),
+        "streamlined workflow blocked preview-product gate QA contract",
     )
 
     for page_step_id in (
