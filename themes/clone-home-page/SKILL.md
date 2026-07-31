@@ -111,17 +111,56 @@ Static screenshots cannot prove these states.
 
 ## Keep media delivery bounded
 
-Use the verified delivery URLs recorded in `clone-manifest.json` for homepage
-media. Never embed binary image or video bytes as `data:`/base64 in Liquid,
-CSS, JSON, or JavaScript to bypass a broken asset URL. That fallback inflates
-theme resources, makes every theme-dev update expensive, and hides the actual
-delivery failure.
+Homepage media is reconciled in bulk, once — not uploaded one asset at a time.
 
-If a required delivery URL does not render, diagnose the DAM response, URL
-escaping, theme markup, and browser network failure. Repair the delivery path
-or leave the media as a named major; do not convert the binary into source
-code. Small authored SVG/CSS interface icons are not media fallbacks and remain
-allowed.
+When discovery is complete, write the home media inventory into
+`clone-manifest.json` under `priority_media.items`, creating the key if absent:
+in this workflow the six-route deterministic builder never runs, so this step
+owns it. One item per unique required media element:
+
+- `source_url`, plus `route: "home"`, `media_kind`, `landmark`, and
+  `viewport_role`
+- `poster` and `video_playback_attributes` for video
+- a visible element whose bytes are genuinely not fetchable gets
+  `source_url: null` and a concrete `source_unavailable_reason`
+
+Write the inventory to the manifest; do not paste it into chat prose.
+
+`theme_media_reconcile` always reads a catalog index. If
+`fluid-catalog-index.json` is not present in the project sandbox, write
+`{"products":[],"complete":true,"next_cursor":null,"product_count":0}` to
+`.mist-desktop/home-catalog-index.json`. That stub declares catalog matching
+out of scope for this step — streamlined runs import products deterministically
+elsewhere. It is not a claim the company has no products, and **it must never
+be written to the default `fluid-catalog-index.json` path.**
+
+Then call `theme_media_reconcile` exactly once with
+`manifest_path: "clone-manifest.json"`, `catalog_index_path` set to the real
+index when it exists and the stub path otherwise, `mode: "theme_only"`, and
+`verify_only: false`. It uploads missing assets in batches, HEAD-verifies every
+delivery URL, and checkpoints the manifest as it goes. If the call is
+interrupted or reports a transient upload failure, call it again with identical
+input — it resumes from verified receipts and does not re-upload completed
+sources.
+
+Reference homepage media in Liquid through the verified delivery URLs the tool
+records back into `priority_media.delivery_items`.
+
+**Do not replace the reconcile call with dozens of manual `dam_upload` calls.**
+Reserve `dam_upload` for a straggler asset discovered after reconciliation,
+never for the main inventory.
+
+Never embed binary image or video bytes as `data:`/base64 in Liquid, CSS, JSON,
+or JavaScript to bypass a broken asset URL. That fallback inflates theme
+resources, makes every theme-dev update expensive, and hides the actual
+delivery failure. If a required delivery URL does not render, diagnose the DAM
+response, URL escaping, theme markup, and browser network failure. Repair the
+delivery path or leave the media as a named major; do not convert the binary
+into source code. Small authored SVG/CSS interface icons are not media
+fallbacks and remain allowed.
+
+Read-only QA turns re-verify with the same input plus `verify_only: true`,
+which performs no writes.
 
 ## Preserve honest document geometry
 
