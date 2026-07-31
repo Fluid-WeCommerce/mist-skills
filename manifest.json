@@ -537,6 +537,21 @@
       "slug": "subscription-gap",
       "path": "workflows/subscription-gap.workflow.json",
       "updated_at": "2026-07-31T03:20:00Z"
+    },
+    {
+      "slug": "setup-tiktok-shop",
+      "path": "workflows/setup-tiktok-shop.workflow.json",
+      "updated_at": "2026-07-31T21:00:00Z"
+    },
+    {
+      "slug": "setup-instagram-affiliate",
+      "path": "workflows/setup-instagram-affiliate.workflow.json",
+      "updated_at": "2026-07-31T21:00:00Z"
+    },
+    {
+      "slug": "subscription-sms",
+      "path": "workflows/subscription-sms.workflow.json",
+      "updated_at": "2026-07-31T21:00:00Z"
     }
   ]
 }

@@ -1,0 +1,240 @@
+{
+  "revision": "agent-1785442835229",
+  "slug": "subscription-sms",
+  "name": "Set up Subscription SMS",
+  "description": "Stand up conversational subscription management over the merchant's own SMS provider: detect the messaging rail they already have, clear the two blockers that actually stop SMS launches (sender registration and consent), scope the actions, and deploy a branded Subscription SMS droplet.",
+  "runTitleTemplate": "Subscription SMS for {{company_name}}",
+  "maxParallel": 3,
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "Detect the messaging rail",
+      "prompt": "Find out what the company can already send with, rather than asking them to tell you.\n\n1. `GET /api/droplet_installations` and `GET /api/droplets` (paginate, 50/page). Join installations to droplet names by `droplet_uuid`.\n2. Report which communication droplets are installed. The ones that matter: **Klaviyo** (OAuth, two-way capable via Conversations API \u2014 partner-gated), **Attentive communication** (two-way capable), **SMS** (Fluid's own \u2014 outbound campaign blaster, NO inbound loop), **Postscript** if it ever appears (Shopify-only, disqualified for Fluid merchants).\n3. State plainly what each installed option can and cannot do for this use case. Fluid's own SMS droplet cannot receive a reply; say so rather than letting the merchant assume.\n4. Ask ONE question: which rail should carry Subscription SMS. If nothing capable is installed, present the options to add (Klaviyo droplet, Attentive droplet, or bring-your-own Twilio) and stop the run there \u2014 everything downstream depends on this answer.\n5. Write the chosen rail to `context.sms_rail`.\n\nDo not ask what platform they use. You can see it.\n\n**Also echo `context.test_phone`** if the operator supplied one at kickoff (the live-test step needs it). If it is absent, say so now \u2014 it is far better to learn at step 1 than at step 9.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The report lists the company's ACTUAL installed droplets, obtained from GET /api/droplet_installations, not a generic list of SMS vendors.",
+        "Each installed communication droplet is labelled two-way capable or outbound-only, with Fluid's own SMS droplet correctly identified as outbound-only.",
+        "context.sms_rail is set to a single chosen rail, or the run stopped because no capable rail exists.",
+        "The report states whether context.test_phone was supplied at kickoff."
+      ]
+    },
+    {
+      "id": "step-2",
+      "name": "Sender identity and registration",
+      "prompt": "Establish what the customer will see as the sender, and whether it can legally send yet. This is the step that decides the go-live date.\n\n1. Ask whether they already have a provisioned sending number on the chosen rail, and if so whether it is a 10DLC long code, a toll-free number, or a short code.\n2. Ask the registration status: 10DLC brand+campaign registered, or toll-free verified. If neither, say clearly that toll-free verification typically takes several business days and 10DLC registration is not instant \u2014 this is a scheduling fact, not a preference.\n3. State the constraint the merchant will otherwise discover late: **US carriers do not support alphanumeric sender IDs.** The sender will always display as a phone number, never as the brand name. Brand recognition comes from the message body opening with the brand, plus consistency of the number. Do not promise a branded sender.\n4. Record `context.sender_number`, `context.sender_type`, `context.registration_status`, and a realistic `context.earliest_go_live`.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-1"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "continue",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The report states explicitly that US carriers do not support alphanumeric sender IDs and that the sender displays as a phone number.",
+        "Registration status is captured and an earliest realistic go-live date is stated, rather than assuming same-day launch."
+      ]
+    },
+    {
+      "id": "step-3",
+      "name": "Consent inventory",
+      "prompt": "Find out who they are actually allowed to text. This is the step that prevents a TCPA problem, and it routinely returns a much smaller number than the merchant expects.\n\n1. Determine how many active subscribers hold SMS **marketing** consent versus **transactional** consent versus none. On Klaviyo this is `subscriptions.sms.marketing.consent` and `subscriptions.sms.transactional` on the profile; on other rails use the equivalent. If the rail's consent data is not reachable by API, say so and ask the merchant for the export.\n2. Ask how consent was captured (checkout checkbox, keyword opt-in, paper form, imported list) and whether the disclosure language named recurring messages. An imported list without documented opt-in is not consent.\n3. Split the audience into two tiers and record both: **reply-tier** (a customer who texts in first \u2014 replying to them rides existing consent) and **proactive-tier** (pre-shipment nudges, which need prior express written consent).\n4. Write `context.consented_count`, `context.proactive_eligible_count`, and `context.consent_method`.\n5. If the proactive-eligible count is zero or near it, say plainly that the launch is reply-only until they run an opt-in campaign, and do not soften it.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-1"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "Actual consent counts were obtained or their unavailability was stated explicitly \u2014 no assumed or invented numbers.",
+        "The report separates reply-tier from proactive-tier eligibility and states which one this merchant can launch with.",
+        "If proactive-eligible is zero, the report says the launch is reply-only rather than implying proactive messaging can start."
+      ]
+    },
+    {
+      "id": "step-4",
+      "name": "Action scope",
+      "prompt": "Decide which subscription actions customers may take by text, and be honest about which the platform gives you versus which this droplet implements.\n\n1. Read the company's subscription plans (`GET /api/subscription_plans`) \u2014 note cadence, `allow_skipping`, `max_skips`, and whether products have size or variant alternatives (that decides whether a swap or a smaller-size save offer is even possible).\n2. Present the action set and let the merchant choose: change the next shipment date, skip one shipment, pause, resume, swap a product, add a one-time item to the next shipment, cancel-with-save.\n3. Be accurate about the platform boundary: **pause, resume and cancel are native Fluid API routes. Change-date is a native field update. Skip, swap and add-one-time-item have NO Fluid routes** \u2014 the droplet implements them in its own action layer. Do not present all seven as equivalent platform features.\n4. Flag the revenue asymmetry for the merchant's decision: skip, pause and swap create no incremental commissionable volume; only a one-time add does. A programme of only skip and pause reduces distributor volume.\n5. Write the enabled set to `context.enabled_actions`.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-1"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "continue",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The report distinguishes actions backed by native Fluid routes (pause/resume/cancel) from those the droplet implements itself (skip/swap/add-one-time-item).",
+        "The chosen action set is recorded in context.enabled_actions and reflects what the merchant's catalog can actually support (e.g. no size-swap offer when the catalog has no size variants)."
+      ]
+    },
+    {
+      "id": "step-5",
+      "name": "Cancellation policy and save offers",
+      "prompt": "Set the rules for the one flow that carries regulatory and reputational risk.\n\n1. Confirm the non-negotiable: when a customer says cancel, they get cancelled \u2014 one message, no hoops, no repeated deflection. The workflow does not offer a configuration where cancellation is hidden or requires a phone call. Write this down as a stated policy, not an implied one.\n2. Choose which save offers may be presented ONCE before the cancel completes: pause for N cycles, stretch the cadence (e.g. every 2 months), smaller size (only if the catalog has size variants \u2014 check, do not assume), or a discount. Recommend against discount-first: it trains customers to threaten cancellation and it is the offer most likely to be read as manipulative.\n3. Match offers to stated reasons where the reason is known \u2014 'too much product' is answered by stretching cadence or pausing, not by a discount.\n4. Record `context.save_offers` and `context.cancel_policy` (which must include the one-message exit).",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-4"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "continue",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The recorded cancel policy explicitly guarantees a one-message cancellation path with no repeated deflection.",
+        "Save offers were checked against the real catalog \u2014 a size-based offer is only present if size variants actually exist."
+      ]
+    },
+    {
+      "id": "step-6",
+      "name": "Timing, cadence and quiet hours",
+      "prompt": "Decide when messages go out, which is mostly about not annoying people.\n\n1. Set the pre-shipment lead time \u2014 how many days before the bill date the proactive message sends. Anchor the recommendation on the merchant's own data: it must land far enough ahead that a customer can act, typically 3-5 days.\n2. Set quiet hours and the timezone they are evaluated in. Confirm the chosen rail enforces them; if the rail does not, the droplet must.\n3. Set the frequency cap: one proactive message per subscription per cycle. More than that is how a programme gets reported as spam.\n4. Confirm STOP and HELP are handled by the rail, and that STOP suppresses future sends immediately.\n5. Record `context.lead_days`, `context.quiet_hours`, `context.frequency_cap`.\n\nRemember the two consent tiers from the consent step: replies to inbound messages are not subject to the proactive cap.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-4"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "continue",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "Lead time, quiet hours with timezone, and a frequency cap are all recorded as concrete values.",
+        "STOP/HELP handling is confirmed as belonging to the rail or explicitly assigned to the droplet."
+      ]
+    },
+    {
+      "id": "step-7",
+      "name": "Distributor attribution",
+      "prompt": "Decide what the field sees. This is the step no other subscription tool can offer, so make it count.\n\n1. Confirm the mechanism plainly: volume routes on the customer-to-distributor enrollment binding, not on a click or a link. An order changed by text pays the same distributor as one changed in the portal, because the binding is on the customer. Do not describe this as solving attribution \u2014 it is the existing behaviour, enforced server-side.\n2. Ask whether the distributor should be notified when their customer changes, pauses, or saves a subscription \u2014 and whether that notification is useful or intrusive at their list size.\n3. Ask whether a one-time add should count toward rank progress in the distributor's view (it carries CV/QV like any order).\n4. Use the company's own vocabulary throughout \u2014 read `brand_md` from `GET /api/settings/brand_guidelines` and use the merchant's term for their field (for RIMAN: Beauty Planner, never 'rep' or 'distributor').\n5. Record `context.notify_distributor` and `context.credit_rank_progress`.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-4"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "continue",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The report states that volume routes on the enrollment binding rather than claiming the programme solves attribution.",
+        "The merchant's own term for their field is used, taken from brand_md or brand guidelines rather than assumed."
+      ]
+    },
+    {
+      "id": "step-8",
+      "name": "Build and brand the droplet",
+      "prompt": "Deploy the Subscription SMS droplet for this company, branded from their own settings.\n\n1. Read `GET /api/settings/brand_guidelines` \u2014 `color`, `secondary_color`, `logo_url`, `favicon_url`, `fonts`, `brand_md`. Theme the droplet from these at install time. Do NOT ask the merchant for colours or fonts; they are already on file and asking makes the product look like it cannot read its own platform.\n2. Configure the droplet from the recorded context: rail, sender, enabled actions, save offers, cancel policy, timing, attribution settings.\n3. Install it on the company and confirm the installation is active.\n4. Report the droplet URL and tell the merchant they can open it in Mist to customise behaviour \u2014 customisation is a deliberate act, not the default, so they stay on a centrally maintained version until they choose otherwise.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-7"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "continue",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The droplet is themed from values actually fetched from brand_guidelines (colour and logo match the company's real brand settings).",
+        "The droplet installation exists and reads active on the company.",
+        "Configuration reflects the context recorded in earlier steps rather than defaults."
+      ]
+    },
+    {
+      "id": "step-9",
+      "name": "Create test subscriptions and run a live test",
+      "prompt": "Prove the whole loop on real objects before a single customer is involved \u2014 real subscriptions, a real text on a real phone, a real change written back to Fluid.\n\n**Read `context.test_phone` FIRST.** The operator supplies their own mobile number in the run context at kickoff (E.164, e.g. `+14802207655`). If `context.test_phone` is absent, do NOT invent one and do NOT guess \u2014 complete every machine-verifiable check below, then stop and report exactly what is missing. Inventing a recipient has already caused a real incident on this project.\n\n**Why a LOCAL rail.** Most merchants cannot send from their own provider on day one: a number needs 10DLC registration or toll-free verification (days), and consent is usually zero. Verified on RIMAN: no sender number stored in Fluid, Attentive installed but credentials unreachable, all customers `phone: null`. So the live test runs on a **local iMessage rail** \u2014 Messages.app on the operator's Mac, texting the operator's own phone. It proves the loop today. It is NOT the production path.\n\n**Division of labour \u2014 this matters.** Steps that touch the droplet's `.env.local` or start its dev server are **OPERATOR actions performed in the droplet project**, not things this step can do from a manager/Home context: that file is outside this turn's sandbox. Ask the operator to confirm the rail is armed, then verify by behaviour (below) rather than by reading the file.\n\n**1. Reuse before you create.** Read existing subscriptions first (`GET /api/subscriptions`). If usable active test subscriptions already exist against a $0 test product, REUSE them and say so. Only create new ones if none exist \u2014 each run otherwise litters the company with products and customers.\n\n**2. If creating: safe test product.** $0 product (`POST /api/company/v1/products`, then `PUT` with `active:true`), with `publish_to_retail_store`, `publish_to_portal_shop`, `publish_to_mobile_store`, `publish_to_share_tab` all false. It still appears in `GET /api/products` \u2014 those flags govern storefront rendering, not API listing.\n\n**3. If creating: subscriptions.** Per subscriber: create customer; set address via `PUT /api/customers/:id` with `default_address_attributes` (dedicated address endpoints 404/500 \u2014 skip them); `POST /api/carts` `{fluid_shop, country_code}`; `POST /api/carts/:token/items` `{items:[...]}`; then `POST /api/subscriptions` (singular `subscription` wrapper) with `subscription_plan_id, customer_id, variant_id, address_id, cart_token, timezone, next_bill_date`.\n\n**Date behaviour, measured:** the +1-day shift applies to the UPDATE path (PUT) but NOT to create. Report what Fluid returns either way.\n\n**4. Confirm the rail is armed (operator action).** The operator sets, in the droplet project's `.env.local`: `SMS_RAIL=imessage`, `SMS_ALLOWED_TO=<context.test_phone>`, `SMS_PUBLIC_BASE_URL=<published droplet URL>`, then restarts the dev server (env is read at boot). The allowlist is a hard default-deny gate. Verify it took by calling the droplet's `GET /api/live` and checking `rail` reads `imessage` \u2014 if it reads `log`, nothing will actually send and `ok:true` means only \"recorded\".\n\n**5. Send one real text.** `POST /api/live {id, action:\"notify\", phone: context.test_phone}` against the running droplet. Then ASK THE OPERATOR to confirm it arrived on the handset. The send API's success is NOT delivery \u2014 `osascript` exits 0 whether or not Messages delivered.\n\n**6. Watch the tap.** Both must be observed, not assumed: tapping the link renders a **confirmation** and changes nothing; only pressing the button performs the change. Verify with audit evidence \u2014 two GETs must leave `next_bill_date`/`updated_at` untouched and add NO audit row; the confirm POST must add exactly ONE. Two rows means a link-preview fetcher executed it on load (a real incident: a shipment moved 16 days instead of 7).\n\n**7. Test the exit.** On a different subscription, run the cancellation path: one save offer, then a plain \"cancel\" must cancel in one message.\n\n**8. Record** `context.test_subscription_ids`, `context.test_phone`, `context.test_rail = \"imessage-local\"`, and what the operator actually observed.\n\n**State two limits plainly:** the local rail sends as whichever Apple Account is signed into Messages (sender shows a person, not the brand), and it cannot run from a deployed droplet. Both vanish once a provider number exists; neither invalidates the test, because what is proven is the action loop, not the carrier path.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-8"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "context.test_phone was read from the run context; if it was absent the step reported that plainly and did NOT invent or guess a number.",
+        "Existing test subscriptions were reused where available, or the report explains why new ones were created.",
+        "The rail was verified as armed by behaviour \u2014 GET /api/live reports rail 'imessage', not 'log' \u2014 rather than by assuming the env file was edited.",
+        "The operator confirmed on their own handset that the text arrived; the send API's success response alone is not accepted as proof of delivery.",
+        "Tapping the action link was observed to render a confirmation WITHOUT changing the subscription; the change happened only after the confirm button was pressed.",
+        "Audit evidence supports it: two GETs added no audit row, the confirm POST added exactly one.",
+        "A plain 'cancel' completed in one message after a single save offer.",
+        "The report states the local iMessage rail sends as the Mac's signed-in Apple Account and cannot be used from a deployed droplet \u2014 it is not presented as the production path."
+      ]
+    },
+    {
+      "id": "step-10",
+      "name": "Compliance gate and dry run",
+      "prompt": "Nothing reaches a customer until this passes. Convergence step \u2014 review everything above together.\n\n1. Verify each of these and name the step that established it: consent tier matches the message type being sent; STOP/HELP handled; quiet hours set; frequency cap set; sender registered for the traffic type; cancel path is one message.\n2. Verify a technical rule that has already caused a real incident on this build: **any action link inside a message must not mutate on GET.** Link-preview fetchers (iMessage, WhatsApp, Slack) and corporate email scanners (Defender Safe Links, Proofpoint) fetch every URL on delivery, sometimes repeatedly. A texted 'push it out a week' link that acts on GET fired twice and moved a shipment 16 days instead of 7. The link must render a confirmation; the mutation must sit behind a POST. Confirm this holds before go-live.\n3. Confirm the live test in the previous step actually passed: real subscriptions created, message confirmed received on the merchant's handset, the action link observed to confirm-then-act rather than act-on-load, and the subscription verified to have moved exactly once. Do not accept 'the step ran' \u2014 check the recorded observations. The recipient allowlist stays ON until the merchant explicitly authorises a wider audience.\n4. Produce a go/no-go with findings grouped Critical (blocks launch) / Should review / Passed, plus a Follow-ups list for anything a human still owns (registration completion, opt-in campaign, legal sign-off on message copy).",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-9"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "Every compliance item is verified against recorded context from earlier steps, with the source step named \u2014 not restated as an assumption.",
+        "The GET-safety rule for in-message action links is explicitly checked and confirmed.",
+        "The live test from the previous step is verified as passed \u2014 handset receipt confirmed by the merchant, confirm-then-act behaviour observed, and the subscription confirmed to have moved exactly once.",
+        "Findings are grouped Critical / Should review / Passed with a Follow-ups section."
+      ]
+    }
+  ]
+}
