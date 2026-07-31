@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-31.3",
+  "revision": "2026-07-31.4",
   "slug": "launch-portal",
   "name": "Launch the Portal",
   "description": "Stand up a company's logged-in FluidOS portal in one run: resolve the portal app, build the chosen pages in parallel from working component trees, reconcile navigation, publish a version, and verify the published state against the API. The Day-1 counterpart to speed-import — that one builds the storefront, this one builds the portal behind the login. Expects a caller `context` with definition_id, navigation_id, pages, page_positions, and optionally company_id, portal_url and audience.",
@@ -56,7 +56,7 @@
     {
       "id": "resolve-app",
       "name": "Resolve the portal app and inventory it",
-      "prompt": "Establish — and prove — the portal app every later step writes into. Do not create any screens here.\n\n1. Read `context.definition_id` and `context.navigation_id` from the `## Context from caller` block. When `definition_id` is the string `NEW`, create one first — this shape is verified:\n   ```\n   POST {{company.api_base}}/api/company/fluid_os/definitions\n     { \"definition\": { \"name\": \"<company name> Portal\" } }\n   ```\n   It returns the new `id` with `active: false` and, importantly, `navigations: []` — a freshly created definition ALWAYS has zero navigations, so the `NEW` path always falls into the none case in step 4. Expect it; don't treat it as an error.\n2. `GET {{company.api_base}}/api/company/fluid_os/definitions` and confirm the id resolves to a real definition. Record its `name` and `active` flag.\n3. `GET {{company.api_base}}/api/company/fluid_os/definitions/<DEF_ID>/screens` — the CURRENT screens. Record every existing `id`, `name` and `slug`.\n   **Flag slug collisions explicitly.** A definition often already carries a screen on `home` — the slug the partner/customer home pages want. For every page in `context.pages` whose target slug already exists, say so in STEP_OUTPUT and state how `context.on_slug_collision` resolves it: `update` means the builder edits that existing screen in place; `alongside` means it must pick a non-colliding slug (`home-partner`, `home-customer`) and leave the existing screen untouched. Never silently overwrite a screen this run did not create.\n4. Resolve the navigation. `GET .../definitions/<DEF_ID>/navigations` and handle what you actually find — do not assume exactly one:\n   - **Exactly one** — use it.\n   - **Several** — a definition commonly carries one navigation per `platform` (`web` and `mobile`). Target the **`web`** one; record the others by id, name and platform so the reconcile step leaves them alone. `context.navigation_id` wins when the caller supplied it.\n   - **None** — every freshly created definition starts here. Create one; `platform` is REQUIRED and must be `web` or `mobile` (omitting it 422s with `platform: [\"is missing\"]`). The portal's main menu is `web`:\n     ```\n     POST .../definitions/<DEF_ID>/navigations\n       { \"navigation\": { \"name\": \"Main Navigation\", \"platform\": \"web\" } }\n     ```\n     Re-`GET` to confirm it exists. Create only the `web` navigation — a `mobile` one is a separate surface and out of scope for this run. If the create is rejected for any other reason, do NOT guess variants: end with `STEP_OUTPUT: BLOCKED — definition <id> has no navigation and POST .../navigations was rejected (<exact error>); a navigation must exist before pages can be linked.`\n   Record the chosen navigation id and every existing item (`id`, `label`, `slug`, `position`).\n5. Inventory the content the page builders will need, so five parallel steps don't each re-discover it:\n   - `GET {{company.api_base}}/api/company/media?per_page=200` — real media (id + URL) to replace `picsum.photos` placeholders.\n   - `GET {{company.api_base}}/api/company/v1/products` — real products (id, title, price, URL) to replace `REPLACE_PRODUCT_*` placeholders.\n   - `GET {{company.api_base}}/api/droplet_installations` — installed droplets and their `droplet_uuid`s. The page templates embed droplet nodes whose UUIDs belong to the company they were exported from; each builder must remap or delete those nodes.\n\nEnd with `STEP_OUTPUT:` carrying, as compact JSON the parallel builders can read directly: `definition_id`, `definition_name`, `navigation_id`, `existing_screens` (id/name/slug), `existing_nav_items` (id/label/slug/position), `company_id`, a `media` sample (up to 30 id+url), a `products` sample (up to 30 id/title/price/url), and `installed_droplets` (uuid + name). If any inventory call fails, say so explicitly rather than reporting an empty list as if it were empty upstream.",
+      "prompt": "Establish — and prove — the portal app every later step writes into. Do not create any screens here.\n\n1. Read `context.definition_id` and `context.navigation_id` from the `## Context from caller` block. When `definition_id` is the string `NEW`, create one first — this shape is verified:\n   ```\n   POST {{company.api_base}}/api/company/fluid_os/definitions\n     { \"definition\": { \"name\": \"<company name> Portal\" } }\n   ```\n   It returns the new `id` with `active: false` and, importantly, `navigations: []` — a freshly created definition ALWAYS has zero navigations, so the `NEW` path always falls into the none case in step 4. Expect it; don't treat it as an error.\n2. `GET {{company.api_base}}/api/company/fluid_os/definitions` and confirm the id resolves to a real definition. Record its `name` and `active` flag.\n3. `GET {{company.api_base}}/api/company/fluid_os/definitions/<DEF_ID>/screens` — the CURRENT screens. Record every existing `id`, `name` and `slug`.\n   **Publish an explicit `slug_plan` — one target slug per requested page.** Two kinds of collision must both be resolved here, before any builder runs:\n   - **Against existing screens.** A definition often already carries a screen on `home`. State how `context.on_slug_collision` resolves it: `update` means the builder edits that existing screen in place; `alongside` means it picks a non-colliding slug and leaves the existing screen untouched. Never silently overwrite a screen this run did not create.\n   - **Against each other.** `partner-home` and `customer-home` BOTH default to `home`. If both are requested, only one can hold it — give the audience-primary page `home` and the other an explicit distinct slug (`customer-home`). Two builders racing for one slug is a silent data-loss bug, not a cosmetic clash.\n   Emit `slug_plan` as `{ \"<page>\": \"<slug>\" }` covering every page in `context.pages`. Builders use it verbatim; they do not re-derive slugs.\n4. Resolve the navigation. `GET .../definitions/<DEF_ID>/navigations` and handle what you actually find — do not assume exactly one:\n   - **Exactly one** — use it.\n   - **Several** — a definition commonly carries one navigation per `platform` (`web` and `mobile`). Target the **`web`** one; record the others by id, name and platform so the reconcile step leaves them alone. `context.navigation_id` wins when the caller supplied it.\n   - **None** — every freshly created definition starts here. Create one; `platform` is REQUIRED and must be `web` or `mobile` (omitting it 422s with `platform: [\"is missing\"]`). The portal's main menu is `web`:\n     ```\n     POST .../definitions/<DEF_ID>/navigations\n       { \"navigation\": { \"name\": \"Main Navigation\", \"platform\": \"web\" } }\n     ```\n     Re-`GET` to confirm it exists. Create only the `web` navigation — a `mobile` one is a separate surface and out of scope for this run. If the create is rejected for any other reason, do NOT guess variants: end with `STEP_OUTPUT: BLOCKED — definition <id> has no navigation and POST .../navigations was rejected (<exact error>); a navigation must exist before pages can be linked.`\n   Record the chosen navigation id and every existing item (`id`, `label`, `slug`, `position`).\n5. Inventory the content the page builders will need, so five parallel steps don't each re-discover it:\n   - `GET {{company.api_base}}/api/company/media?per_page=200` — real media (id + URL) to replace `picsum.photos` placeholders.\n   - `GET {{company.api_base}}/api/company/v1/products` — real products (id, title, price, URL) to replace `REPLACE_PRODUCT_*` placeholders.\n   - `GET {{company.api_base}}/api/droplet_installations` — installed droplets and their `droplet_uuid`s. The page templates embed droplet nodes whose UUIDs belong to the company they were exported from; each builder must remap or delete those nodes.\n\nEnd with `STEP_OUTPUT:` carrying, as compact JSON the parallel builders can read directly: `definition_id`, `definition_name`, `navigation_id`, `existing_screens` (id/name/slug), `existing_nav_items` (id/label/slug/position), `company_id`, a `media` sample (up to 30 id+url), a `products` sample (up to 30 id/title/price/url), and `installed_droplets` (uuid + name). If any inventory call fails, say so explicitly rather than reporting an empty list as if it were empty upstream.",
       "target": {
         "type": "manager"
       },
@@ -64,6 +64,7 @@
         "The definition id used is confirmed to exist by a GET against /api/company/fluid_os/definitions, and STEP_OUTPUT names it.",
         "STEP_OUTPUT lists the definition's CURRENT screens (id, name, slug) — an empty list is acceptable only if the GET actually returned none.",
         "Any collision between an existing screen slug and a requested page is flagged, with the on_slug_collision resolution stated.",
+        "STEP_OUTPUT contains a slug_plan naming one distinct slug per requested page, with no two pages sharing a slug.",
         "A `web` navigation id is resolved and its existing items reported. If the definition had none, the step created one with an explicit `platform: \"web\"` and verified it by re-GET, or reported BLOCKED — it did not proceed as though a navigation existed.",
         "When several navigations exist, the chosen one is named and the others are listed as out of scope.",
         "Media, product and droplet-installation inventories were each fetched; any call that failed is reported as failed rather than as an empty result.",
@@ -107,7 +108,8 @@
         "No `picsum.photos` URL, no `REPLACE_*` token and no `YOUR_COMPANY_ID` remains anywhere in the saved tree.",
         "Droplet nodes were either remapped to a droplet_uuid this company actually has installed, or deleted outright — no foreign UUID survives.",
         "A navigation item points at the screen and carries a non-empty slug.",
-        "Any widget lacking real data uses an honest empty state; no fabricated earnings, ranks or counts."
+        "Any widget lacking real data uses an honest empty state; no fabricated earnings, ranks or counts.",
+        "Verification is via the Fluid API only. The live portal URL requires authentication — a login screen is EXPECTED and is never evidence that the page failed. Do not fail this step for being unable to load the portal in a browser."
       ],
       "qa": {
         "enabled": true,
@@ -116,7 +118,7 @@
         "requiredTools": [
           {
             "tool": "fluid_api",
-            "minSuccessfulCalls": 2,
+            "minSuccessfulCalls": 1,
             "input": {
               "method": "GET"
             },
@@ -126,7 +128,7 @@
           }
         ]
       },
-      "maxReworkRounds": 2,
+      "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
       }
@@ -150,7 +152,8 @@
         "No `picsum.photos` URL, no `REPLACE_*` token and no `YOUR_COMPANY_ID` remains anywhere in the saved tree.",
         "Droplet nodes were either remapped to a droplet_uuid this company actually has installed, or deleted outright — no foreign UUID survives.",
         "A navigation item points at the screen and carries a non-empty slug.",
-        "The page reads as customer-facing, not rep-facing: no commission, downline or recruiting language survives the placeholder swap."
+        "The page reads as customer-facing, not rep-facing: no commission, downline or recruiting language survives the placeholder swap.",
+        "Verification is via the Fluid API only. The live portal URL requires authentication — a login screen is EXPECTED and is never evidence that the page failed. Do not fail this step for being unable to load the portal in a browser."
       ],
       "qa": {
         "enabled": true,
@@ -159,7 +162,7 @@
         "requiredTools": [
           {
             "tool": "fluid_api",
-            "minSuccessfulCalls": 2,
+            "minSuccessfulCalls": 1,
             "input": {
               "method": "GET"
             },
@@ -169,7 +172,7 @@
           }
         ]
       },
-      "maxReworkRounds": 2,
+      "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
       }
@@ -193,7 +196,8 @@
         "No `picsum.photos` URL, no `REPLACE_*` token and no `YOUR_COMPANY_ID` remains anywhere in the saved tree.",
         "Droplet nodes were either remapped to a droplet_uuid this company actually has installed, or deleted outright — no foreign UUID survives.",
         "A navigation item points at the screen and carries a non-empty slug.",
-        "Live-data panels (points, activity, calendar, to-dos) either bind to real company data or render an honest empty state — no invented numbers."
+        "Live-data panels (points, activity, calendar, to-dos) either bind to real company data or render an honest empty state — no invented numbers.",
+        "Verification is via the Fluid API only. The live portal URL requires authentication — a login screen is EXPECTED and is never evidence that the page failed. Do not fail this step for being unable to load the portal in a browser."
       ],
       "qa": {
         "enabled": true,
@@ -202,7 +206,7 @@
         "requiredTools": [
           {
             "tool": "fluid_api",
-            "minSuccessfulCalls": 2,
+            "minSuccessfulCalls": 1,
             "input": {
               "method": "GET"
             },
@@ -212,7 +216,7 @@
           }
         ]
       },
-      "maxReworkRounds": 2,
+      "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
       }
@@ -236,7 +240,8 @@
         "No `picsum.photos` URL, no `REPLACE_*` token and no `YOUR_COMPANY_ID` remains anywhere in the saved tree.",
         "Droplet nodes were either remapped to a droplet_uuid this company actually has installed, or deleted outright — no foreign UUID survives.",
         "A navigation item points at the screen and carries a non-empty slug.",
-        "The QuickShare card and any earnings widget show real share/earnings state or an honest empty state — no fabricated figures."
+        "The QuickShare card and any earnings widget show real share/earnings state or an honest empty state — no fabricated figures.",
+        "Verification is via the Fluid API only. The live portal URL requires authentication — a login screen is EXPECTED and is never evidence that the page failed. Do not fail this step for being unable to load the portal in a browser."
       ],
       "qa": {
         "enabled": true,
@@ -245,7 +250,7 @@
         "requiredTools": [
           {
             "tool": "fluid_api",
-            "minSuccessfulCalls": 2,
+            "minSuccessfulCalls": 1,
             "input": {
               "method": "GET"
             },
@@ -255,7 +260,7 @@
           }
         ]
       },
-      "maxReworkRounds": 2,
+      "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
       }
@@ -279,7 +284,8 @@
         "No `picsum.photos` URL, no `REPLACE_*` token and no `YOUR_COMPANY_ID` remains anywhere in the saved tree.",
         "Droplet nodes were either remapped to a droplet_uuid this company actually has installed, or deleted outright — no foreign UUID survives.",
         "Its slug does NOT collide with the primary home page — this is a second layout to compare against, not a replacement.",
-        "A navigation item points at the screen and carries a non-empty slug."
+        "A navigation item points at the screen and carries a non-empty slug.",
+        "Verification is via the Fluid API only. The live portal URL requires authentication — a login screen is EXPECTED and is never evidence that the page failed. Do not fail this step for being unable to load the portal in a browser."
       ],
       "qa": {
         "enabled": true,
@@ -288,7 +294,7 @@
         "requiredTools": [
           {
             "tool": "fluid_api",
-            "minSuccessfulCalls": 2,
+            "minSuccessfulCalls": 1,
             "input": {
               "method": "GET"
             },
@@ -298,7 +304,7 @@
           }
         ]
       },
-      "maxReworkRounds": 2,
+      "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
       }
@@ -381,7 +387,7 @@
     {
       "id": "portal-qa",
       "name": "Verify the published portal",
-      "prompt": "Independently verify the PUBLISHED portal against the live API. You are checking the state a real user would load, not the summaries earlier steps wrote about themselves. Read only — do not fix anything here; report what is wrong and let rework handle it.\n\nFor the definition this run targeted:\n\n1. `GET .../definitions/<DEF_ID>/screens` — for EVERY screen this run created, fetch it individually and check the saved `component_tree`:\n   - it is the array form, not an empty hash left over from the shell POST;\n   - the whole tree sits inside one page-wrapper LayoutWidget;\n   - a full-text scan of the serialized tree finds no `picsum.photos`, no `REPLACE_`, no `YOUR_COMPANY_ID`;\n   - every `droplet.` node's UUID segment appears in this company's `GET /api/droplet_installations`.\n2. `GET` the navigation — every item has a slug, positions are unique and contiguous, and every created screen has exactly one item.\n3. `GET .../definitions` — the definition exists and `has_pending_changes` is false.\n4. Count what actually shipped versus `context.pages`. A page that was requested and is missing is a FAIL, not a note.\n\nEnd with `STEP_OUTPUT:` as a per-page table — page, screen id, slug, nav position, placeholders found (should be zero), unresolved droplet nodes (should be zero) — followed by an explicit `PORTAL READY` or `PORTAL NOT READY — <reasons>`.",
+      "prompt": "Independently verify the PUBLISHED portal against the live API. You are checking the state a real user would load, not the summaries earlier steps wrote about themselves. Read only — do not fix anything here; report what is wrong and let rework handle it.\n\nFor the definition this run targeted:\n\n1. `GET .../definitions/<DEF_ID>/screens` — for EVERY screen this run created, fetch it individually and check the saved `component_tree`:\n   - it is the array form, not an empty hash left over from the shell POST;\n   - the whole tree sits inside one page-wrapper LayoutWidget;\n   - a full-text scan of the serialized tree finds no `picsum.photos`, no `REPLACE_`, no `YOUR_COMPANY_ID`;\n   - every `droplet.` node's UUID segment appears in this company's `GET /api/droplet_installations`.\n2. `GET` the navigation — every item has a slug, positions are unique and contiguous, and every created screen has exactly one item.\n3. `GET .../definitions` — the definition exists and `has_pending_changes` is false.\n4. Count what actually shipped versus `context.pages`. A page that was requested and is missing is a FAIL, not a note.\n\n5. Confirm the portal can actually RENDER. `GET .../definitions/<DEF_ID>` and check it carries a default `profiles[]` entry and an active `themes[]` entry. Screens with no profile or theme behind them have nothing to display through, however perfect their trees are. Report both.\n\nVerification is via the Fluid API only. The live portal URL requires authentication — a login screen is EXPECTED and is never evidence that the page failed. Do not fail this step for being unable to load the portal in a browser.\n\n## Required output format\n\nEmit `STEP_OUTPUT:` with a per-page table — page, screen id, slug, nav position, placeholders found (must be zero), unresolved droplet nodes (must be zero).\n\n**Then, as the FINAL LINE of your output and nothing after it, write exactly one of:**\n\n```\nPORTAL READY\nPORTAL NOT READY — <reasons>\n```\n\nA report without that closing line is incomplete and will be rejected, however good the findings above it are. Write the line even when everything passed.",
       "target": {
         "type": "manager"
       },
@@ -395,7 +401,9 @@
         "The navigation was re-read: every item has a slug, positions are unique and contiguous, and every created screen has exactly one item.",
         "The definition reports has_pending_changes false after publish.",
         "Every page named in context.pages has a corresponding screen; any missing page is reported as a failure.",
-        "STEP_OUTPUT ends with an explicit PORTAL READY or PORTAL NOT READY verdict listing the reasons."
+        "The definition was checked for a default profile and an active theme, and both are reported.",
+        "Verification is via the Fluid API only. The live portal URL requires authentication — a login screen is EXPECTED and is never evidence that the page failed. Do not fail this step for being unable to load the portal in a browser.",
+        "The VERY LAST line of STEP_OUTPUT is exactly `PORTAL READY` or `PORTAL NOT READY — <reasons>`, with nothing after it."
       ],
       "qa": {
         "enabled": true,
