@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-30-source-provenance",
+  "revision": "2026-07-30-step-skill-prompt-exclusive",
   "slug": "onboard-launch-company",
   "name": "Onboard & Launch Company",
   "description": "Flagship end-to-end onboarding: build source-backed brand and route evidence, run Home, Shop, PDP, and Collection specialists through one universal page-to-Liquid visual-copy core, keep complete catalog migration on its own optional data track, then finish with cross-route launch gates. Worker and reviewer models are deliberately cross-vendor so rendered DOM, durable pixels, interactions, logs, and signed evidence—not one model's self-assessment—decide whether the run passes.",
@@ -983,7 +983,6 @@
           }
         ]
       },
-      "skill": "themes/clone-blog-page",
       "target": {
         "type": "kind",
         "kind": "theme"
@@ -1080,7 +1079,6 @@
           }
         ]
       },
-      "skill": "themes/clone-post-page",
       "target": {
         "type": "kind",
         "kind": "theme"
@@ -1177,7 +1175,6 @@
           }
         ]
       },
-      "skill": "themes/clone-cart-page",
       "target": {
         "type": "kind",
         "kind": "theme"
@@ -1274,7 +1271,6 @@
           }
         ]
       },
-      "skill": "themes/clone-system-pages",
       "target": {
         "type": "kind",
         "kind": "theme"

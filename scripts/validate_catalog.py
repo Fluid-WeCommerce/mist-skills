@@ -1027,10 +1027,35 @@ def validate_streamlined_home_review_contract(workflow: Any) -> None:
             )
 
 
+def validate_step_skill_prompt_exclusivity() -> None:
+    """Mist Desktop's WorkflowDefinitionSchema rejects a step carrying both
+    `skill` and `prompt` (or neither), so a published file violating this
+    fails to load in every synced client. Mirror that rule here so CI
+    catches it before publish."""
+    for path in sorted((ROOT / "workflows").glob("*.workflow.json")):
+        workflow = load_json(path)
+        if not isinstance(workflow, dict) or not isinstance(
+            workflow.get("steps"), list
+        ):
+            raise CatalogValidationError(f"{path.name}: steps must be an array")
+        for index, step in enumerate(workflow["steps"]):
+            if not isinstance(step, dict):
+                raise CatalogValidationError(
+                    f"{path.name}: steps[{index}] must be an object"
+                )
+            label = step.get("id") or f"steps[{index}]"
+            if bool(step.get("skill")) == bool(step.get("prompt")):
+                raise CatalogValidationError(
+                    f"{path.name}: step {label} needs exactly one of "
+                    "`skill` or `prompt`"
+                )
+
+
 def validate_published_catalog(
     *, streamlined_workflow: Any | None = None
 ) -> tuple[int, int]:
     skill_count, workflow_count = validate_manifest(load_json(MANIFEST_PATH))
+    validate_step_skill_prompt_exclusivity()
     validate_flagship_contracts()
     validate_streamlined_product_import_contract()
     validate_streamlined_home_review_contract(
