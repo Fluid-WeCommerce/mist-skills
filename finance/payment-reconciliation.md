@@ -15,8 +15,9 @@ Reconcile `{{company.name}}`'s Fluid payment records against every connected PSP
 Ask the user for:
 - **Company name** (e.g. "Neumi", "Kyani") — skip if already set in `{{company.name}}`
 - **Timeframe** — e.g. "last 24 hours", "last 7 days", or an explicit start/end date
+- **Environment** — **Sandbox/test** or **Production/live**? This determines which payment accounts are included and which PSP API credentials/endpoints are used. Ask explicitly — do not default to either.
 
-Parse the timeframe into UTC start and end timestamps. Confirm both before proceeding.
+Parse the timeframe into UTC start and end timestamps. Confirm all three before proceeding.
 
 ---
 
@@ -28,6 +29,7 @@ Run the following script via Rails runner from the fluid repo. It queries the DB
 COMPANY="<COMPANY_NAME>" \
 START_AT="<YYYY-MM-DD HH:MM:SS UTC>" \
 END_AT="<YYYY-MM-DD HH:MM:SS UTC>" \
+SANDBOX="<true|false>" \
 bundle exec rails runner - <<'RUBY'
 require 'json'
 
@@ -56,12 +58,14 @@ fluid_txns = payments.map do |p|
   }
 end
 
-# Active, live payment accounts with their decrypted credentials
-accounts = Payments::PaymentAccount
+# Payment accounts — filtered by environment
+sandbox_mode = ENV.fetch('SANDBOX', 'false') == 'true'
+account_scope = Payments::PaymentAccount
   .where(company_id: company.id, active: true)
   .kept
-  .reject(&:sandbox?)
-  .map do |pa|
+account_scope = sandbox_mode ? account_scope.select(&:sandbox?) : account_scope.reject(&:sandbox?)
+
+accounts = account_scope.map do |pa|
     {
       id:                pa.id,
       display_name:      pa.display_name.presence || pa.name,
@@ -359,7 +363,7 @@ Print the full file path so the user can open it.
 
 ## Notes
 
-- Sandbox/test payment accounts are always excluded unless the user explicitly asks to include them
+- The user must explicitly choose **sandbox** or **production** at the start — never default. Sandbox mode reconciles test payment accounts and should use PSP sandbox/test API endpoints and credentials. Production mode reconciles live accounts only.
 - Paginate all PSP API calls fully before reconciling — never reconcile on a partial page
 - If a PSP API call fails (auth error, timeout, rate limit), note the failure clearly in that account's section and continue with the remaining accounts
 - For Fluid totals, sum only `success` status transactions — declined and error records are listed separately
