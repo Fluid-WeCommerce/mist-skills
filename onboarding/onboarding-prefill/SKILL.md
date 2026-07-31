@@ -84,9 +84,9 @@ Run these two checks in parallel:
 | Check                   | Method                                                    | Success                         |
 | ----------------------- | --------------------------------------------------------- | ------------------------------- |
 | Source site reachable   | `GET {company_url}` via the crawl tool (follow redirects) | reachable                       |
-| Active company identity | `fluid_api("/api/settings/company", "GET")`               | returns company `id` and `name` |
+| Active company identity | `fluid_api("/api/company/v1/companies/me", "GET")`        | returns company `id` and `name` |
 
-The `company` call gives you the human-readable name and numeric company id used in later API paths. You'll also fetch country data later via `fluid_api("/api/settings/company_countries", "GET")` for Step 8.
+The `companies/me` call returns the active company under `data.company` — its human-readable `name` and the numeric company `id` used in later API paths. You'll also fetch country data later via `fluid_api("/api/settings/company_countries", "GET")` for Step 8.
 
 Print results:
 

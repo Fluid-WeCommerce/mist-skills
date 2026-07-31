@@ -73,7 +73,7 @@ human-entered object verbatim; never invent or alter consent fields.
 
 | Method | Endpoint                          | Used for                                               |
 | ------ | --------------------------------- | ------------------------------------------------------ |
-| GET    | `/api/settings/company`           | Company identity (id, name) for preflight confirmation |
+| GET    | `/api/company/v1/companies/me`    | Company identity (id, name under `data.company`) for preflight confirmation — note: NOT under `/api/settings`; `GET /api/settings/company` does not exist (404) |
 | GET    | `/api/settings/company_countries` | Token validation + country data                        |
 | GET    | `/api/settings/brand_guidelines`  | Read identity, colors, fonts, and `brand_md`            |
 | PATCH  | `/api/settings/brand_guidelines`  | Set identity, colors, fonts, images, and `brand_md`     |
@@ -158,8 +158,9 @@ Notes:
 
 **`PATCH /api/settings/companies/{id}`** — rename + support email live HERE (verified
 against the Rails UpdateAction schema). The `{id}` in the path is REQUIRED (integer — the
-company id from `GET /api/settings/company`); PATCHing `/api/settings/company` (no id) or
-sending a flat body 400s. Body wrapped in the `company` key:
+company id from `GET /api/company/v1/companies/me`, at `data.company.id`); PATCHing
+without the `{id}` hits a route that does not exist (404), and sending a flat body 400s.
+Body wrapped in the `company` key:
 
 ```jsonc
 {

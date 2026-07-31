@@ -30,8 +30,8 @@ about **what to extract**; that file is the authority on **how to persist**.
 
 Take the source site from `context.website_url`. Standalone, ask once if it is
 missing — but in workflow mode a missing URL is a recorded blocker, not a
-question. Confirm the active company with `GET /api/settings/company` and say
-which company you are about to write to before writing.
+question. Confirm the active company with `GET /api/company/v1/companies/me`
+and say which company you are about to write to before writing.
 
 ## Step 1 — Capture the source once
 
