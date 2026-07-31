@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-31-content-body-fallback+theme-remediation-routing+live-handoff-counts",
+  "revision": "2026-07-31-import-worker-allowlist+content-body-fallback+theme-remediation-routing+live-handoff-counts",
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
   "launcherSkill": "onboarding/launch-setup",
@@ -593,6 +593,9 @@
       "target": {
         "type": "manager"
       },
+      "allowedTools": [
+        "fluid_product_import"
+      ],
       "prompt": "Import every product from the already-approved catalog manifest. Read the exact `manifest_path` and `manifest_sha256` from the `catalog-manifest` STEP_OUTPUT; do not substitute a different path, hash, or catalog.\n\nCall `fluid_product_import({ manifest_path: <exact manifest_path>, manifest_sha256: <exact manifest_sha256> })` exactly once in write mode. Do not set `verify_only:true`. The built-in tool owns manifest validation, market resolution, image uploads, product writes, bounded retries, checkpoint/resume, and complete live reconciliation. Do not invoke lower-level API or DAM tools and do not build a manual product or image loop.\n\nReturn the tool's compact receipt as STEP_OUTPUT without expanding the manifest or per-product results.",
       "acceptance": [
         "Every product in the source manifest resolves to exactly one live Fluid product \u2014 no duplicates, no silent drops \u2014 and the count is proven by paginating the products API rather than by self-report.",
