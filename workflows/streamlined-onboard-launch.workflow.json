@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-31-home-code-review",
+  "revision": "2026-07-31-all-page-code-review",
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
   "launcherSkill": "onboarding/launch-setup",
@@ -167,15 +167,78 @@
         "kind": "theme",
         "fallbackToManager": true
       },
-      "skill": "themes/clone-shop-page",
+      "prompt": "Build the canonical Shop/all-products page from source evidence and existing theme code. This step implements the page; screenshots are not a correctness gate.\n\nRead clone-manifest.json first and use its canonical Shop source URL and Fluid route. Because source-capture deep-retains only Home, crawl the canonical Shop source with formats [\"markdown\", \"html\"] and only_main_content:false to gather fresh non-image structure and stable copy. Do not request screenshot capture or screenshot formats. Use Home's retained stylesheet, landmark styles, existing theme tokens, and the route's HTML structure to guide styling. Route-specific CSS is unavailable without screenshot-save capture; record it in unresolved rather than claiming it was retained. Already-retained source screenshots are optional, non-authoritative design context only. Do not capture or inspect new/local screenshots and do not call screenshot_preview or compare_preview_to_source.\n\nInspect the existing shared shell, design tokens, product-card components, list sections, and shop_page/default/index.liquid before editing. Treat the shared shell as read-only. Preserve the source's real Shop versus collection semantics. Render actual Fluid products through dynamic list/card bindings, canonical returned product routes, dynamic prices/images/badges, and honest empty/loading/error states. Implement source-proven filters, search, sorting, pagination or load-more using existing Fluid capabilities when the source exposes them; otherwise omit them or record the unsupported gap rather than inventing controls. Never ship decorative controls that do nothing. Reuse existing product-card and list contracts when already present and compatible; otherwise use page-local canonical scaffold pieces. Do not overwrite shared or sibling-owned components another parallel page step may be editing. Report the product-card, grid, filter/sort, search, pagination, and state contract Collection can reuse if it is already present when Collection runs.\n\nCopy stable headings, labels, option names, and CTAs exactly. Do not hardcode observed products, prices, images, resource ids, hostnames, ports, theme ids, query-triggered QA shortcuts, base-theme scaffold filler, placeholder data, inline binary media, absolute environment-specific asset URLs, monolithic page templates, or layout-hiding workarounds.\n\nRun fluid theme lint --json and fix every error. Use the local preview only for deterministic runtime checks: read the rendered DOM at the canonical Shop route from clone-manifest.json, then read the preview console and local server logs. Verify HTTP success, stable copy, real product-card bindings, canonical links, source-present control markup/state hooks, reusable list components, and no runtime/resource failures. Do not take or compare local screenshots and do not use interact_preview as correctness evidence.\n\nEnd with STEP_OUTPUT: { source_route, built_route, source_evidence: [...], files_read: [...], files_changed: [...], list_contract: {...}, dynamic_bindings: [...], controls: {...}, lint: {...}, dom_checks: [...], console_errors: [...], server_errors: [...], unresolved: [...] }.",
       "acceptance": [
-        "The route renders in the local preview at 1440 and 390 wide and reuses the shared header, footer, and design tokens the home page established.",
-        "Real catalog data drives the template \u2014 no hardcoded product, price, or image left in the Liquid."
+        "The independent reviewer read clone-manifest.json plus at least three distinct implementation files, including shop_page/default/index.liquid and its product-card, list-control, or shared-shell collaborators.",
+        "The independent reviewer ran fluid theme lint --json in read-only mode and it returned zero errors.",
+        "Targeted code searches found Fluid-backed product cards, canonical product routes, dynamic prices and images, reusable list components, and source-proven filter/search/sort/pagination hooks when the source exposes them; absent or unsupported controls are recorded rather than invented.",
+        "Targeted code searches found no hardcoded products, prices, images, resource ids, environment identity, decorative nonfunctional controls, scaffold filler, inline binary media, monolithic page template, or layout-hiding workaround.",
+        "The independent reviewer read the rendered DOM for the canonical Shop route from clone-manifest.json in all mode and confirmed HTTP success, stable copy, real product bindings, canonical links, and shared-shell output.",
+        "The independent reviewer read the preview console and local server logs and found no unresolved Liquid, runtime, resource, or browser errors.",
+        "Screenshots are optional source-design context only. The reviewer did not use screenshot_preview, compare_preview_to_source, view_project_image, interact_preview, or screenshot-producing interaction checks as correctness evidence."
       ],
       "qa": {
         "enabled": true,
         "strictness": "lenient",
-        "onFail": "continue"
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "run_cli",
+            "input": {
+              "command": "fluid",
+              "args": [
+                "theme",
+                "lint",
+                "--json"
+              ]
+            },
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "clone-manifest.json"
+            }
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "shop_page/default/index.liquid"
+            }
+          },
+          {
+            "tool": "read_file",
+            "minSuccessfulCalls": 4,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "search_files",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "query"
+            ]
+          },
+          {
+            "tool": "read_preview_dom",
+            "input": {
+              "mode": "all"
+            },
+            "minSuccessfulCalls": 1,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "read_preview_console",
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_local_server_logs",
+            "minSuccessfulCalls": 1
+          }
+        ]
       },
       "dependsOn": [
         "home-page"
@@ -194,15 +257,78 @@
         "kind": "theme",
         "fallbackToManager": true
       },
-      "skill": "themes/clone-product-page",
+      "prompt": "Build the representative Product Detail Page from source evidence and existing theme code. This step implements the page; screenshots are not a correctness gate.\n\nRead clone-manifest.json first and use its canonical source PDP and exact Fluid product route. Because source-capture deep-retains only Home, crawl the canonical PDP source with formats [\"markdown\", \"html\"] and only_main_content:false to gather fresh non-image structure and stable copy. Do not request screenshot capture or screenshot formats. Use Home's retained stylesheet, landmark styles, existing theme tokens, and the route's HTML structure to guide styling. Route-specific CSS is unavailable without screenshot-save capture; record it in unresolved rather than claiming it was retained. Already-retained source screenshots are optional, non-authoritative design context only. Do not capture or inspect new/local screenshots and do not call screenshot_preview or compare_preview_to_source.\n\nInspect product/default/index.liquid, the scaffold's canonical product-data/add-to-cart section, shared shell, tokens, gallery, option, price, and recommendation components before editing. Treat the shared shell as read-only. Keep product_hero or main_product first, unmodified as the canonical data section; never fork, replace, or imitate it with static Liquid. Compose source-proven supporting sections after it in source order. Bind title, price, availability, options, valid variants, gallery, quantity, subscription, add-to-cart hooks, description, recommendations, and canonical URLs to product.* and existing Fluid hooks. Reuse existing card or recommendation components only when already present and compatible; otherwise use page-local canonical scaffold pieces. Do not overwrite shared or sibling-owned components another parallel page step may be editing.\n\nCopy stable headings, labels, option names, disclosures, and CTAs exactly. Do not hardcode the representative product, variant, price, image, resource ids, hostnames, ports, theme ids, query-triggered QA shortcuts, base-theme scaffold filler, placeholder data, inline binary media, absolute environment-specific asset URLs, monolithic page templates, or layout-hiding workarounds.\n\nRun fluid theme lint --json and fix every error. Use the local preview only for deterministic runtime checks: read the rendered DOM at the canonical PDP route from clone-manifest.json, then read the preview console and local server logs. Verify HTTP success, canonical data section order, stable copy, dynamic product/gallery/variant/price/add-to-cart markup and hooks, canonical links, shared shell, and no runtime/resource failures. Do not take or compare local screenshots and do not use interact_preview as correctness evidence.\n\nEnd with STEP_OUTPUT: { source_product_id, fluid_product_id, source_route, built_route, canonical_data_section, source_evidence: [...], files_read: [...], files_changed: [...], dynamic_bindings: [...], purchase_hooks: [...], lint: {...}, dom_checks: [...], console_errors: [...], server_errors: [...], unresolved: [...] }.",
       "acceptance": [
-        "The route renders in the local preview at 1440 and 390 wide and reuses the shared header, footer, and design tokens the home page established.",
-        "Real catalog data drives the template \u2014 no hardcoded product, price, or image left in the Liquid."
+        "The independent reviewer read clone-manifest.json plus at least three distinct implementation files, including product/default/index.liquid, its canonical product-data section, and shared-shell or supporting-section collaborators.",
+        "The independent reviewer ran fluid theme lint --json in read-only mode and it returned zero errors.",
+        "Targeted code searches found product_hero or main_product first, product.* bindings for title, gallery, options, valid variants, pricing and availability, existing add-to-cart hooks, canonical links, and source-ordered supporting sections.",
+        "Targeted code searches found no static replacement for the canonical product-data section, hardcoded product, variant, price, image or resource id, environment identity, scaffold filler, inline binary media, monolithic page template, or layout-hiding workaround.",
+        "The independent reviewer read the rendered DOM for the canonical Product route from clone-manifest.json in all mode and confirmed HTTP success, stable copy, dynamic product/gallery/variant/price/add-to-cart output, canonical links, and shared-shell output.",
+        "The independent reviewer read the preview console and local server logs and found no unresolved Liquid, runtime, resource, or browser errors.",
+        "Screenshots are optional source-design context only. The reviewer did not use screenshot_preview, compare_preview_to_source, view_project_image, interact_preview, or screenshot-producing interaction checks as correctness evidence."
       ],
       "qa": {
         "enabled": true,
         "strictness": "lenient",
-        "onFail": "continue"
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "run_cli",
+            "input": {
+              "command": "fluid",
+              "args": [
+                "theme",
+                "lint",
+                "--json"
+              ]
+            },
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "clone-manifest.json"
+            }
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "product/default/index.liquid"
+            }
+          },
+          {
+            "tool": "read_file",
+            "minSuccessfulCalls": 4,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "search_files",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "query"
+            ]
+          },
+          {
+            "tool": "read_preview_dom",
+            "input": {
+              "mode": "all"
+            },
+            "minSuccessfulCalls": 1,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "read_preview_console",
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_local_server_logs",
+            "minSuccessfulCalls": 1
+          }
+        ]
       },
       "dependsOn": [
         "home-page"
@@ -221,15 +347,72 @@
         "kind": "theme",
         "fallbackToManager": true
       },
-      "skill": "themes/clone-collection-page",
+      "prompt": "Build the Collection index/detail pages from source evidence and existing theme code. This step implements the pages; screenshots are not a correctness gate.\n\nRead clone-manifest.json first and classify the canonical route as collection index, collection detail, category, or Shop rather than treating those as synonyms. Because source-capture deep-retains only Home, crawl the canonical Collection source with formats [\"markdown\", \"html\"] and only_main_content:false to gather fresh non-image structure and stable copy. Do not request screenshot capture or screenshot formats. Use Home's retained stylesheet, landmark styles, existing theme tokens, and the route's HTML structure to guide styling. Route-specific CSS is unavailable without screenshot-save capture; record it in unresolved rather than claiming it was retained. Already-retained source screenshots are optional, non-authoritative design context only; do not capture or inspect new/local screenshots and do not call screenshot_preview or compare_preview_to_source.\n\nInspect the chosen classification-dependent template, the shared shell, design tokens, and canonical scaffold list/card contracts before editing. Treat the shared shell as read-only. Shop and Collection run in parallel: reuse Shop product-card, grid, filter/sort, search, pagination, and state components only when they already exist and fit; otherwise use page-local canonical scaffold contracts. Do not assume Shop completed or fork its contract. Do not overwrite shared or sibling-owned components another parallel step may be editing.\n\nKeep index/detail semantics honest. Bind collection title, description, media, canonical links, and product grid to real Fluid collection/product data. In Liquid use c.image, c.url, and c.products rather than REST-only shapes; use the image fallback c.image then c.image_url then c.image_path then first product image. Keep visible index work bounded, counts optional, and slug-specific templates limited to source-proven structural variants.\n\nCopy stable headings, labels, option names, and CTAs exactly. Do not hardcode collections, products, prices, images, resource ids, hostnames, ports, theme ids, query-triggered QA shortcuts, base-theme scaffold filler, placeholder data, inline binary media, absolute environment-specific asset URLs, monolithic page templates, or layout-hiding workarounds.\n\nRun fluid theme lint --json and fix every error. Use the local preview only for deterministic runtime checks: read the rendered DOM at the canonical Collection route from clone-manifest.json, then read the preview console and local server logs. Verify HTTP success, correct index/detail semantics, stable copy, real collection/product bindings, canonical collection/product links, shared shell, and no runtime/resource failures. Do not take or compare local screenshots and do not use interact_preview as correctness evidence.\n\nEnd with STEP_OUTPUT: { classification, chosen_template, source_routes: [...], built_routes: [...], source_evidence: [...], files_read: [...], files_changed: [...], list_contract: {...}, dynamic_bindings: [...], lint: {...}, dom_checks: [...], console_errors: [...], server_errors: [...], unresolved: [...] }.",
       "acceptance": [
-        "The route renders in the local preview at 1440 and 390 wide and reuses the shared header, footer, and design tokens the home page established.",
-        "Real catalog data drives the template \u2014 no hardcoded product, price, or image left in the Liquid."
+        "The independent reviewer read clone-manifest.json plus at least three distinct implementation files, including the chosen classification-dependent template and its page-local list/card or index/detail collaborators.",
+        "The independent reviewer ran fluid theme lint --json in read-only mode and it returned zero errors.",
+        "Targeted code searches found honest collection index/detail semantics, real Fluid collection/product bindings, c.image/c.url/c.products-compatible access, canonical collection and product links, and reuse of an existing list contract or the canonical scaffold contract.",
+        "Targeted code searches found no assumption that a parallel sibling completed, duplicated shared list markup, page-local fork of an already-present shared list contract, hardcoded collection/product/price/image/resource ids, REST-only Liquid shapes, environment identity, scaffold filler, inline binary media, monolithic page template, or layout-hiding workaround.",
+        "The independent reviewer read the rendered DOM for the canonical Collection route from clone-manifest.json in all mode and confirmed HTTP success, stable copy, real collection/product bindings, canonical links, correct index/detail semantics, and shared-shell output.",
+        "The independent reviewer read the preview console and local server logs and found no unresolved Liquid, runtime, resource, or browser errors.",
+        "Screenshots are optional source-design context only. The reviewer did not use screenshot_preview, compare_preview_to_source, view_project_image, interact_preview, or screenshot-producing interaction checks as correctness evidence."
       ],
       "qa": {
         "enabled": true,
         "strictness": "lenient",
-        "onFail": "continue"
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "run_cli",
+            "input": {
+              "command": "fluid",
+              "args": [
+                "theme",
+                "lint",
+                "--json"
+              ]
+            },
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "clone-manifest.json"
+            }
+          },
+          {
+            "tool": "read_file",
+            "minSuccessfulCalls": 4,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "search_files",
+            "minSuccessfulCalls": 2,
+            "distinctBy": [
+              "query"
+            ]
+          },
+          {
+            "tool": "read_preview_dom",
+            "input": {
+              "mode": "all"
+            },
+            "minSuccessfulCalls": 1,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "read_preview_console",
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_local_server_logs",
+            "minSuccessfulCalls": 1
+          }
+        ]
       },
       "dependsOn": [
         "home-page"
@@ -248,15 +431,102 @@
         "kind": "theme",
         "fallbackToManager": true
       },
-      "prompt": "Build the routes the source has beyond home, shop, and product, reusing the header, footer, and tokens the home page established. Read clone-manifest.json for the route list rather than inventing routes.\n\nFour of these have their own specialists \u2014 use them, do not hand-roll:\n- Blog or journal index \u2192 run_skill(\"themes/clone-blog-page\"). It also finds blogs that live on a subdomain, a subpath, or an external platform.\n- One article detail \u2192 run_skill(\"themes/clone-post-page\").\n- Cart page or drawer \u2192 run_skill(\"themes/clone-cart-page\").\n- Themed 404 and 503, plus the reusable generic content-page template \u2192 run_skill(\"themes/clone-system-pages\").\n\nFor everything else the source has \u2014 about, contact, FAQ, policy and legal pages \u2014 call run_skill(\"themes/clone-page-to-liquid\") and follow its visual-copy loop once per route, in descending order of how much traffic the route plausibly gets.\n\nSkip a specialist whose route the source genuinely does not have; a store with no blog needs no blog index. Say which you skipped and why.\n\nCart and 404 are not optional even when the source hides them. A storefront that cannot show a cart is broken, and a 404 that renders the raw platform error leaks that this is a migration.\n\nIf you run out of room, ship the pages you finished and list the rest in unresolved. A missing FAQ page is not worth blocking a launch over.\n\nEnd with STEP_OUTPUT: { built: [{route, template, skill}], skipped: [{route, reason}], unresolved: [...] }.",
-      "acceptance": [],
+      "prompt": "Build the blog, post, cart, error, and generic content templates from source evidence and existing theme code. This step implements the pages; screenshots are not a correctness gate.\n\nRead clone-manifest.json first and use its route inventory rather than inventing routes. Because source-capture deep-retains only Home, crawl each selected source content route with formats [\"markdown\", \"html\"] and only_main_content:false to gather fresh non-image structure and stable copy. Do not request screenshot capture or screenshot formats. Use Home's retained stylesheet, landmark styles, existing theme tokens, and each route's HTML structure to guide styling. Route-specific CSS is unavailable without screenshot-save capture; record it in unresolved rather than claiming it was retained. Already-retained source screenshots are optional, non-authoritative design context only. Do not capture or inspect new/local screenshots, call visual page-clone skills, or call screenshot_preview or compare_preview_to_source.\n\nInspect cart_page/default/index.liquid, error_page/404/index.liquid, error_page/503/index.liquid, page/default/index.liquid, the shared shell, tokens, and relevant canonical scaffold sections before editing. Treat the shared shell as read-only. Content, Shop, Product, and Collection run in parallel: reuse a sibling card/body contract only when it already exists and fits; otherwise use page-local canonical scaffold pieces. Do not assume a sibling completed and do not overwrite shared or sibling-owned components.\n\nCart and system pages are mandatory. Keep cart line items, quantities, per-line totals, order totals, discounts, checkout CTA, and empty state dynamically bound to real cart state; never hardcode a line item or subtotal. Preserve localized error.status_code and error.* bindings, render the full read-only shell, give 404 a recovery CTA, make 503 shell-consistent, and keep page title/body/hero dynamic from the Fluid page record.\n\nBuild post_page/default and post/default only when the source has a real blog or journal. Keep post list fields, canonical links, title, author, dates, hero, tags, and stored article body dynamic; never transcribe one article into Liquid. Build other source-proven content routes through the reusable page/default template rather than one hardcoded template per record. Content records and imported products may still be empty because import-content and catalog work run concurrently; verify the template bindings and report absent preview records in unresolved instead of treating missing data as a code failure.\n\nCopy stable headings, labels, and CTAs exactly. Do not hardcode posts, pages, cart items, totals, products, prices, images, resource ids, hostnames, ports, theme ids, query-triggered QA shortcuts, base-theme scaffold filler, placeholder data, inline binary media, absolute environment-specific asset URLs, monolithic page templates, or layout-hiding workarounds.\n\nRun fluid theme lint --json and fix every error. Use the local preview only for deterministic runtime checks: read rendered DOM for at least three distinct built routes covering Cart, a system page, and one source-proven content route when available; then read the preview console and local server logs. Verify HTTP success or the expected themed error status, dynamic template bindings in rendered output when records exist, canonical links, localization, shared shell, and no runtime/resource failures. DOM review does not prove cart interaction, totals recomputation, image loading, viewport behavior, or parity with API values; record those as unresolved when code and available DOM cannot establish them. Do not take or compare local screenshots and do not use interact_preview as correctness evidence.\n\nEnd with STEP_OUTPUT: { built: [{route, template}], skipped: [{route, reason}], source_evidence: [...], files_read: [...], files_changed: [...], dynamic_bindings: [...], lint: {...}, dom_checks: [...], console_errors: [...], server_errors: [...], unresolved: [...] }.",
+      "acceptance": [
+        "The independent reviewer read clone-manifest.json, cart_page/default/index.liquid, error_page/404/index.liquid, error_page/503/index.liquid, page/default/index.liquid, and at least eight distinct implementation files total; post_page/default and post/default were required only when the source route inventory contains a real blog.",
+        "The independent reviewer ran fluid theme lint --json in read-only mode and it returned zero errors.",
+        "At least four targeted code searches found dynamic cart state and totals bindings, localized error.status_code/error.* bindings, dynamic generic page content, and dynamic post list/article body bindings when the source has a blog.",
+        "Targeted code searches found no hardcoded cart item/subtotal, page/post record, resource id, environment identity, scaffold filler, inline binary media, monolithic record-specific template, duplicated shared-shell markup, page-local fork of an already-present sibling contract, or layout-hiding workaround.",
+        "The independent reviewer read rendered DOM for at least three distinct routes covering Cart, a themed system page, and a source-proven content route when available, confirming HTTP success or expected themed error status, dynamic output when records exist, canonical links, localization, and shared-shell output.",
+        "Empty content or product records caused by concurrent import work are listed in unresolved rather than reported as a template-code failure.",
+        "The independent reviewer read the preview console and local server logs and found no unresolved Liquid, runtime, resource, or browser errors.",
+        "Screenshots are optional source-design context only. The reviewer did not use screenshot_preview, compare_preview_to_source, view_project_image, interact_preview, or screenshot-producing interaction checks as correctness evidence."
+      ],
       "qa": {
-        "enabled": false
+        "enabled": true,
+        "strictness": "lenient",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "run_cli",
+            "input": {
+              "command": "fluid",
+              "args": [
+                "theme",
+                "lint",
+                "--json"
+              ]
+            },
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "clone-manifest.json"
+            }
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "cart_page/default/index.liquid"
+            }
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "error_page/404/index.liquid"
+            }
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "error_page/503/index.liquid"
+            }
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "page/default/index.liquid"
+            }
+          },
+          {
+            "tool": "read_file",
+            "minSuccessfulCalls": 8,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "search_files",
+            "minSuccessfulCalls": 4,
+            "distinctBy": [
+              "query"
+            ]
+          },
+          {
+            "tool": "read_preview_dom",
+            "input": {
+              "mode": "all"
+            },
+            "minSuccessfulCalls": 3,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "read_preview_console",
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_local_server_logs",
+            "minSuccessfulCalls": 1
+          }
+        ]
       },
       "dependsOn": [
         "home-page"
       ],
-      "maxReworkRounds": 0,
+      "maxReworkRounds": 1,
       "recovery": {
         "mode": "manual"
       }
@@ -392,20 +662,81 @@
     },
     {
       "id": "storefront-check",
-      "name": "Click through the live storefront",
+      "name": "Review the storefront implementation",
       "model": "openai/gpt-5.6-sol",
       "target": {
-        "type": "manager"
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
       },
-      "prompt": "Walk the live storefront the way a first customer would, and write down what is actually wrong. This is the only broad check in the run, so cover breadth over depth.\n\nLoad home, shop, one product, one collection, a content page, and the cart \u2014 each at 1440 and at 390 wide. For each: HTTP 200, a real rendered body, no horizontal overflow, no visible placeholder text, images that load.\n\nOn one product page, confirm add-to-cart is wired to a real active variant of that product and that changing a variant updates it. On one, check the displayed price matches the Fluid record.\n\nOpen the mobile menu on home and confirm it opens and closes.\n\nReport findings; do not fix them here. Severity matters more than volume: a cart that does not work and a slightly-off font are not the same finding.\n\nEnd with STEP_OUTPUT: { routes: [{route, width, status, issues: [...]}], add_to_cart: {...}, price_check: {...}, mobile_menu: {...}, blocking: [...], cosmetic: [...] }.",
+      "prompt": "Review the published theme implementation from code and deterministic rendered evidence. This is a read-only audit: report findings and do not edit the theme. Screenshots and customer-click simulation are not correctness gates.\n\nRead clone-manifest.json and inspect at least ten distinct implementation files across the shared shell, Home, Shop, Product, Collection, Cart, content, and system templates. Use at least six targeted searches to trace canonical template composition, stable copy, Fluid resource bindings, canonical links, product variant and add-to-cart hooks, cart state and totals, localization, and forbidden implementation shortcuts. Run fluid theme lint --json in read-only mode.\n\nTreat the shared shell and every page file as read-only. Confirm the current code retains required canonical data sections, reuses the shared shell and existing contracts without duplicating or forking them, binds resources dynamically, avoids hardcoded environment identity and scaffold filler, contains no inline binary media or monolithic record-specific templates, and uses no layout-hiding workarounds. Do not claim which parallel step edited a file; this audit can judge only the current implementation.\n\nRead rendered DOM in all mode for at least five distinct canonical routes from clone-manifest.json covering Home, Shop, one Product, one Collection, and Cart. Record HTTP status or expected themed error status, non-empty semantic output, stable copy, dynamic bindings when records exist, canonical links, localization, and shared-shell output. Read the preview console and local server logs for unresolved Liquid, runtime, resource, and browser errors.\n\nContent import can still be running because storefront-check and import-content are concurrent. Missing content records or an empty data-dependent route is unresolved evidence, not automatically a theme-code failure; judge the bindings and available output, and state the missing prerequisite. DOM and code review do not prove viewport layout, horizontal overflow, image loading, interactive behavior, totals recomputation, or parity with API values. Do not take or compare screenshots, call view_project_image, or use interact_preview. Put unprovable behavior in unresolved rather than claiming it passed.\n\nSeparate findings by severity. Blocking means code or available deterministic evidence shows the storefront cannot render, navigate, bind core resources, add through the canonical purchase hooks, represent cart state, or reach checkout. Cosmetic means a non-blocking code-level mismatch. Do not promote missing concurrent data or unmeasured visual fidelity to a code defect.\n\nEnd with STEP_OUTPUT: { files_read: [...], searches: [...], lint: {...}, routes: [{route, status, evidence: [...], issues: [...]}], console_errors: [...], server_errors: [...], blocking: [...], cosmetic: [...], unresolved: [...] }.",
       "acceptance": [
-        "Every listed route was actually loaded in a browser at both widths, with the status and evidence recorded per route.",
-        "Findings are separated into blocking and cosmetic rather than presented as one undifferentiated list."
+        "The independent reviewer inspected clone-manifest.json and at least ten distinct implementation files spanning the shared shell, Home, Shop, Product, Collection, Cart, content, and system templates.",
+        "The independent reviewer ran fluid theme lint --json in read-only mode and it returned zero errors.",
+        "At least six targeted code searches traced canonical template composition, stable copy, Fluid resource bindings, canonical links, product purchase hooks, cart state/totals, localization, and forbidden implementation shortcuts.",
+        "Targeted code searches confirmed required canonical data sections remain present, the shared shell and existing contracts are reused without duplication or page-local forks, resource bindings remain dynamic, and no hardcoded environment identity, scaffold filler, inline binary media, monolithic record-specific template, or layout-hiding workaround is present.",
+        "The independent reviewer read rendered DOM in all mode for at least five distinct canonical routes covering Home, Shop, Product, Collection, and Cart, recording HTTP or expected themed error status, non-empty semantic output, dynamic bindings when records exist, canonical links, localization, and shared-shell output.",
+        "Missing records from concurrent import-content work are listed in unresolved and are not reported as a theme-code failure without code or rendered evidence.",
+        "The independent reviewer read the preview console and local server logs and found no unresolved Liquid, runtime, resource, or browser errors.",
+        "The reviewer did not claim that code or DOM proved viewport layout, horizontal overflow, image loading, interaction behavior, totals recomputation, or API-value parity, and did not use screenshot_preview, compare_preview_to_source, view_project_image, interact_preview, or screenshot-producing interaction checks as correctness evidence.",
+        "Findings are separated into blocking, cosmetic, and unresolved rather than presented as one undifferentiated list."
       ],
       "qa": {
         "enabled": true,
         "strictness": "lenient",
-        "onFail": "continue"
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "run_cli",
+            "input": {
+              "command": "fluid",
+              "args": [
+                "theme",
+                "lint",
+                "--json"
+              ]
+            },
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_file",
+            "input": {
+              "path": "clone-manifest.json"
+            }
+          },
+          {
+            "tool": "read_file",
+            "minSuccessfulCalls": 10,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "search_files",
+            "minSuccessfulCalls": 6,
+            "distinctBy": [
+              "query"
+            ]
+          },
+          {
+            "tool": "read_preview_dom",
+            "input": {
+              "mode": "all"
+            },
+            "minSuccessfulCalls": 5,
+            "distinctBy": [
+              "path"
+            ]
+          },
+          {
+            "tool": "read_preview_console",
+            "minSuccessfulCalls": 1
+          },
+          {
+            "tool": "read_local_server_logs",
+            "minSuccessfulCalls": 1
+          }
+        ]
       },
       "dependsOn": [
         "publish-theme",
