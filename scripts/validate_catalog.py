@@ -847,11 +847,203 @@ def validate_streamlined_product_import_contract() -> None:
     )
 
 
+def validate_streamlined_home_review_contract(workflow: Any) -> None:
+    if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
+        raise CatalogValidationError("streamlined workflow steps must be an array")
+
+    home_step = next(
+        (
+            step
+            for step in workflow["steps"]
+            if isinstance(step, dict) and step.get("id") == "home-page"
+        ),
+        None,
+    )
+    if not isinstance(home_step, dict):
+        raise CatalogValidationError("streamlined workflow: home-page step is missing")
+    if "skill" in home_step:
+        raise CatalogValidationError(
+            "streamlined workflow: home-page must use its inline code-review prompt"
+        )
+    prompt = home_step.get("prompt")
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise CatalogValidationError(
+            "streamlined workflow: home-page prompt must be a non-empty string"
+        )
+    require_fragments(
+        prompt,
+        (
+            "clone-manifest.json",
+            "retained source HTML",
+            "source CSS",
+            "resolved landmark styles",
+            "exact stable copy",
+            "optional, non-authoritative design input only",
+            "open only the retained source screenshot paths",
+            "Fluid Liquid data",
+            "shared shell",
+            "multiple named Liquid sections",
+            "monolithic page-sized section",
+            "base-theme scaffold filler",
+            "inline binary media",
+            "hardcoded development theme ids",
+            "layout-hiding hacks",
+            "fluid theme lint --json",
+            "read the rendered DOM",
+            "browser console",
+            "local server logs",
+        ),
+        "streamlined workflow home-page implementation contract",
+    )
+    qa = home_step.get("qa")
+    if (
+        home_step.get("dependsOn") != ["source-capture"]
+        or home_step.get("maxReworkRounds") != 1
+        or not isinstance(qa, dict)
+        or qa.get("enabled") is not True
+        or qa.get("strictness") != "lenient"
+        or qa.get("onFail") != "continue"
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: home-page must preserve its lenient "
+            "fail-open contract"
+        )
+    expected_qa_tools = [
+        {
+            "tool": "run_cli",
+            "input": {
+                "command": "fluid",
+                "args": ["theme", "lint", "--json"],
+            },
+            "minSuccessfulCalls": 1,
+        },
+        {
+            "tool": "read_file",
+            "input": {"path": "clone-manifest.json"},
+        },
+        {
+            "tool": "read_file",
+            "input": {"path": "home_page/default/index.liquid"},
+        },
+        {
+            "tool": "read_file",
+            "minSuccessfulCalls": 4,
+            "distinctBy": ["path"],
+        },
+        {
+            "tool": "search_files",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["query"],
+        },
+        {
+            "tool": "read_preview_dom",
+            "input": {"path": "/", "mode": "all"},
+            "minSuccessfulCalls": 1,
+        },
+        {
+            "tool": "read_preview_console",
+            "minSuccessfulCalls": 1,
+        },
+        {
+            "tool": "read_local_server_logs",
+            "minSuccessfulCalls": 1,
+        },
+    ]
+    if qa.get("requiredTools") != expected_qa_tools:
+        raise CatalogValidationError(
+            "streamlined workflow: home-page must require only its deterministic "
+            "QA evidence floor"
+        )
+    acceptance = json.dumps(home_step.get("acceptance", []))
+    if "horizontal overflow" in f"{prompt} {acceptance}":
+        raise CatalogValidationError(
+            "streamlined workflow: home-page review claims unsupported DOM evidence"
+        )
+    require_fragments(
+        acceptance,
+        (
+            "clone-manifest.json",
+            "at least three distinct implementation files",
+            "fluid theme lint --json",
+            "Targeted code searches",
+            "multiple named section mounts",
+            "exact stable source copy",
+            "Fluid-backed resource/dynamic bindings",
+            "shared-shell reuse",
+            "no base-theme scaffold filler",
+            "inline binary media",
+            "hardcoded environment identity",
+            "monolithic page-sized section",
+            "layout-hiding workaround",
+            "local rendered DOM for / in all mode",
+            "preview console and local server logs",
+            "Screenshots are optional source-design context only",
+        ),
+        "streamlined workflow home-page review acceptance contract",
+    )
+
+    source_capture = next(
+        (
+            step
+            for step in workflow["steps"]
+            if isinstance(step, dict) and step.get("id") == "source-capture"
+        ),
+        None,
+    )
+    source_prompt = (
+        source_capture.get("prompt") if isinstance(source_capture, dict) else None
+    )
+    if not isinstance(source_prompt, str):
+        raise CatalogValidationError(
+            "streamlined workflow: source evidence contract is missing"
+        )
+    require_fragments(
+        source_prompt,
+        (
+            'formats ["html", "rawHtml", "screenshot"]',
+            "capturePageEvidence: true",
+            "desktop AND at 390 wide",
+        ),
+        "streamlined workflow source evidence contract",
+    )
+
+    expected_page_skills = {
+        "shop-page": "themes/clone-shop-page",
+        "product-page": "themes/clone-product-page",
+        "collection-page": "themes/clone-collection-page",
+    }
+    for step_id, expected_skill in expected_page_skills.items():
+        page_step = next(
+            (
+                step
+                for step in workflow["steps"]
+                if isinstance(step, dict) and step.get("id") == step_id
+            ),
+            None,
+        )
+        if not isinstance(page_step, dict) or page_step.get("skill") != expected_skill:
+            raise CatalogValidationError(
+                "streamlined workflow: other page specialists must remain unchanged"
+            )
+
+
+def validate_published_catalog(
+    *, streamlined_workflow: Any | None = None
+) -> tuple[int, int]:
+    skill_count, workflow_count = validate_manifest(load_json(MANIFEST_PATH))
+    validate_flagship_contracts()
+    validate_streamlined_product_import_contract()
+    validate_streamlined_home_review_contract(
+        load_json(STREAMLINED_WORKFLOW_PATH)
+        if streamlined_workflow is None
+        else streamlined_workflow
+    )
+    return skill_count, workflow_count
+
+
 def main() -> int:
     try:
-        skill_count, workflow_count = validate_manifest(load_json(MANIFEST_PATH))
-        validate_flagship_contracts()
-        validate_streamlined_product_import_contract()
+        skill_count, workflow_count = validate_published_catalog()
     except CatalogValidationError as error:
         print(f"catalog validation failed: {error}", file=sys.stderr)
         return 1
