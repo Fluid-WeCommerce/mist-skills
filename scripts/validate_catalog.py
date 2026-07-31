@@ -759,9 +759,9 @@ def validate_streamlined_product_import_contract() -> None:
         raise CatalogValidationError(
             "streamlined workflow: import-products step is missing"
         )
-    if products_import.get("dependsOn") != ["catalog-manifest"]:
+    if products_import.get("dependsOn") != ["catalog-closure"]:
         raise CatalogValidationError(
-            "streamlined workflow: import-products must wait for catalog-manifest"
+            "streamlined workflow: import-products must wait for catalog-closure"
         )
     if products_import.get("model") != "google/gemini-3.6-flash":
         raise CatalogValidationError(
@@ -785,11 +785,14 @@ def validate_streamlined_product_import_contract() -> None:
     require_fragments(
         prompt,
         (
-            "manifest_path",
-            "manifest_sha256",
+            "closed_manifest_path",
+            "closed_manifest_sha256",
             "exactly once",
             "write mode",
             "compact receipt",
+            "status: complete",
+            "preview_product_ledger_path",
+            "fluid_product_id",
         ),
         "streamlined workflow import-products",
     )
@@ -820,13 +823,13 @@ def validate_streamlined_product_import_contract() -> None:
             "streamlined workflow: import-products QA must use "
             "google/gemini-3.6-flash"
         )
-    if qa.get("strictness") != "lenient":
+    if qa.get("strictness") != "standard":
         raise CatalogValidationError(
-            "streamlined workflow: import-products QA must remain lenient"
+            "streamlined workflow: import-products QA must remain standard"
         )
-    if qa.get("onFail") != "continue":
+    if qa.get("onFail") != "stop":
         raise CatalogValidationError(
-            "streamlined workflow: import-products QA must continue on failure"
+            "streamlined workflow: import-products QA must stop publication on failure"
         )
     if qa.get("requiredTools") != [expected_requirement]:
         raise CatalogValidationError(
@@ -845,6 +848,158 @@ def validate_streamlined_product_import_contract() -> None:
         ),
         "streamlined workflow import-products fidelity",
     )
+
+
+def validate_streamlined_catalog_closure_contract(workflow: Any) -> None:
+    if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
+        raise CatalogValidationError("streamlined workflow steps must be an array")
+
+    steps = {
+        step.get("id"): step
+        for step in workflow["steps"]
+        if isinstance(step, dict) and isinstance(step.get("id"), str)
+    }
+    ledger = steps.get("preview-product-ledger")
+    if not isinstance(ledger, dict):
+        raise CatalogValidationError(
+            "streamlined workflow: preview-product-ledger step is missing"
+        )
+    ledger_prompt = ledger.get("prompt")
+    if not isinstance(ledger_prompt, str):
+        raise CatalogValidationError(
+            "streamlined workflow: preview-product-ledger prompt must be a string"
+        )
+    require_fragments(
+        ledger_prompt,
+        (
+            "/api/v202604/company/products?page[limit]=100",
+            "meta.pagination.next_cursor",
+            "run_id",
+            "baseline_product_ids",
+            "preview_product_ledger_dir",
+            "SHA-256",
+            "read-only",
+        ),
+        "streamlined workflow preview-product-ledger contract",
+    )
+    ledger_qa = ledger.get("qa")
+    if (
+        ledger.get("dependsOn") != []
+        or not isinstance(ledger_qa, dict)
+        or ledger_qa.get("enabled") is not True
+        or ledger_qa.get("strictness") != "standard"
+        or ledger_qa.get("onFail") != "stop"
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: preview-product-ledger must be a fail-closed root gate"
+        )
+
+    home = steps.get("home-page")
+    if not isinstance(home, dict) or set(home.get("dependsOn") or []) != {
+        "source-capture",
+        "preview-product-ledger",
+    }:
+        raise CatalogValidationError(
+            "streamlined workflow: home-page must wait for preview-product-ledger and source-capture"
+        )
+
+    catalog_manifest = steps.get("catalog-manifest")
+    if not isinstance(catalog_manifest, dict):
+        raise CatalogValidationError(
+            "streamlined workflow: catalog-manifest step is missing"
+        )
+    if catalog_manifest.get("dependsOn") != ["source-capture"]:
+        raise CatalogValidationError(
+            "streamlined workflow: catalog-manifest must wait for source-capture"
+        )
+    require_fragments(
+        str(catalog_manifest.get("prompt", "")),
+        (
+            "clone-manifest.json",
+            "distinct product or shop origin",
+            "union",
+        ),
+        "streamlined workflow catalog-manifest source-union contract",
+    )
+
+    closure = steps.get("catalog-closure")
+    if not isinstance(closure, dict):
+        raise CatalogValidationError(
+            "streamlined workflow: catalog-closure step is missing"
+        )
+    if set(closure.get("dependsOn") or []) != {
+        "catalog-manifest",
+        "shop-page",
+        "product-page",
+        "collection-page",
+    }:
+        raise CatalogValidationError(
+            "streamlined workflow: catalog-closure must wait for the manifest and every product-capable page step"
+        )
+    closure_prompt = closure.get("prompt")
+    if not isinstance(closure_prompt, str):
+        raise CatalogValidationError(
+            "streamlined workflow: catalog-closure prompt must be a string"
+        )
+    require_fragments(
+        closure_prompt,
+        (
+            "baseline_product_ids",
+            "/api/v202604/company/products?page[limit]=100",
+            "meta.pagination.next_cursor",
+            "both directions",
+            "source_identity",
+            "fluid_product_id",
+            "closed_manifest_path",
+            "closed_manifest_sha256",
+            "preview_product_ledger_path",
+            "catalog-closure-receipt.json",
+            "status: BLOCKED",
+            "Do not call fluid_product_import",
+        ),
+        "streamlined workflow two-way catalog closure contract",
+    )
+    closure_qa = closure.get("qa")
+    if (
+        not isinstance(closure_qa, dict)
+        or closure_qa.get("enabled") is not True
+        or closure_qa.get("strictness") != "standard"
+        or closure_qa.get("onFail") != "stop"
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: catalog-closure must be a fail-closed gate"
+        )
+    require_fragments(
+        json.dumps(closure.get("acceptance", [])),
+        (
+            "every product id absent from the baseline",
+            "exactly one source identity",
+            "importer-valid closed manifest",
+            "active preview product is excluded",
+        ),
+        "streamlined workflow catalog-closure acceptance contract",
+    )
+
+    products_import = steps.get("import-products")
+    if not isinstance(products_import, dict) or products_import.get(
+        "dependsOn"
+    ) != ["catalog-closure"]:
+        raise CatalogValidationError(
+            "streamlined workflow: import-products must wait for catalog-closure"
+        )
+    import_qa = products_import.get("qa")
+    if not isinstance(import_qa, dict) or import_qa.get("onFail") != "stop":
+        raise CatalogValidationError(
+            "streamlined workflow: import-products must stop publication when QA fails"
+        )
+
+    publish = steps.get("publish-theme")
+    if not isinstance(publish, dict) or "import-products" not in (
+        publish.get("dependsOn") or []
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: publish-theme must wait for import-products"
+        )
 
 
 def _validate_streamlined_home_review_contract(workflow: Any) -> None:
@@ -902,7 +1057,8 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
     )
     qa = home_step.get("qa")
     if (
-        home_step.get("dependsOn") != ["source-capture"]
+        set(home_step.get("dependsOn") or [])
+        != {"source-capture", "preview-product-ledger"}
         or home_step.get("maxReworkRounds") != 1
         or not isinstance(qa, dict)
         or qa.get("enabled") is not True
@@ -910,8 +1066,8 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
         or qa.get("onFail") != "continue"
     ):
         raise CatalogValidationError(
-            "streamlined workflow: home-page must preserve its lenient "
-            "fail-open contract"
+            "streamlined workflow: home-page must preserve its ledger-aware "
+            "lenient fail-open contract"
         )
     expected_qa_tools = [
         {
@@ -1564,6 +1720,11 @@ def validate_published_catalog(
     skill_count, workflow_count = validate_manifest(load_json(MANIFEST_PATH))
     validate_flagship_contracts()
     validate_streamlined_product_import_contract()
+    validate_streamlined_catalog_closure_contract(
+        load_json(STREAMLINED_WORKFLOW_PATH)
+        if streamlined_workflow is None
+        else streamlined_workflow
+    )
     validate_streamlined_page_review_contract(
         load_json(STREAMLINED_WORKFLOW_PATH)
         if streamlined_workflow is None
