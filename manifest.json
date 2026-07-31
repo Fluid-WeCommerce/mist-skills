@@ -313,30 +313,30 @@
       "updated_at": "2026-07-13T00:00:00Z"
     },
     {
-      "slug": "optimize/suggested-changes",
+      "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix — approvals are applied and their impact is tracked.",
-      "category": "optimize",
+      "category": "themes",
       "icon": "sparkles",
-      "path": "optimize/suggested-changes.md",
+      "path": "themes/suggested-changes.md",
       "updated_at": "2026-07-04T03:42:11Z"
     },
     {
-      "slug": "countries/open-a-country",
+      "slug": "compliance/open-a-country",
       "name": "Open a Country",
       "description": "Guided company-launch flow powered by Fluid's Country Atlas: pick the operating mode (NFR / OTG / USD), branch into mode-specific setup (operations status, entity, business id, warehouse), pick payment methods, missing languages, agreements, and enrollment fields, then run the open-country workflow with QA and chain the mode finalizer.",
-      "category": "countries",
+      "category": "compliance",
       "icon": "globe",
-      "path": "countries/open-a-country.md",
+      "path": "compliance/open-a-country.md",
       "updated_at": "2026-07-04T00:00:00Z"
     },
     {
-      "slug": "countries/compliance-manager",
+      "slug": "compliance/compliance-manager",
       "name": "Country Compliance Manager",
       "description": "Audit a storefront against a country's legal requirements — disclosure pages, price display, cookie/privacy law, agreements, product labeling, storefront language — using the Country Atlas as the rulebook. Runs standalone and as the final step of the mode finalizers.",
-      "category": "countries",
+      "category": "compliance",
       "icon": "scale",
-      "path": "countries/compliance-manager/SKILL.md",
+      "path": "compliance/compliance-manager/SKILL.md",
       "updated_at": "2026-07-04T00:00:00Z"
     },
     {

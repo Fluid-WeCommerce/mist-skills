@@ -2,7 +2,7 @@
 name: Suggested Changes
 description: Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix — approvals are applied and their impact is tracked.
 icon: sparkles
-category: optimize
+category: themes
 ---
 
 <!--
