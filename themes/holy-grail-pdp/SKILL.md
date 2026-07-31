@@ -1,6 +1,6 @@
 ---
 name: Holy Grail PDP
-description: Audit, redesign, compare, or locally build high-converting Fluid PDPs using verified product facts, live page evidence, buyer psychology, offer and subscription clarity, credible proof, conversion experiments, and mobile-first QA; use Clone Product Page for exact 1:1 copying.
+description: Audit, redesign, compare, or locally build world-class Fluid PDPs with a conversion system distilled from 27 standout product pages, showing the reasoning behind every section—from design and buyer psychology to proof, offers, objection handling, and the path from first click to checkout.
 icon: shopping-bag
 ---
 
