@@ -1275,10 +1275,93 @@ def _validate_content_page_review(workflow: dict[str, Any]) -> None:
     )
 
 
+def _validate_content_import_body_contract(workflow: dict[str, Any]) -> None:
+    """`body_html` alone imports blank pages and calls them a success.
+
+    Shopify leaves it empty on every section-built page, so a TUSHY import
+    published 52 of 73 pages with no body and passed. The step has to fall back
+    to the rendered DOM, separate genuinely-empty source pages from failures,
+    and report content-bearing pages rather than record counts.
+    """
+    step = _streamlined_step(workflow, "import-content")
+    prompt = step.get("prompt")
+    if not isinstance(prompt, str):
+        raise CatalogValidationError(
+            "streamlined workflow: import-content must carry a prompt"
+        )
+    require_fragments(
+        prompt,
+        (
+            "if `body_html` is empty, fetch the page's rendered DOM",
+            "record those in `empty_at_source`",
+            "Never publish a page whose body resolved to nothing without listing it",
+            "`pages` is the count with a non-empty body",
+            "pages_empty",
+            "body_from_rendered_dom",
+        ),
+        "streamlined workflow import-content page-body contract",
+    )
+    qa = step.get("qa")
+    if (
+        not isinstance(qa, dict)
+        or qa.get("enabled") is not True
+        or qa.get("onFail") != "continue"
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: import-content must be QA-reviewed "
+            "fail-open so empty page bodies fail loudly"
+        )
+    require_fragments(
+        json.dumps(step.get("acceptance", [])),
+        (
+            "Every imported page has a non-empty body",
+            "re-read from the rendered DOM",
+            "count of content-bearing pages",
+        ),
+        "streamlined workflow import-content acceptance contract",
+    )
+
+
+def _validate_handoff_live_counts_contract(workflow: dict[str, Any]) -> None:
+    """A step's STEP_OUTPUT is a snapshot from before any later remediation.
+
+    Copying it made the handoff contradict the store it described — TUSHY's
+    summary reported 149 products against a live catalog of 181.
+    """
+    step = _streamlined_step(workflow, "handoff")
+    prompt = step.get("prompt")
+    if not isinstance(prompt, str):
+        raise CatalogValidationError(
+            "streamlined workflow: handoff must carry a prompt"
+        )
+    require_fragments(
+        prompt,
+        (
+            "Every headline count is read live, not copied",
+            "Paginate the products and pages APIs",
+            "publish the live one and note the step it corrects",
+            'counts_source: "live-api"',
+        ),
+        "streamlined workflow handoff live-count contract",
+    )
+    require_fragments(
+        json.dumps(step.get("acceptance", [])),
+        (
+            "read from the live API in this step",
+            "can_take_an_order reflects the live catalog",
+        ),
+        "streamlined workflow handoff acceptance contract",
+    )
+
+
 def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
     step = _streamlined_step(workflow, "storefront-check")
     prompt = step.get("prompt")
     target = step.get("target")
+    # fallbackToManager must stay False. Every finding this step can produce is
+    # a theme defect, and Home cannot edit or publish a sibling Theme's files —
+    # falling back there burned the step's only rework round on discovering it
+    # had no write access, then terminated the step as BLOCKED.
     if (
         not isinstance(prompt, str)
         or "Review the published theme implementation from code" not in prompt
@@ -1286,11 +1369,12 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
         != {
             "type": "kind",
             "kind": "theme",
-            "fallbackToManager": True,
+            "fallbackToManager": False,
         }
     ):
         raise CatalogValidationError(
             "streamlined workflow: storefront-check must be a theme-targeted code review"
+            " that does not fall back to the manager project"
         )
     require_fragments(
         prompt,
@@ -1464,6 +1548,8 @@ def validate_streamlined_page_review_contract(workflow: Any) -> None:
     )
     _validate_content_page_review(workflow)
     _validate_storefront_code_review(workflow)
+    _validate_content_import_body_contract(workflow)
+    _validate_handoff_live_counts_contract(workflow)
     _reject_unsupported_page_review_claims(workflow)
 
 

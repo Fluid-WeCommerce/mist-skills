@@ -351,13 +351,35 @@ Use GET-before-write and persist source identity → Fluid ID mappings.
 | Categories         | `POST /api/v202604/company/categories`                   | Create parents before children; resolve `parent_id` from the mapping.                                                      |
 | Collections        | `POST /api/v202604/company/collections`                  | Preserve source identity. `product_ids` is a full replacement; omission leaves membership unchanged.                      |
 | Product membership | `PATCH /api/v202604/company/products/{id}`               | Send verified `collection_ids`; PATCH is partial and does not require resending `title`.                                   |
-| Static pages       | Mist `create_page`; underlying `/api/v202604/company/pages` | Use `create_page` so the page, theme template, preview route, and preview pane stay coordinated.                          |
+| Static pages       | Mist `create_page`; underlying `/api/v202604/company/pages` | Use `create_page` so the page, theme template, preview route, and preview pane stay coordinated. Resolve the body before writing (below).                          |
 | Blog posts         | `POST /api/v202604/company/posts`                        | Preserve documented source fields, lifecycle, the response's canonical URL, and DAM hero/SEO image.                       |
 | Playlists          | `POST /api/v202604/company/playlists`                    | The route says playlists but the documented request wrapper is intentionally `library`.                                  |
 | Menus              | `POST /api/menus`                                        | Menus are the explicit legacy exception; use destination canonical routes and preserve nesting/order.                     |
 
 Theme pushes happen before page creates because page creation can auto-generate
 theme templates that a later push may try to remove.
+
+### Resolving a page body
+
+`body_html` is not the page. On Shopify it is empty for every section-built or
+page-builder page, because the copy lives in template sections — so an import
+that reads only `body_html` publishes a blank page and counts it as a success.
+Legal and policy pages have real `body_html`; visually composed marketing pages
+(quizzes, comparison tables, buying guides, About, Contact) generally do not,
+and those are usually the commercially important ones.
+
+For each page:
+
+1. Take `body_html` when it is non-empty.
+2. Otherwise fetch the page's rendered DOM and take the main content region.
+3. If the rendered page is also empty, the source page is genuinely empty.
+   Record it in `empty_at_source` with the URL and what rendered, and do not
+   count it as an import failure.
+
+Never publish a page whose body resolved to nothing without listing it.
+
+Report two page counts, never one: pages with a non-empty body, and pages
+published empty. A single record count hides the failure it should announce.
 
 Legitimately empty resource types are reported as zero with evidence. Do not
 fabricate content to make a count nonzero.
@@ -401,12 +423,15 @@ The product import passes only when:
 - no placeholder images or accidental `$0` shells remain;
 - a second run verifies idempotency without duplicates.
 
-Report discovered, live, excluded, imported, and failed counts separately.
+Report discovered, live, excluded, imported, and failed counts separately, and
+split imported into created and adopted. A re-run that CREATES what it should
+have adopted is duplicating the catalog; merged into one "imported" number that
+run reports the same clean pass as a correct one.
 
 End with:
 
 ```text
-STEP_OUTPUT: manifest=<absolute path> sha256=<hash> discovered=<n> live=<n> excluded=<n> imported=<n> coverage=100% unresolved=0 duplicate_title_groups=<n> checkpoint=<absolute path> match_rates={title,price,currency,images,variants,description} related_resources={categories,collections,pages,posts,menus}
+STEP_OUTPUT: manifest=<absolute path> sha256=<hash> discovered=<n> live=<n> excluded=<n> imported=<n> created=<n> adopted=<n> coverage=100% unresolved=0 duplicate_title_groups=<n> checkpoint=<absolute path> match_rates={title,price,currency,images,variants,description} related_resources={categories,collections,pages,pages_empty,posts,menus}
 ```
 
 If any gate is unmet, report `BLOCKED` or `needs-review` with exact identities
