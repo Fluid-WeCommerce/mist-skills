@@ -35,7 +35,12 @@ Cursor, Claude Code — a deliberate power-user opt-in, not something an end use
 the MCP token, never touches the Global Embed. Rotating a token invalidates a merchant's working
 configuration; there is no read-only question worth that.
 
-> ### You are querying the database directly. No token, no MCP, no setup.
+> ### Run this from the Wisp Mist app project, and query the database directly
+>
+> **Which project you are in decides whether this works at all.** `db_query` targets the ACTIVE
+> project's database, and only the Wisp Mist app (`prose-8de108` for Prose) has the `wisp_*` tables.
+> From a company chat or any other project you will hit a different connection — often
+> `role "postgres" does not exist` — and there is nothing to answer from. Step 0 checks this first.
 >
 > On a Mist app project — which is what Wisp is — `db_query` targets that project's own database,
 > and Wisp's tables are in it. That is the whole connection story: **nothing to configure.**
@@ -59,7 +64,38 @@ thresholds, and a merchant who hears two different definitions in two answers st
 
 ---
 
-## Step 0: Resolve the company, then confirm the corpus is real
+## Step 0: Confirm you are in the right project, then resolve the company
+
+**Run this skill from the Wisp Mist app project itself** — the project whose database holds the
+`wisp_*` tables (for Prose that is `prose-8de108` / `mist-8de108`). `db_query` only ever targets the
+**active project's** connection. Run this from a company chat, a theme project, or any other Mist
+app and it will reach a different database — or Prose's saved reporting connection, which commonly
+errors with `role "postgres" does not exist`.
+
+Check first, before anything else:
+
+```
+db_schema   →  look for wisp_sessions, wisp_signals, wisp_daily_rollups
+```
+
+- **Tables present** → you are in the right place. Continue.
+- **`role "postgres" does not exist`, or no `wisp_*` tables** → you are in the wrong project. **Stop
+  and say so.** Ask the user to open the Wisp Mist app project and re-run this skill there. That is
+  a five-second switch and it is the whole fix.
+
+Three things NOT to do when you land in the wrong project, because each one produces a confident
+answer that Wisp did not earn:
+
+- Do not answer from the product docs, from the storefront, or from general ecommerce knowledge.
+- Do not mint a `wmcp_…` MCP token to reach across the boundary. This skill is read-only, and
+  minting credentials to work around a project boundary is not a read.
+- Do not hand the question to another project's agent unless the user asks you to. If you offer it,
+  offer it as a choice and name the cost: the answer lands in that project's chat, not this one.
+
+The MCP appendix at the bottom is the *supported* cross-host route, and it exists for Claude Desktop
+and Cursor — not as a way around being in the wrong Mist project.
+
+### Then resolve the company
 
 **Get the company id, and never query without it.** One Wisp database holds every company that
 installed the droplet. The MCP derives the tenant from a token so it *cannot* read the wrong one;
