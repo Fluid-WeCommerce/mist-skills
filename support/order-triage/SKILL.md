@@ -122,14 +122,29 @@ Four buckets, keyed by log type:
 | `integration` | The back office / commission system                 |
 | `cart`        | Calls made against the cart **before the order existed** — only present when the order still has a cart, and never shown in the admin UI |
 
-Per entry, the fields that matter: `status` (boolean — **the** success flag),
-`name` (which provider), `response_status`, `response` / `request`, `created_at`,
-`repeatable`, and `external_reference`.
+Per entry, the fields that matter: `status` (the success flag),
+`name` (which provider — `Avalara`, `Paypal`, …), `response_status`,
+`response` / `request`, `created_at`, `repeatable`, and `external_reference`.
 
-**Triage rule:** list every log where `status` is `false`, oldest first, and read
-its `response.message` / `response.displayMessage`. Also treat
+**`status` has three states, not two.** `true` succeeded, `false` failed, and
+**`null` means the outcome was never recorded** — the log was written but nothing
+resolved it. Report a null as *indeterminate*, never as success. Payment logs are
+where nulls turn up.
+
+**Triage rule:** list every log where `status` is `false` **or null**, oldest
+first, and read its `response.message` / `response.displayMessage`. Also treat
 `response.success === false` as a failure even when `response_status` is `200`.
 The earliest failure is usually the cause and the later ones the symptoms.
+
+**What a real failure looks like.** The most common live failure is the tax
+provider rejecting the order — an `Avalara` log with `status: false` and
+`response_status: "400"` (sometimes `503`) — on an order that reads
+`order_status: completed` and `financial_status: paid`. The customer was charged;
+the tax call failed. Nothing on the admin page communicates this: the card prints
+that `400` in the same green as a success. When you see this pattern, say plainly
+that the order is fine as far as the money went and the **tax record** is what
+failed, and check whether `repeatable` is `false` — most tax logs can't be
+retried, so this needs the tax provider looked at rather than a retry click.
 
 Then open the menu.
 
