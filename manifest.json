@@ -349,6 +349,15 @@
       "updated_at": "2026-07-26T17:34:00Z"
     },
     {
+      "slug": "developer/seed-demo-company",
+      "name": "Seed Demo Company",
+      "description": "Populate the active Fluid company with realistic demo data - customers, orders with products, active subscriptions, and mixed sources - using the company's existing product catalog.",
+      "category": "developer",
+      "icon": "database",
+      "path": "developer/seed-demo-company/SKILL.md",
+      "updated_at": "2026-07-31T01:56:25Z"
+    },
+    {
       "slug": "mist/smart-dashboard",
       "name": "Smart Dashboard",
       "description": "Self-fabricate a live business dashboard from real data — gather what every department cares about, render it with show_dashboard, then learn what the user wants front-and-center and remember it.",
