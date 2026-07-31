@@ -10,52 +10,61 @@ Create a new Fluid portal definition using Fluid's canonical starter template,
 then make it available in Mist's portal workspace. Use this skill only when the
 user explicitly asks to create a new portal app.
 
+Portal creation is implemented by Mist's dedicated `create_portal_app` tool.
+It creates the remote Fluid OS definition and seeds it with the same Home
+screen and widget tree, desktop and mobile navigations, company-branded theme,
+and default profile that fluid-admin's Portal Builder "+ New" creates. Do not
+reproduce the template through individual `fluid_api` calls or CLI commands;
+the tool is the canonical, transactional implementation.
+
 # Steps
 
 1. Ask for the portal's display name if the user did not provide one. Preserve
-   that display name exactly. Derive a lowercase kebab-case local slug and show
-   both values.
-2. Check for an existing portal with the same display name by running:
+   that display name exactly.
+2. Explain what the operation will do: create a remote Fluid OS definition and
+   seed it with the default Home screen, Main (web) and Mobile navigations, a
+   Company Theme generated from the company's brand colors, and a Default
+   Profile linking them. It will not publish or activate a version.
+3. Ask for confirmation immediately before the write: present the plan via
+   `human_in_the_loop` (title: the portal name; proposed action: the creation
+   described above) and end your turn. Only proceed after the user approves.
+4. Call the `create_portal_app` tool with `display_name` set to the exact
+   display name and `confirm_create: true` (allowed only because the user just
+   approved via `human_in_the_loop`).
+5. Read the tool's structured JSON result:
 
-   `fluid portal scaffold --name "<display name>" --check`
-
-   If an exact match exists, stop and offer to open the existing portal. Do not
-   create a duplicate.
-3. Explain that the operation will create a remote Fluid OS definition and seed
-   it with the same Home screen, desktop and mobile navigation, company-branded
-   theme, and default profile that fluid-admin creates. It will not publish or
-   activate a version.
-4. Ask for confirmation immediately before the write.
-5. Run:
-
-   `fluid portal scaffold --name "<display name>" --json`
-
-   Use `run_cli` with `command` set to `fluid` and each argument passed
-   separately. Do not reproduce the template through individual `fluid_api`
-   calls; the CLI command is the canonical, transactional implementation.
-6. Parse the JSON result. Confirm that it reports:
-
-   - one definition
-   - a Home screen
-   - web and mobile navigations
-   - an active company theme
-   - a default profile
-
-   If the command reports a partial or rolled-back creation, surface the exact
-   error and do not retry automatically.
-7. Tell the user the portal is ready and give its display name and definition
-   ID. Explain that it will appear in Mist's portal list after refresh; opening
-   it lets Mist clone the connected repository or use the local fallback
-   scaffold when GitHub is not connected.
+   - `status: "duplicate"` — a portal with the same display name already
+     exists (matched case-insensitively). Nothing was created. Tell the user,
+     name the existing definition (its id and name from
+     `existing_definition`), and offer to open that portal instead. Do not
+     retry with the same name.
+   - `status: "created"` — report the definition ID and display name, and
+     summarize the created resources (`created.screens`,
+     `created.navigations`, `created.theme`, `created.profile`). Explain that
+     no version was published and the portal will appear in Mist's portal
+     list after refresh; opening it lets Mist clone the connected repository
+     or use the local fallback scaffold when GitHub is not connected.
+   - `status: "rolled_back"` — seeding failed and the incomplete definition
+     was deleted. Surface `seed_error` verbatim and do not retry
+     automatically.
+   - `status: "rollback_failed"` — seeding failed AND the cleanup delete also
+     failed. Surface BOTH `seed_error` and `rollback_error` verbatim, along
+     with the `definition_id` that remains in an incomplete state, so the
+     user can delete it in fluid-admin's Portal Builder.
 
 # Guardrails
 
 - Never create a portal without explicit user invocation and confirmation.
+  `confirm_create: true` may only be passed after the user approved via
+  `human_in_the_loop` in this conversation.
 - Never publish a portal version as part of this skill.
-- Never create GitHub repositories, install a GitHub App, or change company Git
-  integration settings.
-- Never fall back to a hand-built sequence of API writes. If
-  `fluid portal scaffold` is unavailable, say that the installed Fluid CLI must
-  be updated.
-- Treat the display name as data. Pass it as a single CLI argument and never
-  interpolate it into a shell command.
+- Never create GitHub repositories, install a GitHub App, or change company
+  Git integration settings.
+- Never fall back to a hand-built sequence of API writes or CLI commands. If
+  the `create_portal_app` tool is unavailable, say that Mist Desktop must be
+  updated.
+- Treat the display name as data. Pass it through as the `display_name`
+  argument exactly as the user gave it — never derive, embellish, or
+  interpolate it into commands.
+- Rely on the tool's duplicate check (its structured `duplicate` refusal) —
+  do not pre-check with other tools or ask the user to verify uniqueness.
