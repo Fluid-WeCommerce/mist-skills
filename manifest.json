@@ -482,6 +482,19 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "mist/product-quiz",
+      "name": "Product Quiz",
+      "description": "Build an AI-driven product quiz for any Fluid company — a Mist backend that generates questions and picks products from the live catalog, a native theme section, and a storefront page.",
+      "category": "mist",
+      "icon": "list-checks",
+      "path": "mist/product-quiz/SKILL.md",
+      "updated_at": "2026-07-31T20:33:11Z",
+      "references": [
+        "mist/product-quiz/references/backend-contract.md",
+        "mist/product-quiz/references/fluid-gotchas.md"
+      ]
     }
   ],
   "workflows": [
