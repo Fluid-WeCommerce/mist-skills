@@ -81,7 +81,19 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
             if requirement.get("tool") == "read_file"
             and requirement.get("distinctBy") == ["path"]
         )
-        self.assertEqual(content_read_floor["minSuccessfulCalls"], 8)
+        self.assertEqual(content_read_floor["minSuccessfulCalls"], 5)
+        content_search_floor = next(
+            requirement
+            for requirement in content_step["qa"]["requiredTools"]
+            if requirement.get("tool") == "search_files"
+        )
+        content_route_floor = next(
+            requirement
+            for requirement in content_step["qa"]["requiredTools"]
+            if requirement.get("tool") == "read_preview_dom"
+        )
+        self.assertEqual(content_search_floor["minSuccessfulCalls"], 2)
+        self.assertEqual(content_route_floor["minSuccessfulCalls"], 2)
 
     def test_rejects_home_page_without_bulk_media_reconcile(self) -> None:
         workflow = self.load_workflow()
