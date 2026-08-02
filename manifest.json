@@ -279,11 +279,11 @@
     {
       "slug": "fluid-product-admin-import",
       "name": "Fluid Product & Admin Import",
-      "description": "Import a complete source catalog and related store resources into the active Fluid company with evidence-backed discovery, immutable product identity, resumable checkpoints, exact product fields, and strict one-to-one completion proof.",
+      "description": "Import a complete source catalog and related store resources into the active Fluid company with evidence-backed discovery, immutable product and taxonomy identity, verified category and collection membership, resumable checkpoints, exact product fields, and strict one-to-one completion proof.",
       "category": "onboarding",
       "icon": "package-plus",
       "path": "onboarding/fluid-product-admin-import/SKILL.md",
-      "updated_at": "2026-07-25T19:00:00Z"
+      "updated_at": "2026-08-02T01:20:00Z"
     },
     {
       "slug": "marketing/ugc-discovery",
@@ -499,7 +499,7 @@
     {
       "slug": "streamlined-onboard-launch",
       "path": "workflows/streamlined-onboard-launch.workflow.json",
-      "updated_at": "2026-07-31T06:38:34Z"
+      "updated_at": "2026-08-02T01:20:00Z"
     },
     {
       "slug": "speed-import",
