@@ -473,6 +473,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "fairshare/fairshare-settings",
+      "name": "Set FairShare preferences",
+      "description": "Configure a company's FairShare attribution preferences — how orders and enrollments are credited to reps, and what happens to customers with no sponsor. Explains what each option does and what it's worth to the business and the field.",
+      "category": "fairshare",
+      "icon": "network",
+      "path": "fairshare/fairshare-settings/SKILL.md",
+      "updated_at": "2026-07-31T19:08:07Z"
     }
   ],
   "workflows": [
