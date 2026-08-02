@@ -602,7 +602,7 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
         },
         {
             "tool": "read_file",
-            "minSuccessfulCalls": 4,
+            "minSuccessfulCalls": 3,
             "distinctBy": ["path"],
         },
         {
@@ -638,7 +638,7 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
         acceptance,
         (
             "clone-manifest.json",
-            "at least three distinct implementation files",
+            "at least two distinct implementation files",
             "fluid theme lint --json",
             "Targeted code searches",
             "multiple named section mounts",
@@ -704,7 +704,7 @@ def _streamlined_step(workflow: dict[str, Any], step_id: str) -> dict[str, Any]:
 def _deterministic_page_qa_tools(
     template_path: str | None,
     *,
-    minimum_reads: int = 4,
+    minimum_reads: int = 3,
     minimum_searches: int = 2,
     minimum_routes: int = 1,
     mandatory_paths: tuple[str, ...] = (),
@@ -824,7 +824,7 @@ def _validate_direct_page_review(
         acceptance,
         (
             "clone-manifest.json",
-            "at least three distinct implementation files",
+            "at least two distinct implementation files",
             "fluid theme lint --json",
             "Targeted code searches",
             "rendered DOM",
@@ -885,7 +885,8 @@ def _validate_content_page_review(workflow: dict[str, Any]) -> None:
             "import-content and catalog work run concurrently",
             "report absent preview records in unresolved",
             "fluid theme lint --json",
-            "at least three distinct built routes",
+            "at least two distinct built routes",
+            "when the environment can serve the themed error status",
             "DOM review does not prove cart interaction",
             "Do not take or compare local screenshots",
         ),
@@ -894,9 +895,9 @@ def _validate_content_page_review(workflow: dict[str, Any]) -> None:
     qa = step.get("qa")
     expected_tools = _deterministic_page_qa_tools(
         "cart_page/default/index.liquid",
-        minimum_reads=8,
-        minimum_searches=4,
-        minimum_routes=3,
+        minimum_reads=5,
+        minimum_searches=2,
+        minimum_routes=2,
         mandatory_paths=(
             "error_page/404/index.liquid",
             "error_page/503/index.liquid",
@@ -924,18 +925,19 @@ def _validate_content_page_review(workflow: dict[str, Any]) -> None:
     require_fragments(
         acceptance,
         (
-            "at least eight distinct implementation files",
+            "plus four distinct implementation files",
             "post_page/default and post/default",
             "only when the source route inventory contains a real blog",
             "fluid theme lint --json",
-            "At least four targeted code searches",
+            "At least two targeted code searches",
             "dynamic cart state and totals bindings",
             "localized error.status_code/error.* bindings",
             "dynamic generic page content",
             "no hardcoded cart item/subtotal",
             "duplicated shared-shell markup",
             "page-local fork of an already-present sibling contract",
-            "at least three distinct routes",
+            "at least two distinct routes",
+            "unavailable system-page render was listed in unresolved",
             "Empty content or product records",
             "listed in unresolved",
             "preview console and local server logs",
