@@ -313,6 +313,15 @@
       "updated_at": "2026-07-13T00:00:00Z"
     },
     {
+      "slug": "marketing/origin-stamp-rally",
+      "name": "Origin Stamp Rally",
+      "description": "Transform each customer’s order history into a stamp-rally passport of product origins, then craft personalized emails featuring the exact product that completes their collection.",
+      "category": "marketing",
+      "icon": "stamp",
+      "path": "marketing/origin-stamp-rally.md",
+      "updated_at": "2026-07-31T00:00:00Z"
+    },
+    {
       "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix — approvals are applied and their impact is tracked.",
