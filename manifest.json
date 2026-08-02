@@ -17,7 +17,7 @@
       "category": "finance",
       "icon": "file-text",
       "path": "finance/monthly-close.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-07-23T09:30:00Z"
     },
     {
       "slug": "finance/top-customers",
@@ -26,7 +26,7 @@
       "category": "finance",
       "icon": "trophy",
       "path": "finance/top-customers.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-07-23T09:30:00Z"
     },
     {
       "slug": "themes/scrape-into-theme",

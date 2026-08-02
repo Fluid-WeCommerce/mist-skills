@@ -11,7 +11,7 @@ Produce a month-end close report for `{{company.name}}` covering the most recent
 # Steps
 
 1. Compute the date window: the first and last day of the previous calendar month relative to `{{today}}`.
-2. Pull orders via `fluid_api("/api/v202604/orders?filter[created_at_gte]=<start>&filter[created_at_lte]=<end>&limit=100", "GET")`. Paginate via the cursor.
+2. Pull orders via `fluid_api("/api/v202506/orders?filter[created_at_gte]=<start>&filter[created_at_lte]=<end>&limit=100", "GET")`. Paginate via the cursor.
 3. Pull refunds via `fluid_api("/api/v202604/refunds?filter[created_at_gte]=<start>&filter[created_at_lte]=<end>&limit=100", "GET")`.
 4. Compute:
    - Gross revenue (orders before refunds)
