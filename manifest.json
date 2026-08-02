@@ -29,6 +29,42 @@
       "updated_at": "2026-06-20T00:00:00Z"
     },
     {
+      "slug": "finance/subscription-retention-waterfall",
+      "name": "Subscription retention waterfall",
+      "description": "Break recurring revenue into healthy, at-risk, and lost buckets with dollar impact, and rank the subscriptions worth a manual save.",
+      "category": "finance",
+      "icon": "heart-pulse",
+      "path": "finance/subscription-retention-waterfall.md",
+      "updated_at": "2026-07-23T09:00:00Z"
+    },
+    {
+      "slug": "finance/failed-payment-recovery",
+      "name": "Failed-payment recovery pipeline",
+      "description": "Quantify the dollars sitting behind declined and error-rate payments this period, and propose a dunning-first recovery order.",
+      "category": "finance",
+      "icon": "credit-card",
+      "path": "finance/failed-payment-recovery.md",
+      "updated_at": "2026-07-23T09:00:00Z"
+    },
+    {
+      "slug": "finance/promo-code-roi-ranking",
+      "name": "Promo code ROI ranking",
+      "description": "Rank every active promo code by margin-aware ROI, not just redemption volume, and flag codes to kill.",
+      "category": "finance",
+      "icon": "percent",
+      "path": "finance/promo-code-roi-ranking.md",
+      "updated_at": "2026-07-23T09:00:00Z"
+    },
+    {
+      "slug": "finance/commission-liability-check",
+      "name": "Commission liability check",
+      "description": "Reconcile estimated commission payout against revenue for the period and flag liability creep before it hits payroll.",
+      "category": "finance",
+      "icon": "scale",
+      "path": "finance/commission-liability-check.md",
+      "updated_at": "2026-07-23T09:00:00Z"
+    },
+    {
       "slug": "themes/scrape-into-theme",
       "name": "Scrape a URL into the active theme",
       "description": "Fetch a page, extract its layout and copy, scaffold a matching Fluid theme section.",
