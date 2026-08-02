@@ -2,6 +2,15 @@
   "version": 1,
   "skills": [
     {
+      "slug": "finance/payment-market-breakdown",
+      "name": "Payment market breakdown",
+      "description": "Analyze approval rates and blocked revenue by market and card type. Surfaces underperforming card-market combos and quantifies the recovery opportunity.",
+      "category": "finance",
+      "icon": "activity",
+      "path": "finance/payment-market-breakdown.md",
+      "updated_at": "2026-07-31T00:00:00Z"
+    },
+    {
       "slug": "finance/promo-code-summary",
       "name": "Promo code summary",
       "description": "Summarize orders that used a given promo code over the last 30 days.",
