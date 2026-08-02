@@ -286,6 +286,15 @@
       "updated_at": "2026-08-02T01:20:00Z"
     },
     {
+      "slug": "marketing/brand-manager",
+      "name": "Brand Manager",
+      "description": "Use when someone wants to know who their brand is really for and whether their marketing speaks to those people — defining core customers, auditing brand voice, positioning, message hierarchy and journey against them, then delivering a substantial report and approve-one-at-a-time improvements. Not for catalog data QA.",
+      "category": "marketing",
+      "icon": "compass",
+      "path": "marketing/brand-manager/SKILL.md",
+      "updated_at": "2026-07-31T21:59:28Z"
+    },
+    {
       "slug": "marketing/ugc-discovery",
       "name": "UGC Discovery",
       "description": "Find the 20-30 most engaging, FTC/FDA-compliant UGC posts about a brand or product across TikTok, Instagram, YouTube, and Pinterest, let the user pick, and pull the picks into the DAM.",
