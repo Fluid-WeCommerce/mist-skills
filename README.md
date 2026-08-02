@@ -40,11 +40,20 @@ mist-skills/
 │   ├── open-a-country.md          ← flat skill (front-end steps flow)
 │   └── compliance-manager/        ← folder skill
 │       └── SKILL.md
+├── portal/
+│   ├── launch-portal.md           ← flat skill (front-end steps flow)
+│   ├── portal-page-authoring/     ← folder skill (no references)
+│   │   └── SKILL.md
+│   └── portal-page-partner-home/  ← folder skill; the component_tree is the reference
+│       ├── SKILL.md
+│       └── references/
+│           └── template.md
 ├── workflows/                     ← declarative multi-step chains (JSON, not skills)
 │   ├── open-country.workflow.json
 │   ├── finalize-otg-country.workflow.json
 │   ├── finalize-nfr-country.workflow.json
-│   └── finalize-usd-country.workflow.json
+│   ├── finalize-usd-country.workflow.json
+│   └── launch-portal.workflow.json
 └── README.md
 ```
 
