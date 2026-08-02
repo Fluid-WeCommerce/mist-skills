@@ -42,6 +42,47 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
         except validate_catalog.CatalogValidationError as error:
             self.fail(f"published workflow violates its contract: {error}")
 
+    def test_focused_page_reviews_fit_the_evidence_budget(self) -> None:
+        workflow = self.load_workflow()
+
+        for step_id in (
+            "home-page",
+            "shop-page",
+            "product-page",
+            "collection-page",
+        ):
+            with self.subTest(step_id=step_id):
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                read_floor = next(
+                    requirement
+                    for requirement in step["qa"]["requiredTools"]
+                    if requirement.get("tool") == "read_file"
+                    and requirement.get("distinctBy") == ["path"]
+                )
+
+                self.assertEqual(read_floor["minSuccessfulCalls"], 3)
+                self.assertIn(
+                    "at least two distinct implementation files",
+                    " ".join(step["acceptance"]),
+                )
+
+        content_step = next(
+            step
+            for step in workflow["steps"]
+            if step.get("id") == "content-pages"
+        )
+        content_read_floor = next(
+            requirement
+            for requirement in content_step["qa"]["requiredTools"]
+            if requirement.get("tool") == "read_file"
+            and requirement.get("distinctBy") == ["path"]
+        )
+        self.assertEqual(content_read_floor["minSuccessfulCalls"], 8)
+
     def test_rejects_home_page_without_bulk_media_reconcile(self) -> None:
         workflow = self.load_workflow()
         home_step = next(

@@ -602,7 +602,7 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
         },
         {
             "tool": "read_file",
-            "minSuccessfulCalls": 4,
+            "minSuccessfulCalls": 3,
             "distinctBy": ["path"],
         },
         {
@@ -638,7 +638,7 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
         acceptance,
         (
             "clone-manifest.json",
-            "at least three distinct implementation files",
+            "at least two distinct implementation files",
             "fluid theme lint --json",
             "Targeted code searches",
             "multiple named section mounts",
@@ -704,7 +704,7 @@ def _streamlined_step(workflow: dict[str, Any], step_id: str) -> dict[str, Any]:
 def _deterministic_page_qa_tools(
     template_path: str | None,
     *,
-    minimum_reads: int = 4,
+    minimum_reads: int = 3,
     minimum_searches: int = 2,
     minimum_routes: int = 1,
     mandatory_paths: tuple[str, ...] = (),
@@ -824,7 +824,7 @@ def _validate_direct_page_review(
         acceptance,
         (
             "clone-manifest.json",
-            "at least three distinct implementation files",
+            "at least two distinct implementation files",
             "fluid theme lint --json",
             "Targeted code searches",
             "rendered DOM",
