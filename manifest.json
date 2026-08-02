@@ -473,6 +473,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "mist/monetize-bot-traffic",
+      "name": "Monetize Bot Traffic",
+      "description": "Audit a storefront for safe, high-value bot-facing routes and produce an evidence-backed Tollbooth/x402 pay-per-request pilot plan.",
+      "category": "mist",
+      "icon": "bot",
+      "path": "mist/monetize-bot-traffic/SKILL.md",
+      "updated_at": "2026-07-31T20:40:40Z"
     }
   ],
   "workflows": [
