@@ -394,6 +394,28 @@
       "updated_at": "2026-07-23T00:00:00Z"
     },
     {
+      "slug": "sales/optimize-regional-pricing",
+      "name": "Regional Pricing Strategist",
+      "description": "Recommend evidence-aware country-specific pricing tests from Fluid catalog and performance data, with break-even contribution scenarios and a reversible experiment plan.",
+      "category": "sales",
+      "icon": "badge-dollar-sign",
+      "path": "sales/optimize-regional-pricing/SKILL.md",
+      "updated_at": "2026-07-31T17:54:17Z",
+      "references": [
+        "sales/optimize-regional-pricing/references/chart-contract.md",
+        "sales/optimize-regional-pricing/references/fluid-store-adapter.md",
+        "sales/optimize-regional-pricing/references/input-contract.md",
+        "sales/optimize-regional-pricing/references/model-and-guardrails.md",
+        "sales/optimize-regional-pricing/references/platform-handoff.md",
+        "sales/optimize-regional-pricing/references/research-and-positioning.md"
+      ],
+      "assets": [
+        "sales/optimize-regional-pricing/scripts/analyze_regional_pricing.py",
+        "sales/optimize-regional-pricing/scripts/import_fluid_catalog.py",
+        "sales/optimize-regional-pricing/assets/regional-pricing-report.html"
+      ]
+    },
+    {
       "slug": "themes/clone-blog-page",
       "name": "Clone Blog Page",
       "description": "Recreate a source blog/journal index as the Fluid post_page route with real posts, author and date metadata, category filtering, and pagination. Finds blogs on subdomains, subpaths, or external platforms.",
