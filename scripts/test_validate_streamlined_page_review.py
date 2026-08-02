@@ -57,6 +57,340 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
         ):
             validate_catalog.validate_streamlined_page_review_contract(workflow)
 
+    def test_requires_home_source_control_inventory_contract(self) -> None:
+        required_fragments = (
+            "home_interactions.source_html_paths",
+            "home_interactions.source_html_sha256",
+            "visual_routes.home.source_evidence.desktop.documents.html",
+            "visual_routes.home.source_evidence.mobile.documents.html",
+            "home_interactions.controls",
+            "controls array must be non-empty",
+            "ids are unique non-empty strings",
+            "required keys and types",
+            "source-present visible control",
+            "semantic kind, target, state transition, and keyboard/accessibility behavior",
+            "expected_outcome.type is route, submission, or state",
+            "repeated is a boolean",
+            "viewport, path, sha256, and selector_or_locator",
+            "matching signed desktop or mobile HTML cell",
+            "blank, hash-only, or javascript: links",
+            "action-looking buttons without a real target or state hook",
+            "documented source-equivalent exception",
+        )
+        for fragment in required_fragments:
+            with self.subTest(fragment=fragment):
+                workflow = self.load_workflow()
+                home_step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == "home-page"
+                )
+                home_step["prompt"] = home_step["prompt"].replace(fragment, "")
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "home-page implementation contract",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(
+                        workflow
+                    )
+
+    def test_requires_independent_source_control_denominator_review(self) -> None:
+        required_fragments = (
+            "opened both signed desktop and mobile Home HTML files",
+            "matched both hashes",
+            "independently enumerated every visible actionable element in each viewport",
+            "non-empty controls array",
+            "unique control ids",
+            "required keys and types",
+            "signed source evidence path, hash, viewport, and selector or locator",
+            "no source-present control family or individual non-repeated control was omitted",
+        )
+        for fragment in required_fragments:
+            with self.subTest(fragment=fragment):
+                workflow = self.load_workflow()
+                home_step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == "home-page"
+                )
+                home_step["acceptance"] = [
+                    item.replace(fragment, "") for item in home_step["acceptance"]
+                ]
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "home-page review acceptance contract",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(
+                        workflow
+                    )
+
+    def test_separates_route_checks_from_stateful_interactions(self) -> None:
+        required_fragments = (
+            "Use interact_preview only for stateful controls",
+            "Do not call interact_preview on links, navigational CTAs, or form submissions",
+            "Verify primary CTA targets in code and rendered DOM",
+            "load each representative resolved route with read_preview_dom",
+        )
+        for step_id in ("home-page", "storefront-check"):
+            for fragment in required_fragments:
+                with self.subTest(step_id=step_id, fragment=fragment):
+                    workflow = self.load_workflow()
+                    step = next(
+                        step
+                        for step in workflow["steps"]
+                        if step.get("id") == step_id
+                    )
+                    step["prompt"] = step["prompt"].replace(fragment, "")
+
+                    with self.assertRaisesRegex(
+                        validate_catalog.CatalogValidationError,
+                        "implementation contract",
+                    ):
+                        validate_catalog.validate_streamlined_page_review_contract(
+                            workflow
+                        )
+
+    def test_requires_mobile_stateful_interaction_and_route_tool_floors(self) -> None:
+        for step_id in ("home-page", "storefront-check"):
+            with self.subTest(step_id=step_id, tool="interact_preview"):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                interaction_requirement = next(
+                    requirement
+                    for requirement in step["qa"]["requiredTools"]
+                    if requirement.get("tool") == "interact_preview"
+                    and requirement.get("input", {}).get("width") == 390
+                )
+                self.assertEqual(
+                    interaction_requirement.get("input"),
+                    {"path": "/", "width": 390, "height": 844},
+                )
+
+            with self.subTest(step_id=step_id, tool="CTA read_preview_dom"):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                step["qa"]["requiredTools"] = [
+                    requirement
+                    for requirement in step["qa"]["requiredTools"]
+                    if not (
+                        requirement.get("tool") == "read_preview_dom"
+                        and requirement.get("input") == {"mode": "html"}
+                    )
+                ]
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "deterministic QA evidence",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(
+                        workflow
+                    )
+
+    def test_requires_signed_source_denominator_tool_floors(self) -> None:
+        for step_id in ("home-page", "storefront-check"):
+            with self.subTest(step_id=step_id):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                step["qa"]["requiredTools"] = [
+                    requirement
+                    for requirement in step["qa"]["requiredTools"]
+                    if requirement.get("tool") != "file_sha256"
+                ]
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "deterministic QA evidence",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(workflow)
+
+    def test_requires_inventory_linked_interaction_receipts(self) -> None:
+        required_fragments = (
+            "home_interactions.stateful_receipts",
+            "control id, family, expected outcome type, source evidence, selector, viewport, pre-state, action, post-state, and result",
+            "home_interactions.route_receipts",
+            "control id, expected outcome type, resolved href or action, loaded route, status, and DOM evidence",
+        )
+        for fragment in required_fragments:
+            with self.subTest(fragment=fragment):
+                workflow = self.load_workflow()
+                home_step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == "home-page"
+                )
+                home_step["prompt"] = home_step["prompt"].replace(fragment, "")
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "home-page implementation contract",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(
+                        workflow
+                    )
+
+    def test_rejects_full_catalog_validator_for_home_only_evidence(self) -> None:
+        for step_id in ("home-page", "storefront-check"):
+            with self.subTest(step_id=step_id):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                step["qa"]["requiredTools"].append(
+                    {
+                        "tool": "validate_theme_source_inventory",
+                        "input": {"manifest_path": "clone-manifest.json"},
+                        "minSuccessfulCalls": 1,
+                    }
+                )
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "Home-only workflow must not require the full-catalog source validator",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(workflow)
+
+    def test_rejects_full_catalog_validator_call_in_home_only_prompt(self) -> None:
+        for step_id in ("home-page", "storefront-check"):
+            with self.subTest(step_id=step_id):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                step["prompt"] += (
+                    " Call validate_theme_source_inventory with manifest_path "
+                    "clone-manifest.json."
+                )
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "Home-only workflow must not call the full-catalog source validator",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(workflow)
+
+    def test_requires_current_3009_dynamic_path_binding_disclosure(self) -> None:
+        required_fragments = (
+            "CURRENT-3009",
+            "read_file/file_sha256 receipts",
+            "cannot machine-bind",
+            "requiredTools alone is not proof",
+        )
+        for step_id in ("home-page", "storefront-check"):
+            for fragment in required_fragments:
+                with self.subTest(step_id=step_id, fragment=fragment):
+                    workflow = self.load_workflow()
+                    step = next(
+                        step
+                        for step in workflow["steps"]
+                        if step.get("id") == step_id
+                    )
+                    step["acceptance"] = [
+                        item.replace(fragment, "") for item in step["acceptance"]
+                    ]
+
+                    with self.assertRaisesRegex(
+                        validate_catalog.CatalogValidationError,
+                        "review acceptance contract",
+                    ):
+                        validate_catalog.validate_streamlined_page_review_contract(
+                            workflow
+                        )
+
+    def test_requires_bounded_home_and_storefront_interaction_tools(self) -> None:
+        for step_id in ("home-page", "storefront-check"):
+            with self.subTest(step_id=step_id):
+                workflow = self.load_workflow()
+                step = next(
+                    step
+                    for step in workflow["steps"]
+                    if step.get("id") == step_id
+                )
+                step["qa"]["requiredTools"] = [
+                    requirement
+                    for requirement in step["qa"]["requiredTools"]
+                    if requirement.get("tool") != "interact_preview"
+                ]
+
+                with self.assertRaisesRegex(
+                    validate_catalog.CatalogValidationError,
+                    "deterministic QA evidence",
+                ):
+                    validate_catalog.validate_streamlined_page_review_contract(
+                        workflow
+                    )
+
+    def test_requires_bounded_interaction_review_contracts(self) -> None:
+        required_fragments = {
+            "home-page": (
+                "bounded Home interaction pass",
+                "each distinct source-present interaction family",
+                "representative repeated control",
+                "primary CTA targets",
+            ),
+            "storefront-check": (
+                "bounded final interaction smoke pass",
+                "each distinct source-present interaction family",
+                "representative repeated controls",
+                "primary CTA targets",
+            ),
+        }
+        for step_id, fragments in required_fragments.items():
+            for fragment in fragments:
+                with self.subTest(step_id=step_id, fragment=fragment):
+                    workflow = self.load_workflow()
+                    step = next(
+                        step
+                        for step in workflow["steps"]
+                        if step.get("id") == step_id
+                    )
+                    step["acceptance"] = [
+                        item.replace(fragment, "") for item in step["acceptance"]
+                    ]
+
+                    with self.assertRaisesRegex(
+                        validate_catalog.CatalogValidationError,
+                        "review acceptance contract",
+                    ):
+                        validate_catalog.validate_streamlined_page_review_contract(
+                            workflow
+                        )
+
+    def test_requires_source_button_to_empty_fragment_rework_case(self) -> None:
+        workflow = self.load_workflow()
+        home_step = next(
+            step for step in workflow["steps"] if step.get("id") == "home-page"
+        )
+        home_step["acceptance"] = [
+            item.replace(
+                'A source button implemented as a generated href="#" is REWORK and leaves this lenient step needs-review.',
+                "",
+            )
+            for item in home_step["acceptance"]
+        ]
+
+        with self.assertRaisesRegex(
+            validate_catalog.CatalogValidationError,
+            "home-page review acceptance contract",
+        ):
+            validate_catalog.validate_streamlined_page_review_contract(workflow)
+
     def test_rejects_the_shared_visual_product_skill(self) -> None:
         workflow = self.load_workflow()
         product_step = next(
@@ -280,6 +614,7 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
 
     def test_preserves_lenient_fail_open_page_review_shapes(self) -> None:
         for step_id in (
+            "home-page",
             "shop-page",
             "product-page",
             "collection-page",

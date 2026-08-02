@@ -517,6 +517,52 @@ def validate_streamlined_product_import_contract() -> None:
     )
 
 
+def _home_interaction_qa_requirement() -> dict[str, Any]:
+    return {
+        "tool": "interact_preview",
+        "input": {"path": "/", "width": 390, "height": 844},
+        "minSuccessfulCalls": 1,
+    }
+
+
+def _home_cta_route_qa_requirement() -> dict[str, Any]:
+    return {
+        "tool": "read_preview_dom",
+        "input": {"mode": "html"},
+        "minSuccessfulCalls": 1,
+        "distinctBy": ["path"],
+    }
+
+
+def _signed_source_hash_qa_requirement() -> dict[str, Any]:
+    return {
+        "tool": "file_sha256",
+        "minSuccessfulCalls": 1,
+    }
+
+
+def _reject_full_catalog_source_validator(step: dict[str, Any]) -> None:
+    prompt = step.get("prompt")
+    if isinstance(prompt, str) and "validate_theme_source_inventory" in prompt:
+        raise CatalogValidationError(
+            "streamlined workflow: Home-only workflow must not call the "
+            "full-catalog source validator"
+        )
+    qa = step.get("qa")
+    required_tools = qa.get("requiredTools", []) if isinstance(qa, dict) else []
+    if not isinstance(required_tools, list):
+        return
+    if any(
+        isinstance(requirement, dict)
+        and requirement.get("tool") == "validate_theme_source_inventory"
+        for requirement in required_tools
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: Home-only workflow must not require the "
+            "full-catalog source validator"
+        )
+
+
 def _validate_streamlined_home_review_contract(workflow: Any) -> None:
     if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
         raise CatalogValidationError("streamlined workflow steps must be an array")
@@ -567,10 +613,41 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             'mode: "theme_only"',
             ".mist-desktop/home-catalog-index.json",
             "priority_media.delivery_items",
+            "home_interactions.source_html_paths",
+            "home_interactions.source_html_sha256",
+            "visual_routes.home.source_evidence.desktop.documents.html",
+            "visual_routes.home.source_evidence.mobile.documents.html",
+            "home_interactions.controls",
+            "controls array must be non-empty",
+            "ids are unique non-empty strings",
+            "required keys and types",
+            "source-present visible control",
+            "semantic kind, target, state transition, and keyboard/accessibility behavior",
+            "expected_outcome.type is route, submission, or state",
+            "repeated is a boolean",
+            "viewport, path, sha256, and selector_or_locator",
+            "matching signed desktop or mobile HTML cell",
+            "blank, hash-only, or javascript: links",
+            "action-looking buttons without a real target or state hook",
+            "documented source-equivalent exception",
+            "bounded Home interaction pass",
+            "each distinct source-present interaction family",
+            "representative repeated control",
+            "primary CTA targets",
+            "Do not exhaustively click duplicate controls",
+            "Use interact_preview only for stateful controls",
+            "Do not call interact_preview on links, navigational CTAs, or form submissions",
+            "Verify primary CTA targets in code and rendered DOM",
+            "load each representative resolved route with read_preview_dom",
+            "home_interactions.stateful_receipts",
+            "control id, family, expected outcome type, source evidence, selector, viewport, pre-state, action, post-state, and result",
+            "home_interactions.route_receipts",
+            "control id, expected outcome type, resolved href or action, loaded route, status, and DOM evidence",
         ),
         "streamlined workflow home-page implementation contract",
     )
     qa = home_step.get("qa")
+    _reject_full_catalog_source_validator(home_step)
     if (
         home_step.get("dependsOn") != ["source-capture"]
         or home_step.get("maxReworkRounds") != 1
@@ -615,6 +692,9 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "input": {"path": "/", "mode": "all"},
             "minSuccessfulCalls": 1,
         },
+        _signed_source_hash_qa_requirement(),
+        _home_cta_route_qa_requirement(),
+        _home_interaction_qa_requirement(),
         {
             "tool": "read_preview_console",
             "minSuccessfulCalls": 1,
@@ -655,6 +735,29 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
             "Screenshots are optional source-design context only",
             "completed priority_media reconciliation",
             "verified DAM delivery URLs",
+            "home_interactions.controls",
+            "bounded Home interaction pass",
+            "each distinct source-present interaction family",
+            "representative repeated control",
+            "primary CTA targets",
+            "blank, hash-only, or javascript: links",
+            "action-looking buttons without a real target or state hook",
+            'A source button implemented as a generated href=\\"#\\" is REWORK and leaves this lenient step needs-review.',
+            "post-action URL, DOM, or state transition",
+            "opened both signed desktop and mobile Home HTML files",
+            "matched both hashes",
+            "independently enumerated every visible actionable element in each viewport",
+            "non-empty controls array",
+            "unique control ids",
+            "required keys and types",
+            "signed source evidence path, hash, viewport, and selector or locator",
+            "no source-present control family or individual non-repeated control was omitted",
+            "stateful interaction families",
+            "navigational and submission targets",
+            "CURRENT-3009",
+            "read_file/file_sha256 receipts",
+            "cannot machine-bind",
+            "requiredTools alone is not proof",
         ),
         "streamlined workflow home-page review acceptance contract",
     )
@@ -1068,10 +1171,32 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
             "Put unprovable behavior in unresolved",
             "Blocking means",
             "Cosmetic means",
+            "home_interactions.controls",
+            "bounded final interaction smoke pass",
+            "interact_preview",
+            "mobile navigation",
+            "each distinct source-present interaction family",
+            "representative repeated controls",
+            "primary CTA targets",
+            "blank, hash-only, or javascript: links",
+            "action-looking buttons without a real target or state hook",
+            "post-action URL, DOM, or state transition",
+            "Use interact_preview only for stateful controls",
+            "Do not call interact_preview on links, navigational CTAs, or form submissions",
+            "Verify primary CTA targets in code and rendered DOM",
+            "load each representative resolved route with read_preview_dom",
+            "home_interactions.source_html_paths",
+            "home_interactions.source_html_sha256",
+            "open both signed desktop and mobile Home HTML files",
+            "match both hashes",
+            "Independently enumerate every visible actionable element in each viewport",
+            "home_interactions.stateful_receipts",
+            "home_interactions.route_receipts",
         ),
         "streamlined workflow storefront-check implementation contract",
     )
     qa = step.get("qa")
+    _reject_full_catalog_source_validator(step)
     # maxReworkRounds must stay 0. This step's own prompt forbids it from
     # editing anything, so a rework round can only be spent discovering it
     # cannot act — which is exactly how the TUSHY run ended, with the round
@@ -1089,12 +1214,16 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
             "streamlined workflow: storefront-check must preserve its lenient "
             "fail-open contract with no rework round"
         )
-    if qa.get("requiredTools") != _deterministic_page_qa_tools(
+    expected_tools = _deterministic_page_qa_tools(
         None,
         minimum_reads=10,
         minimum_searches=6,
         minimum_routes=5,
-    ):
+    )
+    expected_tools.insert(-2, _signed_source_hash_qa_requirement())
+    expected_tools.insert(-2, _home_cta_route_qa_requirement())
+    expected_tools.insert(-2, _home_interaction_qa_requirement())
+    if qa.get("requiredTools") != expected_tools:
         raise CatalogValidationError(
             "streamlined workflow: storefront-check must require only its "
             "deterministic QA evidence floor"
@@ -1117,6 +1246,28 @@ def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
             "interaction behavior",
             "API-value parity",
             "blocking, cosmetic, and unresolved",
+            "home_interactions.controls",
+            "bounded final interaction smoke pass",
+            "each distinct source-present interaction family",
+            "representative repeated controls",
+            "primary CTA targets",
+            "blank, hash-only, or javascript: links",
+            "action-looking buttons without a real target or state hook",
+            "post-action URL, DOM, or state transition",
+            "stateful interaction families",
+            "navigational and submission targets",
+            "both signed desktop and mobile Home HTML files",
+            "matched both hashes",
+            "each viewport",
+            "unique control id",
+            "required keys and types",
+            "signed source evidence path, hash, viewport, and selector or locator",
+            "home_interactions.stateful_receipts",
+            "home_interactions.route_receipts",
+            "CURRENT-3009",
+            "read_file/file_sha256 receipts",
+            "cannot machine-bind",
+            "requiredTools alone is not proof",
         ),
         "streamlined workflow storefront-check review acceptance contract",
     )
