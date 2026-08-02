@@ -3,8 +3,8 @@ name: fluid-product-admin-import
 description: >-
   Import a complete source catalog and related store resources into the active
   Fluid company. Builds an evidence-backed source manifest, preserves product
-  identity, images, prices, options, and variants, resumes safely, and proves
-  one-to-one coverage before reporting completion.
+  and taxonomy identity, verifies category and collection membership, resumes
+  safely, and proves one-to-one coverage before reporting completion.
 ---
 
 # Fluid Product & Admin Import
@@ -117,6 +117,18 @@ Required shape:
       "currency": "USD",
       "image_urls": ["https://source.example/source-product-123.jpg"],
       "option_axes": { "Size": ["Small", "Large"] },
+      "category_membership": {
+        "source_id": "source-category-10",
+        "source_handle": "supplements",
+        "title": "Supplements"
+      },
+      "collection_membership": [
+        {
+          "source_id": "source-collection-20",
+          "source_handle": "best-sellers",
+          "title": "Best Sellers"
+        }
+      ],
       "variants": [
         {
           "source_variant_id": "source-variant-456",
@@ -346,18 +358,46 @@ self-certifying.
 
 Use GET-before-write and persist source identity → Fluid ID mappings.
 
-| Resource           | Endpoint                                                 | Important rule                                                                                                             |
-| ------------------ | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Categories         | `POST /api/v202604/company/categories`                   | Create parents before children; resolve `parent_id` from the mapping.                                                      |
-| Collections        | `POST /api/v202604/company/collections`                  | Preserve source identity. `product_ids` is a full replacement; omission leaves membership unchanged.                      |
-| Product membership | `PATCH /api/v202604/company/products/{id}`               | Send verified `collection_ids`; PATCH is partial and does not require resending `title`.                                   |
-| Static pages       | Mist `create_page`; underlying `/api/v202604/company/pages` | Use `create_page` so the page, theme template, preview route, and preview pane stay coordinated. Resolve the body before writing (below).                          |
-| Blog posts         | `POST /api/v202604/company/posts`                        | Preserve documented source fields, lifecycle, the response's canonical URL, and DAM hero/SEO image.                       |
-| Playlists          | `POST /api/v202604/company/playlists`                    | The route says playlists but the documented request wrapper is intentionally `library`.                                  |
-| Menus              | `POST /api/menus`                                        | Menus are the explicit legacy exception; use destination canonical routes and preserve nesting/order.                     |
+| Resource           | Endpoint                                                   | Important rule                                                                                                                                                    |
+| ------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Categories         | `POST /api/v202604/company/categories`                     | Create parents before children; resolve `parent_id` from the mapping. Products accept one `category_id`.                                                         |
+| Collections        | `POST /api/v202604/company/collections`                    | Preserve source identity. `product_ids` is a full replacement; omission leaves membership unchanged.                                                             |
+| Product membership | `PATCH /api/v202604/company/products/{id}`                 | Send the verified `category_id` and complete `collection_ids`; PATCH is partial and does not require resending `title`.                                          |
+| Static pages       | Mist `create_page`; underlying `/api/v202604/company/pages` | Use `create_page` so the page, theme template, preview route, and preview pane stay coordinated. Resolve the body before writing (below).                         |
+| Blog posts         | `POST /api/v202604/company/posts`                          | Preserve documented source fields, lifecycle, the response's canonical URL, and DAM hero/SEO image.                                                              |
+| Playlists          | `POST /api/v202604/company/playlists`                      | The route says playlists but the documented request wrapper is intentionally `library`.                                                                         |
+| Menus              | `POST /api/menus`                                          | Menus are the explicit legacy exception; use destination canonical routes and preserve nesting/order.                                                            |
 
 Theme pushes happen before page creates because page creation can auto-generate
 theme templates that a later push may try to remove.
+
+### Preserve and prove taxonomy membership
+
+Treat taxonomy definitions and taxonomy membership as one import contract. A
+successful category or collection write does not prove that its products were
+attached.
+
+1. During source discovery, record immutable identity, handle, and title for
+   every category and collection. Record each product's
+   `category_membership` and complete `collection_membership` in the source
+   manifest. Reconcile those fields against every exhausted taxonomy listing;
+   do not infer membership from marketing copy or menu placement.
+2. Record genuinely empty source categories and collections separately. If a
+   source taxonomy listing contains products but none resolve into the
+   manifest, the manifest is incomplete rather than empty.
+3. Create or adopt taxonomy records before assigning products. Resolve source
+   taxonomy identities and source product identities through the persisted
+   mappings, then PATCH each destination product once with its `category_id`
+   and complete `collection_ids`. Fluid supports one product category; if the
+   source requires multiple unrelated categories and no primary/deepest
+   category is proven, report the representation gap instead of choosing one.
+4. Re-read every non-empty destination category and collection through its
+   products endpoint. Compare the exact expected and actual destination product
+   ID sets. Missing, extra, or unresolvable identities belong in
+   `membership_failures` and keep the step out of a pass state.
+
+Never report taxonomy counts as membership proof. A run that created four
+categories and assigned zero products imported four empty navigation targets.
 
 ### Resolving a page body
 

@@ -216,6 +216,21 @@ def validate_shared_skill_contracts() -> None:
                     f"contract fragment found: {fragment!r}"
                 )
 
+    product_import_skill = (
+        ROOT / "onboarding/fluid-product-admin-import/SKILL.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        product_import_skill,
+        (
+            '"category_membership"',
+            '"collection_membership"',
+            "Send the verified `category_id` and complete `collection_ids`",
+            "Re-read every non-empty destination category and collection",
+            "taxonomy counts as membership proof",
+        ),
+        "fluid-product-admin-import taxonomy membership contract",
+    )
+
     manifest = load_json(MANIFEST_PATH)
     manifest_skills = {
         entry.get("slug"): entry.get("path")
@@ -992,6 +1007,50 @@ def _validate_content_import_body_contract(workflow: dict[str, Any]) -> None:
     )
 
 
+def _validate_taxonomy_membership_contract(workflow: dict[str, Any]) -> None:
+    manifest_step = _streamlined_step(workflow, "catalog-manifest")
+    require_fragments(
+        str(manifest_step.get("prompt", "")),
+        (
+            "category_membership",
+            "complete collection_membership",
+            "Reconcile product membership against every exhausted category",
+            "genuinely empty source taxonomies",
+        ),
+        "streamlined workflow catalog taxonomy contract",
+    )
+    require_fragments(
+        json.dumps(manifest_step.get("acceptance", [])),
+        (
+            "immutable source taxonomy identities",
+            "non-empty listing with unresolved products fails",
+        ),
+        "streamlined workflow catalog taxonomy acceptance contract",
+    )
+
+    content_step = _streamlined_step(workflow, "import-content")
+    require_fragments(
+        str(content_step.get("prompt", "")),
+        (
+            "source-identity mappings for products, categories, and collections",
+            "PATCH each destination product once with its category_id",
+            "complete collection_ids",
+            "exact expected and actual destination product-id sets",
+            "either list being non-empty keeps this step out of a pass state",
+        ),
+        "streamlined workflow import-content taxonomy contract",
+    )
+    require_fragments(
+        json.dumps(content_step.get("acceptance", [])),
+        (
+            "membership_failures and unresolved are empty",
+            "re-read through its products endpoint",
+            "taxonomy counts alone are not accepted as membership proof",
+        ),
+        "streamlined workflow import-content taxonomy acceptance contract",
+    )
+
+
 def _validate_handoff_live_counts_contract(workflow: dict[str, Any]) -> None:
     """A step's STEP_OUTPUT is a snapshot from before any later remediation.
 
@@ -1224,6 +1283,7 @@ def validate_streamlined_page_review_contract(workflow: Any) -> None:
     _validate_content_page_review(workflow)
     _validate_storefront_code_review(workflow)
     _validate_content_import_body_contract(workflow)
+    _validate_taxonomy_membership_contract(workflow)
     _validate_handoff_live_counts_contract(workflow)
     _reject_unsupported_page_review_claims(workflow)
 
