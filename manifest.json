@@ -473,6 +473,19 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "retention/regimen-guarantee-guard",
+      "name": "Regimen Guarantee Guard",
+      "description": "Find subscription customers at risk of churning or breaking a regimen guarantee, then produce evidence-backed actions, compliant outreach drafts, and a CEO summary without changing production data.",
+      "category": "retention",
+      "icon": "shield-check",
+      "path": "retention/regimen-guarantee-guard/SKILL.md",
+      "updated_at": "2026-07-31T08:29:21Z",
+      "references": [
+        "retention/regimen-guarantee-guard/references/cohort-rules.md",
+        "retention/regimen-guarantee-guard/references/copy-templates.md"
+      ]
     }
   ],
   "workflows": [
