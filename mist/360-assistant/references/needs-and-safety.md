@@ -107,6 +107,9 @@ Condition language, in two families:
 
 - **Named conditions:** eczema, IBS, constipation, migraine, UTI, insomnia, pregnancy, pain, rash,
   and the rest of the obvious set.
+- **Dietary vocabulary, complete from day one:** `carb` / `carbs` / `keto` / `paleo` / `kosher` /
+  `halal` / `sugar-free` / `fat-free` alongside the obvious allergens. A real build shipped without
+  these and a "low carb, wrapped in lettuce?" question reached its handoff **by accident**.
 - **Treatment verbs:** treat, cure, heal, remedy, fix.
 
 Keep this list, like the lexicon, as **language** facts. A product name appearing in it means
@@ -192,6 +195,19 @@ which is a fact about the catalogue rather than a claim about the customer's bod
 
 ---
 
+## 🔴 A safety route must never depend on a lookup failing
+
+The most dangerous bug in this file, because **a fix caused it.** A mandatory allergen handoff was
+firing only because the matcher couldn't resolve the product. Matching improved; the accident
+disappeared; the question started being answered as an ordinary product query.
+
+- **Classify safety before resolution**, so the handoff cannot depend on a resolver's failure mode.
+- **Re-check every safety route whenever matching changes.** Put it in the checklist below, not in
+  your memory.
+- ⚠️ **A test helper that doesn't mirror production invents failures.** One filtered junk by title
+  regex instead of the real suppression predicate, so a nonsense query "resolved" to a product that
+  was never a candidate in production.
+
 ## Checklist before shipping either part
 
 - Does a problem with **no** match return nothing, rather than the top-ranked unrelated product?
@@ -202,3 +218,5 @@ which is a fact about the catalogue rather than a claim about the customer's bod
   recommendation by another route?
 - Is there a test asserting **no treatment claim** appears, across several phrasings of the same
   question?
+- 🔴 **Did matching change since the last time these were checked?** If so, re-verify every safety
+  route — one of them may have been passing by accident.

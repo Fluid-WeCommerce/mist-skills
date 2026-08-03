@@ -508,6 +508,76 @@ Rules that fall out of it, all of which cost real money to learn:
 - **A clarifying question is not an offer.** Mark it, and let a bare "yes" fire nothing.
 - **Adding a new closed question to the copy means adding its kind here, with a test.**
 
+### 🔴 A standing offer must not swallow the next message
+
+Three instances of one shape in a single build, so it is a rule rather than an anecdote: **a helper
+written to answer one question becomes a bug when reused for a different one.**
+
+The case: a resolver that answers *"we're buying this — which variant?"* resolves a single-variant
+product **regardless of the phrase** — correct for its own callers, who are already past deciding to
+buy. Reused to decide whether an arbitrary *next* message was an acceptance, it meant that with an
+offer standing on a one-variant product, typing **"8 ct" bought it**.
+
+Split the two questions, because they only look alike:
+
+| Purpose | Single-variant behaviour |
+|---|---|
+| "We're buying this — which variant?" | Resolves. The decision is already made. |
+| "Was this message an **answer** to my offer?" | **Only** a named option, or a bare yes with exactly one possible meaning. |
+
+Everything else falls through to the router, which is far better placed to work out what was asked.
+Bonus: "8 ct" then *answers the question about the other product* instead of being swallowed.
+
+**And read a follow-up against the message it answers.** After offering options titled "5 ct / 8 ct /
+12 ct", the reply *"Sounds good, I'll take the 8 count"* resolved a completely different product.
+Three faults compounded, each sufficient alone:
+
+1. 🔴 **The catalogue's word is not the customer's word.** The option is titled `8 ct`; nobody types
+   "ct". Ship an **option-only synonym table** (`ct`/`count`/`piece`/`pc`, `sm`/`med`/`lg`/`xl`,
+   `oz`) applied to **both** sides. Keep it to units and sizes so it can never make one *product*
+   resolve to another — and pin that with a test.
+2. 🔴 **Politeness that looks like a request.** A bare `good` in the recommend-hint pattern turned
+   "Sounds good, I'll take…" into "buy me your best thing". Strip whole affirmation **phrases**
+   (`sounds good`, `looks good`, `that works`, `perfect`) before testing intent, and **never a bare
+   `good`/`great`** — that breaks the genuine "what's good here?".
+3. **The standing-offer branch re-asked the question**, at someone who had just answered it. A buy
+   verb against a standing cart offer routes through the normal buy path **for the offered product**,
+   so an option named in the same sentence is honoured.
+
+🔴 **A number that belongs to the option's NAME is not a quantity.** "I'll take the 8 count" is one
+8-count, not eight of them — and on a catalogue where every option is a number, that is the common
+case. Treat a number as a quantity **only** when it does not appear in the chosen option's own title.
+
+**The generalisation:** when one message must be read against a standing offer, try the acceptance
+path **first**, make it strictly stricter than the general resolver, and check what the router would
+do with the leftovers. Politeness, unit words and option numbers are all in that sentence, and each
+can hijack the turn.
+
+### 🔴 The conversation needs a SUBJECT, or it looks broken
+
+Reproduced live, one message apart:
+
+> **"tell me about the `<product>`"** → a correct, priced answer
+> **"how much is it?"** → *"I couldn't find that one."*
+
+Every turn resolved the product from **that message's own words**, and a pronoun has none — every
+token is a stopword, the score is zero, the lookup fails, and the turn dead-ends. To the person
+typing, this is the most damning thing an assistant can do: **it cannot follow its own last
+sentence.**
+
+- Persist a **subject** on the thread — the product the conversation is about — set from the turn's
+  offer, else the line just worked on.
+- Make it **sticky.** An account question or a policy detour midway through choosing does not change
+  what "it" refers to.
+- Consult it **only** when a real lookup has already failed **and** the message refers back (a
+  pronoun, "the one", "the large one"). That ordering keeps "do you sell phone chargers" an honest
+  miss rather than an answer about the last thing mentioned.
+- **Safety routes are unaffected** — they classify earlier, so an ingredient question about "it" is
+  still a mandatory handoff.
+
+⚠️ **Why no test caught it: every single-message test passed.** A subject bug is invisible unless the
+test is a **two-message flow**.
+
 **Same bug class, twice more:** a variant swap ("I'd rather have the brushed one") and an add-more
 ("also add the smaller one") both carry **no purchase verb**, so a buy gate never opens and the
 branch inside is unreachable. **When you add a lane that lives inside a gate, check the gate opens
@@ -533,6 +603,58 @@ Matching rules that prevent the quiet wrong answer:
   *called* that word, not the four others containing it.
 - **Only in-stock, buyable options are ever matched.**
 - **Diagnosis words stay out of the part-synonym map** — "leaking" is a symptom, not a part.
+
+### 🔴 Rank. Never gate-then-rank.
+
+The single largest source of complaints on a real build — **four separate "it can't find an obvious
+product" reports, all one cause.** A scoring threshold was applied *before* ranking, so it could
+discard the top-ranked candidate and the assistant denied knowing its own best seller.
+
+**The floor decides WHETHER to answer. The ranking decides WHAT.** A threshold that can bin the
+best candidate is a bug; safety comes from the suppression list and the tie-breaks, not from the
+floor. Keep the floor low (~0.34 worked) and let ranking do the work.
+
+**Score the whole product, weighted:** title `1.0` → options `0.7` → slug `0.6` → **the catalogue's
+own description prose `0.5`**. Ignoring descriptions throws away the best signal on the page — one
+product's prose contained the exact phrase customers type while its title did not. This is why the
+resolver fetches its curated set by **detail**, not list (list reads omit descriptions).
+
+🔴 **A brand's own name can be a clipped form of the word customers type.** One catalogue's flagship
+contained the brand's shortened stem and **never** the full word shoppers actually search. So allow
+the prefix family, with guard rails:
+
+- both tokens **≥ 4 characters**, length gap **≤ 3** — so `berries`/`berry` ✓ but **`car`/`cards` ✗**
+  (the documented false positive that offered gift cards to someone with a broken car), and a
+  stem against a QA record like `<stem>test` ✗ on the gap, which usefully keeps fuzzy matching away
+  from test data;
+- **an exact hit always outscores a family hit** (factor ~0.85), or a literal-title match ties with a
+  merely-similar sibling.
+
+**Tie-breaks, in order:** reliably priced → cartable → earlier (cheaper) ladder position.
+
+**Five scoring traps, each of which lost a real answer:**
+
+- **Strip stopwords** — the planner passes the whole sentence, so "how much is the `<product>`" must
+  score as "`<product>`".
+- **Score coverage of the QUERY, not of the title.** Normalising by title length ranks the wordier
+  title first: an unpriceable "… Sandwich Meal" out-scored the actual sandwich purely by having more
+  words.
+- **Exclude the product's own option words from the denominator.** "2 large fries" scored 0.5 and
+  fell under the floor because `large` is a size, not part of the name — losing the whole purchase.
+- **A shared unit word cannot decide an option.** A count like "5 ct" matched **all four** of one
+  product's sizes, because every option title contains `ct`. Score coverage of the *variant*, require
+  a unique best, and **ask on a tie**.
+- **A miss returns `near[]`** — the closest real products — so the planner offers something instead
+  of dead-ending. Keep the bare "couldn't find it" for a genuine zero.
+
+### 🔴 A safety route must never depend on a lookup failing
+
+A mandatory allergen handoff was firing **only because the matcher couldn't resolve the product.**
+Improving matching removed the accident, and the question started being answered as an ordinary
+product query — a safety regression caused by a *fix*.
+
+**Re-check every safety route whenever matching changes.** Classify safety **before** resolution, so
+the handoff never depends on a resolver's failure mode.
 
 **Superlatives are answers, not questions.** But **pin the best seller with evidence** (§A3): a
 "best sellers" collection is usually ordered by product id — newest first — so position 1 is not a
@@ -624,9 +746,41 @@ The cart built server-side is a **separate record** reached only by its own link
 storefront cart — the one the badge counts — is untouched. Saying "I've popped one in your cart" is a
 falsehood they can see.
 
+🔴 **This is a money bug, not a footnote.** A live operator already had items in their storefront
+cart; the assistant's checkout link took them to a cart **missing their own items**. Ask *"what
+happens to what they already had?"* before shipping any standalone cart.
+
+The shape that works:
+
+- the panel adds to the **shopper's real cart**, and on a **verified** add hands back the
+  **storefront's own** checkout URL (host-checked to same-origin or the checkout host) — because that
+  cart has everything, theirs and yours;
+- the standalone link survives only as a fallback, and is **labelled** as holding just these items;
+- the total row says **"These items"**, never "Subtotal", so it cannot contradict a real cart total.
+
 Offer both, honestly: a control that adds to their **real** cart via the storefront SDK, and the
 checkout link for the standalone cart. **A failure never renders "in your cart"** — fall back to the
-link. Implementation details (the postMessage bridge, and why you must resolve success from the
+link.
+
+🔴 **Send a DELTA, and apply nothing the person did not press.** The basket is cumulative, so a card
+carrying the whole basket as its action double-adds:
+
+| Turn | Card shows | Card added | Real cart |
+|---|---|---|---|
+| buys product A | A | A | A |
+| then buys product B | A + B | **A + B** | **A ×2** + B |
+
+So: the card **displays** the whole order, but its action is a **delta against a ledger of what
+already happened** — and that ledger lives on the **server**, keyed to the thread, because a panel
+that reloads forgets while the cart does not. Write to it only from a confirmed success.
+
+And **two explicit buttons** — "Add to my cart" and "Complete my order" — rather than applying
+automatically on arrival. The operator's words: *"I like the ability to choose rather than it
+automatically applying."* Clearer, and immune to this whole class of bug. Two traps in the second
+button: when the items are **already** in the cart it must ask the storefront for the checkout URL
+rather than re-sending the lines (the double-add again), and after any `await` the click is **no
+longer the current user gesture**, so a popup blocker can refuse `window.open` — fall back to a
+top-level navigation rather than leaving a dead button. Implementation details (the postMessage bridge, and why you must resolve success from the
 SDK's event rather than its promise) are in `references/reference-implementation.md`.
 
 ## 3.9 Not everything can be carted — some products must go to their page
@@ -725,6 +879,8 @@ Never print the secret ones back to the customer.
 | `cart_token` · `checkout_url` | From the cart call, taken verbatim | **token: YES** |
 | `basket` | The full basket composition, so every edit rebuilds rather than patches (§3.7) | no |
 | `last_offer` | The **typed** offer just made, so a bare "yes" resolves to the right thing (§3.2) | no |
+| `subject` | **The product the conversation is about**, so "how much is it?" resolves. Sticky across detours; consulted only after a real lookup fails (§3.3) | no |
+| `applied_ledger` | What has actually been added to the shopper's real cart, so the next card sends a **delta** rather than the whole basket (§3.8) | no |
 | `last_products[]` | Slug + title + option id of what you last showed, so "the second one" resolves | no |
 | `clarify_pending` | Whether the last turn was a clarifying question, so a second miss escalates | no |
 | `customer_session` | Present only if the implementation has verified auth | **YES** |
@@ -815,6 +971,21 @@ them is true.
 supports. Never claim a rating you didn't read. Bare "best" means best *seller*; explicit premium
 words ("fanciest", "top of the line") get the top of the ladder.
 
+🔴 **A superlative ALWAYS has an answer. This question may never fail.** On a real build *"what is
+the best product?"* was answered *"I couldn't find that one"* — a learn pattern matched "what is
+the", routed a superlative to a product **lookup**, matched no title, and fell out the not-found
+branch. Therefore:
+
+- **A superlative is a product REFERENCE, not a lookup** — classify it *before* price and learn.
+- Add a **recommend fallback at every not-found site** (product, buy, unclear): best / top / popular
+  / most shared / recommend / seller / "which one should I" / "what's good".
+- Check for a **buy verb** so *"I'll take your best one"* goes to the purchase path — never answer an
+  instruction with another offer.
+- Don't put a bare `what's` in a learn pattern: it swallows both "what's your best one?" and "what's
+  your return policy?".
+
+Pin **eight or more phrasings** with tests.
+
 **Out of stock → rearm the offer to the alternative** you just named, or a "yes" buys the sold-out
 one.
 
@@ -842,7 +1013,10 @@ The customer named a job, not a product. Full routine and guards:
 3. Out of stock → say so, offer the nearest in-stock alternate, **rearm the offer to it**, never
    link a dead buy.
 4. Options → ask the choice that matters **before** any cart call. A guessed option is a wrong
-   order.
+   order. **List the real options WITH their prices**, so the next message can be "medium" and land
+   the cart — a purchase should take **two turns**, not four. ⚠️ **Cap the list at ~6.** One drink
+   had eighteen variants and the question dumped all of them in one sentence; beyond that, quote the
+   real range and two real examples.
 5. **Check whether it's cartable (§3.9).** A configurable bundle gets an offer to *open it*, never an
    offer to cart it.
 6. Show the card, then make the matching typed offer — `cart:<slug>` if it can be carted,
@@ -875,7 +1049,12 @@ build a cart, do not guess the contents, do not promise a total.
 
 1. **Resolve the exact option** — their choice, else the default. Never invent one, never guess
    between two.
-2. **Confirm once, brightly**, naming product, option and price. Wait for yes.
+2. **Confirm once, brightly**, naming product, option and price. Wait for yes — **unless the
+   instruction is already unambiguous.** An explicit buy verb with product *and* option named builds
+   immediately: making someone confirm their own instruction is the round trip that makes this feel
+   slow, and no money moves (it is a cart, and the card names product, option and price before
+   anything can be charged). **The gate that matters is untouched:** an option you would have to
+   *guess* is still asked about, never assumed.
 3. **Rebuild the whole basket** through one call (§3.7). Store the basket, the token and the link.
 4. Read the response back: line, quantity, subtotal. **Never quote shipping or tax** — those resolve
    on the linked page once there's an address.
@@ -1167,8 +1346,24 @@ Company-neutral by design — they test behaviour, not specific products.
     chat is still greeted by name on the first message.
 47. **The card's copy passes both outbound guards** in a test, like every other hand-written string.
 
+**Matching, memory and money — the four-complaint class**
+48. **A product whose title carries a clipped brand stem rather than the word shoppers type** →
+    resolves. No threshold discards the top-ranked candidate.
+49. **"What is the best product?"**, in **eight** phrasings → always an answer. Never
+    "I couldn't find that one".
+50. **Two-message flow: "tell me about `<product>`" → "how much is it?"** → resolves from the
+    conversation's subject. This is the test single-message suites cannot catch.
+51. **A follow-up in the customer's units** ("I'll take the 8 count" against options titled "8 ct")
+    → carts one 8-count. Not eight of them, and not a different product.
+52. **A standing offer on a single-variant product, then an unrelated option phrase** → does **not**
+    buy it; the message falls through to the router.
+53. **Two consecutive add-to-cart turns** → the real cart holds one of each. The card's action is a
+    delta, and nothing is applied without a press.
+54. **A safety route with matching improved** → the allergen/medical handoff still fires. It never
+    depended on a lookup failing.
+
 **Portability**
-48. *(the portability grep — always the last test)* Grep this file and every reference for a real
+55. *(the portability grep — always the last test)* Grep this file and every reference for a real
     company name, product name, price or collection slug → zero hits. Company facts live only in the
     generated profile.
 

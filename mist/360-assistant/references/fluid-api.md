@@ -45,6 +45,30 @@ GET https://{shop}.fluid.app/api/v202604/posts?q=        ·  /posts/{slug}
 GET https://{shop}.fluid.app/api/v202604/enrollment-packs
 ```
 
+### 🔴 Read one real product and one real cart before writing the serialiser
+
+Every row below was wrong in a hand-written fixture and only surfaced against the live payload.
+
+| Field | Reality |
+|---|---|
+| `description.body` | **HTML.** Unstripped, the assistant literally reads the tags aloud — "`<p>`Our best…". |
+| `option_attrs` | A **VARIANT** field, not a product field. Read at product level it is always empty — silently disabling the dietary-option safety register, the highest-stakes one in the build. |
+| `default_variant` | `{ id, sku }` — **no title.** Titles live on `variants[]`. |
+| `status` | `"published"`, not `"active"`. |
+| `canonical_url` | Carries a path segment you would not guess. Which is why URLs are **copied**, never composed. |
+| variant price | Lives in `variant_countries[COUNTRY]`. |
+| `image_url` | 🔴 **Absent from the LIST and COLLECTION endpoints** — they return `images: {thumb, medium, large}` instead. Reading only `image_url` leaves every lane product imageless. Detail returns both. |
+| `item.image_url` (cart) | Already resolved to the **chosen variant** — genuinely a different picture from the product shot. |
+| `variant.image_url` | Often **null** while `variant.primary_image` holds the URL. Chain: `item.image_url` → `variant.primary_image` → `variant.image_url` → `product.image_url`. |
+
+🔴 **Some image renditions 404, per-product.** One best seller's `images.medium.url` was built from a
+bare filename with the folder prefix dropped; the same product's `image_url` was fine, and other
+products' renditions were fine. **So send an ordered candidate chain, not one URL**, and let the
+client walk it on error — a single URL plus hide-on-error leaves the most-recommended product with no
+picture, which reads as a design choice rather than a bug. Dedupe the chain, **drop non-absolute
+URLs** (a relative path resolves against the *panel's* origin), and key the `<img>` on its `src` or
+the browser keeps the failed request.
+
 **Fields the assistant may quote** (trim everything else before it reaches model context):
 `id · title · slug · canonical_url · status · in_stock · is_bundle · has_subscription_plans ·
 pricing.display_price · pricing.price · pricing.currency_code · pricing.compare_at ·
@@ -169,6 +193,9 @@ need asserting:
 | Guard | Why |
 |---|---|
 | **$0 total** | A supported country with **no local price** for the variant returns 200 with `price 0.0` and a perfectly normal link. Refuse it; offer a priced alternate. |
+| 🔴 **`amount_total` is NOT the subtotal** | Live it was `$7.18` against a `$5.18` subtotal, because the cart **auto-assigns a shipping method**. Quote `sub_total_in_currency` only, and never quote shipping or tax. |
+| **`valid_for_checkout` is `false` on every fresh cart** | No address or payment yet. It cannot gate the handover. |
+| **A requested line that did not land** | Compare what you asked for against what came back. Silently short carts exist. |
 | **Wrong checkout host** | Refuse a link whose host isn't the derived checkout host, so a staging link can never surface in production. |
 | **Placeholder variant name** | Single-variant products carry a placeholder title (`Default Title`, `Default Variant`, `Untitled Variant`). **The documented set is not exhaustive** — one company's variants were literally titled `a`, `b`, `c`. Derive the list per company (`catalog-profiling.md`) and strip them at source, so one is never read back as if the customer chose it. |
 | **`pricing: null`** | Distinct from `$0`, and it means the product cannot be sold at all. Never quote it, never offer it, never count it when answering "cheapest". |
@@ -191,9 +218,9 @@ of `bundle_group_items[]`, an order line, or a plan.
 **Other price fields that lie:**
 
 - **`buyable: true` is not a price check.** It is set even on `active: false` rows priced `0.0`.
-- **A per-country row can hold a figure in the wrong currency.** Verified: a JP row carrying `9.29`
-  rendered as `¥9 (JPY)` — a USD number displayed in yen. **Quote `display_price` verbatim and never
-  do FX arithmetic.**
+- **A per-country row can hold a figure in the wrong currency.** Verified: a yen row carried a USD
+  number and rendered it with a yen symbol. **Quote `display_price` verbatim and never do FX
+  arithmetic.**
 - **A variant's subscription price can exceed its one-off price** while the plan reports a discount.
   Read the plan, and if the two disagree, don't claim a saving.
 - **Subscription plans on one product can disagree with each other** — one at 10% off, another at

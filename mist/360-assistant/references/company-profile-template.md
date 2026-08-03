@@ -155,6 +155,12 @@ the whole setup.
 | Record | Problem | What fixing it unlocks |
 |---|---|---|
 
+Include **broken image renditions** here too — a rendition URL that 404s while the product's other
+images resolve is invisible until someone looks at the card.
+
+- **Price-sanity ceiling** (one real variant was priced ~800× its own siblings — a cart at or above
+  this ceiling needs refusing rather than quoting):
+
 ## Caveats
 - Markets/currencies with unpriced products (the $0-cart trap):
 - Products with `pricing: null` (unsellable, distinct from $0):
