@@ -112,7 +112,7 @@
     {
       "slug": "themes/theme-clone",
       "name": "Theme Clone",
-      "description": "Clone any website into a pixel-perfect Fluid theme — scrape the source, build sections, push, and visually verify against the original.",
+      "description": "Clone any website into a pixel-perfect Fluid theme \u2014 scrape the source, build sections, push, and visually verify against the original.",
       "category": "themes",
       "icon": "copy",
       "path": "themes/theme-clone/SKILL.md",
@@ -297,7 +297,7 @@
     {
       "slug": "marketing/brand-social-import",
       "name": "Brand Social Content Import",
-      "description": "Import a company's OWN YouTube + TikTok videos into Fluid: find the official accounts, register them in social-media settings, and pull their videos into the DAM + Media. Not UGC — this is the brand's own content.",
+      "description": "Import a company's OWN YouTube + TikTok videos into Fluid: find the official accounts, register them in social-media settings, and pull their videos into the DAM + Media. Not UGC \u2014 this is the brand's own content.",
       "category": "marketing",
       "icon": "video",
       "path": "marketing/brand-social-import.md",
@@ -306,7 +306,7 @@
     {
       "slug": "marketing/brand-setup",
       "name": "Brand Setup",
-      "description": "Interview the company to build a living brand.md — a brand-voice document that Mist, themes, portals, and widgets read to match the company's tone and style. Prefills colors/name from brand guidelines and saves via the update_brand_voice tool. Also use to append a single brand decision later.",
+      "description": "Interview the company to build a living brand.md \u2014 a brand-voice document that Mist, themes, portals, and widgets read to match the company's tone and style. Prefills colors/name from brand guidelines and saves via the update_brand_voice tool. Also use to append a single brand decision later.",
       "category": "marketing",
       "icon": "palette",
       "path": "marketing/brand-setup.md",
@@ -315,7 +315,7 @@
     {
       "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
-      "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix — approvals are applied and their impact is tracked.",
+      "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
       "category": "themes",
       "icon": "sparkles",
       "path": "themes/suggested-changes.md",
@@ -333,7 +333,7 @@
     {
       "slug": "compliance/compliance-manager",
       "name": "Country Compliance Manager",
-      "description": "Audit a storefront against a country's legal requirements — disclosure pages, price display, cookie/privacy law, agreements, product labeling, storefront language — using the Country Atlas as the rulebook. Runs standalone and as the final step of the mode finalizers.",
+      "description": "Audit a storefront against a country's legal requirements \u2014 disclosure pages, price display, cookie/privacy law, agreements, product labeling, storefront language \u2014 using the Country Atlas as the rulebook. Runs standalone and as the final step of the mode finalizers.",
       "category": "compliance",
       "icon": "scale",
       "path": "compliance/compliance-manager/SKILL.md",
@@ -351,7 +351,7 @@
     {
       "slug": "mist/smart-dashboard",
       "name": "Smart Dashboard",
-      "description": "Self-fabricate a live business dashboard from real data — gather what every department cares about, render it with show_dashboard, then learn what the user wants front-and-center and remember it.",
+      "description": "Self-fabricate a live business dashboard from real data \u2014 gather what every department cares about, render it with show_dashboard, then learn what the user wants front-and-center and remember it.",
       "category": "mist",
       "icon": "layout-dashboard",
       "path": "mist/smart-dashboard/SKILL.md",
@@ -360,16 +360,17 @@
     {
       "slug": "mist/360-assistant",
       "name": "360-Assistant",
-      "description": "Build and run a named, company-specific storefront concierge: profile the catalogue into curated lanes, name the assistant, then run it — recommendations that never surface spare parts, real cart links, honest account signposting, and a no-dead-end voice that never says \"I can't help with that\".",
+      "description": "Build and run a named, company-specific storefront concierge: probe the platform, profile the catalogue into curated lanes, pick the assistant's name with the operator (three brand-derived candidates or their own, plus a rename path), then run it \u2014 recommendations that never surface spare parts, answers to a described problem (\"my skin is dry\") matched from the products' own descriptions with a hard medical guard, spare-part lookup, real carts (with a redirect for bundles the customer must configure), honest account signposting, and a no-dead-end voice that never says \"I can't help with that\".",
       "category": "mist",
       "icon": "sparkles",
       "path": "mist/360-assistant/SKILL.md",
-      "updated_at": "2026-07-31T21:10:00Z",
+      "updated_at": "2026-08-03T19:10:00Z",
       "references": [
         "mist/360-assistant/references/catalog-profiling.md",
         "mist/360-assistant/references/company-profile-template.md",
         "mist/360-assistant/references/fluid-api.md",
         "mist/360-assistant/references/graceful-answers.md",
+        "mist/360-assistant/references/needs-and-safety.md",
         "mist/360-assistant/references/platform-limits.md",
         "mist/360-assistant/references/reference-implementation.md"
       ]
@@ -395,7 +396,7 @@
     {
       "slug": "sales/aov-lever-audit",
       "name": "AOV lever audit",
-      "description": "Find which levers actually move average order value — item count, bundles, discount depth — with a dollar figure per lever.",
+      "description": "Find which levers actually move average order value \u2014 item count, bundles, discount depth \u2014 with a dollar figure per lever.",
       "category": "sales",
       "icon": "trending-up",
       "path": "sales/aov-lever-audit.md",
@@ -458,7 +459,7 @@
     {
       "slug": "themes/clone-system-pages",
       "name": "Clone System Pages",
-      "description": "Build the Fluid system routes a source rarely exposes — themed 404 and 503 error pages with full shell, plus the reusable generic content-page template.",
+      "description": "Build the Fluid system routes a source rarely exposes \u2014 themed 404 and 503 error pages with full shell, plus the reusable generic content-page template.",
       "category": "themes",
       "icon": "triangle-alert",
       "path": "themes/clone-system-pages/SKILL.md",

@@ -3,13 +3,15 @@
 Run once per company during Part A, and again whenever the catalogue changes materially. Output is
 `company-profile.md`, the **only** place company facts live.
 
-Five artefacts, in this order:
+Seven artefacts, in this order:
 
 1. **Lane map** — shopper intent → the collection that actually answers it.
-2. **Suppression list** — what must never be recommended.
-3. **Pinned best-seller** — because collection order lies (Step 5).
-4. **Product ladder** — the price-ordered spine.
-5. **Caveats** — where the data will embarrass you.
+2. **Suppression list** — what must never be recommended, **and the one lane where it lifts**.
+3. **The parts lane + part synonyms** — so "my handle broke" is answerable at all (Step 5).
+4. **Pinned best-seller** — because collection order lies (Step 6).
+5. **Product ladder** — the price-ordered spine.
+6. **Description coverage** — whether problem-matching can work here at all (Step 8).
+7. **Caveats** — where the data will embarrass you.
 
 ---
 
@@ -88,7 +90,59 @@ Test the list against the real product list and record deliberate exceptions in 
 **Enforce it server-side in the tool dispatcher, not only in the prompt.** Policy in the prompt is
 a suggestion; policy in the dispatcher is a rule, and it protects both answer paths.
 
-## Step 5 — Pin the best-seller (do not trust collection order)
+🔴 **Suppression must be lane-scoped, not global.** A global list makes the assistant blind to the
+entire spares catalogue: "I need a new valve" hits the clarifier while a cheap valve kit sits in
+stock. Record **which lane lifts suppression** (Step 5) and keep it on everywhere else.
+
+General principle worth carrying to any hiding decision: **whenever you hide something for good
+reasons, ask what question that makes unanswerable, and give that question its own lane.**
+
+## Step 5 — The parts lane and the part-synonym map
+
+If the company sells spare parts, replacements or consumables, "my handle broke" is a real and
+frequent question — and the suppression list from Step 4 has just made it unanswerable. Give it its
+own lane.
+
+Record in the profile:
+
+- **The parts collection slug**, and a note that this is the lane where suppression lifts.
+- **A bigger page cap for it** than for recommendations — it's a catalogue being *searched*, not a
+  shortlist being *recommended*. Something like 40 vs 10.
+- 🔴 **That the lane must query the collection AND keyword search.** Neither covers the catalogue
+  alone. At one company the only valve product was **not** in the parts collection — a
+  collection-only lane would have said "we don't sell that" about something in stock.
+- **The part-synonym map:** words customers use that appear in **no** product title.
+  `handle → knob` · `tube → hose` · `washer → seal` · and so on. Derive it by reading the real part
+  titles and asking what a non-expert would call each one.
+- **Deliberately excluded: diagnosis words.** "leaking", "dripping", "blocked", "won't turn" are
+  symptoms, not parts. Mapping a symptom to a part is how someone is confidently sold the wrong $9
+  item; those go to a human instead (SKILL.md R3b).
+
+Note the part price band in the profile too. It's useful context for the assistant's copy and it
+makes an obviously-wrong match easier to spot in review.
+
+## Step 5b — Classify the bundles
+
+`filter[bundle]=true` enumerates the products the **platform** considers bundles. Run it, then check
+it against every collection whose *name* suggests bundles — they are frequently different sets, and
+sometimes disjoint.
+
+For each real bundle, record whether it is **fixed** (nothing to choose ⇒ cartable) or
+**configurable** (the customer picks ⇒ always open its page, never cart it). The quick test is each
+group's `group_type`: `included` leaves no choice, `customizable` does, and **one customizable group
+makes the whole product a redirect**. `fluid-api.md` has the full field-level test; SKILL.md §3.9 has
+the behaviour. **Default to configurable when you can't prove otherwise.**
+
+🔴 **Never infer from the title or the collection.** Verified live: a collection called "Bundles"
+held three products with `is_bundle: false` — ordinary single-SKU products with "Bundle" in the name,
+perfectly cartable — on a catalogue where the bundle filter returned nothing at all. Both halves of
+that mistake are available: refusing to cart a normal product, and carting one you had no right to.
+
+Also record any product **outside** the bundle system that still needs customer input before it can
+be bought — personalisation or engraving text, a gift-card amount and recipient, made-to-order
+fields. They follow the same redirect rule.
+
+## Step 6 — Pin the best-seller (do not trust collection order)
 
 "What's your best one?" is the most common opening question, and the obvious implementation is
 wrong.
@@ -106,7 +160,7 @@ Also record the **superlative map**: which product answers *popular*, *cheapest*
 Ambiguity resolves toward the cheaper reading — a bare "best" means best **seller**, because an
 expensive cart nobody meant is far worse than a cheap one they can trade up from.
 
-## Step 6 — Product ladder
+## Step 7 — Product ladder
 
 Price-ordered, one row per genuine hero, with the slot it fills (entry / mid / flagship / premium /
 add-on). This is the tie-break order and the answer to "cheapest way in?".
@@ -117,20 +171,43 @@ them live. The ladder's job is ordering, not quoting.
 **Watch for auto-generated slugs.** A product can carry a UUID-suffixed slug from an import. Never
 reconstruct a URL from a title — always copy the canonical URL from the response.
 
-**Watch for name prefixes.** Where one product's name is a prefix of another ("Cloud" / "Cloud+"),
+**Watch for name prefixes.** Where one product's name is a prefix of another (`<Name>` / `<Name>+`),
 record it: resolution must use whole-token equality or the pricier product wins by accident.
 
-## Step 7 — Decision facts
+## Step 8 — Description coverage (can problem-matching work here?)
+
+Problem-matching (SKILL.md R2b, `needs-and-safety.md`) matches a customer's described need against
+product **descriptions**, because product search is title-only. So it is only as good as the text the
+company actually wrote.
+
+Check and record:
+
+1. **Do descriptions exist** on the hero products, and are they more than a spec dump?
+2. **Do they contain the words a customer would use** about the problem the product solves — not the
+   marketing name for it? A description reading "Supports digestion, gut health and regularity" is
+   gold. One reading "Advanced formulation" is useless.
+3. **What fraction of the catalogue has usable description text?**
+
+A title-only catalogue **cannot** answer "my skin is dry", and it is far better to know that on day
+one than to ship a lane that silently never fires. If coverage is poor, record it as a caveat and
+either raise it with the company as a content fix or leave the lane switched off.
+
+## Step 9 — Decision facts
 
 Most catalogues have 1–3 facts that decide which product a customer needs (size, shape, clearance,
 power availability, model compatibility, plan tier). Find them in the top products' descriptions
 and any compatibility page. Record them as the questions to ask **before** recommending. This
 single item removes most wrong recommendations.
 
-## Step 8 — Claims, content, caveats
+## Step 10 — Claims, content, caveats
 
 - **Publishable claims** the assistant may quote, each with its source. Never a claim you can't
-  point at. Note explicitly where a number is a **count, not a rating**.
+  point at. Note explicitly where a number is a **count, not a rating**, and where a claim is
+  **company-wide rather than attachable to one product** — a sustainability or savings statistic
+  about the brand becomes a product claim the moment it's said next to a single item.
+- **The off-brand vocabulary the brand guide rejects.** This becomes an outbound guard, parallel to
+  the refusal guard, so record the actual words. Word-boundary match them: a brand's own coinage can
+  contain a banned substring.
 - **Policy/support page slugs**, and **which pages return an empty body** — imported catalogues are
   full of `200`-with-no-content pages, and runtime must treat empty as not-found.
 - **A policy area with no page at all** is a caveat worth flagging loudly: those questions can only

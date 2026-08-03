@@ -57,8 +57,72 @@ Behaviour that matters:
 - **Show-by-slug is permissive.** Draft, scheduled and inactive products still resolve by direct
   slug (they render `noindex`). Only archived/discarded 404. **So check `status` and `in_stock`
   yourself** — a `200` is not proof a product is sellable.
-- **`q` relevance is unreliable** for both categories and named products — see
-  `catalog-profiling.md`. Resolve through lanes first.
+- 🔴 **Product search is TITLE-ONLY.** It does not read descriptions. Verified live: a query for a
+  distinctive word from a product's own description returns **zero results** on a catalogue that
+  literally contains it. This is why problem-matching builds its own corpus from detail fetches
+  (`needs-and-safety.md`), and it is the first thing to re-verify at a new company.
+- **`q` relevance is also unreliable** for named products, not just categories — see
+  `catalog-profiling.md`. Resolve through lanes first; search is the fallback, and suppression still
+  applies to its results.
+- **SLUG TRAP:** create/update endpoints ignore a `slug` you send and generate one from the title, so
+  a URL composed from your own slug will 404. Quote `canonical_url` from the response.
+
+### 🔴 Bundles: two kinds, and only one of them is cartable
+
+Every product read carries `is_bundle` (boolean) and `bundle_groups[]`.
+
+- **`is_bundle: false`** → an ordinary product, **even if the word "Bundle" is in its title**. Cart
+  it normally.
+- **`is_bundle: true`** → assembled from `bundle_groups`, and its price is the *configured bundle
+  price*, not a variant price.
+
+Each group carries `id · title · description · group_type · min_selections · max_selections ·
+selection_type · allow_subscriptions · force_subscriptions · sort_order · pricing_config`, plus
+`bundle_group_items[]` (each with `bundled_variant_id` and `quantity`).
+
+**`group_type` is the fast discriminator.** Observed values:
+
+| `group_type` | Meaning | Leaves a choice? |
+|---|---|---|
+| `included` | Contents come as standard. `min_selections`/`max_selections` are `null`. | No |
+| `customizable` | The customer picks. Carries `min_selections`, `max_selections`, `selection_type: "exact"`. | **Yes** |
+
+**Verified live** on a real multi-group bundle: one `included` group of three fixed items, plus a
+`customizable` group of "pick exactly 1 of 2", plus another of "pick exactly 3 of 13". **One
+customizable group is enough to make the whole product a redirect.** Treat an unrecognised
+`group_type` as customizable.
+
+**Treat a bundle as configurable — and therefore not cartable — unless every group provably leaves
+no choice.** A group leaves a choice when `max_selections` exceeds `min_selections`, when
+`selection_type` implies picking, when `bundle_group_items` holds more options than the group takes,
+when subscriptions are selectable on it, or **when you can't tell because the fields are null or
+unfamiliar. Unknown means redirect.**
+
+This isn't stylistic. Adding a configurable bundle to a cart means sending `bundled_items[]` — one
+`{ variant_id, quantity, product_bundle_group_id }` per selection — which is the assistant choosing
+the contents of someone's basket for them. Exactly the guess SKILL.md §3.3 forbids, and §3.9 is the
+resulting behaviour.
+
+**`filter[bundle]=true` is the cheap way to enumerate real bundle products.** **Verified:** it
+returned **zero** on a catalogue whose "Bundles" collection held three products — all `is_bundle:
+false`, each a single SKU with its own default variant — and on a different company it returned
+almost the entire catalogue. The collection name is marketing; the flag is structural.
+
+Three more things a bundle does that will bite, all **verified live on one product**:
+
+- 🔴 **A bundle's master variant can be priced `0.0` in every country** while the product-level
+  `pricing` shows a real figure. Carting the default variant therefore produces a **$0 cart with a
+  normal-looking link** — the $0 guard below is not theoretical, it is the thing standing between you
+  and a free order.
+- **`pricing_config` on a group can disagree with the product's own price** (product `$10.00`, group
+  `country_pricing[US].price` `15`). When the price is ambiguous, that is one more reason to send them
+  to the page rather than quote a number.
+- **`Untitled Variant` is another placeholder title**, alongside `Default Title`. Strip both — never
+  read a placeholder back as if the customer chose it.
+
+Unrelated to bundles but the same family: **`in_stock: true` is not a promise of inventory.** Seen
+live with `track_quantity: false` and every warehouse level at zero. It means "purchasable", not "on a
+shelf" — so never turn it into a delivery or availability claim.
 - **Empty page bodies are common** on imported content. Blank body → treat as not-found.
 
 ---
@@ -114,10 +178,38 @@ of* pack contents, so keep fee / contents / total as three separate strings take
 cart. **Verified:** the enrollment-pack *list* endpoint carries no formatted price block at all, so
 the cart is the only authoritative source of a currency string.
 
+### 🔴 There are TWO carts, and only one of them is the shopper's
+
+The cart built through this API is a **separate record**, reachable only by its own checkout link.
+The shopper's storefront cart — the one the site's badge counts — is **untouched**. Telling them
+"I've popped one in your cart" is a falsehood they can see.
+
+To actually add to their real cart you must go through the storefront SDK, which lives on the
+storefront page, not in the chat iframe. So a cross-origin `postMessage` bridge is required:
+
+```
+panel  --postMessage 'add_to_cart'-->  loader (on the storefront, owns the SDK)
+       <--postMessage 'cart_result'--  SDK.addCartItems([...])
+```
+
+Three details, each of which fails silently otherwise:
+
+- 🔴 **Resolve success from the SDK's success EVENT, not the promise.** `addCartItems` resolves
+  `undefined` on failure by design, so awaiting it proves nothing. A documented no-op emits no event
+  at all — hence a timeout that reports failure rather than spinning forever.
+- **Use the array form** for a multi-line basket: one call, one success event. Line-by-line makes
+  partial failure indistinguishable from success.
+- **The loader passes its own origin** so the panel targets `postMessage` exactly, never a wildcard.
+
+**A failure never renders "in your cart"** — fall back to the checkout link.
+
+**Cap the basket** (a limit on lines, and per line). A runaway chat basket is far more likely a
+misparse than a real order, and it lands on someone's card.
+
 ### Not your job
 
 `…/complete`, `…/shipping`, `…/address`, `…/points`, and anything under the payment surfaces belong
-to the hosted checkout page. The assistant's involvement ends at the link, which is also why the
+to the hosted checkout page. The assistant's involvement ends at the cart, which is also why the
 app has **no PCI surface**.
 
 ---
