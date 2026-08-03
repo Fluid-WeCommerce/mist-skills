@@ -215,6 +215,79 @@ copy the SDK's entrance keyframe verbatim and apply it to the **root**, never th
 `forwards` fill locks the transform and kills the hover state); equal boxes aren't equal perceived
 weight, so a sparse glyph needs a larger size and heavier stroke than a dense one beside it.
 
+### 9a. The attention pulse — scoped, not permanent
+
+A soft ring expanding out of the launcher, drawn as a **pseudo-element** on the button so it adds no
+node to the tree:
+
+```css
+.btn::after { content:''; position:absolute; inset:0; border-radius:9999px;
+              border:2px solid <brand>; opacity:0; pointer-events:none; }
+.root.has-teaser .btn::after { animation: ring 2.4s ease-out infinite; }
+@keyframes ring { 0%{opacity:.7;transform:scale(1)} 70%{opacity:0;transform:scale(1.45)}
+                  100%{opacity:0} }
+```
+
+Three decisions in that, and the middle one is the point:
+
+1. 🔴 **The pulse is armed by the first-visit state, not by the base class.** It runs *while the
+   greeting card is up* and then stops forever. A launcher that pulses on every page view, for every
+   visitor, for the life of the site is not an invitation — it is a nag, and people learn to ignore
+   it. Scope the animation to the moment you have something to say.
+2. **`pointer-events: none` on the ring.** A pseudo-element scaled to 1.45 extends ~13px past its
+   host's box on a 60px button, and it will happily take clicks out there — silently widening the
+   launcher's hit area beyond anything visible. Same family as the §9 bug, one layer down.
+3. **`opacity: 0` in the resting state**, so the ring is invisible when the animation isn't running
+   rather than relying on the animation's `0%` frame to hide it.
+
+### 9b. The first-visit greeting card
+
+A small card above the launcher, shown **once per browser**, that introduces the assistant by name
+and offers one CTA that opens the chat.
+
+**State lives in `localStorage` on the storefront origin — deliberately, and this matters.** That is
+first-party storage, so it survives the third-party cookie blocking that breaks the chat iframe's own
+cookie (§7). The launcher is the one part of this system that *can* remember something reliably.
+Wrap the reads and writes: private mode throws.
+
+**Version the key** (`..._seen_v1`). Redesign the card later and you can re-show it once without
+inventing a migration.
+
+Six rules, each of which was a decision rather than a default:
+
+- 🔴 **Mark it seen on DISPLAY, not on dismiss or open.** Otherwise "once per browser" quietly means
+  "every page load until they interact", which is the most annoying possible reading.
+- **Delay it (~1.8s).** Greeting after the page settles reads as a welcome; appearing instantly reads
+  as an interruption.
+- 🔴 **Auto-hide it (~12s), and treat that as a correctness rule rather than polish.** On a narrow
+  screen the card overlaps the hero's primary CTA — **a greeting must never sit on top of the buy
+  button.** If it can't be dismissed automatically, it shouldn't be shown.
+- **Remove it from the DOM after its transition**, not just fade it, so it can't trap focus or
+  clicks.
+- **`role="status"` + `aria-live="polite"`** — announced to a screen reader without stealing focus.
+  It's an aside, not a dialog.
+- **Escape dismisses it** — and Escape while the panel is open closes the panel instead. One key,
+  two states, most-recent-first.
+
+🔴 **The card does NOT consume the server-side introduction.** It is client-side, easily missed,
+dismissible without being read, and per-browser rather than per-person — so the conversation's own
+first line still has to introduce the assistant when they actually open it (§7, `introduced_at`).
+Two surfaces, two jobs: the card is a poster, the greeting is a conversation. Wiring the card into
+the introduce-once flag produces a person who never says hello to anyone who ignored a poster.
+
+**And honour `prefers-reduced-motion`:** kill the entrance slide, the card's transition **and the
+pulse ring**. A permanently-animating ring is exactly what that setting exists to stop.
+
+### 9c. Let the page open it
+
+Two small affordances that cost nothing and get used immediately:
+
+- **A data attribute** (`data-<name>-open`) wired on mount, so any link, button or banner the theme
+  already has can open the assistant without touching this script.
+- **A global** with `open()`, `close()` and — genuinely useful — **`resetTeaser()`**, which clears the
+  first-visit key so the greeting can be demonstrated on demand. You will want this within an hour of
+  shipping.
+
 ## 10. Testing floor
 
 Every behavioural change needs a test that would fail without it. Then typecheck, lint **and build**.
@@ -293,12 +366,23 @@ fired, latency. Then watch:
 
 The last three are the cheapest possible guards on the rules a customer actually feels.
 
-## 14. Two authoring rules that bite once each
+## 14. Authoring rules that bite once each
 
-**🔴 Every `*.md` in a skill's `references/` directory is appended to the skill body at run time.**
-So a build log, a status report or a findings dump left in there is injected into the assistant's
-system prompt — silently, and forever. Keep `references/` to exactly what the runtime needs. Put
-logs and reports at the project root instead.
+🔴 **A build log has two places it can be destroyed, and they are not obvious.**
+
+1. **`references/*.md` is appended to the skill body at run time.** A build log, status report or
+   findings dump left there is injected into the assistant's system prompt — silently, and forever.
+2. **The project root is replaced when the skill is updated.** Verified the hard way: a log written
+   to the root was **gone** after the operator updated the skill. `references/` and the catalogue
+   index survived; the root `.md` did not.
+
+**So write build logs to `docs/`** — outside the runtime prompt, and outside the blast radius of an
+update. Keep `references/` to exactly what the runtime needs.
+
+🔴 **When you add a section to a numbered reference, grep for stale cross-references.** Inserting a
+new §14 pushed "Build order" to §15, and a pointer in `SKILL.md` kept saying §14 — so a handoff sent
+a build agent to the wrong section. Numbered headings are an interface: renumbering one is a breaking
+change to every file that cites it. `rg '§1[0-9]'` across the bundle takes two seconds.
 
 **Ship empty guard lists rather than invented ones.** Where a company has no brand guide, the
 off-brand vocabulary guard should ship as **real code with an empty word list** — not with bans you

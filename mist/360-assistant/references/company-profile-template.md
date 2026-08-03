@@ -37,6 +37,14 @@ So a later session resumes instead of restarting or provisioning a second app.
 - **Vibe** (1–2 lines in the brand's register):
 - **Signature move**:
 
+### First-visit greeting card  (§A5)
+The card shown once per browser above the launcher — see `reference-implementation.md` §9b. Brand
+copy, and it must pass both outbound guards in a test.
+- **Tagline** (2–4 words, what they are):
+- **Body** (one sentence, brand register, promises only what the assistant can deliver):
+- **CTA label**:
+- `localStorage` key + version (bump to re-show after a redesign):
+
 ### Name history
 The operator chooses the name (§A4) and renaming is customer-visible (§A4b) — read that section
 before changing it. Append a row each time; never overwrite one.

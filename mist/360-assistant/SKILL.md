@@ -242,10 +242,30 @@ hardcoded the name**.
 it by name, an unannounced change reads as a different company. Append to the profile's name history
 each time, with the date and the reason.
 
-## A5 — Write the persona
+## A5 — Write the persona, and the first-visit greeting card
 
 Four lines in the profile, derived from brand voice, not generic filler: **Name · Role · Pronouns ·
 Vibe** (1–2 sentences specific enough to change word choice) · **Signature move**.
+
+Then write the **first-visit greeting card** — the small card that appears above the launcher once
+per browser, introducing the assistant before anyone has clicked anything
+(`references/reference-implementation.md` §9b). It is the first sentence most visitors will ever read
+from the assistant, so it is brand copy and it belongs in the profile:
+
+| Field | Rule |
+|---|---|
+| **Tagline** | 2–4 words under the name. What they are, not what they do. |
+| **Body** | One sentence, in the brand's register, saying what they can actually do. Promise nothing the assistant can't deliver — this is the same honesty bar as everything else. |
+| **CTA label** | Short, in the brand's own CTA voice (the profile records those verbs). |
+
+Two constraints on this copy specifically:
+
+- **It must pass the outbound guards** — refusal vocabulary and off-brand words — like any other
+  hand-written string. It bypasses the runtime guard entirely, so a **test** has to run the guards
+  over it (§3.1).
+- **It is not the conversation's greeting.** The card can be missed, ignored or dismissed unread, so
+  the assistant still introduces itself on the first real message. Don't write copy that only makes
+  sense if they read the card.
 
 ## A6 — Generate the profile
 
@@ -282,6 +302,11 @@ Check specifically:
 
 Correct the profile and note what changed. **A correction found here is the system working** — log
 it, because the same class of error will recur at the next company.
+
+**And close the loop: a correction that generalises belongs in the skill, not just the profile.** If
+the mistake could happen at any company — a price read off the wrong object, a search result trusted
+too far, a destination that resolves but shouldn't be linked — it is a rule, and rules go here.
+Most of §3 arrived exactly that way, from a real build getting something wrong first.
 
 ## A8 — Report what you found, honestly, before building
 
@@ -340,7 +365,7 @@ that makes the assistant feel like one person — across two databases.
 4. **Hand the build to the new project's own chat.** Your sandbox is still the setup chat, so the
    code cannot be written here. Send the new project a spec that names this skill's files as the
    contract — Part B as the system prompt, `company-profile.md` as the company facts, and
-   `references/reference-implementation.md` §14 as the build order.
+   `references/reference-implementation.md`'s **Build order** section as the build order.
 5. 🔴 **Carry the profile across as bytes, not as a path.** Verified live: **a Mist project cannot
    `read_file_in` a skill project** — skill projects don't appear in its sibling registry, and may
    sit under a different workspace directory entirely. A handoff that says "read the profile at
@@ -1129,9 +1154,23 @@ Company-neutral by design — they test behaviour, not specific products.
 41. **"Yes" to a configure offer** → opens the page. It never builds a cart, and never falls through
     to the clarifier.
 
+**The launcher and the first visit**
+42. **The closed launcher blocks nothing.** At a phone viewport, a control underneath its box (a
+    product page's add-to-cart is sharpest) still fires — and the launcher still opens and closes.
+43. **The greeting card appears once per browser.** Second page load, and on a later visit → it does
+    not reappear. It is marked seen on **display**, so ignoring it counts.
+44. **The card auto-hides**, and never overlaps the hero's primary CTA at a phone viewport for
+    longer than its own timeout.
+45. **The attention pulse runs only while the card is up**, and stops for good afterwards. With
+    `prefers-reduced-motion`, it never runs at all.
+46. **Seeing the card does not consume the introduction** — a visitor who saw it and then opens the
+    chat is still greeted by name on the first message.
+47. **The card's copy passes both outbound guards** in a test, like every other hand-written string.
+
 **Portability**
-42. Grep this file and every reference for a real company name, product name, price or collection
-    slug → zero hits. Company facts live only in the generated profile.
+48. *(the portability grep — always the last test)* Grep this file and every reference for a real
+    company name, product name, price or collection slug → zero hits. Company facts live only in the
+    generated profile.
 
 # 12. Reference implementation
 

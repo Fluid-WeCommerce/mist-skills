@@ -12,17 +12,23 @@ page. That is what makes a persistent, cross-page assistant possible at all.
 ⚠️ **Installing the launcher edits a production theme, so it needs explicit operator sign-off** —
 identify the *active* theme rather than assuming, and don't push to it as part of setup. A
 badly-built launcher covers most of a phone viewport with a transparent div and kills add-to-cart
-sitewide (`reference-implementation.md` §9), which is a merchant-visible outage rather than a
+sitewide (see the launcher hit-testing section in `reference-implementation.md`), which is a
+merchant-visible outage rather than a
 cosmetic bug.
 
-Two details worth copying:
+Three details worth copying:
 
 - **Take an existing slot rather than adding a third control.** Commerce SDKs often already render
   their own floating buttons. Hiding a lower-value one (a lead-capture bubble) and taking its place
-  keeps the corner at two controls instead of three.
+  keeps the corner at two controls instead of three. Hide it with **CSS, not DOM removal**, so it
+  holds however late the widget mounts — and so removing the script restores the original launcher.
 - **Match the host's own motion.** Copy the SDK's entrance keyframe so the launcher arrives the way
   the cart does. Apply it to the root element, never the button — a `forwards` fill on the button
   locks its transform and kills the hover state.
+- **The launcher is the one piece of this system with reliable memory.** It runs on the storefront
+  origin, so its `localStorage` is first-party and survives the third-party cookie blocking that
+  breaks the chat iframe's own cookie. That is what makes a genuinely once-per-browser first-visit
+  greeting possible (`reference-implementation.md` §9b).
 
 ## Account destinations: verify one serves a sign-in before you link it
 
