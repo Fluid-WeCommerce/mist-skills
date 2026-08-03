@@ -505,6 +505,11 @@
       "slug": "speed-import",
       "path": "workflows/speed-import.workflow.json",
       "updated_at": "2026-07-30T18:00:00Z"
+    },
+    {
+      "slug": "catalog-launch-guard",
+      "path": "workflows/catalog-launch-guard.workflow.json",
+      "updated_at": "2026-07-31T23:20:00Z"
     }
   ]
 }
