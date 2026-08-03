@@ -11,6 +11,13 @@ stock state, URL and account fact is still read live, every turn.
 
 ---
 
+## Setup state  (§A0)
+So a later session resumes instead of restarting or provisioning a second app.
+- Assistant app: **created? / project id / URL** —
+- Build status (scaffolded · in progress · running) —
+- Which Part A steps are complete, and which are outstanding —
+- Last verified (§A7) on —
+
 ## Identity
 - Company name:
 - Storefront host / shop handle:

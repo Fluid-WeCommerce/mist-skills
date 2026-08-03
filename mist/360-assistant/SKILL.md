@@ -40,8 +40,12 @@ price, or collection slug into *this* file, it belongs in the profile instead.
 
 | The request is… | Run |
 |---|---|
-| "set this up for `<company>`", a first install, or the catalogue changed materially | **Part A**, once |
+| "set this up for `<company>`", a first install, or the catalogue changed materially | **Part A**, starting at **§A0** |
 | a shopper talking to the assistant | **Part B**, every turn |
+
+**Part A always starts at §A0**, which checks whether setup already happened for this company — a
+re-run resumes at the first missing step instead of duplicating work or, worse, provisioning a second
+app.
 
 Part A **writes** `references/company-profile.md`. Part B is the operating contract loaded as the
 assistant's system prompt, and it **reads** that profile. Neither half works alone — the
@@ -49,6 +53,8 @@ implementation refuses to serve chat while the profile is missing or still the u
 
 ## Setup — Part A, in order, once per company
 
+0. **§A0 Check whether setup already happened here.** A filled profile, or an app that already
+   exists, means you resume rather than restart. 🔴 **Never propose a second app for one company.**
 1. **§A1 Read the company.** Brand voice, identity, content, account surfaces. Open every page you
    intend to cite; imported ones routinely return `200` with an empty body.
 2. **§A2 Probe the platform for THIS company.** Search behaviour, collection ordering, bundles,
@@ -97,6 +103,28 @@ Output: one generated file, `references/company-profile.md`, auto-appended to th
 
 **Everything here must be verified against that company's live API.** An assumption carried over
 from another company is the single most likely source of a confident lie.
+
+## A0 — Check whether setup already happened here
+
+**Run this first, every time.** Setup is frequently re-run — a catalogue changed, an earlier attempt
+stopped halfway, or someone is simply repeating the skill on a company that already has an assistant.
+Re-profiling from scratch is wasted work; **proposing a second app is worse than wasted.**
+
+Establish, before touching the API:
+
+| Check | If it's already there |
+|---|---|
+| Does a filled `references/company-profile.md` exist for **this** company? | Read it. Don't regenerate it. Jump to **A7** and verify it against live data. |
+| Does an assistant app already exist for this company? | **Do not propose creating another.** Skip to **A9 step 4** — the handoff — and say which app you're building into. |
+| Is the assistant already running? | You're in **A10**, not A1. Run the tests and report. |
+
+**Ask the operator when you can't tell.** *"Is there already an assistant app for this company, or am
+I creating one?"* is one short question that prevents a duplicate hosted stack — which costs real
+money and splits the conversation history across two apps.
+
+If setup did stop halfway, say what exists and what doesn't, then resume at the first missing step
+rather than starting over. A profile written yesterday plus an app created today is a completed
+setup; two apps is a mess someone has to clean up.
 
 ## A1 — Read the company
 
@@ -293,6 +321,10 @@ then waits to be told the obvious next thing.
 
 **The deliverable is a running assistant.** Unless the operator has said not to, proceed to create
 it in the same session.
+
+🔴 **First: if an app already exists for this company (A0), skip straight to step 4.** Never propose a
+second one. A duplicate hosted stack costs real money and splits the conversation history — the thing
+that makes the assistant feel like one person — across two databases.
 
 1. **Propose it and get an explicit approval click**, because this provisions a real hosted stack
    (an app, a database, an embed registration). Use `human_in_the_loop` with:
