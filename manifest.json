@@ -358,6 +358,35 @@
       "updated_at": "2026-07-23T00:00:00Z"
     },
     {
+      "slug": "mist/wisp-install",
+      "name": "Install Wisp session replay",
+      "description": "Install and configure Wisp session replay on a Fluid company from zero — droplet install, write key, Global Embed pixel, and proof that a real session recorded.",
+      "category": "mist",
+      "icon": "monitor-play",
+      "path": "mist/wisp-install/SKILL.md",
+      "updated_at": "2026-07-31T23:55:00Z",
+      "references": [
+        "mist/wisp-install/references/global-embed-api.md",
+        "mist/wisp-install/references/verify-and-troubleshoot.md",
+        "mist/wisp-install/references/dev-install-and-privacy.md"
+      ]
+    },
+    {
+      "slug": "mist/wisp-insights",
+      "name": "Wisp insights across sessions",
+      "description": "Turn a vague question about the storefront into a grounded answer across the whole Wisp session corpus — every claim carrying a session the merchant can watch.",
+      "category": "mist",
+      "icon": "telescope",
+      "path": "mist/wisp-insights/SKILL.md",
+      "updated_at": "2026-08-01T00:30:00Z",
+      "references": [
+        "mist/wisp-insights/references/connect-and-troubleshoot.md",
+        "mist/wisp-insights/references/signals-and-thresholds.md",
+        "mist/wisp-insights/references/what-wisp-cannot-know.md",
+        "mist/wisp-insights/references/sql-path.md"
+      ]
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
