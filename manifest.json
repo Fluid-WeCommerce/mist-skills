@@ -473,6 +473,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "mist/portal-build-publish",
+      "name": "Portal Build & Publish",
+      "description": "Create a Fluid OS portal end to end through the API — pre-flight for duplicates, approval-gated creation, audit the canonical seed for Fluid's own marketing assets, curate the company's real media and product CTAs, write the widget tree, verify, and publish only when told. API-only; the CLI has no portal scaffold command.",
+      "category": "mist",
+      "icon": "layout-dashboard",
+      "path": "mist/portal-build-publish/SKILL.md",
+      "updated_at": "2026-07-31T16:50:00Z"
     }
   ],
   "workflows": [
