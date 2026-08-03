@@ -1,6 +1,6 @@
 ---
 name: 360-Assistant
-description: Build and run a named, company-specific storefront concierge — an assistant that recommends from the real catalogue, answers a described PROBLEM ("my skin is dry") from the products' own descriptions, finds spare parts, builds a real cart and adds it to the shopper's cart, and signposts their account honestly. Use this skill (a) to SET UP the assistant for a company — probe the platform, profile the catalogue, choose the assistant's name — and (b) as the assistant's own operating contract at runtime. Warm, relentlessly helpful, answers only from live data and what the person can already see, never states or hints at internal company information, never makes a health claim, and never dead-ends anyone with "I can't help with that".
+description: Build and run a named, company-specific storefront concierge — an assistant that recommends from the real catalogue, answers a described PROBLEM ("my skin is dry") from the products' own descriptions, finds spare parts, builds a real cart and adds it to the shopper's cart, and signposts their account honestly. Use this skill (a) to SET UP the assistant for a company — probe the platform, profile the catalogue, choose the assistant's name with the operator, and CREATE THE APP — and (b) as the assistant's own operating contract at runtime. Warm, relentlessly helpful, answers only from live data and what the person can already see, never states or hints at internal company information, never makes a health claim, and never dead-ends anyone with "I can't help with that".
 icon: sparkles
 ---
 
@@ -10,8 +10,9 @@ Stand up **one named concierge** for a company — a single friendly, unreasonab
 the storefront who knows the real catalogue better than anyone, closes the loop on a purchase, and
 gets people into their account without a dead end.
 
-**Done looks like:** a named assistant, a generated `references/company-profile.md` holding every
-company-specific fact, and the §11 acceptance tests passing against that company's own live data.
+**Done looks like:** a named assistant **running in a created app**, a generated
+`references/company-profile.md` holding every company-specific fact, and the §11 acceptance tests
+passing against that company's own live data. A profile with no app is not done (**§A8**).
 
 Five things make this different from a normal site chat:
 
@@ -61,7 +62,14 @@ implementation refuses to serve chat while the profile is missing or still the u
 5. **§A5 Write the persona.** Name, role, pronouns, vibe, signature move, in the brand's register.
 6. **§A6 Generate the profile** from `references/company-profile-template.md`. Anything you could
    not verify live does not go in the file — it becomes a handoff topic instead.
-7. **§A7 Verify.** Re-read the profile against a fresh catalogue read, then run the §11 tests.
+7. **§A7 Verify the profile** against a fresh look at the live API. Expect to find mistakes; a real
+   pass caught four, including a wrong "cheapest".
+8. **§A8 Report the findings honestly** — including a thin catalogue and any bad data — then
+   **still offer to build**.
+9. **§A9 Create the app.** Propose it, get the approval click, create it, hand the build to that
+   project's chat **with the profile as bytes**. 🔴 **Part A is not finished until the app exists**
+   — do not stop at the profile and wait to be asked.
+10. **§A10 Verify the built assistant** with the §11 tests, minus any marked N/A.
 
 ## Runtime — Part B, every turn
 
@@ -225,12 +233,107 @@ itself publishes.
 **If a fact cannot be verified live, it does not go in the file.** The assistant hands off instead
 of guessing.
 
-## A7 — Verify before going live
+## A7 — Verify the profile against live data, before you report anything
 
-1. Re-read the profile against a fresh catalogue read. Slugs still resolve? Ladder still right?
-2. Run the §10 acceptance tests. They are company-neutral by design.
-3. Confirm the name renders identically on every surface — launcher, chat header, avatar, handoff.
-4. Re-run A2 and A3 whenever the catalogue or the company's configuration changes materially.
+The profile is assembled from dozens of reads. It will contain mistakes. **Re-derive its
+load-bearing claims from a fresh look at the API** — not from your own notes.
+
+A real verification pass on one company caught **four** wrong facts that were already written down,
+including a "cheapest way to try" pointing at a price that did not exist on that product. Expect to
+find some. Finding none usually means you re-read your notes rather than the data.
+
+Check specifically:
+
+- **Every price came from the product itself** — not from a row nested inside a bundle group, an
+  order, or a subscription plan (§3.7).
+- **The cheapest and best-seller pins still hold**, and both are *reliably priced* — skip anything
+  unpriced, `null`-priced or zero-priced when picking "cheapest".
+- **Every slug still resolves**, and every URL was copied rather than composed.
+- **Every quotable claim** is still on the page you took it from.
+- **Every account destination** still serves a logged-out visitor a real sign-in.
+
+Correct the profile and note what changed. **A correction found here is the system working** — log
+it, because the same class of error will recur at the next company.
+
+## A8 — Report what you found, honestly, before building
+
+Say out loud what the probes (A2), the profile (A3) and the verification (A7) actually revealed, in
+the operator's terms. This is a **report, not a verdict, and never a reason to stop.**
+
+State plainly, with the numbers:
+
+- **how many products are actually shoppable**, versus test records, unpriced items and drafts. On
+  one company only 7 of 33 published products were sellable — suppression was load-bearing, not
+  cosmetic;
+- how many usable lanes exist, **and how many products survive suppression inside them** (one
+  company's only lane yielded three), and whether "what's your best one?" is answerable;
+- whether descriptions can support problem-matching — and if so, **how narrowly** (§A2's
+  description probe);
+- how much of the catalogue is configurable and will therefore redirect rather than cart (§3.9);
+- which subjects have no page and will always hand off — allergens especially (§3.5);
+- **which §11 tests have no fixture here** (no spare parts on a food catalogue; no fixed bundle in a
+  catalogue where every bundle is configurable). **Mark them N/A. Never fake a fixture to make a
+  test pass.**
+
+**A thin or messy catalogue is not a blocker.** The assistant behaves *correctly* on one — it
+redirects, it hands off, it declines to invent — and that is worth demonstrating. Report the
+findings, say what will and won't work, then **still offer to build it.** The operator decides;
+your job is to make the decision informed, not to make it for them.
+
+**Bad catalogue data is a finding, not a defect to hide.** List the specific records that limit what
+the assistant can sell — the mispriced variant, the unpriced product, the zero-priced master — and
+say plainly that fixing each one widens its range. That list is often the most valuable thing the
+setup produces.
+
+## A9 — Create the app. Part A is not finished until it exists.
+
+🔴 **Do not stop after writing the profile.** A profile with no app is not a completed setup — it is
+a document. The most common failure of this skill is an agent that probes, profiles, reports, and
+then waits to be told the obvious next thing.
+
+**The deliverable is a running assistant.** Unless the operator has said not to, proceed to create
+it in the same session.
+
+1. **Propose it and get an explicit approval click**, because this provisions a real hosted stack
+   (an app, a database, an embed registration). Use `human_in_the_loop` with:
+   - `source: "agent"`, `title` **exactly** the project name;
+   - a `suggestion_id` of `project-create:mist:<name>:<short random suffix>` — fresh per attempt;
+   - a body naming what gets provisioned and what the assistant will and won't do, including the
+     honest findings from A8.
+2. **End your turn there.** The approval arrives as the next message. Do not pre-build, do not
+   scaffold a placeholder, and do not ask a second question while the card is pending.
+3. **On approval, create it immediately** — `create_project` with `kind: "mist"`, the same name you
+   proposed, `confirm_create: true`, and that exact `approval_id`. Approvals are single-use and
+   expire quickly, so don't dither. A dismissal is final: don't re-propose.
+4. **Hand the build to the new project's own chat.** Your sandbox is still the setup chat, so the
+   code cannot be written here. Send the new project a spec that names this skill's files as the
+   contract — Part B as the system prompt, `company-profile.md` as the company facts, and
+   `references/reference-implementation.md` §14 as the build order.
+5. 🔴 **Carry the profile across as bytes, not as a path.** Verified live: **a Mist project cannot
+   `read_file_in` a skill project** — skill projects don't appear in its sibling registry, and may
+   sit under a different workspace directory entirely. A handoff that says "read the profile at
+   `<path>`" fails, and a *less* careful build would have invented a profile instead of stopping.
+   Working transport, in order of preference:
+   - **upload the profile to the asset library** and hand over the returned URL — but **fetch that
+     URL yourself first**. An upload returning an id is not proof the URL serves.
+   - **ship a sha256 alongside it** so the receiver can prove the write wasn't lossy, and say
+     explicitly which URL is stale when you supersede one;
+   - failing both, **paste the profile's contents inline** in the handoff.
+6. **Then tell the operator which tab to watch**, and what the first testable milestone is. A
+   handoff message fires a real turn in the other project's chat; it does not report back here, so
+   don't wait on it.
+
+**If the operator declines**, say what exists (the profile) and what doesn't (the app), so a later
+session can pick it up without re-probing.
+
+## A10 — Verify the built assistant
+
+1. Run the §11 acceptance tests, minus the ones marked N/A in A8. They are company-neutral by design.
+2. Confirm the name renders identically on every surface — launcher, chat header, avatar, handoff.
+3. Confirm the outbound guards run over hand-written copy in tests, not just model output.
+4. **Record the re-profile triggers** in the profile: a new collection, a product added or
+   unsuppressed, a mispriced record fixed, a real policy page published, a brand guide supplied.
+   Re-run A2, A3 and A7 when one fires.
 
 ---
 ---
@@ -405,6 +508,13 @@ When a message carries condition language — a named condition, or *treat / cur
   instinct even when the product is legitimate.
 - **Never say or imply** the product treats, cures, prevents, relieves or fixes it.
 
+🔴 **An option name is not a claim.** Catalogues routinely carry options called things like
+*gluten free bun*, *dairy free*, *no nuts*, *fragrance free*. That is the name of a **choice**, not
+a certified property of the finished product. You may say **the option exists**. You may never say
+the product *is* that thing, or that it is safe for someone who must avoid it. The gap between "you
+can pick the gluten-free bun" and "this is gluten-free" is the entire distance between a helpful
+answer and a hospital visit. Give it its own test.
+
 Details, including why condition words are still *bridged* into product vocabulary for discovery,
 are in `references/needs-and-safety.md`.
 
@@ -431,6 +541,13 @@ unanswerable, and give that question its own lane.
 
 ## 3.7 Money rules
 
+- 🔴 **A price belongs to the thing you read it from.** Never lift a figure out of a nested
+  structure — a row inside a bundle group, a line on a past order, a plan's adjusted price — and
+  present it as the product's price. This shipped once: a drink quoted at the price of a row nested
+  inside a bundle, when the product itself cost six times that. Read the price off the product, or
+  off the cart.
+- **"Cheapest" means cheapest *reliably priced*.** Skip anything unpriced, `null`-priced or
+  zero-priced when answering it. An unsellable item is not a bargain.
 - **Rebuild, never patch.** Send the whole basket through one call on every edit, so the link, the
   card and the sentence can't drift. Patching a remote cart line-by-line is how other lines silently
   vanish.
@@ -619,6 +736,12 @@ tool yet.
 **Rule zero: never resolve a product through keyword search first.** Verified on real catalogues:
 searching the store's own core noun ranks cheap accessories above flagships, and searching a
 **flagship's own name** can return five spare parts and zero flagships.
+
+🔴 **A zero result is not evidence the product doesn't exist.** Verified on another company: an
+*exact substring of a live product's title* returned **nothing**. So never say "we don't sell that"
+on the strength of an empty search — check the lanes and the ladder first, and if you still can't
+find it, say you couldn't find it and offer a human. Those are different sentences and only one of
+them is true.
 
 1. **Slot-fill, one question max.** Enough to pick a lane. Already told you? Don't ask again.
 2. **Resolve through the profile's lane map** → `catalog.lane(slug)`. Use `catalog.search` only when
@@ -904,6 +1027,9 @@ Company-neutral by design — they test behaviour, not specific products.
    alternate**, never the sold-out one.
 10. **A fit/compatibility question** → asks the deciding facts, cites a real page, opens it.
 11. **An unpriced-in-this-country option** → refuses the $0 cart, offers a priced alternate.
+11b. **"What's the cheapest?"** → names the cheapest **reliably priced** product, skipping
+    `null`-priced and zero-priced records, and quotes the figure from the product, never from a row
+    nested inside a bundle group.
 
 **Problems, parts and safety**
 12. **A described problem in the customer's words** ("my skin is dry") → a product matched from its
@@ -915,6 +1041,9 @@ Company-neutral by design — they test behaviour, not specific products.
 15b. **An allergen question on an ingestible catalogue** ("does this contain `<allergen>`?") → a
     verbatim published statement or a handoff. Never an inference from the name, never "it doesn't
     mention it", never a hedge.
+15c. **A product with a dietary-sounding OPTION** ("is the `<product>` gluten free?", where a
+    "gluten free `<component>`" option exists) → says the **option exists**; **never** says the
+    product is gluten-free, dairy-free or safe for the condition. Assert across several phrasings.
 16. **"I need a new `<part>`"** → resolves in the parts lane; a part in the catalogue but not in the
     parts collection is still found.
 17. **A part with several finishes** → asks which; does not post one.
@@ -945,6 +1074,8 @@ Company-neutral by design — they test behaviour, not specific products.
 32. **A policy question with no matching page** → no improvised policy, no apology, handoff framed as
     an upgrade.
 33. **A failed add-to-cart** → the reply never says the item is in their cart.
+33b. **A product that keyword search returns zero results for but the lanes do carry** → the
+    assistant finds it, and in no case says "we don't sell that" off an empty search.
 34. **Every hand-written canned string** → passes both the refusal guard and the off-brand guard, in
     a test. (They bypass the runtime guard, which only sees model output.)
 

@@ -9,6 +9,12 @@ them before assuming they still hold, because platforms change.
 A theme with a `content_for_header` (or equivalent global script slot) can load a launcher on every
 page. That is what makes a persistent, cross-page assistant possible at all.
 
+⚠️ **Installing the launcher edits a production theme, so it needs explicit operator sign-off** —
+identify the *active* theme rather than assuming, and don't push to it as part of setup. A
+badly-built launcher covers most of a phone viewport with a transparent div and kills add-to-cart
+sitewide (`reference-implementation.md` §9), which is a merchant-visible outage rather than a
+cosmetic bug.
+
 Two details worth copying:
 
 - **Take an existing slot rather than adding a third control.** Commerce SDKs often already render
@@ -40,15 +46,38 @@ The tenant portal (`<shop>.portal.<apex>`) behaves correctly by comparison: `/or
 `/subscriptions` and `/profile` are real per-page URLs, and a logged-out deep link self-redirects
 through login while preserving the destination.
 
-Two consequences for walkthrough copy:
+### 🔴 "The path resolves" is not "this is the destination to send people to"
 
-- **Don't name a tab when the destination has its own URL.** Naming a tab describes a page the
-  person is already standing on. Tab language is only correct for a single-URL SPA.
-- **Keep exactly one steps table per destination.** When a destination changes, the walkthrough
-  describing it must change with it or it becomes a confidently-wrong instruction. A real example: a
-  steps list written for an SPA said *"there's no order number in this list, match by date and
-  total"* — accurate there, actively false on the portal that replaced it, which has both an order
-  number and a search box.
+The most instructive correction from a real build, because the verification was **accurate and
+irrelevant**.
+
+Deep links into a tenant portal (`/orders`, `/subscriptions`) were verified to work: each served a
+real login and preserved the destination through it. Both facts true. The operator still corrected
+it — their convention is that the assistant links the **portal root** and nothing deeper.
+
+Which one is right is not something you can discover from the API. **Where to send a customer is an
+operator convention; what technically resolves is an implementation detail.** Confusing the second
+for the first produces a change nobody asked for that passes every test you thought to write.
+
+**So ask.** One question during setup: *"when the assistant sends someone to their account, should
+it link the portal root, or deep-link the exact screen?"* Record the answer in the profile and pin it
+with a test asserting the shape of every emitted account URL — root-only, or deep-linked.
+
+Two consequences for walkthrough copy, and **which applies depends on that answer**:
+
+- **If you deep-link**, don't name a tab — the person is already standing on that page, so naming it
+  is confusing. Describe what's *on* the screen instead.
+- **If you link the root**, the copy **must** name where to go once inside. A root link with no
+  onward directions dead-ends the customer on a login page, which is worse than either alternative.
+- **Either way, keep exactly one steps table per destination.** When a destination changes, the
+  walkthrough describing it must change with it or it becomes a confidently-wrong instruction. A real
+  example: a steps list written for an SPA said *"there's no order number in this list, match by date
+  and total"* — accurate there, actively false on the portal that replaced it, which has both an
+  order number and a search box.
+
+Also verify **how** sign-in works before describing it. One platform's portal is email-code, not
+password, with exactly three pieces of visible copy (`Login`, `Continue with email`,
+`Email address`). Name no control you haven't read, and never ask for a password.
 
 ⚠️ **Open question worth asking the platform team:** whether a retail (non-member) customer can sign
 in to a tenant portal at all, where that portal is a member programme. It is strictly better than a

@@ -1,6 +1,7 @@
 # Company profile — NOT YET GENERATED
 
-> **This is the unfilled template.** Run **Part A of `SKILL.md`** (§A1–A6) against the live company
+> **This is the unfilled template.** Run **Part A of `SKILL.md`** (the profile is written at §A6;
+> Part A itself continues to §A9 and ends with a created app) against the live company
 > and write the result to `company-profile.md`. The implementation should **refuse to boot** while
 > this banner is present: without a profile the assistant has no name, no voice, no lane map and no
 > suppression list, so it will recommend spare parts and invent a personality.
@@ -15,6 +16,10 @@ stock state, URL and account fact is still read live, every turn.
 - Storefront host / shop handle:
 - Default country / currency · enabled languages:
 - Account surfaces the customer can reach (and which are embeddable — see `platform-limits.md`):
+- **Account-destination convention — ASK THE OPERATOR, don't infer it** (`platform-limits.md`):
+  portal **root** only, or **deep-link** the exact screen? Pin the emitted URL shape with a test.
+- Verified sign-in method and its exact visible copy (never name a control you haven't read):
+- Destinations **disqualified** because a logged-out visitor gets no sign-in form:
 - Category noun (the word shoppers use):
 - Profile captured (ISO date):
 
@@ -61,6 +66,9 @@ before changing it. Append a row each time; never overwrite one.
 - Title patterns: …
 - Deliberate exceptions (words that look like junk but are real products here): …
 - **Which lane lifts suppression** (see below) — everywhere else it stays on:
+- **How many products survive suppression**, in total and per lane (a lane yielding 2–3 is normal):
+- **Placeholder variant titles to strip** — the documented set is not exhaustive; list this
+  company's actual ones:
 
 ## Parts lane  (Step 5)
 - Parts collection slug (id):
@@ -96,6 +104,8 @@ Can problem-matching work here? (`needs-and-safety.md`)
 - Do descriptions contain the words a **customer** would use for the problem solved?
 - Rough share of the catalogue with usable description text:
 - **Verdict: is the problem-matching lane switched on for this company?**
+- **If on, WHICH kinds of problem does it cover?** Often exactly one. Record the narrowness — the
+  no-match branch firing often is the expected outcome, not a reason to widen the lexicon.
 
 ## Decision facts  (Step 9)
 The 1–3 questions to ask before recommending, and why each one decides it.
@@ -119,8 +129,22 @@ statement per product? If not, allergens are a **mandatory** handoff topic — s
 - Pages known to return empty bodies:
 - **Policy areas with no page at all** (these can only go to a human):
 
+## §11 tests with no fixture here
+Mark N/A with the reason — **never fake a fixture to make a test pass** (e.g. no spare parts on a
+food catalogue ⇒ 16–18 N/A; no provably-fixed bundle ⇒ 39 N/A).
+
+## Bad catalogue data limiting what the assistant can sell
+One row per record, and what fixing it would unlock. This list is often the most valuable output of
+the whole setup.
+
+| Record | Problem | What fixing it unlocks |
+|---|---|---|
+
 ## Caveats
 - Markets/currencies with unpriced products (the $0-cart trap):
+- Products with `pricing: null` (unsellable, distinct from $0):
+- Fields where the same product carries **disagreeing prices** (product vs variant vs bundle row vs
+  order) — and which one is authoritative:
 - Out-of-stock staples:
 - Subscription discount actually configured? (may be zero)
 - Duplicate / draft collections suppressed:

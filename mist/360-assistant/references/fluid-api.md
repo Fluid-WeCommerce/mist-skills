@@ -61,9 +61,16 @@ Behaviour that matters:
   distinctive word from a product's own description returns **zero results** on a catalogue that
   literally contains it. This is why problem-matching builds its own corpus from detail fetches
   (`needs-and-safety.md`), and it is the first thing to re-verify at a new company.
+- 🔴 **It is worse than title-only: an EXACT SUBSTRING of a live product's title can return zero.**
+  Verified on a second company — a published, in-stock product whose title contained the searched
+  phrase word for word did not come back. **A zero result therefore proves nothing about whether the
+  product exists.** Never let the assistant say "we don't sell that" on the strength of an empty
+  search (SKILL.md R2).
 - **`q` relevance is also unreliable** for named products, not just categories — see
   `catalog-profiling.md`. Resolve through lanes first; search is the fallback, and suppression still
   applies to its results.
+- **Result order is frequently descending product id**, not relevance — so the top hit is the newest
+  record, which on a sandboxed or migrated catalogue is usually test data.
 - **SLUG TRAP:** create/update endpoints ignore a `slug` you send and generate one from the title, so
   a URL composed from your own slug will 404. Quote `canonical_url` from the response.
 
@@ -163,7 +170,8 @@ need asserting:
 |---|---|
 | **$0 total** | A supported country with **no local price** for the variant returns 200 with `price 0.0` and a perfectly normal link. Refuse it; offer a priced alternate. |
 | **Wrong checkout host** | Refuse a link whose host isn't the derived checkout host, so a staging link can never surface in production. |
-| **Placeholder variant name** | Single-variant products carry a placeholder title (e.g. `Default Title`). Strip it at source so it is never read back as if the customer chose it. |
+| **Placeholder variant name** | Single-variant products carry a placeholder title (`Default Title`, `Default Variant`, `Untitled Variant`). **The documented set is not exhaustive** — one company's variants were literally titled `a`, `b`, `c`. Derive the list per company (`catalog-profiling.md`) and strip them at source, so one is never read back as if the customer chose it. |
+| **`pricing: null`** | Distinct from `$0`, and it means the product cannot be sold at all. Never quote it, never offer it, never count it when answering "cheapest". |
 | **Attribution shape** | **Verified:** only top-level `attribution: { fluid_rep_id }` persists. Every other spelling returns 200 with `attribution: null`. Assert it; warn on miss. |
 | **Subscription saving** | **Verified:** a subscribe-and-save plan can be configured at **0.00**. Read the live number and let the copy flip automatically — never hardcode "you save". |
 
@@ -172,6 +180,26 @@ therefore a cart *rebuild*, not a label swap: create the cart again and quote th
 response returns. Carrying the previous total across a swap misquotes the order. Persist the
 quantity and the cart kind (one-off / subscription / membership) so the rebuild cannot silently
 change either.
+
+🔴 **A price belongs to the object you read it from.** The same product can be represented in four
+places with four different numbers — verified live on one drink: the **product** said `$3.39`, its
+own **default variant** said `$0.55`, a row for it nested in a **bundle group** said something else
+again, and a **completed order** said `$0.50`. Lifting the nested figure and calling it the product
+price shipped a wrong "cheapest" answer. Read the price off the product, or off the cart. Never out
+of `bundle_group_items[]`, an order line, or a plan.
+
+**Other price fields that lie:**
+
+- **`buyable: true` is not a price check.** It is set even on `active: false` rows priced `0.0`.
+- **A per-country row can hold a figure in the wrong currency.** Verified: a JP row carrying `9.29`
+  rendered as `¥9 (JPY)` — a USD number displayed in yen. **Quote `display_price` verbatim and never
+  do FX arithmetic.**
+- **A variant's subscription price can exceed its one-off price** while the plan reports a discount.
+  Read the plan, and if the two disagree, don't claim a saving.
+- **Subscription plans on one product can disagree with each other** — one at 10% off, another at
+  exactly zero. Read the specific plan you're about to name.
+- **Duplicated option axes:** a variant can return the same option twice, in both orders
+  (size/soda-type, then soda-type/size). Read the variant `title` rather than reassembling options.
 
 **Money is quoted, never computed.** Especially for enrollment: a joining fee is charged *on top
 of* pack contents, so keep fee / contents / total as three separate strings taken verbatim from the

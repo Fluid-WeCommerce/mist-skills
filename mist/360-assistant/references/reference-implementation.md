@@ -242,6 +242,10 @@ The habits that caught real bugs, and the traps that hid them.
 
 - **Run the negative control.** A check that would also pass for deliberately invalid input is not
   verification. (A `return_to` parameter appears on a login page for a nonsense route too.)
+- **Fetch a URL yourself before telling another agent to rely on it.** An upload that returns an id
+  is not proof the URL serves, with the right content type, un-truncated.
+- **Ship a sha256 with any file you hand over**, so the receiver can prove the write wasn't lossy —
+  and say explicitly which copy is stale when you supersede one.
 - **Measure, don't eyeball.** A ~60px placement shift is invisible at thumbnail scale. Crop the
   *same* region from before/after captures and compare.
 - ⚠️ **A network-frozen isolated preview does not execute injected scripts** — the launcher is simply
@@ -289,7 +293,20 @@ fired, latency. Then watch:
 
 The last three are the cheapest possible guards on the rules a customer actually feels.
 
-## 14. Build order
+## 14. Two authoring rules that bite once each
+
+**🔴 Every `*.md` in a skill's `references/` directory is appended to the skill body at run time.**
+So a build log, a status report or a findings dump left in there is injected into the assistant's
+system prompt — silently, and forever. Keep `references/` to exactly what the runtime needs. Put
+logs and reports at the project root instead.
+
+**Ship empty guard lists rather than invented ones.** Where a company has no brand guide, the
+off-brand vocabulary guard should ship as **real code with an empty word list** — not with bans you
+made up and attributed to the brand. Adding words later becomes configuration; inventing them now
+becomes a fake constraint nobody can trace. Same reasoning for a `parts` lane on a catalogue with no
+spare parts: wire it inert, mark the tests **N/A, and never fake a fixture to make one pass.**
+
+## 15. Build order
 
 1. Session + thread store + chat loop with catalogue and UI tools → substance and safety tests.
 2. Cart + both cart controls → the purchase tests.

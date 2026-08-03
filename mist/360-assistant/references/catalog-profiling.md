@@ -87,6 +87,16 @@ Two layers, because either alone leaks:
 **A word that is junk at one company is a flagship at another** — "kit" may be the hero bundle.
 Test the list against the real product list and record deliberate exceptions in the profile.
 
+**Count what survives, and say so.** Suppression is often load-bearing rather than cosmetic: on one
+company **21 of 33 published, in-stock products were QA records**, and the single published
+collection yielded **three** products once cleaned. A lane that returns almost nothing is a finding
+for the A8 report, not a reason to loosen the list.
+
+**Also derive the placeholder-title list here.** Single-variant products carry a filler variant
+title, and the documented ones (`Default Title`, `Default Variant`, `Untitled Variant`) are **not
+exhaustive** — one company's were literally `a`, `b`, `c`. Read the real variant titles and record
+every non-descriptive one, so none is ever read back to a customer as a choice they made.
+
 **Enforce it server-side in the tool dispatcher, not only in the prompt.** Policy in the prompt is
 a suggestion; policy in the dispatcher is a rule, and it protects both answer paths.
 
@@ -165,6 +175,12 @@ expensive cart nobody meant is far worse than a cheap one they can trade up from
 Price-ordered, one row per genuine hero, with the slot it fills (entry / mid / flagship / premium /
 add-on). This is the tie-break order and the answer to "cheapest way in?".
 
+🔴 **Only reliably-priced products go on the ladder**, and the "cheapest" pin especially. Exclude
+anything `null`-priced, zero-priced, or priced only in a country the shopper isn't in — an
+unsellable item is not a bargain. And take each price **off the product itself**: a figure lifted
+from a row nested inside a bundle group produced a wrong "cheapest" answer on a real build
+(`fluid-api.md`).
+
 Record prices as **reference figures with a capture date**, and state that runtime must re-read
 them live. The ladder's job is ordering, not quoting.
 
@@ -187,6 +203,10 @@ Check and record:
    marketing name for it? A description reading "Supports digestion, gut health and regularity" is
    gold. One reading "Advanced formulation" is useless.
 3. **What fraction of the catalogue has usable description text?**
+4. **Which *kinds* of problem do they cover?** The answer is often "exactly one". A food catalogue's
+   descriptions carried hunger and group-feeding language and nothing about wellness or diet — so
+   the lane is genuinely on, and genuinely narrow. **Record the narrowness**, and never widen the
+   lexicon later to force matches (`needs-and-safety.md`).
 
 A title-only catalogue **cannot** answer "my skin is dry", and it is far better to know that on day
 one than to ship a lane that silently never fires. If coverage is poor, record it as a caveat and

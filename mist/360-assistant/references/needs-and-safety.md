@@ -73,6 +73,18 @@ question to a face balm. **Anchor at a word boundary.**
 the match and say it verbatim. Paraphrase is precisely how *"supports regularity"* becomes *"fixes
 your constipation"* — which is Part 2's problem.
 
+### The lane can be ON but narrow — and that's fine
+
+A catalogue's descriptions may support problem-matching for **one kind of problem only**. Verified
+live: a food catalogue's descriptions carried hunger and group-feeding vocabulary ("hungry",
+"feeding your fam", "perfect spread") and **zero** wellness or dietary vocabulary. Problem-matching
+works there, for exactly one family of question.
+
+🔴 **Do not widen the lexicon to force matches.** The temptation, on seeing the no-match branch fire
+often, is to add terms until something hits. That converts a correct "I'm not sure — what are you
+after?" into a confident wrong answer. The no-match branch firing is the *expected* outcome on a
+narrow catalogue. Record the narrowness in the profile and leave the matcher honest.
+
 ### Testing it
 
 Fixtures for this lane should be a **different kind of shop** than the one you're building on — a
@@ -130,10 +142,26 @@ free?"*, *"does this have peanuts?"*, *"is it dairy free?"*, *"is this vegan?"*
 **The rule is stricter than everywhere else in this skill: quote a published ingredient or allergen
 statement verbatim, or hand off. There is no third option.**
 
+🔴 **An option name is not an allergen claim.** This is the one most likely to be got wrong, because
+the data actively invites it. Catalogues carry options named *gluten free bun*, *dairy free*,
+*no nuts*, *fragrance free* — those are the names of **choices a customer can make**, not certified
+properties of what arrives. Verified live on a food catalogue: a sandwich offered a "gluten free bun"
+option and published **no allergen statement at all**.
+
+- ✅ "There's a gluten-free bun option on that one."
+- ❌ "That one's gluten-free." ❌ "That's safe if you're coeliac." ❌ "It's dairy-free if you pick no
+  cheese."
+
+Same for every dietary-sounding option: carb, dairy, nut, sugar, fragrance. **Pin it with a test**,
+because the phrasing that crosses the line is one word away from the phrasing that doesn't.
+
 - **Never infer from a product name, a category, or the absence of a mention.** "It doesn't say
   peanuts" is not "it has no peanuts", and a fried item's shared fryer or a facility's cross-contact
   will never appear in a marketing description.
-- **Never generalise across a range.** One item's statement says nothing about its siblings.
+- **Never generalise across a range.** One item's statement says nothing about its siblings. A real
+  catalogue had exactly two products publishing one allergen fact — *"pressure cooked in 100%
+  refined peanut oil"* — quotable **verbatim on those two**, and applicable to nothing else on the
+  menu.
 - **No published statement ⇒ hand off**, and say why in the customer's terms — you want them to have
   the real answer, not your reading of a product page.
 - **Preparation claims are out of scope entirely.** Cross-contamination, shared equipment and
