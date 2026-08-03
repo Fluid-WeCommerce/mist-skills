@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "profile_id": "example-fitness-us",
+  "company": {
+    "subdomain": "example-fitness",
+    "display_name": "Example Fitness"
+  },
+  "portal": {
+    "definition_name": "Example Fitness Partners",
+    "definition_id": 123,
+    "screen_path": "portal/screens/partner-home.json",
+    "anchor_id": "LayoutWidget-partner-home-hero"
+  },
+  "campaign": {
+    "disclosure": "When someone uses your link, the purchase may be attributed to you.",
+    "partner_segments": [
+      { "id": "coach", "label": "Coach", "audience_noun": "clients" },
+      { "id": "gym_club", "label": "Gym or club", "audience_noun": "members" },
+      { "id": "wellness_professional", "label": "Wellness professional", "audience_noun": "clients" }
+    ],
+    "goals": [
+      { "id": "product_discovery", "label": "Product discovery" },
+      { "id": "membership_conversion", "label": "Membership conversion" }
+    ]
+  },
+  "storefront": {
+    "banner": {
+      "enabled": true,
+      "name_prefix": "example-fitness-partner-campaign",
+      "domain": "shop.example.com",
+      "path": "*",
+      "country_ids": [1],
+      "language_ids": [1],
+      "placement": "top",
+      "behavior": "dismissible",
+      "priority": 100,
+      "styles": {
+        "width": "full_width",
+        "background_color": "#111111",
+        "text_color": "#FFFFFF",
+        "button_color": "#FFFFFF",
+        "button_text_color": "#111111",
+        "shadow": "none"
+      }
+    }
+  }
+}
