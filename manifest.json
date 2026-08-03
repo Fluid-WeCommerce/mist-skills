@@ -133,6 +133,20 @@
       ]
     },
     {
+      "slug": "themes/rtl-localization",
+      "name": "RTL localization",
+      "description": "Localize a file-based Fluid theme for an RTL-language market (Arabic, Hebrew, Persian, Urdu). Always mirrors the layout via dir + CSS logical properties on the shared theme and fixes directional sections in place; asks the user whether the market also needs different content before creating any variant template. No section copies.",
+      "category": "themes",
+      "icon": "align-right",
+      "path": "themes/rtl-localization/SKILL.md",
+      "updated_at": "2026-07-31T00:00:00Z",
+      "references": [
+        "themes/rtl-localization/references/direction-map.md",
+        "themes/rtl-localization/references/special-sections.md",
+        "themes/rtl-localization/references/fluid.md"
+      ]
+    },
+    {
       "slug": "themes/theme-source-inventory",
       "name": "Theme Source Inventory",
       "description": "Capture a fresh, machine-verifiable Home/Shop/PDP source bundle with exact copy, DOM, screenshots, and exhaustive image/video evidence before a Fluid theme build.",
