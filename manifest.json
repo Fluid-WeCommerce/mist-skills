@@ -47,6 +47,15 @@
       "updated_at": "2026-06-20T00:00:00Z"
     },
     {
+      "slug": "themes/theme-section-report",
+      "name": "Theme Section Report",
+      "description": "Audit the active company's database-backed theme for manual template code, broken section references, and classified orphan sections without making changes.",
+      "category": "themes",
+      "icon": "scan-search",
+      "path": "themes/theme-section-report.md",
+      "updated_at": "2026-07-31T20:44:46Z"
+    },
+    {
       "slug": "themes/image-optimization",
       "name": "Optimize theme images",
       "description": "Add responsive, lazy-loaded images and videos to Fluid Liquid themes with the media_tag filter (srcset/sizes/width/height/loading) and ImageKit transforms.",
