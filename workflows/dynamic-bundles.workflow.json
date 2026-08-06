@@ -1,0 +1,180 @@
+{
+  "slug": "dynamic-bundles",
+  "name": "Dynamic Bundles",
+  "description": "Execution engine for the themes/dynamic-bundles skill. Understands a company's existing bundle implementation (or a source configurator page) and recreates it as Fluid Dynamic Bundles, with one reusable theme implementation that renders every current and future bundle. Phases 1-3 are READ-ONLY; nothing writes until the caller has confirmed the plan and passed `context.approved: true`.",
+  "maxParallel": 3,
+  "steps": [
+    {
+      "id": "preflight",
+      "name": "Resolve company and preflight",
+      "prompt": "Establish what you are working on before touching anything.\n\n1. GET `/api/company/v1/companies/me` — record company id and subdomain (`fluid_shop`). You need the subdomain for the cart test in step 8.\n2. GET `/api/application_themes/active` — record the active theme id and name. Routing is a `template_resources` join **scoped to the active theme**, so every later routing claim is relative to this id.\n3. GET `/api/v2025-06/bundles` — READ ONLY. Record how many bundles already exist and their slugs. This endpoint omits `product_id`, so never use it to get from bundle to product.\n4. Read `context` for `source_url` (a configurator page to mirror) and `approved`. Note which are present.\n\nSTEP_OUTPUT: company id, subdomain, active theme id + name, existing bundle count, and whether a source_url was supplied.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The report names the company id, the `fluid_shop` subdomain, and the ACTIVE theme id and name, each quoted from a successful GET this turn.",
+        "Existing bundles were listed via GET /api/v2025-06/bundles and the count is stated (zero is a valid answer).",
+        "The report states whether context.source_url and context.approved were present — no assumption either way."
+      ],
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "study-company",
+      "name": "Study the catalog and classify candidate shapes",
+      "prompt": "Find the products that should become bundles — and, critically, the ones that should NOT. Follow `playbooks/01-discovery.md`.\n\n1. Page `/api/company/v1/products` at `per_page=50` (**`per_page=100` returns zero products with no error**). Record every product that has `options` with more than one value, plus every product already carrying `product_bundle_groups`.\n2. For each candidate, record **the option id** and the option's values.\n3. Classify each candidate with the shape test — this is the step that prevents the most expensive mistake available:\n   - Option values are **components of one sellable item** (protein, rice, size-of-the-same-thing) → **bundle**.\n   - Option values are **separate sellable items that already exist as their own products** → **category/collection**, NOT a bundle.\n   Products sharing a *look* do not share a shape. In the reference campaign, seven near-identical 'menu item' products split three ways across three different option ids; converting a flattened category into one bundle destroys a browsable listing and advertises one wrong price.\n4. Record each candidate as fixed kit (contents named, one price → one `included` group at `fixed_price`), configurable (shopper chooses → `customizable` groups), or **both** (a category page of fixed kits where each card also has a CUSTOMIZE link — that is N fixed-kit products PLUS one configurable bundle, not one or the other).\n5. Note the theme's CSS token lineage (`--clr-*` vs `--color-*`) and container mechanism for step 6.\n\nSTEP_OUTPUT: a table of candidate → option id → values-are-components|separate-items → bundle|category → fixed|configurable|both.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Products were listed via GET /api/company/v1/products at per_page<=50, and the report names each candidate by id and title.",
+        "EVERY candidate carries its own option id and an explicit components-of-one-item vs separate-sellable-items classification. A blanket claim that a group of products 'share a pattern' is a fail — the option id must be cited per product.",
+        "Any candidate classified as category/collection rather than bundle is named with the reason, so it is excluded from the write phase.",
+        "Each bundle candidate is labelled fixed kit, configurable, or both.",
+        "The report names the theme's CSS token lineage and container mechanism."
+      ],
+      "dependsOn": [
+        "preflight"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "source-analysis",
+      "name": "Source configurator analysis",
+      "prompt": "Only run when `context.source_url` is present; otherwise emit `STEP_OUTPUT: no source_url supplied; skipped` and stop.\n\nFollow `playbooks/01-discovery.md` §6. Crawl the source configurator with `crawl(url, formats: ['markdown','html'], only_main_content: false)` and extract, verbatim:\n- every group heading and its selection rule (`Choose One`, `Up to Three`, included-with-no-choice)\n- every option with its **exact price and calorie/qualifier text**\n- which options are preselected\n\nTwo hard rules:\n1. **Never trust imported catalog prices as source of truth.** Read prices off the source. In the reference campaign the importer had catering proteins at $50/$50/$61 while the live page said $52/$52/$63 — the catalog was wrong before anyone touched it.\n2. If the source is bot-gated (Kasada/Cloudflare) and the crawl fails, say so plainly and ask the operator to paste the rendered HTML. Do not infer a menu you could not read.\n\nAlso record whether the page is a category of fixed kits, a single builder, or both (a kit grid where each card has its own CUSTOMIZE link).\n\nSTEP_OUTPUT: group-by-group structure with verbatim prices, the page's shape verdict, and how the evidence was obtained (crawled | operator-pasted | unavailable).",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Either the source URL was crawled this turn and the report contains the verbatim group headings, selection rules and per-option prices, OR the report states plainly that the source was unreadable and names what it asked the operator for.",
+        "The report gives an explicit shape verdict: category-of-fixed-kits | single-configurable-builder | both.",
+        "No price in the report is sourced from the Fluid catalog when source evidence was available — prices are quoted from the source page."
+      ],
+      "dependsOn": [
+        "preflight"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "plan-translation",
+      "name": "Plan the translation",
+      "prompt": "Produce `bundle-plan.json` per `playbooks/02-translation.md` and `schemas/bundle-manifest.schema.json`. Still READ-ONLY — no writes in this step.\n\nFor each product to convert or create, plan:\n- group list with `group_type` (`customizable` | `included`), `selection_type`, min/max, `pricing_config`\n- every item with its variant id and its intended `config.price`\n- the **before** price span of the variants being replaced, and the **intended after** `price_range`\n\nApply the pricing rules from `playbooks/08-api-write-recipe.md` §4 while planning, because they change what is safe to include:\n- `included` groups add the sum of **all** their components' resolved prices to the floor.\n- Optional `fixed_price` (`max_only`) groups add **nothing**.\n- Optional `dynamic_price` groups add their **cheapest** item even at `min_selections: nil` — so an optional paid add-on group raises the advertised 'from' price. Flag any such group for explicit operator acceptance.\n- `fixed_price: \"0.00\"` is **ignored**; components fall back to their own variant price. Only genuinely $0 variants belong in a free group.\n\nFor any candidate classified as category/collection in the study step, plan a collection instead of a bundle, and say so.\n\nSTEP_OUTPUT: the plan, plus a per-product before → intended-after price line, plus an explicit list of any groups that will raise the advertised floor.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "A bundle-plan.json was produced that validates against schemas/bundle-manifest.schema.json.",
+        "Every planned product carries a before price span and an intended after price_range, so step 5 has something to diff against.",
+        "Any planned group that would raise the advertised floor (an optional dynamic_price group, or a priced component inside an included group) is called out explicitly for operator acceptance rather than buried.",
+        "No write calls were made in this step — the report contains no create/update/PATCH of a product.",
+        "Candidates classified as category/collection are planned as collections, not bundles."
+      ],
+      "dependsOn": [
+        "study-company",
+        "source-analysis"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "write-bundles",
+      "name": "Write the bundle records",
+      "prompt": "**Approval gate.** If `context.approved` is not exactly `true`, emit `STEP_OUTPUT: not approved; no writes performed` and STOP. Money is involved; the calling skill is responsible for the human confirmation.\n\nWrite through **Surface A only** — `POST /api/company/v1/products/create_bundle_product` and `PATCH /api/company/v1/products/{id}/update_bundle_product`. `/api/v2025-06/bundles` is read-only here: it skips validation and writes `bundles.settings` without mirroring to `products.bundle_config`, so exclusivity written there is silently ignored by the cart.\n\nFollow `playbooks/08-api-write-recipe.md` exactly. The load-bearing parts:\n- `title` is required even on an update (omitting it 422s).\n- **Create = ONE call.** `bundle: true` persists on `create_bundle_product` with groups in the same request.\n- **Convert = TWO calls.** On `update_bundle_product`, `bundle: true` does NOT persist alongside groups — the groups are created while `is_bundle` stays false, `bundle_config` stays `{}` and no Bundle row syncs. A second, groups-free `{id, title, bundle: true, status}` call fixes it.\n- Teardown (`option_attrs: []`, master repriced to `0.0` via `variant_countries_attributes[].id`, `_destroy` for other variants) goes in the SAME call as the groups — never leave a priced variant axis alongside a priced component group.\n- Route each product immediately after its flag call, before starting the next product: `PATCH /api/company/v1/products/{id} {application_theme_template_id}`. Between the two calls an unrouted bundle renders $0.00 with no picker.\n- `images_attributes` APPENDS on PATCH — send `_destroy` for the old image id when swapping.\n\nAfter each product, read it back and compare `price_range` to the plan's intended value.\n\nSTEP_OUTPUT: per product — id, is_bundle, group count, price_range before → after, template id, and whether it was create (1 call) or convert (2 calls).",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "If context.approved was not true, NOTHING was written and the report says so. Otherwise every product below applies.",
+        "For every written product the report quotes `is_bundle: true` and an actual `price_range` value read back AFTER the write — not the word 'verified'.",
+        "Every converted product's price_range is compared to the plan's intended value, and any difference is explained (a moved minimum means the shelf price changed).",
+        "Each converted product shows evidence of the two-call sequence (structure call, then a groups-free flag call); each created product shows the single create call.",
+        "Every written product has a non-null application_theme_template_id, confirmed via GET /api/application_theme_templates/{id}/available_themeables.",
+        "No writes were made through /api/v2025-06/bundles."
+      ],
+      "dependsOn": [
+        "plan-translation"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "theme-implementation",
+      "name": "Generate the theme implementation",
+      "prompt": "Install the reusable bundle section per `playbooks/03-theme-generation.md`. One implementation must render every current and future bundle — no per-bundle templates.\n\nCopy `templates/sections/bundle_builder/index.liquid`, `templates/assets/bundle-builder.js`, `templates/assets/bundle-builder.css` and `templates/product/bundle/index.liquid` into the theme, then adapt ONLY what the study step recorded about the host theme (token lineage, container mechanism, button/list resets).\n\nNon-negotiables:\n- Detect a bundle with `product.product_bundle_groups.size > 0`. Not `is_bundle` (API-only), not `slug`/`handle` (nil in page and section scope), not `bundle_in_stock` (true on non-bundles).\n- **Never pin `bundle_product` on a `product/*` template** — it hard-wires one bundle and drops hidden groups.\n- Read exclusivity from `product.bundle_config.mutually_exclusive_groups`; it holds `sort_order`s, not group ids, in two possible shapes, and is `null` (not `[]`) on older bundles.\n- Build `bundled_items` per `SKILL.md` rule 3 and 4: tag EVERY entry with `product_bundle_group_id`, collapse duplicate variants into `quantity`, and **omit every group whose `group_type == \"included\"`** (except an included group inside an exclusive pair). A product whose only group is `included` sends NO `bundled_items` at all.\n- Add-to-cart must be enabled when every group is either `included` or optional. A fixed kit has nothing to select; gating the CTA on 'all required groups chosen' leaves every fixed kit permanently unclickable while the API side looks perfectly healthy.\n\nSTEP_OUTPUT: files written, the detection expression used, the theme adaptations made, and the CTA-enablement rule implemented.",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "acceptance": [
+        "The section, JS, CSS and host template exist in the theme, and the report names each path.",
+        "Bundle detection uses product.product_bundle_groups.size > 0 — the report quotes the expression.",
+        "`bundle_product` is NOT pinned on any product/* template.",
+        "The cart payload builder demonstrably tags every entry with product_bundle_group_id, collapses duplicates into quantity, and skips included groups except exclusive members.",
+        "The report states the add-to-cart enablement rule and confirms a product whose only group is `included` yields an enabled CTA and an empty bundled_items array."
+      ],
+      "dependsOn": [
+        "write-bundles"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "route-and-render",
+      "name": "Route and render every bundle",
+      "prompt": "Follow `playbooks/04-routing.md`. For every bundle product, confirm it is routed to the bundle template on the ACTIVE theme and that the picker actually renders at the product's own canonical URL.\n\n1. `GET /api/application_theme_templates/{template_id}/available_themeables?per_page=200` and confirm each bundle product appears with a non-null `application_theme_template_id`.\n2. Load each bundle's `canonical_url` — copied verbatim from the product response, never composed from a slug — and confirm the group UI renders.\n3. Re-check routing after ANY theme switch or clone; the join is theme-scoped and is silently dropped.\n\nA bundle on a bundle-unaware theme is a silent revenue hole: normal-looking page, working native add-to-cart, hard failure at checkout.\n\nSTEP_OUTPUT: per bundle — canonical_url, routed yes/no, picker renders yes/no.",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "acceptance": [
+        "Every bundle product is confirmed routed via available_themeables, quoted per product.",
+        "Every bundle's canonical_url was loaded this turn and the report states whether the group picker rendered — per product, not in aggregate.",
+        "Every URL in the report was copied from an API response or a card, not composed from a slug."
+      ],
+      "dependsOn": [
+        "theme-implementation"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "cart-and-money",
+      "name": "Prove add-to-cart and the money path",
+      "prompt": "**Valid bundle config is NOT evidence the storefront can sell it.** In the reference campaign a six-group bundle read back perfectly from `/api/v2025-06/bundles` and still failed for every shopper. Reproduce the real thing.\n\nFor at least one **configurable** bundle and at least one **pure fixed kit** (all-`included`), call:\n\n```\nPOST /api/checkout/v2026-04/carts\n{ \"fluid_shop\": \"<subdomain>\", \"country_code\": \"<ISO>\",\n  \"items\": [ { \"variant_id\": <master>, \"quantity\": 1, \"bundled_items\": [ ... ] } ] }\n```\n\n- Configurable: send entries for `customizable` groups ONLY, each tagged with `product_bundle_group_id`.\n- Fixed kit: send **NO `bundled_items` at all**.\n\nThe failure this catches, verbatim: `400 \"product_bundle_group_id <id> must reference a customizable group or an exclusive included group\"` — that is an `included` group being sent by the client. The cart attaches included components itself; a successful response lists them even though they were not in the request.\n\nThen verify the money: quote `amount_total` and confirm it equals the intended source price. Inspect `items[].errors` and any top-level `skipped_items` — a country-unavailable child returns 200, prices the bundle at $0.00 and leaves `errors` EMPTY.\n\nFinally exercise the UI: click through one configurable bundle and one fixed kit in the browser, confirm the CTA is enabled and the cart line matches. Read the console and server logs.\n\nSTEP_OUTPUT: for each tested product — the payload shape sent, HTTP status, `amount_total`, `bundle_selection_key`, and whether the browser add-to-cart succeeded.",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "acceptance": [
+        "A successful POST /api/checkout/v2026-04/carts is reported for at least ONE configurable bundle AND at least ONE pure fixed kit, with the actual amount_total quoted for each. A test of only one shape is a fail.",
+        "The fixed-kit request demonstrably sent NO bundled_items, and the report notes that the cart attached the included components itself.",
+        "No successful request included a bundled_items entry for a group whose group_type is `included` (except a documented exclusive-pair member).",
+        "Each quoted amount_total is compared against the intended source price and matches, or the discrepancy is explained.",
+        "items[].errors and skipped_items were inspected and reported — an empty errors array is stated explicitly rather than assumed to mean success.",
+        "A browser add-to-cart was exercised for one configurable bundle and one fixed kit, with the console and server logs read."
+      ],
+      "dependsOn": [
+        "route-and-render"
+      ],
+      "maxReworkRounds": 3
+    },
+    {
+      "id": "reusability-and-report",
+      "name": "Reusability proof and final report",
+      "prompt": "Prove the implementation is general, not fitted to one product, then report honestly. Follow `playbooks/05-validation.md`.\n\n1. **Reusability proof:** confirm the same section renders a bundle it was not built against — either a second existing bundle with a different group shape, or a scratch bundle created for the test and then removed. Delete the Bundle row BEFORE the Product; the reverse order leaves an orphan whose DELETE then 500s forever.\n2. Write the manifest per `schemas/bundle-manifest.schema.json`.\n3. Final report, structured as: what was built · what was verified and how · what was NOT verified · what a human must decide.\n\nThe report must separate observed facts from inference. If the six entrées were never driven through the cart, say that rather than implying they were. If an advertised floor moved, name the product and both numbers.\n\nSTEP_OUTPUT: the manifest path, the reusability evidence, and the four-part report.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The same theme implementation is shown rendering at least two bundles with different group shapes, named by id.",
+        "A manifest was written that validates against schemas/bundle-manifest.schema.json.",
+        "The final report has a distinct 'not verified' section that names every claim resting on inference rather than a call made this run.",
+        "Any advertised price change is reported with the product and both the before and after values.",
+        "If a scratch bundle was created for the reusability proof, the report confirms the Bundle row was deleted before the Product."
+      ],
+      "dependsOn": [
+        "cart-and-money"
+      ],
+      "maxReworkRounds": 2
+    }
+  ]
+}

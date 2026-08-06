@@ -1,0 +1,45 @@
+{%- comment -%}
+  Host template for Dynamic Bundles.
+  ----------------------------------------------------------------------------
+  NEVER host a bundle section in product/default — the platform's section does
+  not self-guard and paints ~98 KB of empty "Build Your Bundle" UI onto every
+  ordinary product (defect P4). Ours does self-guard, but a dedicated template
+  is still correct: it keeps routing explicit and reversible.
+
+  This template is ADDITIVE. CreateAction sets status:active and publishes but
+  does NOT set default:true, so it cannot hijack the default product page.
+
+  Routing is manual and per-active-theme:
+    PATCH /api/company/v1/products/{id} { "product": { "application_theme_template_id": <this id> } }
+  Re-run that after ANY theme switch or clone — the assignment is a
+  template_resources join scoped to the active theme and is silently dropped.
+
+  The fallback below matters: if a product is routed here but has no bundle
+  groups (draft data, a mis-route, a bundle whose groups were removed), the
+  shopper still gets a working product page instead of a blank one.
+{%- endcomment -%}
+
+{% section 'header' %}
+
+<main class="bundle-page">
+  {%- if product.product_bundle_groups.size > 0 -%}
+    {% section 'bundle_builder' %}
+  {%- else -%}
+    {% section 'main_product' %}
+  {%- endif -%}
+</main>
+
+{% section 'footer' %}
+
+{% schema %}
+{
+  "name": "Dynamic bundle",
+  "sections": {
+    "header": { "type": "header" },
+    "bundle_builder": { "type": "bundle_builder" },
+    "main_product": { "type": "main_product" },
+    "footer": { "type": "footer" }
+  },
+  "order": ["header", "bundle_builder", "main_product", "footer"]
+}
+{% endschema %}
