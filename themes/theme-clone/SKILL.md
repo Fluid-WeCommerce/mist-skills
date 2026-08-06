@@ -861,6 +861,11 @@ Read [references/page-templates.md](references/page-templates.md) for the correc
 | `product`    | `product/<PAGE_SLUG>/index.liquid`    |
 | `collection` | `collection/<PAGE_SLUG>/index.liquid` |
 
+> A template's name **is** its directory name on disk. Always use slug-shaped
+> names (`[a-z0-9-]`) — never dates, slashes, colons, or other punctuation
+> (`/ \ : * ? " < > |`), which break `fluid theme pull` on Windows and produce
+> nested junk directories elsewhere.
+
 ### Key rules
 
 - `{% layout 'theme' %}` is always line 1

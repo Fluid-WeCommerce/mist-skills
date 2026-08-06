@@ -357,6 +357,14 @@ fluid theme pull -t <THEME_ID>     # writes .fluid-theme.json with checksums
 
 If `THEME_DIR` was provided, run `fluid theme pull -t <THEME_ID>` from inside it to refresh local state and pick up any changes made in the editor.
 
+> **If the pull fails with `ENOENT`/`mkdir` on a `page/...` path** (especially on
+> Windows), a template in this theme was likely named in Fluid Admin with
+> path-hostile characters — e.g. an auto-generated `New Template 11/14/2025, 12:30:36 PM`
+> or a display name containing `/ \ : * ? " < > |`. Template names become directory
+> names on disk, so those characters break the checkout. Remedy: rename the offending
+> template in the Admin visual builder to a slug-safe name, then pull again. Templates
+> you create through Mist's own tools are always slugified and never cause this.
+
 ### 3b: Start the dev server
 
 Call `start_preview` and let Mist resolve dependencies, bundled CLI, and the
