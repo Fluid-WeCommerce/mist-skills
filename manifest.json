@@ -473,6 +473,75 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "portal/portal-page-authoring",
+      "name": "Portal page authoring",
+      "description": "How to build a FluidOS portal screen that actually renders — widget vocabulary, layout rules, the screen/nav/publish API, and the gotchas that silently break pages on the live portal. Read this before hand-building any portal page; the \"Create a … page\" skills already follow it.",
+      "category": "portal",
+      "icon": "layout-template",
+      "path": "portal/portal-page-authoring.md",
+      "updated_at": "2026-08-01T00:00:00Z"
+    },
+    {
+      "slug": "portal/portal-page-affiliate",
+      "name": "Create an affiliate page",
+      "description": "Create an affiliate landing/tools page in the portal — hero, share card, product and earnings widgets, activity and calendar. Use when asked for an affiliate page, affiliate tools, or a share/earnings page.",
+      "category": "portal",
+      "icon": "share-2",
+      "path": "portal/portal-page-affiliate/SKILL.md",
+      "updated_at": "2026-08-01T00:00:00Z",
+      "references": [
+        "portal/portal-page-affiliate/references/template.md"
+      ]
+    },
+    {
+      "slug": "portal/portal-page-customer-home",
+      "name": "Create a customer home page",
+      "description": "Create the customer-facing home page in the portal — account quicklinks, rewards, learn videos, member perks and shop rows. Use when asked to add a customer home, customer portal page, or member home.",
+      "category": "portal",
+      "icon": "user-round",
+      "path": "portal/portal-page-customer-home/SKILL.md",
+      "updated_at": "2026-08-01T00:00:00Z",
+      "references": [
+        "portal/portal-page-customer-home/references/template.md"
+      ]
+    },
+    {
+      "slug": "portal/portal-page-home-alternate",
+      "name": "Create an alternate home page",
+      "description": "Create an alternate home page layout in the portal — same widget vocabulary as the partner home, different section arrangement. Use when asked for a second home, home variant, alternate layout, or an A/B home page.",
+      "category": "portal",
+      "icon": "layout-panel-left",
+      "path": "portal/portal-page-home-alternate/SKILL.md",
+      "updated_at": "2026-08-01T00:00:00Z",
+      "references": [
+        "portal/portal-page-home-alternate/references/template.md"
+      ]
+    },
+    {
+      "slug": "portal/portal-page-partner-dashboard",
+      "name": "Create a partner dashboard (Today)",
+      "description": "Create a 'Today' partner dashboard page in the portal — advice ring, a three-widget action row, a product to sell today, calendar and activity. Use when asked for a today page, partner dashboard, daily cockpit, or action page.",
+      "category": "portal",
+      "icon": "layout-dashboard",
+      "path": "portal/portal-page-partner-dashboard/SKILL.md",
+      "updated_at": "2026-08-01T00:00:00Z",
+      "references": [
+        "portal/portal-page-partner-dashboard/references/template.md"
+      ]
+    },
+    {
+      "slug": "portal/portal-page-partner-home",
+      "name": "Create a partner home page",
+      "description": "Create the everyday partner/rep home page in the portal — hero, share kit, ready-to-post content, community proof, aspirational closer. Use when asked to add or build a home page, rep home, partner home, or daily driver page.",
+      "category": "portal",
+      "icon": "house",
+      "path": "portal/portal-page-partner-home/SKILL.md",
+      "updated_at": "2026-08-01T00:00:00Z",
+      "references": [
+        "portal/portal-page-partner-home/references/template.md"
+      ]
     }
   ],
   "workflows": [
