@@ -473,6 +473,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "sales/replenishment-revenue-recovery",
+      "name": "Replenishment Revenue Recovery",
+      "description": "Audit and repair a durable-goods catalog's consumables engine — subscription SKUs with no plan attached, $0.00 placeholders, and devices with no purchasable replacement path.",
+      "category": "sales",
+      "icon": "refresh-cw",
+      "path": "sales/replenishment-revenue-recovery.md",
+      "updated_at": "2026-07-31T16:56:00Z"
     }
   ],
   "workflows": [
