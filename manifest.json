@@ -358,6 +358,15 @@
       "updated_at": "2026-07-23T00:00:00Z"
     },
     {
+      "slug": "mist/follow-your-heart",
+      "name": "Follow Your Heart",
+      "description": "Hand Mist one hint — or nothing at all — and it reads the company, commits to one ambitious build it can finish this session, routes around every dead end without asking, and comes back with the finished work and the story.",
+      "category": "mist",
+      "icon": "heart",
+      "path": "mist/follow-your-heart/SKILL.md",
+      "updated_at": "2026-07-31T00:00:00Z"
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
