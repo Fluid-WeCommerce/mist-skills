@@ -473,6 +473,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "mist/agent-commerce-publisher",
+      "name": "Agent Commerce Publisher",
+      "description": "Publish a store as a zero-configuration agent-commerce surface — one URL a merchant pastes into ChatGPT, Claude Desktop, or Cursor, after which any assistant can shop the catalog, quote a real landed total, and hand checkout to a human.",
+      "category": "mist",
+      "icon": "bot",
+      "path": "mist/agent-commerce-publisher.md",
+      "updated_at": "2026-07-31T18:05:03Z"
     }
   ],
   "workflows": [
