@@ -1,0 +1,178 @@
+{
+  "revision": "agent-instagram-reels-1",
+  "slug": "setup-instagram-affiliate",
+  "name": "Set up Instagram Reels affiliate commerce",
+  "description": "Stand up Instagram Reels affiliate commerce for a direct seller: screen the catalog against Meta's Commerce Policies (ingestible supplements are barred, which decides most of the direct-selling book), connect or build the Commerce catalog, settle where the comp plan plugs in, enable distributors as creators at Meta's 18+/1,000-follower floor, and design click-level attribution back to the plan. Meta killed native checkout in Aug 2025 and takes 0% of the commission, so the order lands on the merchant's own Fluid storefront — this is link attribution, not order reconciliation. Expects `context` from the open-instagram-reels skill: ig_presence, affiliate_stack, rep_model, commission_treatment, attribution_policy, markets, screener_verdict, excluded_skus, defaulted.",
+  "runTitleTemplate": "Instagram Reels affiliate for {{company_name}}",
+  "maxParallel": 3,
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "Catalog eligibility gate",
+      "prompt": "Hard gate. Nothing downstream is valid if this fails. Do not ask the user anything — read the `## Context from caller` block and proceed.\n\n1. Read `context.screener_verdict` and `context.excluded_skus`. If `screener_verdict` is absent, re-run the screen yourself rather than assuming a pass: call `fluid_api` -> GET `/api/company/v1/products?per_page=50` and match each SKU's title, description and feature_text against the buckets in `~/Fluid/skills/data/ig-commerce-categories.json`. Tag the result `screener_source: recomputed`.\n2. EXPECT THAT FILE TO BE UNREADABLE. Workflow steps run in a project sandbox that cannot reach `~/Fluid/skills/`, so treat the read as best-effort. When it fails, do NOT guess and do NOT skip the screen — verify the clauses yourself with `web_fetch` against https://www.facebook.com/policies_center/commerce and https://www.facebook.com/business/help/221149188908254, and say in your output which route you used.\n3. When you match, match on WORD BOUNDARIES, treat acronyms as CASE-SENSITIVE, and never treat an ingredient as a category. These are not stylistic preferences, they are two bugs found on a real catalog: naive substring matching flagged a lip tint and a cleansing oil as medical devices because `TENS` sits inside 'softens' and 'moistens', and flagged a topical serum as an ingestible because its description lists vitamin E. The opposite error is just as real — a term list without bare 'supplement' let a psyllium husk FIBER SUPPLEMENT pass as eligible. For a PROHIBITED bucket, bias toward flagging: over-flagging costs a human review, under-flagging costs a catalog rejection.\n4. The decisive rule is the commerce bar on ingestibles: 'Commerce content may not promote the buying, selling, or trading of medical and healthcare products and services, including medical devices or ingestible supplements.' A product must be a catalog item to be taggable in a Reel, so anything barred from commerce content is EXCLUDED, not restricted.\n5. If `screener_verdict` is `refuse`, or the hero product is excluded, emit `STEP_OUTPUT: REFUSED — <reason, with the verbatim clause>` and STOP. Emit no configuration. Do not soften a prohibited finding into a 'consideration'.\n6. If `pass_with_exclusions`, restate every excluded SKU individually: its bucket, the verbatim policy clause, and its share of catalog value. State plainly that these SKUs are omitted from the catalog feed rather than filtered later.\n7. For each bucket disposition you report, name which Meta document it came from — Commerce Policies or Branded Content Policies — with the URL. A disposition you cannot link is reported as unverified, not as fact.\n8. STEP_OUTPUT includes: the verdict, excluded SKU count, excluded share of catalog value, the hero product and its verdict, and the policy source per bucket.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The output states exactly one of three verdicts — pass, pass_with_exclusions, or REFUSED — and never hedges between two of them.",
+        "Every excluded SKU is named individually with its bucket, the verbatim policy clause, and its share of catalog value; reporting only a count of exclusions fails this criterion.",
+        "Each bucket disposition names which Meta document it came from (Commerce Policies vs Branded Content Policies) and includes that document's URL, or is explicitly labelled unverified.",
+        "When `context.screener_verdict` was absent, the output carries `screener_source: recomputed` rather than silently assuming a pass."
+      ]
+    },
+    {
+      "id": "step-2",
+      "name": "Commerce catalog status and gaps",
+      "prompt": "Establish what exists on Meta today and what has to be built. Never ask the user — branch on context and default loudly when a field is missing.\n\n1. Read `context.ig_presence`. If absent, treat it as `unknown` and tag `ig_presence_source: default` in your output.\n2. Branch and say which branch you took:\n   - `catalog_live` — a Commerce catalog already exists, most likely built for ads. This is a connect, not a build. Verify it against the four prerequisites below rather than creating a new one.\n   - `page_only` — Instagram presence, no catalog. The catalog is the first build item.\n   - `none` — nothing on Instagram. Business portfolio and professional account come first, then the catalog.\n   - `unknown` — produce the verification checklist a human can run in Commerce Manager in ten minutes, and mark the whole step provisional.\n3. Check all four catalog prerequisites individually and report each as met, unmet, or unknown. Do not collapse them into a single verdict:\n   a. Physical goods only. Hotels, flights, destinations, vehicles and home listings are ineligible inventory types.\n   b. Between 1 and 10,000,000 items.\n   c. Full control of the business portfolio holding the catalog, plus permission to manage the catalog itself.\n   d. Product links resolve to the specific product page on the business's OWN domain, matching the domain registered under Settings > Brand Safety > Domains. Links must begin with http:// or https:// and may not be hosted on a Facebook-owned domain or another business's domain.\n4. Prerequisite (d) is the one most often missed and it is the one Fluid satisfies directly: a Fluid storefront on the client's own domain meets it. Say so, and name the exact Brand Safety setting the human has to check.\n5. Read `context.markets`. Instagram affiliate tagging reached all 22 Instagram commerce markets by June 2026, but Meta has not published the full country list. Name only the confirmed launch markets — US, Brazil, India, Indonesia, Thailand — and say the remaining markets need confirmation. Do NOT invent the other seventeen.\n6. STEP_OUTPUT includes: the branch taken, each of the four prerequisites with its status, the domain requirement stated concretely, and the market position.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "All four catalog prerequisites (physical goods, 1–10M items, business portfolio control, own-domain product links) are reported individually with a met/unmet/unknown status each; a single combined verdict fails this criterion.",
+        "The output names which `ig_presence` branch it took, and when the field was absent it carries `ig_presence_source: default`.",
+        "The product-link requirement names the Settings > Brand Safety > Domains setting explicitly and states that links may not be hosted on a Facebook-owned or third-party domain.",
+        "Markets are limited to the five confirmed launch markets plus an explicit statement that the remaining markets of the 22 are unpublished and need confirmation; any invented country list fails."
+      ]
+    },
+    {
+      "id": "step-3",
+      "name": "Where the comp plan plugs in",
+      "prompt": "Settle how the merchant's existing commission machinery relates to Meta's affiliate surface. Do not ask the user.\n\n1. Read `context.affiliate_stack`. If absent, treat it as `comp_plan_only` and tag `affiliate_stack_source: default`.\n2. Branch and name the branch:\n   - `comp_plan_only` — the comp plan IS the affiliate program. Fluid is the ledger; there is no incumbent network to sit beside.\n   - `impact` / `rakuten` / `shopify_collabs` — an incumbent already occupies the affiliate slot. Describe both options honestly: run Meta traffic through the incumbent, or run it through Fluid and reconcile. Name the trade-off rather than assuming Fluid wins.\n   - `none` — no tracking exists. The comp plan plus FairShare is the fastest path to something that works.\n3. STATE THE UNVERIFIED THING PLAINLY. Whether Meta lets a brand connect a CUSTOM affiliate program, or only the named networks (Impact, Rakuten, Shopify Collabs), has NOT been verified — see POLICY_FINDINGS.md section 3. Report it as an open question. Never assert that a custom program can connect, and never assert that it cannot.\n4. The claim that brands already tracking through Impact, Rakuten or Shopify Collabs can have creators tag immediately is SINGLE-SOURCE trade press. If you use it, label it single-source and unverified in the same sentence.\n5. Note the architectural fact that makes this tractable either way: Meta killed native checkout in August 2025, so the order lands on the merchant's own storefront. Whatever sits in the affiliate slot, the merchant's own system sees the order. There is no foreign order system to reconcile.\n6. STEP_OUTPUT includes: the branch taken, the recommended position, the custom-program question flagged as unverified, and any single-source claim labelled as such.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The output explicitly labels the custom-affiliate-program question as unverified and does not assert either that a custom program can connect or that it cannot.",
+        "The output names which `affiliate_stack` branch it took, and when an incumbent network exists it presents both the run-through-incumbent and run-through-Fluid options with a stated trade-off rather than assuming Fluid wins.",
+        "Any use of the Impact / Rakuten / Shopify Collabs immediate-tagging claim is labelled single-source and unverified in the same sentence where it appears.",
+        "When `context.affiliate_stack` was absent, the output carries `affiliate_stack_source: default`."
+      ]
+    },
+    {
+      "id": "step-4",
+      "name": "Creator eligibility and content rules",
+      "prompt": "Define who can post and what they may say. Do not ask the user.\n\n1. Read `context.rep_model`. If absent, treat it as `distributors_only` and tag `rep_model_source: default`. Branch: `distributors_only`, `outside_creators`, or `both`. Meta's floor is identical either way — the branch changes recruiting and training, not eligibility.\n2. State all four Meta creator eligibility requirements individually: a professional (creator or business) account; the account is public; 18 or older; and in good standing with Meta's Partner Monetization Policies. A follower threshold of 1,000 applies.\n3. Read the `content_rules` block in `~/Fluid/skills/data/ig-commerce-categories.json` and render it as a rep-facing list, each rule with its source. At minimum it must carry:\n   a. Products only. The income opportunity, team building and enrollment never appear on a Meta surface. Basis: 'Multilevel marketing' is listed under Prohibited content in the Branded Content Policies, unqualified, and affiliate content meets Meta's own definition of branded content ('features or is influenced by a business partner for an exchange of value'). The narrow-vs-broad reading of that clause is UNRESOLVED — see POLICY_FINDINGS.md section 1. Do not present the narrow reading as settled.\n   b. No disease claims — no treat, cure, prevent, heal or diagnose language.\n   c. No income claims. The FTC is actively pursuing individual MLM participants for social-video earnings claims.\n   d. In-video disclosure on every Reel. Caption-only does not satisfy the FTC, and Meta's own 'Paid partnership' and 'commission-eligible' labels do not satisfy it either.\n   e. Branded content must be posted using the branded content tool, tagging the business partner with prior permission.\n4. State the two liability facts that change how the program is run, because merchants consistently do not know them:\n   - The brand is co-liable for creator claims it boosts. A distributor's health claim in a boosted post lands on the BRAND's ad account. Any amplification program needs claim review BEFORE the boost.\n   - Brands cannot remove product tags from affiliate posts — only from branded-content posts. That is liability without takedown control, so monitoring must be proactive rather than reactive.\n5. STEP_OUTPUT includes: the branch taken, the four eligibility requirements plus the follower floor, the content rules with sources, and both liability facts.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-1"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "All four Meta creator eligibility requirements (professional account, public, 18+, good standing with Partner Monetization Policies) are stated individually alongside the 1,000-follower floor.",
+        "The content rules include both the products-only rule and the in-video-disclosure rule, each carrying its policy source, and the products-only rule states that the narrow-vs-broad reading of Meta's MLM clause is unresolved.",
+        "The output states that brands cannot remove product tags from affiliate posts and that the brand is co-liable for claims in content it boosts.",
+        "The output explicitly states that platform labels ('Paid partnership', 'commission-eligible') do not satisfy FTC disclosure obligations."
+      ]
+    },
+    {
+      "id": "step-5",
+      "name": "Rep link and attribution design",
+      "prompt": "This is the heart of the build. On Meta the order lands on the merchant's own storefront, so the work is carrying distributor identity on the click — NOT reconciling a foreign order system. Do not ask the user.\n\n1. Read `context.attribution_policy`. If absent, treat it as `first_referrer_protected` and tag `attribution_policy_source: default`, because defaulting silently to last-click is the failure mode this step exists to prevent.\n2. Emit a concrete link shape, not a description of one. Use the form `https://shop.<client-domain>/p/{product-slug}?ref={rep_ref}` and name the rep identifier parameter explicitly. Substitute the client's real domain if it is available from `fluid_api` -> GET `/api/companies`.\n3. State the four requirements on that link, each with its reason:\n   a. DIRECT — no redirect chain. Meta penalizes redirect chains and escalates to IP-level blocking. This rules out the classic replicated-site redirect architecture, which is how most direct sellers do links today. Say so; it is a real migration cost.\n   b. On the client's own domain, matching the catalog's registered Brand Safety domain.\n   c. Resolved by FairShare on landing, persisting rep identity across the session so the order carries it.\n   d. Serving both intents — a shopper buys and the rep is credited; a prospect taps through to enroll and the same rep is credited as enroller. This is what MONAT means by 'one seamless link'.\n4. Implement the chosen attribution policy and describe how a conflict resolves under it:\n   - `first_referrer_protected` — the distributor who first brought the customer keeps them for a stated window. Name the window as a decision the merchant must make.\n   - `time_decay` — credit splits with weighting toward the most recent touch. Name the decay period as a decision.\n   - `last_click` — whoever posted the last Reel takes it. If this was chosen, state the known failure modes plainly: the upline who built the customer relationship loses credit, and coupon poaching and cookie stuffing become rational behaviour.\n5. STATE THE AUTOMATION LIMIT EXPLICITLY. There is no Meta API that attaches an arbitrary affiliate URL to a product tag — the Content Publishing API's `product_tags` takes a `product_id` and a `merchant_id`, meaning a catalog item, not a URL. The paste-a-URL flow exists only inside the Instagram app. The rep's paste step CANNOT be automated. Any design that assumes otherwise is fiction. Fluid's job is to make the copy step one tap.\n6. STEP_OUTPUT includes: the concrete link shape, the four requirements with reasons, the attribution policy with its conflict-resolution rule and the decision the merchant still owes, and the automation limit.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-3",
+        "step-4"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The output emits a concrete link shape with the rep identifier parameter named, rather than describing a link in the abstract.",
+        "The output states that the link must be direct with no redirect chain, names IP-level blocking as the enforcement risk, and acknowledges that this is a migration cost for merchants using replicated-site redirects today.",
+        "The attribution policy from `context.attribution_policy` is implemented with a stated conflict-resolution rule, and when the field was absent the output carries `attribution_policy_source: default`; if last_click was chosen, its failure modes are stated.",
+        "The output explicitly states that the rep's paste step cannot be automated because no Meta API attaches an arbitrary affiliate URL to a product tag."
+      ]
+    },
+    {
+      "id": "step-6",
+      "name": "Commission rates and comp-plan treatment",
+      "prompt": "Settle what a Reel-sourced sale pays, and surface what the merchant still has to decide. Do not ask the user — present decisions, do not resolve them.\n\n1. Read `context.commission_treatment`. If absent, treat it as `undecided` and tag `commission_treatment_source: default`.\n2. Lead with the economics fact that separates Meta from TikTok: Meta takes ZERO platform commission on affiliate-tagged sales. The brand sets and pays the rate. Because there is no platform cut, full comp-plan volume on a Reel-sourced sale is genuinely affordable here. Do NOT carry TikTok's reasoning across — there a referral fee plus platform-paid creator commission makes full volume expensive, and that arithmetic does not apply.\n3. Propose TIERED rates by SKU band, never a single flat rate. Hero and high-margin SKUs at 15–20%; commodity SKUs at 5–8%. Practitioner range across Instagram is 2–18%, with beauty and personal care at the top. Flat rates cause creator defection — that is a direct TikTok Shop lesson, and it is the most common design error.\n4. Surface all four comp-plan questions as explicit decisions. Where `context.commission_treatment` answers one, apply it and say so; where it does not, leave the decision open and named:\n   a. Do Reel-sourced sales generate PV/QV and count toward rank?\n   b. Do downline commissions flow, or is it single-level only?\n   c. Is the Reel commission above, below, or equal to replicated-site margin? Arbitrage risk runs BOTH ways — set it above and reps cannibalize their own site; set it below and they will not post.\n   d. Can non-distributor affiliates participate, and what is the upgrade path from customer to affiliate to rep?\n5. Give market reference points so the merchant can calibrate: Wyld Notes 25% personal-only; USANA 15–20% plus a 10% one-level referral bonus; BODi up to 40% plus 10% on renewals. Attribute each.\n6. Note that comp-plan changes usually require notice to the field, and put that notice period on the timeline as a duration the merchant must specify rather than treating the change as instant.\n7. STEP_OUTPUT includes: the tiered rate proposal by band, the four decisions with their current status, the market reference points, and the field-notice requirement.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-5"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The rate proposal is tiered by SKU band with distinct percentages per band; proposing a single flat rate across the catalog fails this criterion.",
+        "All four comp-plan questions appear as explicitly named decisions, each marked as either answered by context or still open.",
+        "The output states that Meta takes 0% platform commission and that full plan volume is therefore affordable, without importing TikTok's referral-fee arithmetic.",
+        "The output notes that comp-plan changes require notice to the field and treats the notice period as a duration the merchant must specify rather than assuming a value."
+      ]
+    },
+    {
+      "id": "step-7",
+      "name": "Launch review",
+      "prompt": "Assemble the upstream steps into a single decision surface. Do not ask the user. Do not introduce any new fact that no upstream step produced.\n\n1. Classify EVERY item from the upstream steps into exactly one of three buckets: Blocking, Should review, or Ready. Nothing may be left unclassified.\n2. The Meta branded-content MLM clarification is BLOCKING. 'Multilevel marketing' is listed under Prohibited content in Meta's Branded Content Policies, unqualified, and affiliate content meets Meta's own definition of branded content. The narrow reading — that the bar targets promotion of the business opportunity rather than the brand — is probably correct and is supported by MONAT operating since April 1 2026 without visible enforcement, but that is inference from absence, not a policy statement. Written clarification from a Meta representative is required before any public launch. Do not downgrade this to Should review.\n3. If `catalog-eligibility-gate` returned REFUSED, this step reports the refusal and nothing else. Emit no launch plan.\n4. LABEL EVERY ASSUMED OR DEFAULTED VALUE. Walk `context.defaulted` and every `*_source: default` tag emitted by an upstream step, and mark each resulting value as assumed. A value that traces to a step that itself reported an unverified or defaulted input carries that uncertainty forward — it is never presented as settled.\n5. List external dependencies with a named owner for each: Meta Business portfolio admin access, Commerce Manager catalog verification, the Brand Safety domain registration, any comp-plan change and its field-notice period, and the Meta policy clarification. An owner is a role, not 'TBD'.\n6. State the two open questions that no step could close: whether a custom affiliate program can connect to Meta or only the named networks, and whether Meta enforces the branded-content MLM bar against product-led affiliate Reels in practice.\n7. STEP_OUTPUT includes: the three-bucket classification, the blocking items, the labelled assumptions, external dependencies with owners, and the open questions.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-1",
+        "step-2",
+        "step-3",
+        "step-4",
+        "step-5",
+        "step-6"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "Every item carried forward from an upstream step is classified into exactly one of Blocking, Should review, or Ready; any unclassified item fails this criterion.",
+        "The Meta branded-content MLM clarification appears as a Blocking item and is not downgraded, and the output states that the supporting evidence for the narrow reading is inference from absence rather than a policy statement.",
+        "Every value that came from `context.defaulted` or an upstream `*_source: default` tag is individually labelled as assumed, and any value depending on an unverified upstream input carries that uncertainty forward.",
+        "Each external dependency names an owner as a role; an entry of 'TBD' or an unowned dependency fails this criterion."
+      ]
+    }
+  ]
+}

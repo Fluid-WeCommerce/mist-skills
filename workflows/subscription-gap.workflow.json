@@ -1,0 +1,130 @@
+{
+  "revision": "authored-2026-07-30-1",
+  "slug": "subscription-gap",
+  "name": "Close the Subscription Gap",
+  "description": "Find the SKUs a merchant sells that run out and get rebought but that no customer can put on a schedule, size the opportunity against real order history rather than a guess, then build the plans and the attach offer that close it. Adds recurring revenue without adding a SKU, a channel or an ad budget.",
+  "runTitleTemplate": "Subscription gap for {{company_name}}",
+  "maxParallel": 3,
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "Read the catalog and state where it came from",
+      "prompt": "Pull the catalog yourself. Do not ask the merchant what they sell.\n\n1. `GET /api/products` on the SHOP host, paginating fully. Note: `/api/company/products` returns `{error}` for a PT- token, and `api.fluid.app` serves HTML 404s for both product paths — it must be the shop host.\n2. Prices live in `variants[].variant_countries[]`, NOT at product level. Prefer the US/USD entry. A product-level `price` of 0 is common and means nothing.\n3. Count products AND variants separately. A catalog of two dozen products can carry several times that in colourways, scents and shades, and the variant count is what the merchant actually manages.\n4. If the catalog cannot be reached, STOP the run and say what you tried. Do not proceed against a stale snapshot without labelling it.\n\nWrite to `context.catalog` and open STEP_OUTPUT with a data-source block: source endpoint, live or snapshot, capture timestamp, product count, variant count. Every downstream step inherits that provenance, so if this block is wrong everything after it is wrong.",
+      "target": { "type": "manager" },
+      "dependsOn": [],
+      "maxReworkRounds": 2,
+      "qa": { "enabled": true, "strictness": "standard", "onFail": "stop", "requiredTools": [] },
+      "acceptance": [
+        "STEP_OUTPUT opens with a data-source block naming the actual endpoint called, whether it was live, and a capture timestamp.",
+        "Product count and variant count are reported separately, not conflated.",
+        "Prices were read from variants[].variant_countries[] rather than the product-level price field.",
+        "If the catalog was unreachable the run stopped rather than continuing against unlabelled data."
+      ]
+    },
+    {
+      "id": "step-2",
+      "name": "Classify every SKU: replenishable, durable, or bundle",
+      "prompt": "Decide, for each product, whether it RUNS OUT and gets rebought.\n\nStructure beats text, always. If `is_bundle` is true, or `bundle` is true, or `product_bundles` is non-empty, or `bundle_config` is populated, the product IS a bundle and no wording overrides that.\n\nWhere structure is absent, classify from title and description — Fluid returns `category: null` and `tags: []` on a real import, so do not wait for metadata that is not coming. Score matches: a term found in the TITLE outranks one found only in the description, and a longer term outranks a shorter one. A product's name is what it IS; its description is what it MENTIONS. This is why \"wax kit\" must beat the bare token \"kit\", and why a \"Razor Starter Kit\" whose copy mentions refill cartridges is a kit and not a refill.\n\nMatch on word boundaries and treat acronyms as case-sensitive, or you will find \"TENS\" inside \"softens\" and tell a skincare merchant their lip balm is a medical device.\n\nWhen nothing in the title decided it AND either several consumable categories are in play or a bundle word appeared anywhere, mark the SKU NEEDS REVIEW. Do not guess. That pattern is how an unflagged multi-product set reads.\n\nDo not ask the merchant to categorise their own catalog — that is the work.\n\nWrite `context.classified` and put in STEP_OUTPUT the counts per class, every NEEDS REVIEW SKU by name, and every SKU no rule matched.",
+      "target": { "type": "manager" },
+      "dependsOn": ["step-1"],
+      "maxReworkRounds": 2,
+      "qa": { "enabled": true, "strictness": "standard", "onFail": "stop", "requiredTools": [] },
+      "acceptance": [
+        "Structural bundle fields were checked before any text rule was applied.",
+        "No bundle, kit or durable is classified as replenishable.",
+        "Ambiguous SKUs are listed by name as NEEDS REVIEW rather than assigned a class.",
+        "If more than a third of the catalog is unclassified, the step says the classification is not reliable instead of reporting a confident split."
+      ]
+    },
+    {
+      "id": "step-3",
+      "name": "Read what is already subscribable, and name the gap",
+      "prompt": "Find which replenishable SKUs a customer can already put on a schedule.\n\nA product counts as covered if ANY of these is true — check all four, because a plan attaches at product level or at variant level:\n`has_subscription_plans === true`, `product_subscription_plans` non-empty, `variants[].allow_subscription === true`, `variants[].subscription_only === true`.\n\n**The gap = replenishable AND not covered.**\n\nReport three things: the gap count, its share of the catalog, and its total list price. Then report separately any DURABLE that has no matching refill SKU anywhere in the catalog — that is an entry device which can never produce a second order, and it is often the bigger finding.\n\nThere are three legitimate outcomes and you must pick one honestly:\n- NO GAP — every replenishable SKU already has a plan. Say so and stop the run. Do not manufacture work.\n- GAP — the normal outcome.\n- CANNOT ASSESS — catalog unreachable or classification unreliable. Refuse and say what you would need.\n\nDo not ask the merchant which products are on subscription. The payload says.\n\nWrite `context.gap` and put the outcome, the three numbers, and the orphan-durable list in STEP_OUTPUT.",
+      "target": { "type": "manager" },
+      "dependsOn": ["step-2"],
+      "maxReworkRounds": 2,
+      "qa": { "enabled": true, "strictness": "standard", "onFail": "stop", "requiredTools": [] },
+      "acceptance": [
+        "All four subscription signals were checked, including both variant-level flags.",
+        "One of the three outcomes is stated explicitly, and NO GAP stops the run rather than inventing work.",
+        "The gap is quantified as a count, a share of catalog, and a total list price.",
+        "Durables with no matching refill SKU are reported as a separate finding."
+      ]
+    },
+    {
+      "id": "step-4",
+      "name": "Get real cadence from order history, or say you could not",
+      "prompt": "Replace guesses with measurements wherever the data allows.\n\n1. Check whether a reporting database is connected. If `404 No database-enabled reporting connector` comes back, that is a permanent-looking condition, not a transient error.\n2. If it IS connected: for each gap SKU compute the MEDIAN days between consecutive orders of the same product by the same customer. Median, not mean — repurchase intervals have a long right tail and the customer returning after 400 days is real but is not the cadence. Require at least 30 repeat pairs before trusting a median; below that, keep the category default and label it an assumption. Report p25 and p75 as well: if they are far apart the SKU has no single cadence and the honest answer is a customer-selectable interval.\n3. Also compute buyers per SKU and repeat-buyer share. Repeat-buyer share is the argument in one column — those people are already rebuying it manually.\n4. If it is NOT connected, do not substitute anything that looks close. Say plainly that cadence is a category assumption, and tell the merchant that Settings → Reporting Databases converts every assumption in this analysis into a measurement.\n\nDo not ask the merchant how often customers rebuy. Either the data answers or you report that it cannot.\n\nWrite `context.cadence` and state in STEP_OUTPUT, per SKU, whether its cadence is MEASURED or ASSUMED.",
+      "target": { "type": "manager" },
+      "dependsOn": ["step-3"],
+      "maxReworkRounds": 2,
+      "qa": { "enabled": true, "strictness": "standard", "onFail": "stop", "requiredTools": [] },
+      "acceptance": [
+        "Every SKU's cadence is labelled MEASURED or ASSUMED, with no unlabelled numbers.",
+        "Medians below the 30 repeat-pair floor were rejected and fell back to a labelled assumption.",
+        "If no reporting database is connected the step says so plainly and names the setting that fixes it.",
+        "Median was used rather than mean, and p25/p75 spread is reported where cadence was measured."
+      ]
+    },
+    {
+      "id": "step-5",
+      "name": "Size the opportunity, and refuse if you cannot",
+      "prompt": "Put a number on closing the gap ONLY where the inputs are real.\n\n`annual = Σ price × (365 / cadence_days) × buyers_per_sku × attach_rate`\n\nThe attach rate must come from THIS merchant's own subscription orders — the observed rate on SKUs that already offer subscription. Do not borrow an industry figure. If they have no subscription orders at all, the attach rate is unmeasurable here and any projection is borrowed and must be labelled so.\n\nCompute the total over gap SKUs that have BOTH a trustworthy cadence AND a buyer count. Exclude the rest — never backfill them with category defaults and then present one confident total. State what share of the gap your number actually covers.\n\nIf you cannot compute it, say this and mean it: \"I can't give you a revenue number. That needs your order history. What I can tell you without guessing: N SKUs, $X of list price, that no customer can currently buy on a schedule.\"\n\nApply the attach rate conservatively across categories — a blade refill and a body lotion do not convert alike, so give a band rather than a point estimate. Do not ask the merchant to supply an attach rate; that is how a flattering assumption gets laundered into a forecast.\n\nWrite `context.opportunity` and put the number, its coverage share, and every assumption inside it into STEP_OUTPUT.",
+      "target": { "type": "manager" },
+      "dependsOn": ["step-4"],
+      "maxReworkRounds": 2,
+      "qa": { "enabled": true, "strictness": "standard", "onFail": "stop", "requiredTools": [] },
+      "acceptance": [
+        "Any revenue figure travels with the assumptions inside it, stated in the same breath.",
+        "SKUs lacking a trustworthy cadence or a buyer count are excluded, not estimated, and the coverage share is stated.",
+        "The attach rate is either derived from this merchant's own subscription orders or explicitly labelled as borrowed.",
+        "Where the number is not computable the step refuses and gives the defensible SKU-and-list-price version instead."
+      ]
+    },
+    {
+      "id": "step-6",
+      "name": "Agree the plans, the cadence and the discount",
+      "prompt": "Turn the gap into a concrete build proposal, then get the two decisions that are not yours to make.\n\nDraft a subscription plan for each gap SKU: cadence from step 4, flagged where the cadence is an assumption. Group by class so the merchant reviews a handful of decisions rather than a list of thirty.\n\nTwo things need the merchant, and ONLY these two:\n- **The discount percentage.** It is a margin decision. Never pick it for them. Ask once, for a single default with any per-class exceptions.\n- **The NEEDS REVIEW SKUs from step 2.** Give them the list and your read of each; they decide.\n\nDo NOT propose plans on bundles, kits or durables. Subscribing a bundle re-ships durables the customer already owns, and that is how a subscription earns a cancellation. If the merchant asks for it anyway, say why it backfires, then record their decision and move on.\n\nAsk both questions in ONE exchange. Do not ask them one at a time and do not ask anything else.\n\nWrite `context.plans` and put the proposed plan table, the discount decision and the resolved review list into STEP_OUTPUT.",
+      "target": { "type": "manager" },
+      "dependsOn": ["step-5"],
+      "maxReworkRounds": 2,
+      "qa": { "enabled": true, "strictness": "standard", "onFail": "stop", "requiredTools": [] },
+      "acceptance": [
+        "No proposed plan sits on a bundle, kit or durable.",
+        "The discount percentage was decided by the merchant, not chosen by the agent.",
+        "Every NEEDS REVIEW SKU from step 2 was resolved by a human decision.",
+        "Plans carrying an assumed cadence are visibly flagged as such in the proposal."
+      ]
+    },
+    {
+      "id": "step-7",
+      "name": "Build the plans and the attach offer",
+      "prompt": "Create what step 6 agreed, and make it visible to customers.\n\n1. Create the subscription plans on the approved SKUs at the approved cadence and discount.\n2. **Expose them on the storefront.** A plan sitting in the admin with no subscribe control on the product page sells nothing. Verify a customer can actually see and choose it — open a product page and look.\n3. Build the attach offer: rank gap SKUs by how cleanly they clear the merchant's free-shipping threshold from a subscriber's current order value. Prefer the CHEAPEST SKU that clears the shortfall — that is the offer a customer accepts without doing arithmetic. If nothing clears it, say so; two smaller items or a subscriber-only shipping rule may be the honest answer.\n4. Order the offer so the add-on comes BEFORE any skip or pause flow. Only adding an item creates incremental revenue. A concierge that opens with \"want to skip?\" is an agent that very efficiently reduces the merchant's revenue.\n5. Any link that reaches a human must not mutate on GET. Render a confirmation; put the mutation behind a form POST with POST-redirect-GET. Corporate mail scanners fetch every URL on delivery, sometimes twice.\n\nActivating a plan on a live SKU needs approval. Draft freely; do not switch anything on unattended. Do not ask the merchant to confirm details already decided in step 6.\n\nWrite `context.built` and list in STEP_OUTPUT every plan created, its storefront visibility check, and the ranked attach offer.",
+      "target": { "type": "manager" },
+      "dependsOn": ["step-6"],
+      "maxReworkRounds": 2,
+      "qa": { "enabled": true, "strictness": "standard", "onFail": "stop", "requiredTools": [] },
+      "acceptance": [
+        "Each created plan was verified visible and selectable on the live storefront, not just present in the admin.",
+        "The attach offer presents the add-on before any skip or pause option.",
+        "No link handed to a customer mutates on GET.",
+        "Plans were activated only with explicit approval, and anything unapproved is left as a draft."
+      ]
+    },
+    {
+      "id": "step-8",
+      "name": "Set the measurement, then hand over",
+      "prompt": "Make the result falsifiable before anyone celebrates it.\n\nDefine and record the baseline for each of these, as of today, so the comparison exists later:\n- Subscription attach rate on the gap SKUs — new subscriptions ÷ orders containing that SKU.\n- Share of total revenue that is recurring. This is the number the CEO cares about.\n- Add-on acceptance rate on the attach offer.\n- Churn on the NEW plans, tracked separately from existing plans. A cadence set too fast shows up here first, as cancellations rather than complaints.\n\nThen write the handover: what was built, what is live versus drafted, which cadences are still assumptions and what would replace them, which SKUs remain unresolved, and the single next action.\n\nBe honest about what did not work. A rough edge you name is worth more than a clean report nobody can reproduce.\n\nDo not ask the merchant what to measure. Propose the four, note anything their business makes irrelevant.\n\nPut the baselines, the handover and the next action in STEP_OUTPUT.",
+      "target": { "type": "manager" },
+      "dependsOn": ["step-7"],
+      "maxReworkRounds": 2,
+      "qa": { "enabled": true, "strictness": "standard", "onFail": "stop", "requiredTools": [] },
+      "acceptance": [
+        "Baseline values are recorded as of today for every metric, not just metric names listed.",
+        "Churn on new plans is separated from churn on pre-existing plans.",
+        "The handover distinguishes what is live from what is drafted, and names every remaining assumption.",
+        "A single concrete next action is stated."
+      ]
+    }
+  ]
+}

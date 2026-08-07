@@ -482,6 +482,19 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "sales/subscription-gap",
+      "name": "Subscription gap audit",
+      "description": "Find the products that run out and get rebought but that no customer can put on a schedule, size the missing recurring revenue against real repeat-purchase data, and rank the add-on that closes it.",
+      "category": "sales",
+      "icon": "repeat",
+      "path": "sales/subscription-gap/SKILL.md",
+      "references": [
+        "sales/subscription-gap/references/replenishment-classes.md",
+        "sales/subscription-gap/references/measuring-cadence.md"
+      ],
+      "updated_at": "2026-07-31T03:20:00Z"
     }
   ],
   "workflows": [
@@ -514,6 +527,26 @@
       "slug": "speed-import",
       "path": "workflows/speed-import.workflow.json",
       "updated_at": "2026-07-30T18:00:00Z"
+    },
+    {
+      "slug": "subscription-gap",
+      "path": "workflows/subscription-gap.workflow.json",
+      "updated_at": "2026-07-31T03:20:00Z"
+    },
+    {
+      "slug": "setup-tiktok-shop",
+      "path": "workflows/setup-tiktok-shop.workflow.json",
+      "updated_at": "2026-07-31T21:00:00Z"
+    },
+    {
+      "slug": "setup-instagram-affiliate",
+      "path": "workflows/setup-instagram-affiliate.workflow.json",
+      "updated_at": "2026-07-31T21:00:00Z"
+    },
+    {
+      "slug": "subscription-sms",
+      "path": "workflows/subscription-sms.workflow.json",
+      "updated_at": "2026-07-31T21:00:00Z"
     }
   ]
 }

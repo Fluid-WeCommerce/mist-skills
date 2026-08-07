@@ -1,0 +1,202 @@
+{
+  "revision": "authored-2026-07-31-1",
+  "slug": "setup-tiktok-shop",
+  "name": "Set up TikTok Shop",
+  "description": "Open a TikTok Shop channel for a merchant: screen the catalog against TikTok commerce policy, pick the category gate and its real timeline, set the creator qualification gate and commission tiers against live prices, build the creator enrollment page and the merchant console, and close with an honest blocker list.",
+  "runTitleTemplate": "TikTok Shop for {{company_name}}",
+  "maxParallel": 3,
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "Screen the catalog against TikTok commerce policy",
+      "prompt": "Read the catalog with fluid_api from /api/v202604/company/products plus /{id} per product. Pin that endpoint: the shop-host /api/products embeds the whole country atlas (~25KB per product) and the admin LIST endpoint carries no variants[]. Two payload shapes will silently produce confident wrong output if read naively — description is an OBJECT with a .body, not a string, and price lives in variants[].variant_countries keyed by country code. Verify both at build time rather than trusting this prompt. Then screen every SKU against TikTok Shop policy. Weight-management products are PROHIBITED outright — fat reduction, appetite suppressants, diet pills, GLP-1 — not restricted, banned. Match on word boundaries with case-sensitive acronyms or you will find TENS inside 'softens'. Separate ELIGIBILITY from REVIEWABILITY: a review flag must never reduce the eligible count. Do not ask the merchant what they sell. Put the verdict, the eligible count, and every flagged SKU named with its matched text into STEP_OUTPUT, opening with the endpoint, capture time and product/variant counts.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "STEP_OUTPUT opens with the endpoint called, capture timestamp, and product and variant counts.",
+        "Eligibility and reviewability are reported as separate numbers, and a review flag never reduces the eligible count.",
+        "Every flagged SKU is named with the specific text that triggered it.",
+        "Weight-management SKUs, if any, are reported as prohibited outright rather than restricted."
+      ]
+    },
+    {
+      "id": "step-2",
+      "name": "Pick the category gate and its real timeline",
+      "prompt": "Determine which TikTok Shop category gate the catalog falls under and what it costs in time. Beauty and personal care is self-serve: MoCRA facility registration plus real label photos, roughly a six-day review, about thirty days end to end. Dietary supplements is invitation-gated: an Account-Manager invite plus lab reports from approved labs plus FDA facility registration, roughly fifty-two days, and the invite is the long pole. If the catalog contains even one supplement it drags the whole shop onto the slower path — say so, and say what holding that SKU back would buy in days and in retained catalog value. Do not guess a timeline you cannot source; if a figure comes from the playbook rather than a live check, label it. Put the chosen path, the day count, and the hold-back tradeoff in STEP_OUTPUT. Do not ask the merchant which gate applies — classify it from the catalog you just read.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-1"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The chosen gate is stated with its day count and the evidence for it.",
+        "If a single SKU forces the slower path, that is named along with what holding it back would save.",
+        "Any figure taken from the playbook rather than a live check is labelled as such.",
+        "The step does not invent a timeline for a category it could not classify."
+      ]
+    },
+    {
+      "id": "step-3",
+      "name": "Set the creator qualification gate",
+      "prompt": "Decide how creators qualify, and ask the merchant only what you cannot read. TikTok's own floor in the US is 1,000 followers for the marketplace, and that applies regardless of what the merchant chooses. The three vetted models are open enrollment, a follower floor verified at enrollment, and rank-or-followers for merchants that have distributor ranks. If the company has no distributors, say so and drop the rank option rather than offering a qualification path that does not exist — check is_mlm and the distributor count instead of assuming. Never ask for TikTok credentials. Put the chosen gate, the verification method, and what the merchant must decide into STEP_OUTPUT.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-2"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The gate is chosen against what the company actually has, verified rather than assumed.",
+        "Rank-based options are dropped explicitly if no distributor ranks exist.",
+        "TikTok's own 1,000-follower marketplace floor is stated as applying regardless of merchant choice.",
+        "No step asks for TikTok credentials at any point."
+      ]
+    },
+    {
+      "id": "step-4",
+      "name": "Decide pricing and on-platform autoship",
+      "prompt": "Two vetted pricing postures. Price above direct with a post-purchase pull to subscription is the Unicity model, and it exists to stop a distributor field being undercut — if the merchant has no field, say plainly that the model has no rationale here rather than applying it by default. On-platform autoship is the Nature's Sunshine model and reportedly reached about a quarter of their TikTok revenue. Check whether the catalog actually has subscription plans before recommending autoship: if has_subscription_plans is false across the catalog, autoship is blocked until plans exist, and Fluid has no documented endpoint to create a product subscription plan. Do not recommend a path you have just proven is blocked. Put the posture, the reasoning, and any blocker in STEP_OUTPUT. Do not ask the merchant whether plans exist; read has_subscription_plans yourself.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-2"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "Subscription-plan availability is checked in the catalog rather than assumed.",
+        "A pricing model is not applied by default when its rationale does not exist for this merchant.",
+        "If autoship is blocked by missing plans, that is stated with the reason.",
+        "The recommendation names which vetted model it follows."
+      ]
+    },
+    {
+      "id": "step-5",
+      "name": "Set commission tiers against real prices",
+      "prompt": "Build the commission structure from live catalog prices, not percentages in the abstract. Compute what each tier actually pays in dollars on this catalog's price band and show it, because a percentage that looks generous on a $37 bundle is often trivial on a $9 single item and creators do the arithmetic. Tier toward whatever pushes basket value — typically bundles and sets — and note where a tier crosses the merchant's free-shipping threshold. The merchant sets the rates; propose and let them decide. Any SKU whose rate is not agreed shows as rate not set with no payout computed, never a plausible-looking placeholder. Put the tier table with real dollar payouts in STEP_OUTPUT. Do not pick the rates yourself — propose, and never invent a rate to fill a gap.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-1"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "Every tier shows the actual dollar payout computed from live catalog prices.",
+        "SKUs without an agreed rate render as not set rather than carrying an invented number.",
+        "The tier structure is proposed, with the rate decision left explicitly to the merchant.",
+        "Any interaction with a free-shipping threshold is named."
+      ]
+    },
+    {
+      "id": "step-6",
+      "name": "Build the creator enrollment surface",
+      "prompt": "Build the creator-facing enrollment page on the merchant's own storefront theme, not in an admin console — creators have no admin session. It needs the eligibility gate in plain creator language, a read-and-confirm gate where submit stays locked until the official TikTok guideline links are opened and consent is ticked, and fields for handle, email, name and existing-customer status. Post to a public endpoint that accepts no session, gated by a per-company slug rather than auth, with CORS scoped to the storefront origin specifically and never a wildcard. Re-check the follower floor and consent SERVER-side before writing; never trust the client. Every submission writes as pending. Do not scaffold a new app for this — it is a storefront page. Put the page URL, quoted verbatim from the tool result, and the endpoint contract in STEP_OUTPUT. Do not scaffold a new Mist app for this, and do not ask for anything the catalog already answers.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-3"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "The enrollment page lives on the storefront theme, not behind admin login.",
+        "The intake endpoint accepts no session and is gated by slug, with CORS scoped to a specific origin.",
+        "Follower floor and consent are re-checked server-side before any write.",
+        "URLs are quoted verbatim from tool results, never composed from a slug."
+      ]
+    },
+    {
+      "id": "step-7",
+      "name": "Build the merchant console as a droplet",
+      "prompt": "Build the merchant-facing console as a Fluid droplet so it renders inside the company's own admin. Four surfaces: catalog eligibility with the screen from step 1; a creator approval queue where Approve stays disabled until every gate condition is provably met, each blocked row naming which condition failed; an attribution ledger; and a shop connection surface that uses OAuth only and never has a credential field anywhere. Open every surface with one muted provenance line and an info disclosure, not a wall of text. Label any credential that is company-wide rather than per-installation, visibly, on every surface that uses it. Where a number cannot be computed, say so in one sentence and state what would make it computable — not three paragraphs. Put the admin URL in STEP_OUTPUT once it renders. Do not ask the merchant to re-supply data the API returns.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-5",
+        "step-6"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "Approve is disabled until every gate condition is met, and each blocked row names the failing condition.",
+        "No surface contains a field that accepts platform credentials directly.",
+        "Provenance is one line with a disclosure, not a block of body text.",
+        "A shared company credential, if used, is labelled as such on every surface that reads with it."
+      ]
+    },
+    {
+      "id": "step-8",
+      "name": "Launch review and the honest gap list",
+      "prompt": "Close with what is actually true. State which steps are complete, which are blocked and by what, and what the merchant must do that no agent can: the seller account, the category-gate submission, and the affiliate API approval, which is typically the longest pole at around three weeks. Name every assumption still carrying the analysis and what would replace it. If any surface is running on sample data, say so plainly and say what would make it real. Do not present a launch as ready when a blocking dependency is outstanding — a checklist that reads clean while a 21-day approval is unstarted is worse than no checklist. Put the readiness verdict, the blocker list with owners, and the single next action in STEP_OUTPUT. Do not ask what to report — state it, and never present a blocked launch as ready.",
+      "target": {
+        "type": "manager"
+      },
+      "dependsOn": [
+        "step-7",
+        "step-4"
+      ],
+      "maxReworkRounds": 2,
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop",
+        "requiredTools": []
+      },
+      "acceptance": [
+        "Every blocker is listed with an owner and, where known, a realistic duration.",
+        "Sample or seeded data is identified as such, with what would make it real.",
+        "The readiness verdict does not read as ready while a blocking dependency is outstanding.",
+        "A single concrete next action is named."
+      ]
+    }
+  ]
+}
