@@ -11,9 +11,14 @@ is written. This is the most expensive decision to get wrong in portal work: a
 portal widget cannot be converted into a Mist app, or the reverse, without
 starting over.
 
-The deciding question is **not** "internal or external data." It is:
+The deciding question is:
 
-> Does this need a server that can hold a secret?
+> Is any of this data from outside Fluid?
+
+If yes, it is a Mist app. If every field comes from Fluid — orders, products,
+account, shares, subscriptions, content, points, todos, calendar — it is a
+portal widget. There is no third option, and the reasons are in "Why there is no
+third case" below.
 
 # The two systems
 
@@ -30,8 +35,11 @@ Its data comes from exactly three places:
 - props written into the screen JSON
 - built-in host capabilities — `account`, `store`, `products`, `content`,
   `mySite`, `todos`, `calendar`, `points`, `localization`, and similar
-- data sources the host resolves and passes in as props: `api` with a Fluid
-  preset, `custom` for hand-picked Fluid resources, `static` for literal data
+- data sources the host resolves and passes in as props: `api` with a **Fluid
+  preset**, `custom` for hand-picked Fluid resources, `static` for literal data.
+  A preset resolves to a Fluid path against the portal's own base URL. Writing an
+  absolute third-party URL into a data source is not a supported way to reach an
+  outside API — see below.
 
 Cheap to build, nothing to host, no secrets, no install lifecycle.
 
@@ -57,22 +65,26 @@ also be *installed*, not just created and linked, or install-scoped features
 
 # Steps
 
-1. **Classify the request** into one of three cases:
+1. **Classify the request** into one of two cases:
 
-   1. **Mist app** — needs an API key, OAuth, webhooks, background jobs, or any
-      server-side processing. Anything phrased as "pull in data from
-      &lt;third-party service&gt;" is this case essentially every time.
-   2. **Portal widget** — presents Fluid's own data: orders, products, account,
-      shares, subscriptions, content, points, todos, calendar.
-   3. **Portal widget with an `api` data source** — presents public,
-      unauthenticated, CORS-enabled JSON and nothing more. The host performs
-      this fetch in the browser, so it cannot hold a credential. The moment
-      authentication enters, this becomes case 1.
+   1. **Mist app** — any data or action from outside Fluid. A third-party API,
+      an API key, OAuth, webhooks, background jobs, server-side processing.
+      "Free", "public", "no API key" and "CORS-enabled" do NOT move a request
+      out of this case; see "Why there is no third case".
+   2. **Portal widget** — every field comes from Fluid: orders, products,
+      account, shares, subscriptions, content, points, todos, calendar.
+
+   The test is the source of the data, not the difficulty of reaching it.
 
 2. **When the request is ambiguous, ask.** Say which two systems you are
    choosing between and what the tradeoff is (hosting and credentials versus a
    presentation-only widget). Do not guess — the rework cost is the whole
    feature.
+
+   A request is not ambiguous merely because the outside API is easy to call.
+   "Build me a widget that shows the weather" is a Mist app: the noun the user
+   reached for is not the architecture decision, and they have no way to know a
+   portal widget runs in a worker with `fetch` removed.
 
 3. **Check whether it already exists before building.** An installed droplet may
    already publish registered widget types. Confirm with
@@ -84,8 +96,46 @@ also be *installed*, not just created and linked, or install-scoped features
    for identity and credentials, plus a mobile embed or drop zone for placement.
    Every `embed_url` is the Mist's `public_url`.
 
-5. **For cases 2 and 3**, build a company portal widget in the portal project and
+5. **For case 2**, build a company portal widget in the portal project and
    publish it with `fluid portal deploy`.
+
+# Why there is no third case
+
+An earlier version of this skill offered one: a portal widget whose `api` data
+source names an absolute third-party URL, for "public, unauthenticated,
+CORS-enabled JSON and nothing more." A free weather API fits that description
+exactly, which is the problem — it reads as the more specific match and wins over
+"Mist app" every time.
+
+It should not, for four reasons, none of which are visible to the agent choosing
+it:
+
+1. **It does not work in Mist's preview.** The renderer's CSP `connect-src`
+   allows `api.fluid.app`, `auth.fluid.app`, `*.fluid.app`, `*.wecommerce.dev`
+   and a few Fluid-owned hosts. A third-party origin is refused before the
+   request leaves. The tool the portal is built in is the one place this path
+   cannot run.
+2. **It does not work on a Fluid-hosted portal.** That nginx policy allows three
+   origins.
+3. **It appears to work on a scaffolded portal**, which ships no CSP at all. So
+   the one environment where it succeeds is the one nobody tests in, and the two
+   where it fails are preview and production. A widget built this way looks
+   broken locally and ships broken.
+4. **It sends the member's Fluid credentials to the third party.** The `api`
+   fetcher spreads `context.getApiHeaders()` into every request including one
+   with an absolute endpoint. In Mist's preview that returns an
+   `Authorization: Bearer <jwt>` header. Whatever host the endpoint names
+   receives it.
+
+The failure mode when this is attempted is also worth naming, because it is
+seductive: the fetch is refused, and the obvious next move is to bake a static
+snapshot of the response into the screen JSON so the widget renders. Do not do
+that. A widget showing frozen data reads as success in every screenshot and is a
+lie. Report the boundary instead.
+
+If the data is not Fluid's, build the Mist app. It survives an API key being
+added later, it holds its own secrets, and it works in preview, on a scaffolded
+portal, and on a hosted one.
 
 # Surfacing a Mist app on a portal screen
 
@@ -141,7 +191,7 @@ the page.
 
 # Report
 
-State which of the three cases you chose and why, in one sentence. If you built
+State which of the two cases you chose and why, in one sentence. If you built
 a Mist app, report the `public_url`, the droplet uuid, and which placement
 surfaces were attached. If you built a portal widget, report the widget type and
 whether it was published.
