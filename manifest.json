@@ -92,6 +92,15 @@
       "updated_at": "2026-07-30T00:00:00Z"
     },
     {
+      "slug": "mist/portal-widget-vs-mist-app",
+      "name": "Portal Widget or Mist App",
+      "description": "Decide whether a requested feature should be a company portal widget or a Mist app with a droplet, and surface it correctly on a portal screen.",
+      "category": "mist",
+      "icon": "git-fork",
+      "path": "mist/portal-widget-vs-mist-app.md",
+      "updated_at": "2026-08-07T00:00:00Z"
+    },
+    {
       "slug": "mist/env-vars-audit",
       "name": "Audit env vars across all live Mists",
       "description": "Check every live Mist for missing or inconsistent env vars (Stripe keys, webhook secrets, etc.).",
