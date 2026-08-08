@@ -1,0 +1,297 @@
+{
+  "revision": "2026-08-07-rev3-run-skill-materialization+human-in-the-loop-approval+theme-pinning+runif-source-and-approval",
+  "slug": "dynamic-bundles",
+  "name": "Dynamic Bundles",
+  "description": "Execution engine for the themes/dynamic-bundles skill. Understands a company's existing bundle implementation (or a source configurator page) and recreates it as Fluid Dynamic Bundles, with one reusable theme implementation that renders every current and future bundle. Every step materializes the skill with run_skill first. Everything before `write-bundles` is READ-ONLY; the mutating tail is gated on `context.approved` via runIf AND on a human_in_the_loop confirmation of the actual plan. Requires `context.theme_id` pinned to the active theme — preflight stops the run if it is missing or disagrees.",
+  "maxParallel": 3,
+  "runTitleTemplate": "Dynamic Bundles — {{company}}",
+  "steps": [
+    {
+      "id": "preflight",
+      "name": "Preflight: company, theme, and variant completeness",
+      "prompt": "**First, call `run_skill(\"themes/dynamic-bundles\")` and follow it.** A workflow step runs in its own chat and does NOT inherit the launching skill's materialized files — without this call `SKILL.md`, `playbooks/`, `templates/` and `schemas/` are not on disk and every path below is a dead reference. If the call fails, say so explicitly in STEP_OUTPUT and work from this prompt alone; do not silently proceed as though you had read them.\n\nEstablish what you are working on before touching anything.\n\n1. GET `/api/company/v1/companies/me` — record company id AND the `fluid_shop` subdomain. The cart step needs the subdomain; do not skip it.\n2. GET `/api/application_themes/active` — record active theme id and name. **Then reconcile it with `context.theme_id`.** Mist resolves a theme-targeted step from the run's initial `context.theme_id`, NOT from anything discovered here — so if `context.theme_id` is absent or names a different theme, every later theme step may edit an unrelated checkout. If they disagree, or `context.theme_id` is missing, STOP and tell the operator to restart the run with `context.theme_id` set to the active theme. Routing is a `template_resources` join **scoped to the active theme**, so every later routing claim is relative to this id.\n3. GET `/api/v2025-06/bundles` — READ ONLY. Record existing bundle count and slugs. This endpoint omits `product_id`; never use it to get from bundle to product.\n4. **Variant completeness (G0, blocking).** Identify the products that will become bundle components and confirm each already carries its **full variant set**. A group built while its components are single-variant points at the only variant available; once real variants land that pointer is wrong and the group needs repointing or a full rebuild. If any component product is missing variants, STOP and report that the catalog must be fixed first.\n5. Read `context` for `source_url` and `approved`; state which are present.\n\nSTEP_OUTPUT: company id, fluid_shop, active theme id + name, existing bundle count, variant-completeness verdict, and whether source_url / approved were supplied.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The report names company id, the fluid_shop subdomain, and the active theme id and name, each quoted from a successful GET this turn.",
+        "Existing bundles were listed via GET /api/v2025-06/bundles and the count is stated (zero is valid).",
+        "Variant completeness is explicitly asserted for the intended component products — either 'all carry full variant sets' with evidence, or a STOP naming which products are incomplete.",
+        "The report states whether context.source_url and context.approved were present, with no assumption either way.",
+        "context.theme_id is reconciled against the active theme from GET /api/application_themes/active: either they match and both ids are quoted, or the step STOPPED and said so. Reporting the active theme without checking context.theme_id is a FAIL — the theme steps do not read this step's output to choose a project."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "stop"
+      },
+      "dependsOn": [],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "study-company",
+      "name": "Study the catalog and classify candidate shapes",
+      "prompt": "**First, call `run_skill(\"themes/dynamic-bundles\")` and follow it.** A workflow step runs in its own chat and does NOT inherit the launching skill's materialized files — without this call `SKILL.md`, `playbooks/`, `templates/` and `schemas/` are not on disk and every path below is a dead reference. If the call fails, say so explicitly in STEP_OUTPUT and work from this prompt alone; do not silently proceed as though you had read them.\n\nFind the products that should become bundles — and, critically, the ones that should NOT. Follow `playbooks/01-discovery.md`; SKILL.md §4a carries the same rules in short form.\n\n1. Page `/api/company/v1/products` at `per_page=50`. **`per_page=100` returns zero products with no error.** Record every product with multi-value `options`, plus every product already carrying `product_bundle_groups`.\n2. For each candidate record **the option id** and its values.\n3. Classify with the shape test:\n   - values are **components of one sellable item** → **bundle**\n   - values are **separate sellable items that already exist as their own products** → **category/collection, NOT a bundle**\n   Products that merely look alike do not share a shape. In the reference campaign seven near-identical products split three ways across three option ids; converting a flattened category into one bundle destroys a browsable listing and advertises one wrong price.\n4. Label each bundle candidate: fixed kit, configurable, or **both** (a category page of fixed kits where each card ALSO has a CUSTOMIZE link — that is N fixed kits PLUS one configurable bundle).\n5. **Identify the anchor** of each bundle — the item the bundle is named after, which will hold the base price. Flag any candidate with more than one anchor candidate, or none.\n6. Record the theme's CSS token lineage (`--clr-*` vs `--color-*`) and container mechanism.\n\nSTEP_OUTPUT: table of candidate → option id → components|separate-items → bundle|category → fixed|configurable|both → anchor.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Products were listed via GET /api/company/v1/products at per_page<=50 and each candidate is named by id and title.",
+        "EVERY candidate carries its own option id and an explicit components-of-one-item vs separate-sellable-items classification. A blanket claim that a group of products 'share a pattern' is a FAIL — the option id must be cited per product.",
+        "Any candidate classified as category/collection rather than bundle is named with its reason, so it is excluded from the write phase.",
+        "Each bundle candidate is labelled fixed kit, configurable, or both, and names its anchor item (or flags that the anchor is ambiguous).",
+        "The theme's CSS token lineage and container mechanism are named."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "strict",
+        "onFail": "continue"
+      },
+      "dependsOn": [
+        "preflight"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "source-analysis",
+      "name": "Source configurator analysis",
+      "prompt": "**First, call `run_skill(\"themes/dynamic-bundles\")` and follow it.** A workflow step runs in its own chat and does NOT inherit the launching skill's materialized files — without this call `SKILL.md`, `playbooks/`, `templates/` and `schemas/` are not on disk and every path below is a dead reference. If the call fails, say so explicitly in STEP_OUTPUT and work from this prompt alone; do not silently proceed as though you had read them.\n\nRun ONLY when `context.source_url` is present; otherwise emit `STEP_OUTPUT: no source_url supplied; skipped` and stop.\n\nCrawl the source with `crawl(url, formats: ['markdown','html'], only_main_content: false)` and extract verbatim:\n- every group heading and its selection rule (Choose One, Up to Three, included-with-no-choice)\n- every option with its **exact price** and any qualifier text\n- **which option is preselected in each group** — this is load-bearing, it becomes `is_default` and it determines the base arithmetic\n\nTwo hard rules:\n1. **Never trust imported catalog prices as source of truth.** Read prices off the source. In the reference campaign the importer had proteins at $50/$50/$61 while the live page said $52/$52/$63 — the catalog was wrong before anything was touched.\n2. If the source is bot-gated (Kasada/Cloudflare) and the crawl fails, say so plainly and ask the operator to paste the rendered HTML. Do not infer a menu you could not read.\n\n**Membership is per bundle.** Different bundles offer different subsets of the same product's variants. Record each group's membership from the source's own definition — never derive it from the component product's full variant list, which silently adds options the merchant does not sell.\n\nSTEP_OUTPUT: group-by-group structure with verbatim prices and the declared default per group, the page's shape verdict, and how evidence was obtained (crawled | operator-pasted | unavailable).",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Either the source was crawled this turn with verbatim group headings, selection rules and per-option prices, OR no source_url was supplied and the step reported that and stopped, OR the source was unreadable and the report names what it asked the operator for. All three are passes; a crawl that half-happened and was written up as though it succeeded is not.",
+        "The declared default member of each choice group is recorded, or its absence is stated explicitly.",
+        "Group membership is presented as read from the source per bundle, not derived from any component product's variant list."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "continue"
+      },
+      "dependsOn": [
+        "preflight"
+      ],
+      "maxReworkRounds": 2,
+      "runIf": {
+        "flag": "source_url"
+      }
+    },
+    {
+      "id": "plan-translation",
+      "name": "Plan the translation and the pricing arithmetic",
+      "prompt": "**First, call `run_skill(\"themes/dynamic-bundles\")` and follow it.** A workflow step runs in its own chat and does NOT inherit the launching skill's materialized files — without this call `SKILL.md`, `playbooks/`, `templates/` and `schemas/` are not on disk and every path below is a dead reference. If the call fails, say so explicitly in STEP_OUTPUT and work from this prompt alone; do not silently proceed as though you had read them.\n\nProduce `bundle-plan.json`. Still READ-ONLY — make no writes.\n\nFor each product to convert or create, plan the group list with `group_type`, `selection_type`, min/max and `pricing_config`; every item with its variant id; the **before** price span; and the **intended after** state.\n\n**The pricing decision (playbooks/09-pricing-patterns.md — read it if reachable):**\n\n- If the shopper's choices should change the price (the usual case), use the **rebalanced base**:\n  `anchor_group.fixed_price = headline − Σ(default component price, one per choice group)`, every choice group `dynamic_price`, `is_default: true` inside `config` on each intended default.\n- **Show the arithmetic per bundle.** Default configuration must land exactly on the headline.\n- **Assert `base >= 0`.** A negative base is normal for value bundles priced below the sum of their parts. Resolve it by honouring the source's declared default (usually a smaller/cheaper component). If it is STILL negative, **stop and escalate** — do not clamp to zero, do not substitute a different default to make the sum work.\n- Do NOT plan per-item deltas with a `0.00` base item: `0.00` is treated as unset and falls back to the variant's own price, which double-charges. Do not plan `config.country_prices` — 500 as an object, silently dropped as an array.\n- Optional `dynamic_price` groups raise the advertised floor by their cheapest item; flag any for explicit operator acceptance.\n\n**Census before any batch.** Flag every candidate whose base is negative or zero, that carries an explicit price-increment mechanism, whose group count or min/max differs from the proven shape, or whose anchor is ambiguous. Anything unresolved is **skipped and named**, never guessed.\n\nSTEP_OUTPUT: the plan; per bundle the base arithmetic (headline, each default, resulting base) and the assertion that base >= 0; the census with any skipped candidates named.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "Every planned bundle shows its base arithmetic explicitly: headline price, each choice group's default component price, and the resulting anchor base.",
+        "Every planned bundle asserts base >= 0. Any negative base is either resolved by honouring the source's declared default (shown) or escalated — clamping to zero or silently swapping the default is a FAIL.",
+        "No plan uses a 0.00 item price as an intended-free component, and none uses config.country_prices.",
+        "Any group that would raise the advertised floor is called out for operator acceptance rather than buried.",
+        "A census is present naming every candidate that is being skipped and why.",
+        "No write calls were made in this step."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "strict",
+        "onFail": "stop"
+      },
+      "dependsOn": [
+        "study-company",
+        "source-analysis"
+      ],
+      "maxReworkRounds": 2
+    },
+    {
+      "id": "write-bundles",
+      "name": "Write the bundle records",
+      "prompt": "**First, call `run_skill(\"themes/dynamic-bundles\")` and follow it.** A workflow step runs in its own chat and does NOT inherit the launching skill's materialized files — without this call `SKILL.md`, `playbooks/`, `templates/` and `schemas/` are not on disk and every path below is a dead reference. If the call fails, say so explicitly in STEP_OUTPUT and work from this prompt alone; do not silently proceed as though you had read them.\n\n**APPROVAL GATE — two locks, and `context.approved` is only the first.**\n\n`context.approved` is fixed when `run_workflow` is called, which is BEFORE this run produced a plan. It authorises the run to be capable of writing; it is not consent to the specific plan `plan-translation` just produced. So:\n\n1. If `context.approved` is not exactly `true`, emit `STEP_OUTPUT: not approved; no writes performed` and STOP.\n2. Then call **`human_in_the_loop`** with the plan's actual numbers — per bundle: headline, the base arithmetic, and the before → intended-after price span — and get explicit approval of THAT before the first write. This is the lock that matters, because it is the only one a human sees the plan behind.\n3. If `human_in_the_loop` is unavailable in this build, do NOT treat that as approval. Write nothing, emit the plan and `STEP_OUTPUT: approval mechanism unavailable; no writes performed`, and stop.\n\nMoney is involved and these writes change advertised shelf prices.\n\nWrite through **Surface A only** — `POST /api/company/v1/products/create_bundle_product` and `PATCH /api/company/v1/products/{id}/update_bundle_product`. Never `/api/v2025-06/bundles` for writes.\n\nThe write contract (SKILL.md §5a carries the full table if the playbook is unreachable):\n- `product.title` is required on **every** call, even a pricing-only update.\n- **Create = ONE call. Convert = TWO** — on `update_bundle_product`, `bundle: true` does not persist alongside groups; a second groups-free `{id, title, bundle: true, status}` call is required.\n- Teardown (`option_attrs: []`, master repriced to `0.0` via `variant_countries_attributes[].id`, `_destroy` per non-master variant) goes in the SAME call as the groups.\n- `is_default` goes **inside `config`**; at top level it is silently dropped.\n- Items are **append-only**; omitted items are kept.\n- (group, variant) is unique — re-sending an existing variant 422s the whole request atomically.\n- **Group-level `_destroy` returns 404.** Item-level works; repointing `variant_id` on an item by `id` works and is how you fix a wrong pointer.\n- `images_attributes` appends; send `_destroy` with the old id when swapping.\n- Route each product immediately after its flag call, before starting the next.\n\n**Verify from a fresh `GET`, never from the PATCH echo.** An echo showed `$52.00` on an all-fixed kit that a fresh GET returns as `0.0` two days later with the stored config byte-identical. The echo is not evidence.\n\nSTEP_OUTPUT: per product — id, is_bundle, group count, the fresh-GET price_range, template id, and whether it was create (1 call) or convert (2 calls).",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "If context.approved was not true, NOTHING was written and the report says so. Otherwise every criterion below applies.",
+        "Every reported value comes from a fresh GET issued AFTER the write, not from the PATCH response echo. A report that quotes only echo values is a FAIL.",
+        "For every written product the report quotes is_bundle: true and an actual price_range from that fresh GET, and interprets it correctly — a $0.00 range on an all-fixed bundle is expected and must be named as such, not reported as a defect or as verification.",
+        "Each converted product shows the two-call sequence; each created product shows the single create call.",
+        "Every written product has a non-null application_theme_template_id confirmed via GET /api/application_theme_templates/{id}/available_themeables.",
+        "No writes were made through /api/v2025-06/bundles.",
+        "Approval was obtained through human_in_the_loop AFTER the plan existed and BEFORE the first write, and the report shows the figures that were put in front of the human. Treating context.approved alone as consent to the plan is a FAIL — it is fixed before the plan exists."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "strict",
+        "onFail": "stop"
+      },
+      "dependsOn": [
+        "plan-translation"
+      ],
+      "maxReworkRounds": 2,
+      "runIf": {
+        "flag": "approved"
+      }
+    },
+    {
+      "id": "picker-section",
+      "name": "Build the picker section",
+      "prompt": "**First, call `run_skill(\"themes/dynamic-bundles\")` and follow it.** A workflow step runs in its own chat and does NOT inherit the launching skill's materialized files — without this call `SKILL.md`, `playbooks/`, `templates/` and `schemas/` are not on disk and every path below is a dead reference. If the call fails, say so explicitly in STEP_OUTPUT and work from this prompt alone; do not silently proceed as though you had read them.\n\nInstall the reusable bundle section. ONE implementation must render every current and future bundle — no per-bundle templates. Follow `playbooks/10-ui-and-price-surfaces.md`, which supersedes `03-theme-generation.md` on card rendering.\n\nCopy the skill's `templates/` artefacts into the theme and adapt ONLY what the study step recorded about the host theme (token lineage, container mechanism, button/list resets). If `templates/` is still absent after `run_skill`, say so in STEP_OUTPUT and build to the contract in SKILL.md rather than inventing one.\n\nNon-negotiables:\n- Detect a bundle with `product.product_bundle_groups.size > 0`. Not `is_bundle`, not `slug`/`handle`, not `bundle_in_stock`.\n- **Never pin `bundle_product` on a `product/*` template.**\n- Read exclusivity from `product.bundle_config.mutually_exclusive_groups` (holds `sort_order`s, not ids; `null` not `[]` on older bundles).\n- **One card per parent product, not per item.** Group items by `item.product_id`. A group holding three variants of one product must render ONE card with a variant sub-picker — not three identical cards. Sub-picker labels come from the variant's own option values, never a hardcoded size list. Product + option must resolve to exactly one variant_id.\n- **Use the variant's image**, falling back to the parent only when absent, and swap it when the sub-picker changes.\n- **The anchor item is never visually subordinate to the options.** Derive its size from the same sizing token as the option grid so they cannot drift; roughly 1.25x an option thumbnail.\n- Build `bundled_items` tagging EVERY entry with `product_bundle_group_id`, collapsing duplicate variants into `quantity`, and **omitting every `included` group** except an exclusive-pair member. A product whose only group is `included` sends NO `bundled_items`.\n- Add-to-cart must be ENABLED when every group is `included` or optional — a fixed kit has nothing to select, and gating on 'all required groups chosen' leaves every kit unclickable while the API looks healthy.\n\nSTEP_OUTPUT: files written, the detection expression, the grouping/sub-picker approach, anchor sizing token, and the CTA-enablement rule.\n\n**Before touching a single file, confirm you are in the right theme.** Read the theme id of the checkout you are in and compare it to the active theme id from `preflight`. Mist picked this project from the run's initial `context.theme_id`, or — if that was absent — by taking the first local theme checkout or scaffolding a new one, so being in the wrong theme is a live failure mode, not a hypothetical. If they do not match, STOP and report both ids. Do not 'fix' it by switching the active theme; routing is theme-scoped and that silently un-routes every bundle.",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "acceptance": [
+        "The theme checkout's own id is quoted and matches the active theme id from preflight. An unverified assumption that this is the right theme is a FAIL.",
+        "The section, JS, CSS and host template exist in the theme and the report names each path.",
+        "Bundle detection uses product.product_bundle_groups.size > 0 — the report quotes the expression.",
+        "Cards are grouped by parent product id with a variant sub-picker for multi-variant products — the report shows the grouping code or expression, and confirms one product contributing N variants yields ONE card.",
+        "Sub-picker labels derive from variant option values, with no hardcoded size/tier list anywhere in the section.",
+        "The anchor item's size derives from the same token as the option grid, and the report states both resulting sizes.",
+        "The cart payload builder tags every entry with product_bundle_group_id, collapses duplicates into quantity, and skips included groups except exclusive members.",
+        "The report confirms a product whose only group is included yields an ENABLED CTA and an empty bundled_items array."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "continue"
+      },
+      "dependsOn": [
+        "write-bundles"
+      ],
+      "maxReworkRounds": 2,
+      "runIf": {
+        "flag": "approved"
+      }
+    },
+    {
+      "id": "price-surfaces",
+      "name": "Inventory and wire every price surface",
+      "prompt": "**First, call `run_skill(\"themes/dynamic-bundles\")` and follow it.** A workflow step runs in its own chat and does NOT inherit the launching skill's materialized files — without this call `SKILL.md`, `playbooks/`, `templates/` and `schemas/` are not on disk and every path below is a dead reference. If the call fails, say so explicitly in STEP_OUTPUT and work from this prompt alone; do not silently proceed as though you had read them.\n\nA bundle page is not one price. On the reference storefront the host template composed FOUR sections, only one was wired to the selection engine, the PDP header rendered no price at all, and listing cards rendered a scalar where a bundle needs a range.\n\n1. **Inventory first.** Enumerate every surface that shows a price for a bundle: PDP header/hero, each composed section on the product template, sticky CTA bars, listing/collection/search cards, cart page, cart drawer, mini-cart.\n2. **Classify each**: must update live | should show a range or 'from' | correct as-is | should not render a price.\n3. **Wire from one computed source of truth.** Live surfaces subscribe to the engine's total. Never a second parallel calculation — that is how two numbers on one page drift apart. Surfaces outside the section need an explicit data-attribute hook, not a cross-section CSS selector.\n4. Server-rendered surfaces that cannot update show a **range or 'from'** price.\n5. **First paint must equal the default configuration** or the page visibly flickers from a wrong number to the right one.\n6. Remember `price_range` reads **$0.00** for an all-fixed bundle. Do not wire a surface to it without checking that bundle's pricing shape.\n\nSTEP_OUTPUT: the inventory table (surface → classification → treatment applied), and the source of truth every live surface reads from.\n\n**Before touching a single file, confirm you are in the right theme.** Read the theme id of the checkout you are in and compare it to the active theme id from `preflight`. Mist picked this project from the run's initial `context.theme_id`, or — if that was absent — by taking the first local theme checkout or scaffolding a new one, so being in the wrong theme is a live failure mode, not a hypothetical. If they do not match, STOP and report both ids. Do not 'fix' it by switching the active theme; routing is theme-scoped and that silently un-routes every bundle.",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "acceptance": [
+        "The theme checkout's own id is quoted and matches the active theme id from preflight. An unverified assumption that this is the right theme is a FAIL.",
+        "An inventory table is present naming every price surface found, each with a classification and the treatment applied — not a general statement that prices were wired.",
+        "All live surfaces read from a single computed total; the report names it and confirms no second parallel calculation exists.",
+        "Surfaces outside the section are hooked by explicit data attributes, not cross-section CSS selectors.",
+        "The report confirms first paint equals the default configuration.",
+        "Any surface wired to price_range is confirmed to belong to a bundle whose pricing shape makes that value meaningful."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "continue"
+      },
+      "dependsOn": [
+        "picker-section"
+      ],
+      "maxReworkRounds": 2,
+      "runIf": {
+        "flag": "approved"
+      }
+    },
+    {
+      "id": "route-and-render",
+      "name": "Route and render every bundle",
+      "prompt": "**First, call `run_skill(\"themes/dynamic-bundles\")` and follow it.** A workflow step runs in its own chat and does NOT inherit the launching skill's materialized files — without this call `SKILL.md`, `playbooks/`, `templates/` and `schemas/` are not on disk and every path below is a dead reference. If the call fails, say so explicitly in STEP_OUTPUT and work from this prompt alone; do not silently proceed as though you had read them.\n\nFor every bundle product confirm it is routed to the bundle template on the ACTIVE theme and that the picker actually renders at the product's own canonical URL.\n\n1. `GET /api/application_theme_templates/{template_id}/available_themeables?per_page=200` — every bundle product must appear with a non-null `application_theme_template_id`.\n2. Load each bundle's `canonical_url`, copied verbatim from the product response and never composed from a slug, and confirm the group UI renders.\n3. **Warn in the report** that routing is per-product and per-ACTIVE-theme: switching or cloning the active theme silently un-routes every bundle and this step must be re-run.\n\nA bundle on a bundle-unaware theme is a silent revenue hole: normal-looking page, working native add-to-cart, hard failure at checkout.\n\nSTEP_OUTPUT: per bundle — canonical_url, routed yes/no, picker renders yes/no, plus the theme-switch warning.\n\n**Before touching a single file, confirm you are in the right theme.** Read the theme id of the checkout you are in and compare it to the active theme id from `preflight`. Mist picked this project from the run's initial `context.theme_id`, or — if that was absent — by taking the first local theme checkout or scaffolding a new one, so being in the wrong theme is a live failure mode, not a hypothetical. If they do not match, STOP and report both ids. Do not 'fix' it by switching the active theme; routing is theme-scoped and that silently un-routes every bundle.",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "acceptance": [
+        "The theme checkout's own id is quoted and matches the active theme id from preflight. An unverified assumption that this is the right theme is a FAIL.",
+        "Every bundle product is confirmed routed via available_themeables, quoted per product.",
+        "Every bundle's canonical_url was loaded this turn and the report states per product whether the picker rendered — not in aggregate.",
+        "Every URL in the report was copied from an API response, not composed from a slug.",
+        "The report carries the explicit warning that a theme switch or clone un-routes every bundle."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "continue"
+      },
+      "dependsOn": [
+        "price-surfaces"
+      ],
+      "maxReworkRounds": 2,
+      "runIf": {
+        "flag": "approved"
+      }
+    },
+    {
+      "id": "cart-and-money",
+      "name": "Prove add-to-cart and the money path",
+      "prompt": "**First, call `run_skill(\"themes/dynamic-bundles\")` and follow it.** A workflow step runs in its own chat and does NOT inherit the launching skill's materialized files — without this call `SKILL.md`, `playbooks/`, `templates/` and `schemas/` are not on disk and every path below is a dead reference. If the call fails, say so explicitly in STEP_OUTPUT and work from this prompt alone; do not silently proceed as though you had read them.\n\n**Valid bundle config is NOT evidence the storefront can sell it.** In the reference campaign a six-group bundle read back perfectly and still failed for every shopper.\n\nCart creation needs BOTH `fluid_shop` and a top-level **`country_code`** — omitting the latter is `422 country_code is missing`.\n\nPOST /api/checkout/v2026-04/carts\n{ \"fluid_shop\": \"<subdomain>\", \"country_code\": \"<ISO>\", \"items\": [ { \"variant_id\": <master>, \"quantity\": 1, \"bundled_items\": [ ... ] } ] }\n\nTest matrix, per bundle:\n1. **Default** configuration — total must equal the headline price exactly.\n2. **One upgrade** — total must move by exactly the component delta.\n3. **One downgrade** — same, downward.\n4. **Negative case** — send a variant that is NOT in the group; it must be rejected. This is what proves membership is enforced rather than merely looking right.\n\nFor a **pure fixed kit** send **NO `bundled_items` at all**. For configurable bundles send `customizable` groups ONLY — an `included` group returns `400 product_bundle_group_id <id> must reference a customizable group or an exclusive included group`. The cart attaches included components itself.\n\n**Read every cart back.** `200` + `$0.00` total + empty `items[].errors` is a documented silent failure and it is real. Inspect `items[].errors` and any top-level `skipped_items`.\n\nFinally exercise the UI: click through one configurable bundle and one fixed kit in the browser, confirm the CTA is enabled and the cart line matches the page. Read console and server logs.\n\nSTEP_OUTPUT: per tested configuration — payload shape, HTTP status, amount_total, bundle_selection_key, and pass/fail against the expected total.\n\n**Before touching a single file, confirm you are in the right theme.** Read the theme id of the checkout you are in and compare it to the active theme id from `preflight`. Mist picked this project from the run's initial `context.theme_id`, or — if that was absent — by taking the first local theme checkout or scaffolding a new one, so being in the wrong theme is a live failure mode, not a hypothetical. If they do not match, STOP and report both ids. Do not 'fix' it by switching the active theme; routing is theme-scoped and that silently un-routes every bundle.",
+      "target": {
+        "type": "kind",
+        "kind": "theme",
+        "fallbackToManager": true
+      },
+      "acceptance": [
+        "The theme checkout's own id is quoted and matches the active theme id from preflight. An unverified assumption that this is the right theme is a FAIL.",
+        "Successful POST /api/checkout/v2026-04/carts calls are reported for at least ONE configurable bundle AND at least ONE pure fixed kit, with the actual amount_total quoted for each. Testing only one shape is a FAIL.",
+        "The default configuration's amount_total equals the headline price exactly, and the arithmetic is shown.",
+        "At least one upgrade and one downgrade were carted, and each total moved by exactly the expected component delta.",
+        "A negative case was attempted — a variant not in the group — and was rejected. Omitting this is a FAIL, because nothing else proves membership is enforced.",
+        "The fixed-kit request demonstrably sent NO bundled_items, and no successful request included a bundled_items entry for an included group except a documented exclusive-pair member.",
+        "items[].errors and skipped_items were inspected and reported — an empty errors array is stated explicitly rather than assumed to mean success.",
+        "A browser add-to-cart was exercised for one configurable bundle and one fixed kit, with console and server logs read, and page total == cart total confirmed."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "strict",
+        "onFail": "continue",
+        "requiredTools": [
+          {
+            "tool": "fluid_api",
+            "minSuccessfulCalls": 3,
+            "input": {
+              "path": "/api/checkout/v2026-04/carts"
+            },
+            "distinctBy": [
+              "body"
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "route-and-render"
+      ],
+      "maxReworkRounds": 3,
+      "runIf": {
+        "flag": "approved"
+      }
+    },
+    {
+      "id": "reusability-and-report",
+      "name": "Reusability proof and final report",
+      "prompt": "**First, call `run_skill(\"themes/dynamic-bundles\")` and follow it.** A workflow step runs in its own chat and does NOT inherit the launching skill's materialized files — without this call `SKILL.md`, `playbooks/`, `templates/` and `schemas/` are not on disk and every path below is a dead reference. If the call fails, say so explicitly in STEP_OUTPUT and work from this prompt alone; do not silently proceed as though you had read them.\n\nProve the implementation is general, not fitted to one product, then report honestly.\n\n1. **Reusability proof:** confirm the same section renders a bundle it was not built against — a second existing bundle with a different group shape, or a scratch bundle created and then removed. **Delete the Bundle row BEFORE the Product**; the reverse order leaves an orphan whose DELETE then 500s forever.\n2. Write the manifest.\n3. Final report in four parts: what was built · what was verified and how · what was NOT verified · what a human must decide.\n\nSeparate observed facts from inference. If products were never driven through the cart, say so rather than implying they were. If an advertised price moved, name the product and both numbers. If a playbook or template was unreachable, name it — that is a portability finding worth recording, not an embarrassment.\n\nSTEP_OUTPUT: manifest path, reusability evidence, and the four-part report.",
+      "target": {
+        "type": "manager"
+      },
+      "acceptance": [
+        "The same theme implementation is shown rendering at least two bundles with different group shapes, named by id.",
+        "A manifest was written that validates against schemas/bundle-manifest.schema.json.",
+        "The final report has a distinct 'not verified' section naming every claim that rests on inference rather than a call made this run.",
+        "Any advertised price change is reported with the product and both before and after values.",
+        "If a scratch bundle was created for the reusability proof, the report confirms the Bundle row was deleted before the Product.",
+        "Any unreachable playbook, template or reference file is named explicitly.",
+        "If the run was not approved and the mutating steps were condition-skipped, the report says exactly that and names what WOULD have been written — and the reusability criteria above do not apply. A skipped write reported as a completed one is a FAIL."
+      ],
+      "qa": {
+        "enabled": true,
+        "strictness": "standard",
+        "onFail": "continue"
+      },
+      "dependsOn": [
+        "cart-and-money"
+      ],
+      "maxReworkRounds": 2
+    }
+  ]
+}

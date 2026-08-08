@@ -1,0 +1,277 @@
+{%- comment -%}
+  ============================================================================
+  bundle_builder — universal Fluid Dynamic Bundle section
+  ----------------------------------------------------------------------------
+  Presentation only. No pricing logic, no rule logic, no bundle-specific ids.
+  All behaviour lives in assets/bundle-builder.js (normalize / rules / render /
+  cart). All styling lives in assets/bundle-builder.css.
+
+  Renders NOTHING unless the resolved product has bundle groups, so this section
+  is safe to place on a shared product template (the platform's own section is
+  not — it paints ~98 KB of empty UI onto every ordinary product, defect P4).
+
+  Progressive enhancement: group shells and static/included rows are rendered
+  server-side, so the page has real content and stable layout before JS runs.
+  JS fills the selectable grids and the summary.
+  ============================================================================
+{%- endcomment -%}
+
+{%- liquid
+  assign bp = section.settings.bundle_product
+  if bp == blank
+    assign bp = product
+  endif
+
+  assign is_bundle = false
+  if bp != blank and bp.product_bundle_groups.size > 0
+    assign is_bundle = true
+  endif
+-%}
+
+{%- if is_bundle -%}
+  {%- liquid
+    assign iso = localization.country.iso_code | default: 'US' | upcase
+    assign sym = localization.country.currency.symbol | default: '$'
+    assign ccode = localization.country.currency.iso_code
+    assign dp = localization.country.currency.decimal_places
+    if dp == blank
+      assign dp = 2
+    endif
+    assign fallback_image = ''
+    if bp.images.size > 0
+      assign fallback_image = bp.images[0].src
+    endif
+  -%}
+
+  <div
+    class="bb"
+    data-bb-root
+    data-bb-section="{{ section.id }}"
+    style="
+      --bb-accent: {{ section.settings.accent_color | default: 'var(--clr-primary, var(--color-primary, #111111))' }};
+      --bb-radius: {{ section.settings.card_radius | default: 12 }}px;
+      --bb-pad-top: {{ section.settings.padding.top | default: 48 }}px;
+      --bb-pad-bottom: {{ section.settings.padding.bottom | default: 48 }}px;
+    "
+  >
+    {%- comment -%} ---------- data contract: ONE tag ---------- {%- endcomment -%}
+    <script type="application/json" data-bb-config>
+      {
+        "countryIso": {{ iso | json }},
+        "currencySymbol": {{ sym | json }},
+        "currencyCode": {{ ccode | json }},
+        "decimalPlaces": {{ dp | json }},
+        "locale": {{ request.locale.iso_code | default: '' | json }},
+        "fallbackImage": {{ fallback_image | json }},
+        "showProgress": {{ section.settings.show_progress | json }},
+        "showRecurring": {{ section.settings.show_recurring | json }},
+        "debug": {{ section.settings.debug | default: false | json }}
+      }
+    </script>
+
+    {%- comment -%}
+      The platform emits this blob with a bare JSON.generate, so a product title
+      containing `</script>` executes (defect P1, live stored XSS). We escape the
+      three dangerous characters as JSON \u escapes — JSON.parse restores them
+      exactly, and the raw characters never reach the HTML parser.
+    {%- endcomment -%}
+    <script type="application/json" data-bb-product>
+      {{- bp | json | replace: '<', '\u003c' | replace: '>', '\u003e' | replace: '&', '\u0026' -}}
+    </script>
+
+    {%- comment -%} ---------- templates cloned by JS ---------- {%- endcomment -%}
+    <template data-bb-tpl="group">
+      <section class="bb-group" data-bb-group>
+        <header class="bb-group__head">
+          <h3 class="bb-group__title" data-bb-group-title></h3>
+          <button type="button" class="bb-group__choose" data-bb-choose hidden aria-pressed="false">
+            <span data-bb-choose-label>Choose this</span>
+          </button>
+        </header>
+        <p class="bb-group__desc" data-bb-group-desc hidden></p>
+        <p class="bb-group__rule" data-bb-rule hidden></p>
+        <div class="bb-tracker" data-bb-tracker hidden role="progressbar" aria-valuemin="0">
+          <span class="bb-tracker__label" data-bb-tracker-label></span>
+          <span class="bb-tracker__track"><span class="bb-tracker__fill" data-bb-tracker-fill></span></span>
+        </div>
+        <div class="bb-grid" data-bb-grid role="group"></div>
+      </section>
+    </template>
+
+    <template data-bb-tpl="card">
+      <div class="bb-card" role="checkbox" aria-checked="false" data-bb-variant>
+        <div class="bb-card__media">
+          <img class="bb-card__img" data-bb-card-image loading="lazy" decoding="async" alt="" hidden>
+          <span class="bb-card__ph" data-bb-card-placeholder aria-hidden="true"></span>
+        </div>
+        <div class="bb-card__body">
+          <span class="bb-card__title" data-bb-card-title></span>
+          <span class="bb-card__variant" data-bb-card-variant hidden></span>
+          <span class="bb-card__prices">
+            <s class="bb-card__compare" data-bb-card-compare hidden></s>
+            <span class="bb-card__price" data-bb-card-price hidden></span>
+          </span>
+          <label class="bb-check bb-card__sub" data-bb-card-subscribe hidden>
+            <input type="checkbox"><span class="bb-check__box" aria-hidden="true"></span>
+            <span data-bb-card-subscribe-label></span>
+          </label>
+        </div>
+        <div class="bb-card__actions">
+          <button type="button" class="bb-btn bb-btn--ghost bb-card__toggle" data-bb-toggle>
+            <span data-bb-toggle-label>Add</span>
+          </button>
+          <div class="bb-stepper" data-bb-stepper hidden>
+            <button type="button" class="bb-stepper__btn" data-bb-minus aria-label="Decrease quantity">&minus;</button>
+            <span class="bb-stepper__val" data-bb-qty aria-live="polite">1</span>
+            <button type="button" class="bb-stepper__btn" data-bb-plus aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template data-bb-tpl="summary-row">
+      <li class="bb-sum__row">
+        <span class="bb-sum__title" data-bb-sum-title></span>
+        <span class="bb-sum__qty" data-bb-sum-qty></span>
+        <span class="bb-sum__badge" data-bb-sum-badge hidden></span>
+        <span class="bb-sum__price" data-bb-sum-price></span>
+      </li>
+    </template>
+
+    {%- comment -%} ---------- server-rendered shell ---------- {%- endcomment -%}
+    <div class="bb__layout bb__layout--{{ section.settings.layout | default: 'sidebar' }}">
+      <div class="bb__main">
+        {%- if section.settings.heading != blank -%}
+          <h2 class="bb__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+        {%- if section.settings.description != blank -%}
+          <p class="bb__intro">{{ section.settings.description }}</p>
+        {%- endif -%}
+
+        <div data-bb-groups>
+          {%- for group in bp.product_bundle_groups -%}
+            {%- unless group.pricing_config.hidden -%}
+              <section
+                class="bb-group"
+                data-bb-group="{{ group.id }}"
+                data-bb-group-type="{{ group.group_type }}"
+              >
+                <header class="bb-group__head">
+                  <h3 class="bb-group__title" data-bb-group-title>{{ group.title }}</h3>
+                  <button type="button" class="bb-group__choose" data-bb-choose hidden aria-pressed="false">
+                    <span data-bb-choose-label>Choose this</span>
+                  </button>
+                </header>
+                <p class="bb-group__desc" data-bb-group-desc {% if group.description == blank %}hidden{% endif %}>{{ group.description }}</p>
+                <p class="bb-group__rule" data-bb-rule hidden></p>
+
+                {%- if group.group_type == 'customizable' -%}
+                  <div class="bb-tracker" data-bb-tracker hidden role="progressbar" aria-valuemin="0">
+                    <span class="bb-tracker__label" data-bb-tracker-label></span>
+                    <span class="bb-tracker__track"><span class="bb-tracker__fill" data-bb-tracker-fill></span></span>
+                  </div>
+                  <div class="bb-grid" data-bb-grid role="group" aria-label="{{ group.title | escape }}">
+                    {%- comment -%} JS fills this; a no-JS shopper sees the included list + copy. {%- endcomment -%}
+                  </div>
+                {%- else -%}
+                  <ul class="bb-included">
+                    {%- for item in group.bundle_group_items -%}
+                      <li class="bb-included__row">
+                        {%- assign img = item.variant.images[0].src | default: item.product_image_url -%}
+                        {%- if img != blank -%}
+                          <img class="bb-included__img" src="{{ img }}" alt="" loading="lazy" decoding="async" width="48" height="48">
+                        {%- else -%}
+                          <span class="bb-included__ph" aria-hidden="true"></span>
+                        {%- endif -%}
+                        <span class="bb-included__title">{{ item.product_title }}</span>
+                        {%- if item.display_quantity > 1 -%}
+                          <span class="bb-included__qty">&times;{{ item.display_quantity }}</span>
+                        {%- endif -%}
+                      </li>
+                    {%- endfor -%}
+                  </ul>
+                {%- endif -%}
+              </section>
+            {%- endunless -%}
+          {%- endfor -%}
+        </div>
+      </div>
+
+      <aside class="bb__aside">
+        <div class="bb-sum">
+          <h3 class="bb-sum__heading">{{ section.settings.summary_heading | default: 'Your bundle' }}</h3>
+          <ul class="bb-sum__items" data-bb-summary-items></ul>
+
+          <label class="bb-check bb-sum__suball" data-bb-subscribe-all hidden>
+            <input type="checkbox"><span class="bb-check__box" aria-hidden="true"></span>
+            <span>{{ section.settings.subscribe_label | default: 'Subscribe & save' }}</span>
+          </label>
+          <select class="bb-sum__plan" data-bb-plan-select aria-label="Subscription plan" hidden></select>
+
+          <div class="bb-sum__total">
+            <span>{{ section.settings.total_label | default: 'Total' }}</span>
+            <strong data-bb-total aria-live="polite">{{ bp.price }}</strong>
+          </div>
+          <p class="bb-sum__recurring" data-bb-recurring hidden aria-live="polite"></p>
+
+          <button type="button" class="bb-btn bb-btn--primary bb-sum__cta" data-bb-cta disabled>
+            {{ section.settings.cta_text | default: 'Add bundle to cart' }}
+          </button>
+          <p class="bb-sum__msg" data-bb-message aria-live="polite" hidden></p>
+          <p class="bb-sum__err" data-bb-error role="alert" hidden></p>
+          <noscript>
+            <p class="bb-sum__msg">Building a bundle requires JavaScript.</p>
+          </noscript>
+        </div>
+      </aside>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Bundle Builder",
+  "tag": "section",
+  "class": "bundle-builder",
+  "settings": [
+    { "type": "header", "content": "Bundle source" },
+    {
+      "type": "product",
+      "id": "bundle_product",
+      "label": "Bundle product",
+      "info": "Leave EMPTY on product templates — the page product is used automatically, and pinning hard-wires one bundle. Set this only on home/landing page templates."
+    },
+    { "type": "header", "content": "Content" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Build your bundle" },
+    { "type": "textarea", "id": "description", "label": "Description" },
+    { "type": "text", "id": "summary_heading", "label": "Summary heading", "default": "Your bundle" },
+    { "type": "text", "id": "total_label", "label": "Total label", "default": "Total" },
+    { "type": "text", "id": "cta_text", "label": "Add to cart button", "default": "Add bundle to cart" },
+    { "type": "text", "id": "subscribe_label", "label": "Subscribe label", "default": "Subscribe & save" },
+    { "type": "header", "content": "Behaviour" },
+    { "type": "checkbox", "id": "show_progress", "label": "Show per-group progress", "default": true },
+    {
+      "type": "checkbox",
+      "id": "show_recurring",
+      "label": "Disclose renewal price",
+      "default": true,
+      "info": "Renewal can differ from the first charge. Off means the shopper first sees it at checkout."
+    },
+    { "type": "checkbox", "id": "debug", "label": "Log configuration warnings to the console", "default": false },
+    { "type": "header", "content": "Layout & style" },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "default": "sidebar",
+      "options": [
+        { "value": "sidebar", "label": "Summary sidebar" },
+        { "value": "stacked", "label": "Summary below" }
+      ]
+    },
+    { "type": "color", "id": "accent_color", "label": "Accent colour" },
+    { "type": "range", "id": "card_radius", "label": "Card corner radius", "min": 0, "max": 32, "step": 2, "unit": "px", "default": 12 },
+    { "type": "padding", "id": "padding", "label": "Section padding" }
+  ]
+}
+{% endschema %}

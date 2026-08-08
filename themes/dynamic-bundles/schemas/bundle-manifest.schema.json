@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "bundle-manifest.json",
+  "description": "Provenance and routing state for a generated Dynamic Bundles implementation. Written at the end of a run; read by the next agent so re-syncing is deliberate rather than archaeological.",
+  "type": "object",
+  "required": ["generatedAt", "company", "theme", "artefacts", "routing", "contract"],
+  "properties": {
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "skillVersion": { "type": "string" },
+    "company": {
+      "type": "object",
+      "required": ["id", "slug"],
+      "properties": {
+        "id": { "type": "integer" },
+        "slug": { "type": "string" },
+        "storefront": { "type": "string" },
+        "countries": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" },
+        "tokenLineage": { "enum": ["clr", "color", "none"] },
+        "containerMechanism": { "type": "string" },
+        "globalSectionDigest": {
+          "type": "string",
+          "description": "SHA of the platform product_bundle row at generation time. The deployed row is NOT the repo file; record it so a future diff is meaningful."
+        }
+      }
+    },
+    "artefacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "kind"],
+        "properties": {
+          "path": { "type": "string" },
+          "kind": { "enum": ["section", "asset", "template", "manifest"] },
+          "templateId": { "type": ["integer", "null"] },
+          "published": { "type": "boolean" }
+        }
+      }
+    },
+    "routing": {
+      "type": "object",
+      "description": "Replay list. application_theme_template_id is a template_resources join scoped to the ACTIVE theme, so a theme switch or clone silently un-routes every product here.",
+      "required": ["themeId", "templateId", "productIds"],
+      "properties": {
+        "themeId": { "type": "integer" },
+        "templateId": { "type": "integer" },
+        "productIds": { "type": "array", "items": { "type": "integer" } },
+        "verifiedAt": { "type": "string", "format": "date-time" },
+        "verifiedOn": { "type": "string", "description": "The plain storefront URL used for verification — never a preview URL." }
+      }
+    },
+    "contract": {
+      "type": "object",
+      "properties": {
+        "dropRevision": { "type": "string" },
+        "cartRevision": { "type": "string" },
+        "detector": { "type": "string", "default": "product.product_bundle_groups.size > 0" },
+        "exclusivitySource": { "type": "string", "default": "bundle_config.mutually_exclusive_groups" }
+      }
+    },
+    "defectsHandled": {
+      "type": "array",
+      "description": "Platform defects this implementation works around, so a future agent does not 'simplify' the guard away.",
+      "items": {
+        "type": "object",
+        "required": ["id", "how"],
+        "properties": {
+          "id": { "type": "string" },
+          "how": { "type": "string" }
+        }
+      }
+    },
+    "openIssues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": { "type": "string" },
+          "detail": { "type": "string" },
+          "needsHuman": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

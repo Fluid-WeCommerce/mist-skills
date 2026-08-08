@@ -482,6 +482,35 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "themes/dynamic-bundles",
+      "name": "Dynamic Bundles",
+      "description": "Understand a company's existing bundle implementation (or a source configurator page) and recreate it as Fluid Dynamic Bundles, with one reusable theme implementation that renders every current and future bundle.",
+      "category": "themes",
+      "icon": "boxes",
+      "path": "themes/dynamic-bundles/SKILL.md",
+      "updated_at": "2026-08-07T00:00:00Z",
+      "references": [
+        "themes/dynamic-bundles/PLAN.md",
+        "themes/dynamic-bundles/playbooks/01-discovery.md",
+        "themes/dynamic-bundles/playbooks/02-translation.md",
+        "themes/dynamic-bundles/playbooks/03-theme-generation.md",
+        "themes/dynamic-bundles/playbooks/04-routing.md",
+        "themes/dynamic-bundles/playbooks/05-validation.md",
+        "themes/dynamic-bundles/playbooks/06-greenfield.md",
+        "themes/dynamic-bundles/playbooks/07-troubleshooting.md",
+        "themes/dynamic-bundles/playbooks/08-api-write-recipe.md",
+        "themes/dynamic-bundles/playbooks/09-pricing-patterns.md",
+        "themes/dynamic-bundles/playbooks/10-ui-and-price-surfaces.md"
+      ],
+      "assets": [
+        "themes/dynamic-bundles/templates/sections/bundle_builder/index.liquid",
+        "themes/dynamic-bundles/templates/assets/bundle-builder.js",
+        "themes/dynamic-bundles/templates/assets/bundle-builder.css",
+        "themes/dynamic-bundles/templates/product/bundle/index.liquid",
+        "themes/dynamic-bundles/schemas/bundle-manifest.schema.json"
+      ]
     }
   ],
   "workflows": [
@@ -514,6 +543,11 @@
       "slug": "speed-import",
       "path": "workflows/speed-import.workflow.json",
       "updated_at": "2026-07-30T18:00:00Z"
+    },
+    {
+      "slug": "dynamic-bundles",
+      "path": "workflows/dynamic-bundles.workflow.json",
+      "updated_at": "2026-08-07T00:00:00Z"
     }
   ]
 }
