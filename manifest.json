@@ -482,6 +482,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "commerce/bulk-subscription-plans",
+      "name": "Bulk Subscription Plans",
+      "description": "Bulk create subscription plans and apply them to all products or a selected subset — in one shot. Supports presets (Starter, Standard, Consumables) or custom frequencies and discounts.",
+      "category": "commerce",
+      "icon": "refresh-cw",
+      "path": "commerce/bulk-subscription-plans/SKILL.md",
+      "updated_at": "2026-07-31T00:00:00Z"
     }
   ],
   "workflows": [
