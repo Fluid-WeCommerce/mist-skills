@@ -482,6 +482,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "compliance/market-launch-kit",
+      "name": "Market Launch Kit",
+      "description": "Prove a market is actually purchasable before calling it open — walks the real purchase path as a customer in that country and reports which step failed",
+      "category": "compliance",
+      "icon": "shield-check",
+      "path": "compliance/market-launch-kit.md",
+      "updated_at": "2026-07-31T00:00:00Z"
     }
   ],
   "workflows": [
