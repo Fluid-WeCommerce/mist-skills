@@ -135,9 +135,20 @@ customer-facing** unless the client accepts the inflated floor.
 (items still echo their real `pc_price`). This is the correct primitive for a fixed kit, and it
 means the kit price cannot drift when a component's à-la-carte price changes.
 
-### 4d. Always compare `price_range` before → after
-It is the single most useful verification signal (see §7). If min moved, you changed the shelf
-price. That check caught both 4a and 4b.
+### 4d. Compare `price_range` before → after — but know what it measures
+It sums each item's `config.price`; it does **not** read the group's `fixed_price`. So it is a
+strong signal for **dynamic** groups (a moved minimum means you changed the shelf price — that
+check caught both 4a and 4b), and reads **`$0.00`** for an **all-fixed** bundle even though the
+cart charges correctly. Do not read a zero as a defect, and do not read it as verification.
+Full semantics: `09-pricing-patterns.md` §5.
+
+### 4e. Upgrade pricing needs a rebalanced base
+Flipping choice groups to `dynamic_price` alone **double-charges**: each item contributes its
+full variant price on top of an anchor group that already holds the headline. Use
+`base = headline − Σ(default component prices)` on the anchor, `dynamic_price` on every choice
+group, `is_default: true` inside `config` on each intended default. Assert `base >= 0`.
+See `09-pricing-patterns.md` — this is the single biggest gap the first version of this
+playbook had.
 
 ---
 
@@ -169,15 +180,32 @@ Loop shape: `call 1 → call 2 → read back → route → verify`. Per product,
   distinct cart keys. This is why rule 4 (always tag the group) is load-bearing.
 - **Sequencing: never archive or delete a product the storefront still links to.** Retire only
   after the referring tile/nav has been repointed and that change is confirmed.
+- **Bundle items are append-only.** Omitting an existing item from
+  `bundle_group_items_attributes` keeps it; it does not remove it.
+- **(group, variant) is unique.** Re-sending a variant already in that group `422`s the
+  **whole request**, atomically — nothing is written. This makes it a cheap, non-mutating
+  membership oracle: send a candidate and read the error.
+- **Group-level `_destroy` does not work** — returns 404 even for a group that exists. Do not
+  plan a delete-and-recreate around it. Item-level and variant-level `_destroy` DO work.
+- **Item updates by `id` work**, including repointing `variant_id` in place. That is how you
+  fix a group pointing at the wrong variant — no rebuild needed.
+- **Reads cap at 51,200 bytes.** A large bundle cannot be read whole. Page it by PATCHing the
+  visible items' `sort_order` into a high block and re-reading.
+- **Cart creation needs a top-level `country_code`** as well as `fluid_shop`. Omitting it is
+  `422 country_code is missing`.
 
 ---
 
 ## 7. Read-back checklist, per product
 
+Do all of this from a **fresh `GET`**. A PATCH echo can show values the persisted read does
+not — an all-fixed kit echoed `$52.00` and reads `0.0` two days later with its stored config
+byte-identical (`09-pricing-patterns.md` §5a). The echo is not evidence.
+
 | Assert | Where |
 |---|---|
-| `is_bundle: true` | product response after the flag call |
-| `price_range` matches the intended source price | product response |
+| `is_bundle: true` | fresh GET after the flag call |
+| `price_range` matches intent (dynamic groups) — or is a knowing `$0.00` (all-fixed) | fresh GET |
 | `option_attrs: []`, no priced variants remain | product response |
 | Bundle row exists with the expected group count | `GET /api/v2025-06/bundles` (read-only) |
 | `application_theme_template_id` set | `available_themeables` |

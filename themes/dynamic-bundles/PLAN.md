@@ -1,7 +1,7 @@
 # Universal Dynamic Bundles Skill — Research & Implementation Plan
 
 Status: **IMPLEMENTED AND FIELD-VERIFIED.** Planned 2026-08-05; built and exercised against a live company 2026-08-06.
-Author: Mist. Date: 2026-08-05, revised 2026-08-06. Reference corpus: `fluid-dynamic-bundles copy/` (SKILL.md + 18 reference docs + evidence).
+Author: Mist. Date: 2026-08-05, revised 2026-08-06. Reference corpus: the 18 docs now shipped alongside this skill at `reference/*.md` (originally read from `fluid-dynamic-bundles copy/`).
 
 > **Read PART 7 before trusting PART 1.** Parts 1–6 are the pre-build research record and are
 > preserved deliberately, including the questions that were open at planning time. PART 7 records

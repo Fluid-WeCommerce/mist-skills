@@ -213,10 +213,17 @@ hidden groups. Pin only on `home_page`/`page` templates, where there is no page 
   `"$30.00 - $70.00"` range when any group is dynamic). Top-level `price` and `display_price`
   from the JSON APIs are computed with `country_code: nil` and read `0.0` / `$0.00` — unusable
   (every live bundle reports `display_price: "$0.00 (USD)"`).
-  **`price_range` / `bundle_price_range` ARE correct, and are the primary write-verification
-  signal.** Verified 2026-08-06 across nine bundles: `$9.35–$11.35`, `$52.00`, `$53.00–$64.00`,
-  plus a *wrong* `$55.75–$66.75` that exposed a real pricing defect. Compare before → after on
-  every write — see `playbooks/08-api-write-recipe.md` §4.
+- **`price_range` / `bundle_price_range` sum each item's `config.price`. They do NOT read the
+  group's `fixed_price`.** So:
+  - **dynamic** choice groups → the range is correct and arithmetically checkable. Use it.
+  - **all-fixed** bundle (anchor holds the price, items all `0.0`) → the range reads **`$0.00`**
+    on a fresh GET while the cart charges correctly. Not a reader defect — an accurate sum of
+    zeros. Useless for verification, and dangerous on any storefront surface that renders it.
+- **A PATCH echo is not proof.** On 2026-08-06 an all-fixed kit was recorded at `$52.00` from
+  the `update_bundle_product` echo; a fresh `GET` on 2026-08-08, stored config byte-identical
+  and `updated_at` unchanged, returns `0.0`. The cart was correct at `$52.00` throughout
+  (verified with a real cart POST). **Never verify a write from the response to that write —
+  always re-`GET`, or prove it with a cart.** See `playbooks/09-pricing-patterns.md` §5.
 - In one object: `price`/`wholesale`/`compare_price` are **floats**, `subscription_price` is a
   **string**. `cv`/`qv` are Integers in Liquid, **strings** in both APIs. `display_*` carries a
   `" (USD)"` suffix. Drop prices can be BigDecimal engineering notation (`"0.4999e2"`) —
@@ -225,6 +232,37 @@ hidden groups. Pin only on `home_page`/`page` templates, where there is no page 
 - **CV/QV only flow from `dynamic_price` groups.** Fixed-price and flat bundles credit 0/0
   unless CV/QV is re-entered on the group or bundle `country_pricing` row. Never sum
   `variant_countries[].cv` into a "you'll earn N CV" promise.
+
+---
+
+## 4a. Planning rules learned in the field
+
+1. **Variants must exist before groups are built.** A group built while its component
+   products were single-variant points at the only variant available; once real variants are
+   added that pointer is *wrong* and the group must be repointed. A second group built too
+   early had 43 items where the source offered 117 (43 products × sizes) and needed a full
+   rebuild. **Assert in preflight: every product that will become a component already carries
+   its full variant set.** If not, fix the catalog first — this is a G0 check, alongside
+   active-theme and non-empty-catalog.
+
+2. **Group membership comes from the source, per bundle — never derived from the component
+   product.** Different bundles offer different subsets of the same product's variants; one
+   bundle offered three sizes of a component, another offered a smaller size the first did
+   not. Deriving from the parent product's full variant list silently adds options the
+   merchant does not sell. Where the source declares a default member, honour it; where it
+   declares none, use the cheapest.
+
+3. **Upgrade pricing needs a rebalanced base**, not just `dynamic_price` — see
+   `playbooks/09-pricing-patterns.md`. Compute `base = headline − Σ(defaults)` per bundle and
+   assert `base >= 0` before writing. A negative base is normal for value bundles and is
+   resolved by honouring the source's default; if it is still negative, **escalate**.
+
+4. **Bundles are not interchangeable — census before any batch.** Flag any candidate whose
+   computed base is negative or zero, that carries an explicit price-increment mechanism,
+   whose group count or min/max differs from the proven shape, or that has more than one
+   anchor candidate (or none). Anything unresolved is **skipped and named**, never guessed.
+   Convert in batches behind a human gate, then cart-verify a sample spanning the *kinds* of
+   bundle — premium, value, and any odd shape — not just the easy ones.
 
 ---
 
@@ -243,34 +281,87 @@ written here is honoured by the portal and **silently ignored by the cart**), re
 not 422** on schema errors, `items[].is_default` 500s on update and is dropped on create,
 `sort_order` is overwritten by array position, and `groups: []` destroys all groups.
 
-Two more write rules: send `is_default` **inside `config`**; and unknown keys are silently
-dropped with a 200, so always read back and diff.
+### 5a. The write contract — inline, as the safety net
+
+A workflow step chat does not inherit the launching skill's materialized files, so
+`playbooks/`, `templates/` and `reference/` have repeatedly come back ENOENT. Every step of
+the `dynamic-bundles` workflow now calls `run_skill("themes/dynamic-bundles")` first, which
+materializes them — but if that call fails, this table is all you have. Do not go looking for
+the write recipe elsewhere and do not improvise it.
+
+| Rule | Detail |
+|---|---|
+| Surface A only | `POST create_bundle_product` / `PATCH /api/company/v1/products/{id}/update_bundle_product`. Never `/api/v2025-06/bundles` for writes. |
+| `product.title` required on **every** call | Omitting it → `422 product.title is missing`, even when updating only pricing. |
+| Nested keys | `product_bundle_groups_attributes` / `bundle_group_items_attributes`. |
+| `is_default` goes **inside `config`** | At top level it is silently dropped. |
+| **Create = 1 call, convert = 2** | `bundle: true` persists on `create_bundle_product`; on `update_bundle_product` it does not — a second groups-free `{id, title, bundle: true, status}` call is required. |
+| Items are **append-only** | Omitted existing items are kept, not removed. |
+| Uniqueness on (group, variant) | Re-sending an existing variant `422`s the **whole request**, atomically. Useful as a cheap non-mutating membership oracle. |
+| Group-level `_destroy` **does not work** | Returns 404 even for a group that exists. Do not plan delete-and-recreate around it. Item-level and variant-level `_destroy` DO work. |
+| Item updates by `id` work | Including repointing `variant_id` in place — this is how you fix a group pointing at the wrong variant. |
+| `images_attributes` **appends** | It does not replace. Send `_destroy` with the old image id when swapping. |
+| Reads cap at 51,200 bytes | A large bundle cannot be read whole. Page it by PATCHing visible items' `sort_order` into a high block and re-reading. |
+| Unknown keys silently dropped, 200 | Always read back and diff. |
+| **A PATCH echo is not proof** | The echo can show values a fresh GET does not. Always re-`GET`. |
+
+Cart writes need **both** `fluid_shop` and a top-level **`country_code`** — omitting the
+latter is `422 country_code is missing`.
 
 ---
 
 ## 6. The workflow
 
 Run the **`dynamic-bundles` workflow** — it is this skill's execution engine, with per-step QA
-and bounded rework. Phases 0–2 are read-only; nothing writes before the approval gate.
+and bounded rework. Everything before `write-bundles` is read-only.
 
-| # | Step | Gate |
+**You are the launcher. Collect these before calling `run_workflow`** — the workflow cannot
+recover from any of them being wrong, because a step chat only ever sees the start context:
+
+| Context key | Why it must come from you |
+|---|---|
+| `theme_id` | **Required.** Mist picks the project for a theme-targeted step from `context.theme_id`. Absent, it takes the first local theme checkout or scaffolds one — so the run can silently build into a theme nobody asked for. `preflight` stops the run if this is missing or disagrees with the active theme. |
+| `approved` | Gates the entire mutating tail via `runIf`. Absent or falsy, steps 5–9 are condition-skipped and the run still completes, reporting a plan and no writes. |
+| `source_url` | Optional. Present → `source-analysis` runs; absent → it is condition-skipped, which satisfies its dependents, so the run proceeds without it. |
+
+`approved: true` says *this run may write*. It is **not** consent to a plan that does not exist
+yet when `run_workflow` is called. `write-bundles` therefore calls `human_in_the_loop` with the
+plan's real numbers and gets approval for **that** before its first write.
+
+| # | Step | QA on fail |
 |---|---|---|
-| 1 | Resolve reference company; preflight | **G0** |
-| 2 | Study the company — catalog, theme, existing bundles, archetype | **G1** |
-| 2b | Source-reference analysis (a URL was supplied) — `playbooks/01-discovery.md` §6 | G1 |
-| 3 | Plan the translation → `bundle-plan.json` | — |
-| 4 | **Approve** (human) — money is involved | stop |
-| 5 | Write Dynamic Bundle records (Surface A, idempotent, read-back-and-diff) — follow `playbooks/08-api-write-recipe.md` exactly: create = 1 call, **convert = 2**, teardown in the same call, route per product | **G2** |
-| 6 | Generate the theme implementation | **G3** |
-| 7 | Route each bundle product + verify on the plain storefront URL | G3/G4 |
-| 8 | Interaction, cart, money verification — reproduce add-to-cart through `POST /api/checkout/v2026-04/carts` per `playbooks/08-api-write-recipe.md` §8; valid config is **not** evidence the storefront can sell it | **G4–G6** |
-| 9 | Reusability proof + manifest + report | **G7** |
+| 1 | `preflight` — company, `fluid_shop`, active theme vs `context.theme_id`, variant completeness (**G0, blocking**) | **stop** |
+| 2 | `study-company` — catalog, shapes, anchors, theme token lineage | continue |
+| 3 | `source-analysis` — the source configurator (`runIf: source_url`) | continue |
+| 4 | `plan-translation` — `bundle-plan.json` + the base arithmetic, `base >= 0` | **stop** |
+| 5 | `write-bundles` — Surface A; `human_in_the_loop` on the plan, then write; fresh-GET verify | **stop** |
+| 6 | `picker-section` — the one reusable section | continue |
+| 7 | `price-surfaces` — inventory and wire every surface that shows a price | continue |
+| 8 | `route-and-render` — per product, on the ACTIVE theme | continue |
+| 9 | `cart-and-money` — default / upgrade / downgrade / **negative case** through the cart API | continue |
+| 10 | `reusability-and-report` — proof, manifest, four-part report | continue |
 
-Greenfield collapses 2–3 to "no existing implementation" and builds **one real bundle from
+Steps 5–9 carry `runIf: {flag: "approved"}`. Step 10 deliberately does not, so an unapproved
+run still ends with a report saying what it would have written.
+
+Greenfield collapses 2–4 to "no existing implementation" and builds **one real bundle from
 the live catalog** as the proving fixture.
 
 Playbooks: `01-discovery` · `02-translation` · `03-theme-generation` · `04-routing` ·
-`05-validation` · `06-greenfield` · `07-troubleshooting` · `08-api-write-recipe`.
+`05-validation` · `06-greenfield` · `07-troubleshooting` · `08-api-write-recipe` ·
+`09-pricing-patterns` · `10-ui-and-price-surfaces`.
+(`09` and `10` supersede `02`/`03` where they overlap — they are field corrections.)
+
+**The workflow may not exist in this company.** The skill catalog and the workflow library
+sync separately and per-company; a skill can be present with no matching workflow. Check
+first. If `dynamic-bundles` is absent, either author it from the table above with
+`create_workflow` — carrying the acceptance criteria, not just the step names — or run the
+steps directly in order. Do not assume it arrived with the skill.
+
+**If you run the steps directly instead**, you are running them in one chat, so `run_skill` and
+the `runIf` gating do not apply — but the two gates they encode still do. Do not write until a
+human has seen the actual plan, and confirm which theme you are editing before the first file
+write.
 
 ---
 
@@ -281,6 +372,11 @@ Playbooks: `01-discovery` · `02-translation` · `03-theme-generation` · `04-ro
 | Group type is emergent from config | `group_type` is a stored NOT-NULL column |
 | Products sharing an option share a pattern | Check the **option id per product**. Option values that are *components of one item* → bundle; values that are *separate sellable items* → category/collection. Converting a category into one bundle destroys a listing and advertises one wrong price (hit 3× in one session) |
 | A group priced `fixed_price: "0.00"` is free | `0.00` behaves as **unset** — components fall back to their own variant price and inflate the bundle floor |
+| Flipping choice groups to `dynamic_price` gives upgrade pricing | It double-charges unless the anchor base is rebalanced. `base = headline − Σ(defaults)`. See `09-pricing-patterns.md` |
+| A `$0.00` read means the platform is broken | It usually means every item genuinely resolves to zero. Check the configuration before filing a defect |
+| A PATCH echo confirms the write | It does not. Re-`GET`, or prove it with a real cart |
+| Group-level `_destroy` removes a group | Returns 404. Only item- and variant-level `_destroy` work |
+| Sending the full item list replaces the group's items | Items are **append-only**; omitted items are kept |
 | An optional group can't affect the advertised price | An optional `dynamic_price` group adds its **cheapest** item to `price_range.min` regardless of `min_selections: nil` |
 | `product.bundle` is nil in section scope | It works. Only `is_bundle` / `slug` / `handle` are nil |
 | Legacy `ProductBundle` is retired | Still writable, still read, still rendered |
@@ -342,22 +438,33 @@ receive, $60 confirmed) and **P19** (defaults over max → unrecoverable `3 / 1`
 
 ## 10. Where things are
 
-**Artefact sources and the reference corpus live in the Chipotle workspace**, at
-`/Users/braydenpay/Fluid/.workspace/chipotle/`:
+**Everything this skill needs ships inside the skill's own directory.** Paths below are
+relative to the directory holding this `SKILL.md`, so they resolve the same way for every
+company — there is no dependency on any particular workspace.
 
 | What | Path |
 |---|---|
-| These playbooks | `dynamic-bundles-skill/playbooks/*.md` |
-| The `bundle_builder` section | `dynamic-bundles-skill/templates/sections/bundle_builder/index.liquid` |
-| The four-layer JS engine | `dynamic-bundles-skill/templates/assets/bundle-builder.js` |
-| Token-only CSS | `dynamic-bundles-skill/templates/assets/bundle-builder.css` |
-| Host template | `dynamic-bundles-skill/templates/product/bundle/index.liquid` |
-| Manifest schema | `dynamic-bundles-skill/schemas/bundle-manifest.schema.json` |
-| The reference corpus (the spec) | `fluid-dynamic-bundles copy/reference/*.md` |
+| These playbooks | `playbooks/*.md` |
+| The `bundle_builder` section | `templates/sections/bundle_builder/index.liquid` |
+| The four-layer JS engine | `templates/assets/bundle-builder.js` |
+| Token-only CSS | `templates/assets/bundle-builder.css` |
+| Host template | `templates/product/bundle/index.liquid` |
+| Manifest schema | `schemas/bundle-manifest.schema.json` |
+| The reference corpus (the spec) | `reference/*.md` |
 
-A step running inside a theme project reaches these with `read_file_in` against the
-workspace project, or the operator copies them in once. Copy the artefacts and **adapt only
-what `01-discovery.md` §3 recorded about the host theme** — they are already lineage-agnostic.
+**Assume you may not be able to read any of them.** Workflow step sandboxes have repeatedly
+failed with ENOENT on `playbooks/`, `templates/` and `reference/`. `SKILL.md` is written to be
+sufficient on its own — §5a carries the full write contract for exactly this reason. If a
+playbook is unreachable, say so in the report and proceed from this file; do not stall, and
+do not silently reverse-engineer a contract that is already written down here.
+
+If `reference/` is missing the skill still runs — it is the evidence behind the rules, needed
+only when triaging a suspected platform defect (§9) or checking a claim.
+
+Copy the artefacts into the theme and **adapt only what `01-discovery.md` §3 recorded about the
+host theme** — they are already lineage-agnostic. A step running inside a theme project that
+cannot see the skill directory can be handed the four artefact files by the operator; nothing
+else needs to travel.
 
 | Need | Read |
 |---|---|
