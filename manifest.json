@@ -482,6 +482,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "onboarding/catalog-health-check",
+      "name": "Catalog Health Check",
+      "description": "Audit a Fluid catalog after an import and return three scored health reports — products (prices per market, duplicate SKUs, missing images, empty descriptions, SEO gaps, currency mismatches, orphan variants), taxonomy (empty or duplicated categories and collections), and enrollment packs (fees, agreements, pack contents). Reads the Fluid API only; never fetches the storefront. Use when the user asks \"check my catalog\", \"did the import work\", \"catalog health\", \"are my products ready\", \"are my collections set up\", \"what's missing in my products\", or right after any product-import workflow finishes.",
+      "category": "onboarding",
+      "icon": "package-search",
+      "path": "onboarding/catalog-health-check.md",
+      "updated_at": "2026-07-31T16:40:00Z"
     }
   ],
   "workflows": [
