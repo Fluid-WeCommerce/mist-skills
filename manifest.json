@@ -463,6 +463,15 @@
       ]
     },
     {
+      "slug": "themes/affiliate-url-standardization",
+      "name": "Affiliate URL standardization",
+      "description": "Rewrite every affiliate/storefront link in the active theme to the /{{username}}/ prefix \u2014 replacing affiliate_guid/share_guid outputs, hardcoded guid segments, and hardcoded \"home\" prefixes.",
+      "category": "themes",
+      "icon": "link",
+      "path": "themes/affiliate-url-standardization.md",
+      "updated_at": "2026-08-27T20:39:48Z"
+    },
+    {
       "slug": "onboarding/brand-from-source",
       "name": "Brand From Source",
       "description": "Read a company's public website once and set up its Fluid brand unattended: logo, app icon, favicon, OG image and description, primary and secondary colors, licensed fonts, and a first brand.md drafted from the site's own copy.",
