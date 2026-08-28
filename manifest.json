@@ -367,6 +367,15 @@
       "updated_at": "2026-07-23T00:00:00Z"
     },
     {
+      "slug": "mist/daily-data-digest",
+      "name": "Daily data digest",
+      "description": "Read a Mist app's own database and report what changed in the last 24 hours — volume trends per table, spikes, drops, stalls — as a chat digest plus a live dashboard that updates in place every day.",
+      "category": "mist",
+      "icon": "activity",
+      "path": "mist/daily-data-digest/SKILL.md",
+      "updated_at": "2026-07-31T00:00:00Z"
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
