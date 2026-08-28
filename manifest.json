@@ -376,6 +376,24 @@
       "updated_at": "2026-07-23T00:00:00Z"
     },
     {
+      "slug": "mist/360-assistant",
+      "name": "360-Assistant",
+      "description": "Build and run a named, company-specific storefront concierge: probe the platform, profile the catalogue into curated lanes, pick the assistant's name with the operator (three brand-derived candidates or their own, plus a rename path), create the app, then run it \u2014 recommendations that never surface spare parts, answers to a described problem (\"my skin is dry\") matched from the products' own descriptions with a hard medical guard, spare-part lookup, real carts (with a redirect for bundles the customer must configure), honest account signposting, and a no-dead-end voice that never says \"I can't help with that\".",
+      "category": "mist",
+      "icon": "sparkles",
+      "path": "mist/360-assistant/SKILL.md",
+      "updated_at": "2026-08-04T01:40:00Z",
+      "references": [
+        "mist/360-assistant/references/catalog-profiling.md",
+        "mist/360-assistant/references/company-profile-template.md",
+        "mist/360-assistant/references/fluid-api.md",
+        "mist/360-assistant/references/graceful-answers.md",
+        "mist/360-assistant/references/needs-and-safety.md",
+        "mist/360-assistant/references/platform-limits.md",
+        "mist/360-assistant/references/reference-implementation.md"
+      ]
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
