@@ -163,6 +163,15 @@
       ]
     },
     {
+      "slug": "themes/theme-section-report",
+      "name": "Theme Section Report",
+      "description": "Report the section-usage health of a company's active theme — inline (unsectioned) template code, broken section references, and unused sections. Read-only, never blocks.",
+      "category": "themes",
+      "icon": "clipboard-list",
+      "path": "themes/theme-section-report/SKILL.md",
+      "updated_at": "2026-07-31T00:00:00Z"
+    },
+    {
       "slug": "themes/theme-refine",
       "name": "Theme Refine",
       "description": "Refine a Fluid theme to the gold standard: pixel-perfect visual QA after a clone, or migrate a legacy theme to the canonical architecture.",
