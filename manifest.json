@@ -491,6 +491,15 @@
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
       "updated_at": "2026-07-30T23:10:00Z"
+    },
+    {
+      "slug": "onboarding/catalog-hygiene-audit",
+      "name": "Catalog Hygiene Audit",
+      "description": "Sweep a product catalog for data-integrity defects — duplicate SKUs, defective live slugs, inconsistent family naming, reused images, unpriced purchasable products — rank them by customer-visible impact, and apply only the fixes the user approves one at a time.",
+      "category": "onboarding",
+      "icon": "list-checks",
+      "path": "onboarding/catalog-hygiene-audit.md",
+      "updated_at": "2026-07-31T22:30:00Z"
     }
   ],
   "workflows": [
