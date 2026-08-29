@@ -172,6 +172,15 @@
       "updated_at": "2026-07-31T00:00:00Z"
     },
     {
+      "slug": "themes/web-interface-guidelines",
+      "name": "Web Interface Guidelines",
+      "description": "Review a theme's UI code against the Vercel Web Interface Guidelines \u2014 accessibility, focus states, forms, animation, typography, performance, i18n, and common anti-patterns. Asks which theme to target; read-only.",
+      "category": "themes",
+      "icon": "list-checks",
+      "path": "themes/web-interface-guidelines.md",
+      "updated_at": "2026-08-28T00:00:00Z"
+    },
+    {
       "slug": "themes/theme-refine",
       "name": "Theme Refine",
       "description": "Refine a Fluid theme to the gold standard: pixel-perfect visual QA after a clone, or migrate a legacy theme to the canonical architecture.",
