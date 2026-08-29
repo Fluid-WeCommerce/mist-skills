@@ -1,6 +1,6 @@
 ---
 name: Brand Manager
-description: Use when someone wants to know who their brand is really for and whether their marketing speaks to those people — defining core customers, auditing brand voice, positioning, message hierarchy and journey against them, then delivering a substantial report and approve-one-at-a-time improvements. Not for catalog data QA.
+description: Use when someone wants to know who their brand is really for and whether their marketing speaks to those people — defining core customers, auditing brand voice, positioning, message hierarchy and journey against them, then delivering a substantial report, approve-one-at-a-time improvements, and writing what it learned back to brand.md. Not for catalog data QA.
 icon: compass
 ---
 
@@ -30,6 +30,8 @@ This is the spine. Do not deviate from it.
   4. SUGGEST    one card at a time — approve / skip / dismiss
        ↓
   5. CHANGE     only what was approved, verified after each one
+       ↓
+  6. RECORD     durable brand knowledge written back to brand.md, on approval
 ```
 
 **There are exactly two interactive moments: the intake panel at the start, and the
@@ -167,6 +169,12 @@ boundaries in the report.
 # STAGE 2 — ESTABLISH THE BRAND BASELINE
 
 Two equal paths. A missing brand guide is never a roadblock and never a reason to nag.
+
+**Look at `brand.md` first.** Mist injects the current `brand.md` (the company's living
+brand-voice document, owned by the `brand-setup` skill) into context as a
+`<brand_voice>` block. If it has content, that *is* the brand guide — treat it as Path A
+and never re-interview the user for anything it already states. If it is empty or absent,
+take Path B and note that the engagement will end by offering to write one.
 
 ### Path A — a brand guide exists
 
@@ -448,6 +456,9 @@ one-click when it isn't.
 Collection membership, ordering, titles and descriptions · navigation labels and routing
 · page and template copy, section order · messaging settings.
 
+Plus **`brand.md` itself**, via the write-back in Stage 11 — same approval rule as any
+other change.
+
 ### Changes you may never make
 
 Product specifications · prices · inventory · review data · images · subscription and
@@ -473,6 +484,57 @@ toward correctness rather than meaning.
 
 ---
 
+# STAGE 11 — WRITE WHAT YOU LEARNED BACK TO `brand.md`
+
+The audit produces exactly the material `brand.md` exists to hold — who the brand is for,
+what it promises, how it sounds. **That knowledge must not die with the report.** After the
+suggestion cards, offer the write-back as the final card.
+
+### What goes in
+
+Only durable brand knowledge that a future run, a theme, a portal or a widget would need:
+
+- **The lead customer** and the target hierarchy, in plain language — who this brand is for
+- **The promise** — positioning, category choice, value proposition
+- **The voice specification** — register, sentence shape, always/never, vocabulary to use
+  and avoid, drawn from the worked rewrites in the report
+- **What it can credibly claim** — the proof and owned assets nobody can copy
+- **Decisions the client confirmed during the engagement** — an approved customer model or
+  a corrected voice attribute is a brand decision, and is recorded as one
+
+### What stays out
+
+The audit itself. Findings, scores, severity ratings, per-page critiques, the change log,
+catalog handoffs, and anything provisional or version-specific belong in the report — not
+in `brand.md`. Colors, logo and fonts live in the structured brand-guidelines/theme fields,
+never here. If the client disputed a conclusion, it is not brand knowledge.
+
+### How to write it
+
+Use the **`update_brand_voice`** tool — never PATCH `brand_md` by hand, and let the tool
+own attribution and API sync.
+
+| Situation | Call |
+|---|---|
+| `brand.md` empty or absent | `mode: "replace"` with the full assembled document, headings matching the `brand-setup` template verbatim |
+| `brand.md` already exists | `mode: "append"`, **one section at a time**, only the sections the audit actually changed — pass the target `section` if the tool signature accepts it |
+
+Never regenerate an existing `brand.md` from the audit. Appending is the default; a replace
+on a populated document destroys human-authored voice.
+
+### The rules that still apply
+
+- **One card, explicit approval, same as any other change.** Never write `brand.md`
+  silently, and never as a side effect of delivering the report.
+- Show what you intend to write — the actual prose, per section — before asking.
+- Where the audit **contradicts** what `brand.md` already says, say so plainly on the card
+  and let the client decide which stands. Never overwrite a stated brand position because
+  the evidence disagrees with it; that is a finding, and their call.
+- Skip and dismiss behave exactly as in Stage 10.
+- Verify by reading `brand.md` back afterwards, and confirm what was added and where.
+
+---
+
 # DECISION RULES
 
 - Never infer who the customers actually are, or what they're worth, from website
@@ -487,6 +549,9 @@ toward correctness rather than meaning.
 - Never make a change before the report is delivered.
 - Never make an unapproved change, and never report one applied without reading it back.
 - Never present something as one-click when its real blocker is a human decision.
+- Never let durable brand knowledge end its life in the report — offer it back to
+  `brand.md`.
+- Never write `brand.md` without approval, and never replace a populated one from an audit.
 - Always preserve and report existing strengths.
 - Always separate what's supported now from what needs testing.
 - When someone wants certainty the evidence can't support, say so plainly, state what
@@ -504,4 +569,6 @@ consistency were each assessed · the report carries a cover, contents, charts, 
 severity ratings and a confidence section · catalog defects are in the handoff appendix
 and excluded from scoring · suggestions were offered one at a time with approve, skip
 and dismiss · nothing was changed without approval · skipped items were offered back at
-the end.
+the end · the durable brand knowledge — lead customer, promise, voice specification,
+credible claims — was offered back to `brand.md` and, if approved, written with
+`update_brand_voice` and read back to verify.
