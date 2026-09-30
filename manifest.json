@@ -181,6 +181,18 @@
       "updated_at": "2026-08-28T00:00:00Z"
     },
     {
+      "slug": "themes/fluid-block-spec",
+      "name": "Fluid Block Spec",
+      "description": "Build or review Fluid theme sections and blocks against the Block & Section Specification v3 — canonical block types, setting IDs, control order, shared control groups, rendering rules and the pre-ship checklist.",
+      "category": "themes",
+      "icon": "blocks",
+      "path": "themes/fluid-block-spec/SKILL.md",
+      "updated_at": "2026-09-30T00:00:00Z",
+      "references": [
+        "themes/fluid-block-spec/references/fluid-block-spec-v3.md"
+      ]
+    },
+    {
       "slug": "themes/theme-refine",
       "name": "Theme Refine",
       "description": "Refine a Fluid theme to the gold standard: pixel-perfect visual QA after a clone, or migrate a legacy theme to the canonical architecture.",
