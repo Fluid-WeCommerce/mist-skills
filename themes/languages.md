@@ -33,7 +33,7 @@ professional localizer would ship — not raw machine output.
 | `locales/{iso}.json` | One file per language (`es`, `de`, `fr`, `fil`, …). Same keys, translated values. |
 | `{{ 'key.path' | t }}` | The Liquid filter that resolves a dotted key against the active locale, falling back to `en`. |
 | `{{ 'key' | t: count: n, name: x }}` | Interpolation — placeholders are passed as filter args and referenced as `%{name}` in the value. |
-| `<html lang="{{ request.locale.iso_code }}">` | The active locale, set per request. |
+| `<html lang="{{ localization.language.iso_code \| default: 'en' }}">` | The visitor's language. Read it from `localization`; `request` has no locale. |
 
 Locale files are **nested JSON**, dotted in Liquid:
 

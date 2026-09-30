@@ -11,7 +11,10 @@
 - Good — block per feature
 - Benefits the reviewer should cite when suggesting the fix
 - When sections-with-many-fields _is_ the right answer
+- Rendering checks
 
+
+How blocks are defined and rendered (inline blocks, standalone blocks, `content_for`, `@theme` and `@app` references, presets) is documented in [Blocks and components](https://docs.fluid.app/themes/blocks-and-components) and [Schema components](https://docs.fluid.app/themes/schema-components). Look it up there with `search_docs` or `query_docs`. This file covers design judgement and the review checks.
 
 Fluid themes are **blocks-first**: a section is a layout shell, and its *content* lives in blocks. A section that bundles every piece of content into one giant `settings: [...]` array becomes a wall of fields the merchant can't navigate, can't reorder, and can't extend without a developer.
 
@@ -128,4 +131,11 @@ Rendering:
 
 Some sections genuinely have many settings that _all_ apply to the whole section — e.g. a configuration-heavy hero with background, overlay, video poster, mobile alt, autoplay, mute, etc. That's fine: those are whole-section **config**, not content. The test isn't field count — it's whether each field is one-per-section plumbing (section setting) or a piece of content a merchant would add / remove / reorder (block).
 
----
+### Rendering checks
+
+| You see | Severity | Fix |
+| --- | --- | --- |
+| `{% render block %}` used to render a theme block | `blocker` | It renders only app blocks from Droplet theme extensions, so theme blocks output nothing. Use `{% content_for 'blocks' %}`, or `{% content_for 'block', type: '...', id: '...' %}` for one fixed block. |
+| A `for block in section.blocks` loop alongside `{% content_for 'blocks' %}` for the same standalone blocks | `blocker` | The blocks render twice. Keep `content_for`. |
+| A block's outer element without `{{ block.fluid_attributes }}` | `should` | The Page Editor can't select the block. Add it to inline and standalone blocks. |
+| A section expected to render nothing when emptied | `should` | Fluid refills an empty section from its first preset at render time. Add an explicit empty state instead. |

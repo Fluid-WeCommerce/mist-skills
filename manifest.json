@@ -71,7 +71,7 @@
       "category": "themes",
       "icon": "clipboard-check",
       "path": "themes/theme-review.md",
-      "updated_at": "2026-07-25T18:00:00Z"
+      "updated_at": "2026-09-30T14:39:05Z"
     },
     {
       "slug": "themes/languages",
@@ -80,7 +80,7 @@
       "category": "themes",
       "icon": "languages",
       "path": "themes/languages.md",
-      "updated_at": "2026-06-24T00:00:00Z"
+      "updated_at": "2026-09-30T14:39:05Z"
     },
     {
       "slug": "mist/scaffold-droplet",
@@ -134,7 +134,7 @@
       "category": "themes",
       "icon": "copy",
       "path": "themes/theme-clone/SKILL.md",
-      "updated_at": "2026-07-26T06:05:00Z",
+      "updated_at": "2026-09-30T14:39:05Z",
       "references": [
         "themes/theme-clone/references/batch-upload-script.md",
         "themes/theme-clone/references/css-js-patterns.md",
@@ -187,7 +187,7 @@
       "category": "themes",
       "icon": "sparkles",
       "path": "themes/theme-refine/SKILL.md",
-      "updated_at": "2026-07-25T18:00:00Z",
+      "updated_at": "2026-09-30T14:39:05Z",
       "references": [
         "themes/theme-refine/references/dev-preview-visual-diff.md",
         "themes/references/blocks-vs-sections.md",

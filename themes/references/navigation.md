@@ -2,87 +2,33 @@
 
 > Part of the `themes-review` skill. See [`../SKILL.md`](../SKILL.md) for the review workflow, severity ladder, and validator rules.
 
-## Contents
+## Where menus are documented
 
-- Bad — hardcoded nav
-- Good — one `link_list` setting
-- Findings to surface
-- When to keep nav items singular
+How menus are created, how a `link_list` setting stores a menu's slug, and how Liquid reads the menu are documented in [Navigation menus](https://docs.fluid.app/themes/navigation-menus). Look it up there with `search_docs` or `query_docs`. This file keeps only the review checks.
 
-
-Any series of `<a>` tags that represents a navigation (header nav, footer columns, mobile drawer, breadcrumbs, social links) belongs in a `link_list` setting — **the engine's menu selector**. Hardcoding nav items locks the company into a code change for every new link.
-
-`link_list` is one of the canonical setting types (a single-resource picker). It points at a _menu_ the company configures in admin; the theme reads it as an iterable of menu items.
-
-### Bad — hardcoded nav
+The shape to check templates against: a `link_list` setting resolves to a menu with `menu_items`. Each item has `title`, `url`, and nested `sub_menu_items`. There is no `menu.links`, `link.links`, `link.active`, or global `linklists`, so any of those renders nothing.
 
 ```liquid
-<nav class="main-nav">
-  <a href="/shop">Shop</a>
-  <a href="/about">About</a>
-  <a href="/blog">Blog</a>
-  <a href="/contact">Contact</a>
-</nav>
+{%- for item in section.settings.menu.menu_items -%}
+  <a href="{{ item.url }}">{{ item.title | escape }}</a>
+{%- endfor -%}
 ```
 
-Or this — better, but still wrong: company-level text/URL settings paired into "nav items":
+## Findings to surface
 
-```json
-{
-  "settings": [
-    { "type": "text", "id": "nav_label_1", "label": "Item 1 label" },
-    { "type": "url", "id": "nav_url_1", "label": "Item 1 link" },
-    { "type": "text", "id": "nav_label_2", "label": "Item 2 label" },
-    { "type": "url", "id": "nav_url_2", "label": "Item 2 link" }
-  ]
-}
-```
+| You see | Severity | Fix |
+| --- | --- | --- |
+| `menu.links`, `link.links`, `link.active`, or `linklists` | `blocker` | Use `menu_items`, `sub_menu_items`, `title`, and `url`. The menu renders empty otherwise. |
+| 2+ hardcoded `<a href="/...">` tags that form a navigation (header, footer columns, mobile drawer, social row) | `should` | Replace them with a `link_list` setting and a loop over `menu_items`. |
+| Parallel `text` + `url` settings faking a menu (`nav_label_1` / `nav_url_1`, ...) | `should` | Collapse them into one `link_list`, so items gain reordering and nesting in the admin. |
+| Footer columns hardcoded one after another | `should` | One block per column, each with its own `link_list`. |
+| Breadcrumbs, social-link rows, related-links rails: any list of `{ label, url }` pairs | `should` | Use a `link_list`. |
+| A `link_list` `default` that doesn't match an existing menu's slug | `should` | Use a slug returned by the menus API. Don't derive it from the title. |
 
-### Good — one `link_list` setting
+## When to keep nav items singular
 
-```json
-{
-  "settings": [
-    {
-      "type": "link_list",
-      "id": "menu",
-      "label": "Menu",
-      "default": "main-menu"
-    }
-  ]
-}
-```
+The `link_list` check doesn't apply to:
 
-```liquid
-{%- assign menu = section.settings.menu -%}
-<nav class="main-nav" aria-label="Main navigation">
-  {%- for link in menu.links -%}
-    <a href="{{ link.url }}"
-       class="main-nav__link {% if link.active %}is-active{% endif %}">
-      {{ link.title | escape }}
-    </a>
-  {%- endfor -%}
-</nav>
-```
-
-The company now picks an existing menu in admin (the editor surfaces all menus the store has configured), and adds/reorders/renames items without ever touching code. Multi-level dropdowns work via `link.links` (children).
-
-### Findings to surface
-
-| You see                                                                                                                       | Severity | Fix                                                                                                                                                |
-| ----------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2+ hardcoded `<a href="/...">` tags that visually form a navigation (header, footer columns, mobile drawer, social row)       | `should` | Replace with a `link_list` setting and a `{% for link in menu.links %}` loop.                                                                      |
-| Multiple parallel `text` + `url` settings used to fake a menu (`nav_label_1` / `nav_url_1`, `nav_label_2` / `nav_url_2`, ...) | `should` | Collapse to one `link_list`. Each menu item gains drag-reorder, depth, and active-state tracking.                                                  |
-| Section that lists footer columns by hardcoding the same column twice                                                         | `should` | One block per column with a `link_list` inside the block. Users add/remove/rename columns.                                                         |
-| Iterating `linklists` (the global) without exposing a `link_list` picker                                                      | `nit`    | Acceptable for "site-wide menu" cases, but giving the user a `link_list` setting is more flexible — the section can be reused for different menus. |
-| Breadcrumbs, social-link rows, related-links rails — anything that's a list of `{ label, url }` pairs                         | `should` | All belong in a `link_list`. Don't reinvent.                                                                                                       |
-
-### When to keep nav items singular
-
-The `link_list` heuristic does not apply to:
-
-- **Single CTAs** in marketing sections — these are real "hero button" / "secondary button" roles. A standalone `text` + `url` (or one `link_list` with `limit: 1` if you want consistency) is fine.
-- **Brand logo links** — the logo's `href` is almost always "go home"; a fixed `/` is acceptable, or expose a single `url` setting.
-- **Legal/footer links that are _required by policy_** (Terms, Privacy) and not the company's call to omit — but even these are usually better as a `link_list` so they can be reordered or extended.
-
----
+- **Single CTAs** in marketing sections, such as a hero's primary and secondary buttons. A `text` + `url` pair is fine.
+- **Brand logo links**, which almost always go home. A fixed `/` or one `url` setting is fine.
+- **Policy links** (Terms, Privacy) that the company can't omit. Even these are usually better as a `link_list` so they can be reordered or extended.

@@ -1624,7 +1624,7 @@ python3 ../theme-clone/scripts/theme_audit.py "$THEME_DIR"
 
 Then walk this list for anything the audit doesn't catch (file structure, settings_schema/data shape, template inventory):
 
-- [ ] `layouts/theme.liquid` has `{{ content_for_header }}` and `{{ content_for_layout }}` / `{% content_for_layout %}`
+- [ ] `layouts/theme.liquid` has `{{ content_for_header }}` and `{{ content_for_layout }}` (or `{% content_for 'layout' %}`)
 - [ ] All CSS files are in `assets/` (not at theme root) and linked in `theme.liquid`
 - [ ] `config/settings_schema.json` has all **12 colors** with `option_group: { id: "background_colors", … }` and all **5 fonts** with `option_group: { id: "font_families", … }`, and `option_group: { id: "text_presets", … }` on every heading font-size
 - [ ] `config/settings_data.json` has current values for every setting referenced in `theme.liquid`'s `:root`

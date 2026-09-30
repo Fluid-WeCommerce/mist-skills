@@ -1217,7 +1217,7 @@ When you update [references/schema-settings-reference.md](references/schema-sett
 <body>
   {% section 'main_navbar' %}
   <main>
-    {% content_for_layout %}
+    {{ content_for_layout }}
   </main>
   {% section 'main_footer' %}
 </body>
