@@ -151,19 +151,17 @@ If you feel the urge to nest, rename: `assets/icon-social-twitter.svg`, `compone
 
 Every layout file under `layouts/` **must emit both magic drops** for the engine to inject head content and page content:
 
-- `{{ content_for_header }}` — placed inside `<head>`. The engine injects meta tags, analytics, editor-mode scripts, asset preloads, and the FairShare runtime initialization here.
+- `{{ content_for_header }}` — placed inside `<head>`. The engine injects the `<title>`, meta tags, analytics, editor-mode scripts, asset preloads, and the FairShare runtime initialization here.
 - `{{ content_for_layout }}` — placed where the page content goes (inside `<body>`, typically inside the main container). The selected page template renders into this slot.
 
 A layout missing either one is broken. Missing `content_for_header` breaks editor mode, analytics, and head-injected assets. Missing `content_for_layout` renders an empty page.
 
 ```liquid
 <!doctype html>
-<html lang="{{ request.locale.iso_code }}">
+<html lang="{{ localization.language.iso_code | default: 'en' }}">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ page_title }}</title>
-
     {{ 'theme.css' | asset_url | stylesheet_tag }}
 
     {{ content_for_header }}   {# ← required #}

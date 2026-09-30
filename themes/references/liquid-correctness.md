@@ -23,7 +23,7 @@ The variables a template can read fall into three buckets:
 
 | Bucket                       | Available in…                                           | Examples                                                                                                                   |
 | ---------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **Always available globals** | every template                                          | `request`, `cart`, `customer`, `shop`, `settings` (global), `linklists`                                                    |
+| **Always available globals** | every template                                          | `company`, `request`, `affiliate`, `localization`, `settings` (global). Check the rest in [Theme variables](https://docs.fluid.app/themes/theme-variables) |
 | **Resource context**         | the matching page template, plus any section it renders | `product` (only on `product/{variant}/index.liquid` and sections rendered from it); `collection`, `category`, `post`, etc. |
 | **Section / block scope**    | inside that section only                                | `section`, `section.settings`, `section.blocks`, `block`, `block.settings`                                                 |
 | **Component args**           | inside a component only when explicitly passed          | only the keys passed to `{% render 'name', key: value %}`                                                                  |
