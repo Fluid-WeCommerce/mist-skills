@@ -545,6 +545,110 @@
       "icon": "list-checks",
       "path": "onboarding/catalog-hygiene-audit.md",
       "updated_at": "2026-07-31T22:30:00Z"
+    },
+    {
+      "slug": "advisors/finance-fred",
+      "name": "Finance Fred",
+      "description": "Finance Fred, your Chief Financial Officer: a data-grounded finance briefing for your company, with one offer to act when it's warranted.",
+      "category": "advisors",
+      "icon": "landmark",
+      "path": "advisors/finance-fred/SKILL.md",
+      "updated_at": "2026-09-30T00:00:00Z",
+      "references": [
+        "advisors/references/data-sources.md",
+        "advisors/references/briefing-rules.md"
+      ]
+    },
+    {
+      "slug": "advisors/logistics-leanna",
+      "name": "Logistics Leanna",
+      "description": "Logistics Leanna, your Chief Operations Officer: a data-grounded logistics briefing for your company, with one offer to act when it's warranted.",
+      "category": "advisors",
+      "icon": "truck",
+      "path": "advisors/logistics-leanna/SKILL.md",
+      "updated_at": "2026-09-30T00:00:00Z",
+      "references": [
+        "advisors/references/data-sources.md",
+        "advisors/references/briefing-rules.md"
+      ]
+    },
+    {
+      "slug": "advisors/developer-dave",
+      "name": "Developer Dave",
+      "description": "Developer Dave, your Chief Technology Officer: a data-grounded engineering briefing for your company, with one offer to act when it's warranted.",
+      "category": "advisors",
+      "icon": "code",
+      "path": "advisors/developer-dave/SKILL.md",
+      "updated_at": "2026-09-30T00:00:00Z",
+      "references": [
+        "advisors/references/data-sources.md",
+        "advisors/references/briefing-rules.md"
+      ]
+    },
+    {
+      "slug": "advisors/compliance-karen",
+      "name": "Compliance Karen",
+      "description": "Compliance Karen, your Chief Compliance Officer: a data-grounded compliance briefing for your company, with one offer to act when it's warranted.",
+      "category": "advisors",
+      "icon": "shield-check",
+      "path": "advisors/compliance-karen/SKILL.md",
+      "updated_at": "2026-09-30T00:00:00Z",
+      "references": [
+        "advisors/references/data-sources.md",
+        "advisors/references/briefing-rules.md"
+      ]
+    },
+    {
+      "slug": "advisors/sales-shelby",
+      "name": "Sales Shelby",
+      "description": "Sales Shelby, your Chief Revenue Officer: a data-grounded sales briefing for your company, with one offer to act when it's warranted.",
+      "category": "advisors",
+      "icon": "trending-up",
+      "path": "advisors/sales-shelby/SKILL.md",
+      "updated_at": "2026-09-30T00:00:00Z",
+      "references": [
+        "advisors/references/data-sources.md",
+        "advisors/references/briefing-rules.md"
+      ]
+    },
+    {
+      "slug": "advisors/marketing-maverik",
+      "name": "Marketing Maverik",
+      "description": "Marketing Maverik, your Chief Marketing Officer: a data-grounded marketing briefing for your company, with one offer to act when it's warranted.",
+      "category": "advisors",
+      "icon": "megaphone",
+      "path": "advisors/marketing-maverik/SKILL.md",
+      "updated_at": "2026-09-30T00:00:00Z",
+      "references": [
+        "advisors/references/data-sources.md",
+        "advisors/references/briefing-rules.md"
+      ]
+    },
+    {
+      "slug": "advisors/customer-cathy",
+      "name": "Customer Cathy",
+      "description": "Customer Cathy, your Chief Customer Officer: a data-grounded customer experience briefing for your company, with one offer to act when it's warranted.",
+      "category": "advisors",
+      "icon": "heart-handshake",
+      "path": "advisors/customer-cathy/SKILL.md",
+      "updated_at": "2026-09-30T00:00:00Z",
+      "references": [
+        "advisors/references/data-sources.md",
+        "advisors/references/briefing-rules.md"
+      ]
+    },
+    {
+      "slug": "advisors/leader-lester",
+      "name": "Leader Lester",
+      "description": "Leader Lester, your Chief Executive Advisor: a data-grounded field leadership briefing for your company, with one offer to act when it's warranted.",
+      "category": "advisors",
+      "icon": "users",
+      "path": "advisors/leader-lester/SKILL.md",
+      "updated_at": "2026-09-30T00:00:00Z",
+      "references": [
+        "advisors/references/data-sources.md",
+        "advisors/references/briefing-rules.md"
+      ]
     }
   ],
   "workflows": [
