@@ -371,7 +371,7 @@ These capabilities have exactly one implementation, the Fluid CLI that ships ins
 | Droplet reinstall (irreversible) | `fluid mist droplet reinstall --dry-run`, approval via `human_in_the_loop` (title `Reinstall Droplet installation <uuid>`, suggestion_id `droplet-reinstall:<uuid>:<suffix>`), then `--confirm` with run_cli's `approval_id` |
 | Fluid Connect setup | `fluid connect list \| show \| install \| credentials \| settings \| unmapped \| mappings \| map \| unmap …` |
 | Country Atlas / compliance | `fluid countries atlas <ISO> [--agreement <localId>]`, `fluid countries compliance <ISO>` |
-| Storefront Pages | `fluid pages create --title … --content-file page/<name>/index.liquid --yes`, `fluid pages template <page> --content-file … [--publish] --yes` |
+| Storefront Pages | `fluid pages create --title … --theme "<Theme>" --content-file page/<name>/index.liquid --yes` with run_cli `approval_id` from an approved `page-create:` human_in_the_loop card, `fluid pages template <page> --content-file … [--publish] --yes` |
 
 ## Contributing a skill
 
