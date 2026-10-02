@@ -141,8 +141,8 @@ re-upload completed sources.
 Reference homepage media in Liquid through the verified delivery URLs the tool
 records back into `priority_media.delivery_items`.
 
-**Do not replace the reconcile call with dozens of manual `dam_upload` calls.**
-Reserve `dam_upload` for a straggler asset discovered after reconciliation,
+**Do not replace the reconcile call with dozens of manual `fluid assets upload` calls.**
+Reserve `run_cli fluid assets upload --url <url> --create-media` for a straggler asset discovered after reconciliation,
 never for the main inventory.
 
 Never embed binary image or video bytes as `data:`/base64 in Liquid, CSS, JSON,

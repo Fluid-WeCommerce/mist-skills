@@ -341,21 +341,37 @@ Skills and workflow steps run with Claude's full tool set in Mist Desktop. **Too
 | Tool | What it does |
 | ---- | ------------ |
 | `fluid_api(path, method, body)` | Call the user's Fluid API with their token — the workhorse for reads and writes. |
-| `country_atlas(country_code, [agreement_local_id])` | Fluid's per-market pre-setup profile (modes, launch checklists, agreements, tax/legal settings, payment methods, address layout, languages). Pass `agreement_local_id` for one agreement's full legal text. |
-| `country_settings(country_code)` | The compliance rulebook projected from the atlas (disclosure pages, cookie/VAT/unit-price rules) — what `compliance-manager` reads. |
 | `steps` / `steps_answer` / `steps_mark_item` | Open an interactive click-through panel, record a typed-in answer, or check off a live "setting up…" item. |
 | `run_workflow(workflow_slug, [context])` / `workflow_status` | Kick off a workflow chain (passing collected answers as `context`) and check a run's progress. |
 | `run_skill(slug)` | Load another skill's body and follow it (skill composition). |
 | File I/O: `read_file`, `write_file`, `edit_file`, `list_dir` (+ `*_in` cross-project variants) | Read/write files scoped to the active project. |
-| `run_cli` | The `fluid` CLI (`fluid theme push`, `fluid mist push --watch`, …), allowlisted subcommands only. |
-| `web_fetch`, `crawl` | Fetch a URL as text, or crawl a page (markdown + screenshot). |
-| `dam_upload`, `compress_media`, `video_ripper`, `video_metadata` | Push media into the Fluid DAM, shrink it (bundled ffmpeg), rip/inspect a social video. |
+| `run_cli` | The bundled `fluid` CLI, run with the active company's token (`fluid theme push`, `fluid mist push --watch`, …), allowlisted subcommands only. It is also how a skill reaches capabilities that used to be dedicated tools — see the table below. |
+| `web_fetch` | Fetch a URL as text. |
+| `view_project_image` | Look at a project image, e.g. a crawl screenshot saved under `.mist-desktop/source-baselines/`. |
+| `compress_media`, `video_ripper`, `video_metadata` | Shrink media (bundled ffmpeg), rip/inspect a social video. |
 | `screenshot_preview`, `start_preview`, `read_recent_log_tail`, `retry_lifecycle` | Drive + inspect a running dev preview. |
 | `db_query`, `sql_answer_card`, `list_projects` | Query a connected Mist database and list projects. |
 | `product_card`, `resource_card`, `order_card` | Render a rich card for a product / storefront resource / order in the chat. |
 | `human_in_the_loop` | Gate a change on the user's approval. |
 
 Name the exact tool + endpoint you expect in a skill or workflow step, not "figure it out from the docs."
+
+### Fluid CLI commands (through `run_cli`)
+
+These capabilities have exactly one implementation, the Fluid CLI that ships inside Mist. Call them with `run_cli` (`{ command: "fluid", args: [...] }`); each prints JSON.
+
+| Need | Command |
+| ---- | ------- |
+| Crawl a public page (JS rendered, through Fluid) | `fluid theme crawl <url> [--format markdown,html,screenshot] [--viewport WxH] [--full-page] [--no-main-content-only] [--action '<json>']` |
+| Page-clone source evidence | `fluid theme crawl <url> --evidence . --viewport 1440x900 --full-page --no-main-content-only --format markdown,html,screenshot` — then `view_project_image` on `evidence.path`; `compare_preview_to_source` takes `evidence.path` + `evidence.page_evidence.path` |
+| Upload to the DAM | `fluid assets upload <project file>` or `fluid assets upload --url <url>` (`--name`, `--tags`, `--create-media`) |
+| Production logs of a Mist | `fluid mist logs --json [--limit N] [--deployment <id>]` |
+| Mist env vars | `fluid mist env list --json`, `fluid mist env set KEY=value`, `fluid mist env set KEY --generate [--bytes N] --json` |
+| Droplet lifecycle repair | `fluid mist droplet repair --dry-run --json`, then `--yes --json` |
+| Droplet reinstall (irreversible) | `fluid mist droplet reinstall --dry-run`, approval via `human_in_the_loop` (title `Reinstall Droplet installation <uuid>`, suggestion_id `droplet-reinstall:<uuid>:<suffix>`), then `--confirm` with run_cli's `approval_id` |
+| Fluid Connect setup | `fluid connect list \| show \| install \| credentials \| settings \| unmapped \| mappings \| map \| unmap …` |
+| Country Atlas / compliance | `fluid countries atlas <ISO> [--agreement <localId>]`, `fluid countries compliance <ISO>` |
+| Storefront Pages | `fluid pages create --title … --content-file page/<name>/index.liquid --yes`, `fluid pages template <page> --content-file … [--publish] --yes` |
 
 ## Contributing a skill
 
@@ -380,7 +396,7 @@ Name the exact tool + endpoint you expect in a skill or workflow step, not "figu
   - File I/O scoped to the active project.
   - The `fluid` CLI (`fluid theme push`, `fluid mist push --watch`, etc.).
   - A `fluid_api(path, method, body)` tool that hits the user's Fluid API with their token.
-  - `dam_upload` for pushing media into the Fluid DAM.
+  - `fluid assets upload` (through `run_cli`) for pushing media into the Fluid DAM.
   - `compress_media` (bundled ffmpeg) for shrinking videos / images before upload.
 
   Name the exact endpoint or command you expect the agent to run, not "look at the docs and figure it out."

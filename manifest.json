@@ -134,7 +134,7 @@
       "category": "themes",
       "icon": "copy",
       "path": "themes/theme-clone/SKILL.md",
-      "updated_at": "2026-09-30T14:39:05Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/theme-clone/references/batch-upload-script.md",
         "themes/theme-clone/references/css-js-patterns.md",
@@ -157,7 +157,7 @@
       "category": "themes",
       "icon": "scan-search",
       "path": "themes/theme-source-inventory/SKILL.md",
-      "updated_at": "2026-07-26T22:53:55Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/references/pixel-fidelity-core.md"
       ]
@@ -199,7 +199,7 @@
       "category": "themes",
       "icon": "sparkles",
       "path": "themes/theme-refine/SKILL.md",
-      "updated_at": "2026-09-30T14:39:05Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/theme-refine/references/dev-preview-visual-diff.md",
         "themes/references/blocks-vs-sections.md",
@@ -221,7 +221,7 @@
       "category": "themes",
       "icon": "scan-eye",
       "path": "themes/clone-page-to-liquid/SKILL.md",
-      "updated_at": "2026-07-28T13:58:00Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -237,7 +237,7 @@
       "category": "themes",
       "icon": "house",
       "path": "themes/clone-home-page/SKILL.md",
-      "updated_at": "2026-07-27T04:48:39Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -254,7 +254,7 @@
       "category": "themes",
       "icon": "shopping-bag",
       "path": "themes/clone-shop-page/SKILL.md",
-      "updated_at": "2026-07-27T04:48:39Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -271,7 +271,7 @@
       "category": "themes",
       "icon": "package",
       "path": "themes/clone-product-page/SKILL.md",
-      "updated_at": "2026-07-27T04:48:39Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -286,7 +286,7 @@
       "category": "themes",
       "icon": "folders",
       "path": "themes/clone-category-page/SKILL.md",
-      "updated_at": "2026-07-27T04:48:39Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -301,7 +301,7 @@
       "category": "themes",
       "icon": "layout-grid",
       "path": "themes/clone-collection-page/SKILL.md",
-      "updated_at": "2026-07-27T04:48:39Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -316,7 +316,7 @@
       "category": "onboarding",
       "icon": "id-card",
       "path": "onboarding/onboarding-prefill/SKILL.md",
-      "updated_at": "2026-07-25T18:00:00Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "onboarding/onboarding-prefill/references/api-endpoints.md",
         "onboarding/onboarding-prefill/references/brand-md.md",
@@ -331,7 +331,7 @@
       "category": "onboarding",
       "icon": "package-plus",
       "path": "onboarding/fluid-product-admin-import/SKILL.md",
-      "updated_at": "2026-08-02T01:20:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "marketing/brand-manager",
@@ -349,7 +349,7 @@
       "category": "marketing",
       "icon": "video",
       "path": "marketing/ugc-discovery.md",
-      "updated_at": "2026-07-24T00:00:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "marketing/brand-social-import",
@@ -358,7 +358,7 @@
       "category": "marketing",
       "icon": "video",
       "path": "marketing/brand-social-import.md",
-      "updated_at": "2026-07-06T00:00:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "marketing/brand-setup",
@@ -376,7 +376,7 @@
       "category": "themes",
       "icon": "sparkles",
       "path": "themes/suggested-changes.md",
-      "updated_at": "2026-07-04T03:42:11Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "compliance/open-a-country",
@@ -385,7 +385,7 @@
       "category": "compliance",
       "icon": "globe",
       "path": "compliance/open-a-country.md",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "compliance/compliance-manager",
@@ -394,7 +394,7 @@
       "category": "compliance",
       "icon": "scale",
       "path": "compliance/compliance-manager/SKILL.md",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "themes/iterative-theme-refine",
@@ -403,7 +403,7 @@
       "category": "themes",
       "icon": "refresh-cw",
       "path": "themes/iterative-theme-refine/SKILL.md",
-      "updated_at": "2026-07-26T17:34:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "mist/smart-dashboard",
@@ -466,7 +466,7 @@
       "category": "themes",
       "icon": "newspaper",
       "path": "themes/clone-blog-page/SKILL.md",
-      "updated_at": "2026-07-29T19:00:00Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -481,7 +481,7 @@
       "category": "themes",
       "icon": "file-text",
       "path": "themes/clone-post-page/SKILL.md",
-      "updated_at": "2026-07-29T19:00:00Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -496,7 +496,7 @@
       "category": "themes",
       "icon": "shopping-cart",
       "path": "themes/clone-cart-page/SKILL.md",
-      "updated_at": "2026-07-29T19:00:00Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -511,7 +511,7 @@
       "category": "themes",
       "icon": "triangle-alert",
       "path": "themes/clone-system-pages/SKILL.md",
-      "updated_at": "2026-07-29T19:00:00Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -535,7 +535,7 @@
       "category": "onboarding",
       "icon": "palette",
       "path": "onboarding/brand-from-source/SKILL.md",
-      "updated_at": "2026-07-30T09:00:00Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "onboarding/onboarding-prefill/references/api-endpoints.md"
       ]
@@ -563,32 +563,32 @@
     {
       "slug": "open-country",
       "path": "workflows/open-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "finalize-otg-country",
       "path": "workflows/finalize-otg-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "finalize-nfr-country",
       "path": "workflows/finalize-nfr-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "finalize-usd-country",
       "path": "workflows/finalize-usd-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "streamlined-onboard-launch",
       "path": "workflows/streamlined-onboard-launch.workflow.json",
-      "updated_at": "2026-08-02T01:20:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "speed-import",
       "path": "workflows/speed-import.workflow.json",
-      "updated_at": "2026-07-30T18:00:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     }
   ]
 }

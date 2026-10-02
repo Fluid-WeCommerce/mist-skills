@@ -54,7 +54,7 @@ These are rendered by `layouts/theme.liquid` and appear on every page. Only modi
 
 | Type                          | Handling                                                                                                                    |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Self-hosted (`.mp4`, `.webm`) | Upload the public source directly with `dam_upload(url=..., create_media=true)`. If rejected for size, run `compress_media(url=...)` and retry with `dam_upload(path=<output_path>, create_media=true)`. Use `asset.default_variant_url`. |
+| Self-hosted (`.mp4`, `.webm`) | Upload the public source directly with `run_cli fluid assets upload --url <url> --create-media`. If rejected for size, run `compress_media(url=...)` and retry with `run_cli fluid assets upload <output_path> --create-media`. Use `asset.default_variant_url`. |
 | YouTube/Vimeo embeds          | Keep original embed URLs. Use a supported `url` setting or the canonical Fluid Media block.                                 |
 | Background videos             | Use `autoplay`, `loop`, `muted`, `playsinline` attributes. Include poster image fallback.                                   |
 

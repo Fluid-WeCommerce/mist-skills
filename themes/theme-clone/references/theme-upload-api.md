@@ -73,7 +73,7 @@ The `key` maps directly to the theme directory structure:
 
 ### Binary files (.png, .jpg, .woff2, etc.)
 
-For a resource the theme references by URL, upload it with `dam_upload` and store the
+For a resource the theme references by URL, upload it with `run_cli fluid assets upload` and store the
 returned `asset.default_variant_url` in `settings_data.json`, a section preset, or the
 appropriate block setting. Do not send `{ "dam_asset": "<url>" }` to the theme resource
 endpoint: live API verification returns 422 for that fallback shape.

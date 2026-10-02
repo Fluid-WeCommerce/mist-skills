@@ -20,7 +20,7 @@ Help {{company.name}} launch a new country the slick way: an interactive `steps`
 
 Run these in parallel:
 
-1. `country_atlas` with the country's ISO code (e.g. `DE`). The backbone of the flow. Returns per-mode (`nfr` / `otg` / `usd`) market overviews + launch checklists, `marketNotes`, `agreements` (titles + metadata; full legal bodies come later via `agreement_local_id`), `taxSettings`, `legalSettings`, `addressFields`, `paymentMethods` (ranked; `integration_type` matches `integration_class` in `/api/payment_integrations`), `enrollmentFormFields`, `majorLanguages`, `defaultCurrency`, `requires3ds`. If `covered: false`, tell the user Fluid has no atlas for this market yet, offer conservative generic defaults, and skip the atlas-derived enrichment below.
+1. `run_cli fluid countries atlas <ISO>` with the country's ISO code (e.g. `DE`). The backbone of the flow. Returns per-mode (`nfr` / `otg` / `usd`) market overviews + launch checklists, `marketNotes`, `agreements` (titles + metadata; full legal bodies come later via `fluid countries atlas <ISO> --agreement <localId>`), `taxSettings`, `legalSettings`, `addressFields`, `paymentMethods` (ranked; `integration_type` matches `integration_class` in `/api/payment_integrations`), `enrollmentFormFields`, `majorLanguages`, `defaultCurrency`, `requires3ds`. If `covered: false`, tell the user Fluid has no atlas for this market yet, offer conservative generic defaults, and skip the atlas-derived enrichment below.
 2. `fluid_api` → `GET /api/countries` — the country's record (id, iso, currency_code). The atlas `defaultCurrency` should match; if not, trust the atlas and note it.
 3. `fluid_api` → `GET /api/settings/company_countries` — is the country ALREADY open? If so, offer to review its settings instead of re-opening.
 4. `fluid_api` → `GET /api/agreements` — existing company agreements (to avoid duplicating atlas agreements by title, case-insensitively).
@@ -34,7 +34,7 @@ Give the user a 2-3 sentence market brief distilled from `marketNotes` before op
 
 Compute FIRST:
 
-- `themeLanguages` = `country_atlas.majorLanguages` verbatim (e.g. `['es']` for Mexico). The storefront must be available in these to sell in the market; the workflow translates themes into ALL of them regardless of whether they're already enabled company languages. This is separate from enabling a language.
+- `themeLanguages` = `atlas.majorLanguages` verbatim (e.g. `['es']` for Mexico). The storefront must be available in these to sell in the market; the workflow translates themes into ALL of them regardless of whether they're already enabled company languages. This is separate from enabling a language.
 - `missingLanguages` = every ISO in `themeLanguages` MINUS every `/api/settings/languages` ISO with `active_in_company === true`. Drives the `languages` step (which ENABLES a language company-wide). If empty, DROP the `languages` step — but translation still happens for `themeLanguages`, so never conclude "nothing to do about language".
 - `fx_rate` for USD → `defaultCurrency` via a reliable public rate (`web_fetch` an FX endpoint). Round to 3 sig figs for display.
 
@@ -57,9 +57,9 @@ Call `steps` with title like `Open Germany 🇩🇪` and these steps IN THIS ORD
 6. `warehouse_otg` — single_select, `show_if: { step_id: "mode", equals: "otg" }`, "Which warehouse handles local fulfillment in <country>?". OTG fulfills locally, so this is about an in-country warehouse. Options = one per existing warehouse from `/api/settings/warehouses` (id = the warehouse's numeric id as a string, label = `"<name> — <country iso>"`), PLUS a final option id `new`, label "Set up a new in-country warehouse", description "We'll flag warehouse creation as a follow-up."
 7. `warehouse_nfr` — single_select, `show_if: { step_id: "mode", equals: "nfr" }`, "Which warehouse ships cross-border to <country>?". NFR ships from an origin warehouse the customer imports from — this picks that origin. Options = one per existing warehouse from `/api/settings/warehouses` (same id/label shape), PLUS a final option id `new`, label "Set up a new warehouse", description "We'll flag warehouse creation as a follow-up." (USD is digital — neither warehouse step shows for it.)
 8. `languages` — multi_select (mode `opt_in`, all pre-checked) "Add languages spoken in <country>?" — INCLUDE ONLY when `missingLanguages` is non-empty. Option id = ISO, label = display name, description = short in-market note.
-9. `agreements` — multi_select (mode `opt_out`) "Fluid's recommended agreements for <country>" from `country_atlas.agreements`. Option id = `localId`, label = `title`, description = one line (what it is + flags: required/shown at checkout, languages). Pre-check all EXCEPT titles that case-insensitively match an existing company agreement — leave those unchecked with "you already have one".
-10. `payment_methods` — multi_select (mode `opt_out`) "Recommended payment methods for <country>" from `country_atlas.paymentMethods`, in priority order. Option id = `integration_type`, label = `name`. `pre_checked: true` only for `enabled: true`; include the rest unchecked. Note integration status from `/api/payment_integrations`: "already configured" vs "needs onboarding in Payments settings".
-11. `enrollment_fields` — multi_select (mode `opt_out`) "Enrollment fields for <country>" from `country_atlas.enrollmentFormFields`, in `order`. Option id = field `id`, label = field `label`, description = field `description` (one line). Pre-check `required: true`.
+9. `agreements` — multi_select (mode `opt_out`) "Fluid's recommended agreements for <country>" from `atlas.agreements`. Option id = `localId`, label = `title`, description = one line (what it is + flags: required/shown at checkout, languages). Pre-check all EXCEPT titles that case-insensitively match an existing company agreement — leave those unchecked with "you already have one".
+10. `payment_methods` — multi_select (mode `opt_out`) "Recommended payment methods for <country>" from `atlas.paymentMethods`, in priority order. Option id = `integration_type`, label = `name`. `pre_checked: true` only for `enabled: true`; include the rest unchecked. Note integration status from `/api/payment_integrations`: "already configured" vs "needs onboarding in Payments settings".
+11. `enrollment_fields` — multi_select (mode `opt_out`) "Enrollment fields for <country>" from `atlas.enrollmentFormFields`, in `order`. Option id = field `id`, label = field `label`, description = field `description` (one line). Pre-check `required: true`.
 12. `product_pricing` — single_select "How should existing products be priced in <country>?" — EXACT labels (recommend the first):
     - id `convert`, label `Convert Product Pricing by <fx_rate> from USD` (interpolate fx_rate), description "Fluid multiplies every existing USD-priced product by <fx_rate> to create the local <currency> price and activates them. Override individual prices later."
     - id `leave_inactive`, label `Leave Products Inactive in Country for now`, description "Nothing gets a local price; products stay inactive in <country> until you set prices yourself."
@@ -80,7 +80,7 @@ run_workflow({
   context: {
     country_id: <country id from /api/countries>,
     country_iso: <ISO alpha-2>,
-    currency_code: <defaultCurrency from country_atlas>,
+    currency_code: <defaultCurrency from the atlas>,
     mode: <"nfr" | "otg" | "usd">,
     otg_operations: <"have_it" | "need_setup" | null when mode != "otg">,
     entity_legally_registered: <true when mode == "otg" && otg_operations == "have_it", else false>,
@@ -89,17 +89,17 @@ run_workflow({
     otg_posture: <"b2c" | "b2b" | "both"; "both" or omit when not OTG>,
     warehouse_id: <numeric id of the chosen existing warehouse from whichever warehouse step was shown (warehouse_otg for OTG, warehouse_nfr for NFR); null when the user picked "new" or neither step showed (USD)>,
     warehouse_choice: <"existing" | "new" | null>,
-    tax_name: <country_atlas.taxSettings.taxName>,
-    tax_inclusive: <country_atlas.taxSettings.taxInclusive>,
-    requires_3ds: <country_atlas.requires3ds>,
+    tax_name: <atlas.taxSettings.taxName>,
+    tax_inclusive: <atlas.taxSettings.taxInclusive>,
+    requires_3ds: <atlas.requires3ds>,
     agreements_to_create: <array of atlas localIds kept in the agreements step>,
     payment_integration_types: <array of integration_type values kept>,
     enrollment_fields: <array of { id, label, component, required } kept>,
     languages_to_add: <array of ISO codes kept in the languages step to ENABLE company-wide; [] when dropped or all opt-outs>,
-    theme_languages: <the themeLanguages array (country_atlas.majorLanguages) — the storefront languages the workflow translates themes into, regardless of what's already enabled>,
+    theme_languages: <the themeLanguages array (atlas.majorLanguages) — the storefront languages the workflow translates themes into, regardless of what's already enabled>,
     pricing_choice: <"convert" | "leave_inactive">,
     fx_rate: <numeric fx_rate; still send it when leave_inactive, for the record>,
-    launch_checklist: <the chosen mode's launchChecklist array ({ id, label, description }) from country_atlas — verbatim>
+    launch_checklist: <the chosen mode's launchChecklist array ({ id, label, description }) from the atlas — verbatim>
   }
 })
 ```
@@ -125,14 +125,14 @@ run_workflow({
 })
 ```
 
-The finalizer reads the country's compliance rulebook via the `country_settings` tool (the atlas compliance projection). If the user only wanted core setup, tell them the finalizer is available whenever they're ready — don't force it.
+The finalizer reads the country's compliance rulebook via `run_cli fluid countries compliance <ISO>` (the atlas compliance projection). If the user only wanted core setup, tell them the finalizer is available whenever they're ready — don't force it.
 
 **On no / decline / "just exploring"** — do NOT run the workflow. Tell the user nothing was written and give a short summary (3-6 bullets) of what the setup WOULD have configured, including the automatic items and the automated tail (agreement creation, language enablement, pricing, theme translation, QA + launch checklist, mode finalizer). Offer to run it whenever they're ready.
 
 # Rules
 
 - READ endpoints during data-gathering are always safe. The ONLY writes are performed by the `open-country` workflow (and the finalizer), and only after the user's explicit yes.
-- Never invent tax rates, agreements, payment methods, warehouses, or legal requirements — everything market-specific comes from `country_atlas` / the API. When `covered: false`, be conservative and label the gap honestly.
+- Never invent tax rates, agreements, payment methods, warehouses, or legal requirements — everything market-specific comes from `fluid countries atlas` / the API. When `covered: false`, be conservative and label the gap honestly.
 - Never ask a question the mode makes irrelevant: no warehouse for USD, no entity/business-id/posture unless OTG, no language step when nothing is missing.
 - The atlas mode overviews and launch checklists are real compliance intelligence — use their specifics (weeks, costs, regulators, statutes) instead of paraphrasing them into mush.
 - Keep chat text short; the panel and the workflow-run card do the talking.

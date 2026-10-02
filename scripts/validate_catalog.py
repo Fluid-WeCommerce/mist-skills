@@ -305,7 +305,7 @@ def validate_shared_skill_contracts() -> None:
         (
             'document.querySelectorAll("img,video,video source")',
             "different desktop/mobile video sources",
-            "`dam_upload` with its public `url`",
+            "Run `fluid assets upload` with its public `url`",
             "`compress_media`",
             "`priority_media`",
             "video is a hard failure",
@@ -340,7 +340,7 @@ def validate_shared_skill_contracts() -> None:
         (
             "source_copy_sha256",
             "`stable`, `resource`, `dynamic`, or `external`",
-            'dam_upload({ url: "<exact-public-url>", create_media: true })',
+            "run_cli fluid assets upload --url <exact-public-url> --create-media",
             "compress_media",
             "`currentSrc`",
             "`read_preview_dom",
@@ -483,7 +483,7 @@ def validate_streamlined_product_import_contract() -> None:
             "streamlined workflow: work prompt must contain exactly one "
             "fluid_product_import invocation"
         )
-    for banned_tool in ("fluid_api", "dam_upload"):
+    for banned_tool in ("fluid_api", "assets upload"):
         if banned_tool in prompt:
             raise CatalogValidationError(
                 "streamlined workflow: import-products must not direct the "
@@ -692,8 +692,8 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
     require_fragments(
         source_prompt,
         (
-            'formats ["html", "rawHtml", "screenshot"]',
-            "capturePageEvidence: true",
+            "fluid theme crawl <home url> --evidence .",
+            "--format markdown,html,screenshot",
             "desktop AND at 390 wide",
         ),
         "streamlined workflow source evidence contract",
@@ -797,8 +797,8 @@ def _validate_direct_page_review(
         prompt,
         (
             "clone-manifest.json",
-            'formats ["markdown", "html"]',
-            "only_main_content:false",
+            "--format markdown,html",
+            "--no-main-content-only",
             "fresh non-image structure and stable copy",
             "Do not request screenshot capture or screenshot formats",
             "Home's retained stylesheet, landmark styles",
@@ -878,8 +878,8 @@ def _validate_content_page_review(workflow: dict[str, Any]) -> None:
         prompt,
         (
             "clone-manifest.json",
-            'formats ["markdown", "html"]',
-            "only_main_content:false",
+            "--format markdown,html",
+            "--no-main-content-only",
             "Do not request screenshot capture or screenshot formats",
             "Home's retained stylesheet, landmark styles",
             "Route-specific CSS is unavailable",

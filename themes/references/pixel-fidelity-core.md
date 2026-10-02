@@ -50,7 +50,7 @@ preview, but interactive work should present the route and scroll state in Mist.
 
 ## Read the source CSS before inferring anything from pixels
 
-`crawl` retains the page's own stylesheet as `documents.stylesheet` — a `.css`
+`fluid theme crawl --evidence .` retains the page's own stylesheet as `documents.stylesheet` — a `.css`
 file beside the `.html` and `.md`, containing the inline `<style>` bodies and
 the fetched `<link rel=stylesheet>` sheets, each prefixed with a provenance
 comment naming its origin.

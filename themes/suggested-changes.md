@@ -45,7 +45,7 @@ The same sub-resources exist for `media/{id}`, `playlists/{id}`, `categories/{id
 
 - One suggestion per compliance issue and per Lighthouse optimization opportunity.
 - Rank: compliance `critical` > `high` severity first, then Lighthouse opportunities by `savings_ms` (largest first), then remaining compliance issues.
-- Keep only suggestions you can actually act on (copy changes via `fluid_api` PATCH, theme/code edits via file tools when the project is a theme, image compression via `compress_media` + `dam_upload`, …). For things you can't automate, still present the card but say so in `proposed_action` ("I'll draft the corrected copy for you to paste") — the decision is still worth recording.
+- Keep only suggestions you can actually act on (copy changes via `fluid_api` PATCH, theme/code edits via file tools when the project is a theme, image compression via `compress_media` + `run_cli fluid assets upload`, …). For things you can't automate, still present the card but say so in `proposed_action` ("I'll draft the corrected copy for you to paste") — the decision is still worth recording.
 
 ## 3. Present via `human_in_the_loop`
 

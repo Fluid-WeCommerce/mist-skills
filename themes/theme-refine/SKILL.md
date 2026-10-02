@@ -40,7 +40,8 @@ Inside Mist, use the fresh-machine capability contract in
 
 | Tool                 | Purpose                                                       |
 | -------------------- | ------------------------------------------------------------- |
-| `crawl`              | Managed source HTML plus exact-viewport full-page screenshots |
+| `run_cli fluid theme crawl` | Source HTML plus exact-viewport full-page screenshots (via Fluid) |
+| `view_project_image` | Look at a saved source screenshot                             |
 | `start_preview`      | Bundled CLI, dependency setup, port allocation, dev lifecycle |
 | `screenshot_preview` | Matched local route/viewports plus overflow evidence          |
 | `interact_preview`   | Constrained local menu/accordion/tab state verification       |
@@ -310,8 +311,8 @@ Also ask:
 The active Fluid company is already selected in Mist Desktop — no token, store URL, or company confirmation step is needed. Verify the source site is reachable and pick the theme:
 
 ```python
-# 1. Source site reachable (use managed crawl in Mist)
-#    crawl(SOURCE_URL)
+# 1. Source site reachable (use the bundled Fluid CLI in Mist)
+#    run_cli fluid theme crawl SOURCE_URL
 
 # 2. List themes and confirm THEME_ID
 fluid_api("/api/application_themes", "GET")
@@ -376,8 +377,8 @@ first free port. Wait for the ready result, confirm the exact URL with
 
 For home, shop, and PDP at `1440×900` and `390×844`:
 
-- source: managed `crawl` with rendered HTML/global chrome and an exact
-  full-page screenshot;
+- source: `run_cli fluid theme crawl <url> --evidence . --viewport WxH --full-page --no-main-content-only`
+  (rendered HTML/global chrome and an exact full-page screenshot);
 - local: `screenshot_preview` with the matched path/width/height and
   `mode:"full"`;
 - interactions: `interact_preview`, then a fresh screenshot.
@@ -709,7 +710,7 @@ the deterministic audit. A section is verified only when both pass.
 python3 ../theme-clone/scripts/theme_audit.py "$THEME_DIR/sections/<section_name>/index.liquid"
 ```
 
-Recapture the complete home/shop/PDP desktop/mobile matrix through `crawl` +
+Recapture the complete home/shop/PDP desktop/mobile matrix through `fluid theme crawl` +
 `screenshot_preview`, read the relevant semantic pairs plus surrounding
 landmarks, and loop:
 

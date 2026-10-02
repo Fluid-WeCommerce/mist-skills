@@ -113,7 +113,7 @@ Rails `UpdateAction` params schema — anything else is dropped):
 
 **Logo/image flow — two steps, in order.** The endpoint takes a **URL**, not a file:
 
-1. In Mist, use `dam_upload` for files already in the project sandbox. It returns
+1. In Mist, use `run_cli fluid assets upload <path>` for files already in the project sandbox. It returns
    `asset.default_variant_url`.
 2. For a remote source URL, the upload service also accepts multipart
    `external_asset_url` and fetches the bytes server-side; `fileName` is auto-detected

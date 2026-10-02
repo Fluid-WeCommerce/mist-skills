@@ -38,12 +38,13 @@ and say which company you are about to write to before writing.
 One capture feeds every extraction below. Do not crawl the same page repeatedly
 to answer separate questions.
 
-Call `crawl` on the source home page with `formats: ["html", "rawHtml", "screenshot"]`,
-`capturePageEvidence: true`, and a desktop viewport. That single call returns
-four things this skill depends on:
+Crawl the source home page once with the bundled Fluid CLI:
+`run_cli fluid theme crawl <home url> --evidence . --viewport 1440x900 --full-page --no-main-content-only --format markdown,html,screenshot`.
+That single call returns four things this skill depends on:
 
-- **`rawHtml`** — the post-hydration document, where the icon and OpenGraph
-  tags actually live.
+- **the rendered HTML** (`evidence.documents.html.path`) — the post-hydration
+  document, where the icon and OpenGraph tags actually live. If it omits
+  `<head>`, `web_fetch` the raw page for those tags.
 - **`documents.stylesheet`** in `.mist-desktop/source-baselines/` — the site's
   own CSS, each block labelled `[site]`, `[third-party-widget]`, or
   `[browser-artifact]`. Read only `[site]` blocks. Browser artifacts are
@@ -62,7 +63,7 @@ say which page you used.
 
 ## Step 2 — Identity assets
 
-Pull candidates from `rawHtml`, not from guesses at conventional paths:
+Pull candidates from the rendered HTML, not from guesses at conventional paths:
 
 | Field | Source, in order of preference |
 | --- | --- |

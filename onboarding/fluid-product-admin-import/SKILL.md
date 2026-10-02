@@ -16,8 +16,8 @@ existing commerce site.
 Inside Mist, the active company and credentials are already selected:
 
 - use `fluid_api(path, method, body)` for Fluid API calls;
-- use `crawl` for public source pages;
-- use `dam_upload` for source image bytes;
+- use `run_cli fluid theme crawl <url>` for public source pages;
+- use `run_cli fluid assets upload` for source image bytes;
 - never ask for a Fluid token, store URL, Firecrawl key, or global CLI install.
 
 This is an execution contract. A row count is not proof of a complete import.
@@ -243,8 +243,9 @@ as USD and is not a harmless probe.
 
 For every real product/gallery/variant image:
 
-1. ingest the source asset with `dam_upload` when it is already in the sandbox,
-   or use `fluid dam upload --url <SOURCE_URL>` for a remote URL;
+1. ingest the source asset with `run_cli fluid assets upload <path>` when it is
+   already in the sandbox, or `run_cli fluid assets upload --url <SOURCE_URL>`
+   for a remote URL;
 2. take `asset.default_variant_url` from the result;
 3. store source URL → DAM URL in `id-mapping.json`;
 4. use only the Fluid DAM URL in product payloads.
@@ -363,7 +364,7 @@ Use GET-before-write and persist source identity → Fluid ID mappings.
 | Categories         | `POST /api/v202604/company/categories`                     | Create parents before children; resolve `parent_id` from the mapping. Products accept one `category_id`.                                                         |
 | Collections        | `POST /api/v202604/company/collections`                    | Preserve source identity. `product_ids` is a full replacement; omission leaves membership unchanged.                                                             |
 | Product membership | `PATCH /api/v202604/company/products/{id}`                 | Send the verified `category_id` and complete `collection_ids`; PATCH is partial and does not require resending `title`.                                          |
-| Static pages       | Mist `create_page`; underlying `/api/v202604/company/pages` | Use `create_page` so the page, theme template, preview route, and preview pane stay coordinated. Resolve the body before writing (below).                         |
+| Static pages       | `run_cli fluid pages create`; underlying `/api/v202604/company/pages` | Write the Liquid to `page/<template-name>/index.liquid`, then `fluid pages create --title "<Title>" --template-name <name> --content-file page/<template-name>/index.liquid --yes` so the page and its theme template are created and linked together; then `start_preview` on the page. Resolve the body before writing (below). |
 | Blog posts         | `POST /api/v202604/company/posts`                          | Preserve documented source fields, lifecycle, the response's canonical URL, and DAM hero/SEO image.                                                              |
 | Playlists          | `POST /api/v202604/company/playlists`                      | The route says playlists but the documented request wrapper is intentionally `library`.                                                                         |
 | Menus              | `POST /api/menus`                                          | Menus are the explicit legacy exception; use destination canonical routes and preserve nesting/order.                                                            |
