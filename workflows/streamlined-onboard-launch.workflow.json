@@ -3,7 +3,7 @@
   "slug": "streamlined-onboard-launch",
   "name": "Streamlined Onboard & Launch",
   "launcherSkill": "onboarding/launch-setup",
-  "description": "Get a company live fast. The theme is the long pole, so it starts building in the second wave: source capture, brand, and catalog discovery all open together, then the theme, product, business-profile, and media tracks run beside each other instead of in one chain. No step stops the run \u2014 QA is off or lenient everywhere except the publish gate, which reviews at standard strictness (it is the one place a false PASS costs the launch) but still continues on fail, so a rough page or an unmatched review profile becomes a line in the handoff rather than a dead run. Themes are built by Fable 5. For the trimmed single-model version, use Speed Import.",
+  "description": "Get a company live fast. The theme is the long pole, so it starts building in the second wave: source capture, brand, and catalog discovery all open together, then the theme, product, business-profile, and media tracks run beside each other instead of in one chain. No step stops the run \u2014 QA is off or lenient everywhere except the publish gate, which reviews at standard strictness (it is the one place a false PASS costs the launch) but still continues on fail, so a rough page or an unmatched review profile becomes a line in the handoff rather than a dead run. Themes are built by Opus 5.5. For the trimmed single-model version, use Speed Import.",
   "maxParallel": 8,
   "runTitleTemplate": "Launch {{website_url}}",
   "steps": [
@@ -53,7 +53,7 @@
     {
       "id": "source-capture",
       "name": "Capture the source site",
-      "model": "anthropic/claude-fable-5",
+      "model": "anthropic/claude-opus-5.5-fast",
       "target": {
         "type": "kind",
         "kind": "theme",
@@ -73,7 +73,7 @@
     {
       "id": "home-page",
       "name": "Build the home page",
-      "model": "anthropic/claude-fable-5",
+      "model": "anthropic/claude-opus-5.5-fast",
       "target": {
         "type": "kind",
         "kind": "theme",
@@ -162,7 +162,7 @@
     {
       "id": "shop-page",
       "name": "Build the shop page",
-      "model": "anthropic/claude-fable-5",
+      "model": "anthropic/claude-opus-5.5",
       "target": {
         "type": "kind",
         "kind": "theme",
@@ -252,7 +252,7 @@
     {
       "id": "product-page",
       "name": "Build the product page",
-      "model": "anthropic/claude-fable-5",
+      "model": "anthropic/claude-opus-5.5",
       "target": {
         "type": "kind",
         "kind": "theme",
@@ -342,7 +342,7 @@
     {
       "id": "collection-page",
       "name": "Build collection and category pages",
-      "model": "anthropic/claude-fable-5",
+      "model": "anthropic/claude-opus-5.5",
       "target": {
         "type": "kind",
         "kind": "theme",
@@ -426,7 +426,7 @@
     {
       "id": "content-pages",
       "name": "Build the blog, cart, error, and content pages",
-      "model": "anthropic/claude-fable-5",
+      "model": "anthropic/claude-opus-5.5",
       "target": {
         "type": "kind",
         "kind": "theme",
@@ -535,7 +535,7 @@
     {
       "id": "publish-theme",
       "name": "Publish the theme",
-      "model": "anthropic/claude-fable-5",
+      "model": "anthropic/claude-opus-5.5",
       "target": {
         "type": "kind",
         "kind": "theme",
