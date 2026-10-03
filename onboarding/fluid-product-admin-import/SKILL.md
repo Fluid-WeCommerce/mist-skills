@@ -373,7 +373,7 @@ Use GET-before-write and persist source identity → Fluid ID mappings.
 | Static pages       | `run_cli fluid pages create`; underlying `/api/v202604/company/pages` | Write the Liquid to `page/<template-name>/index.liquid`, then get the user's human_in_the_loop approval (title exactly `Create Page "<Title>" in Theme "<Theme>" with its brand style`, or `without` for a blank page; suggestion_id `page-create:<random>`) and run `fluid pages create --title "<Title>" --theme "<Theme>" --template-name <name> --content-file page/<template-name>/index.liquid [--blank] --yes` with run_cli's `approval_id` set to it, so the page and its theme template are created and linked together; then `start_preview` on the page. Resolve the body before writing (below). |
 | Blog posts         | `POST /api/v202604/company/posts`                          | Preserve documented source fields, lifecycle, the response's canonical URL, and DAM hero/SEO image.                                                              |
 | Playlists          | `POST /api/v202604/company/playlists`                      | The route says playlists but the documented request wrapper is intentionally `library`.                                                                         |
-| Menus              | `POST /api/menus`                                          | Menus are the explicit legacy exception; use destination canonical routes and preserve nesting/order.                                                            |
+| Menus              | `POST /api/menus`                                          | Menus are the explicit legacy exception; use destination canonical routes and preserve nesting/order. Follow [Rebuild the header menu](#rebuild-the-header-menu). |
 
 Theme pushes happen before page creates because page creation can auto-generate
 theme templates that a later push may try to remove.
@@ -405,6 +405,35 @@ attached.
 
 Never report taxonomy counts as membership proof. A run that created four
 categories and assigned zero products imported four empty navigation targets.
+
+### Rebuild the header menu
+
+Creating a menu changes nothing on the storefront. The header renders whichever
+menu its `link_list` setting names, so a menu import is finished only when the
+live header shows it. The payloads are in
+[Navigation menus](https://docs.fluid.app/themes/navigation-menus).
+
+1. Start from the recorded source navigation (`navigation.header` in
+   `clone-manifest.json`). Header controls such as the logo, search, account,
+   cart, and the country/language/currency selector are not menu items.
+2. Import menus after the records they link to. Resolve each internal source
+   URL to the canonical URL the API returned for the destination record, using
+   the persisted mappings first. Keep external links unchanged. Report an
+   internal link you cannot resolve; never point it at a guessed route or at
+   home.
+3. `GET /api/menus` and adopt the matching menu before creating one. Write
+   `linkable_type: "Link"` items with the source's titles, order, and nesting
+   (`sub_menu_items_attributes`), then read the menu back and compare.
+4. Use the `slug` the API returns. Never derive it from the title; older menus
+   can return a null slug.
+5. Set every header `link_list` setting (desktop and mobile, if separate) to
+   that slug in the navbar template's section settings, push, and check the
+   live header's rendered items against the menu.
+6. Keep the country and language selector in the header, beside the menu, on by
+   default behind a setting the merchant can turn off.
+
+Report `menu_id`, `menu_slug`, the bound header settings, and every unresolved
+item. A menu that exists but isn't bound to the header is not an import.
 
 ### Resolving a page body
 
