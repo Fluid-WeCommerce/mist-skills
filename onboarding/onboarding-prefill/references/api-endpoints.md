@@ -175,32 +175,19 @@ Body wrapped in the `company` key:
 (Other permitted fields: appstore_url, playstore_url, active, allow_signup, sandbox,
 mobile_app_identifier, … — anything not in the schema is dropped.)
 
-**`POST /api/settings/company_countries`** — add a selling country/market. Body wrapped in
-`company_country`:
+**Writes to `/api/settings/company_countries` go through the Fluid CLI.** Mist refuses
+`fluid_api` POST/PUT/PATCH/DELETE on it; use `run_cli` instead.
 
-```jsonc
-{ "company_country": { "country_id": 214, "currency": "USD", "default": true } }
-```
+- Add a selling country/market: `fluid countries open <ISO> --mode <nfr|otg|usd> --yes`
+  (preview first with `fluid countries plan <ISO> --mode …`). It seeds currency, tax, legal
+  and address settings from the Country Atlas. `GET /api/settings/company_countries` first to
+  check what exists; note `company_country_id` ≠ `country_id`.
+- Attach the matched legal entity to an existing selling country and record settlement
+  details: `fluid countries update <ISO> --set entity_id=126 --entity-registered
+  --settlement-currency USD --yes`. It writes only the named fields. `<ISO>` is the row's
+  `country.iso`, not the company-country id or the entity id.
 
-(`country_id` integer required — 214 = US. `GET /api/settings/company_countries` first to
-check what exists; note `company_country_id` ≠ `country_id`.)
-
-**`PATCH /api/settings/company_countries/{company_country_id}`** — attach the matched
-legal entity to an existing selling country and record settlement details. The id in this
-path is the company-country record id returned by `GET /api/settings/company_countries`,
-not the country id and not the entity id:
-
-```jsonc
-{
-  "company_country": {
-    "entity_id": 126,
-    "entity_legally_registered": true,
-    "settlement_currency": "USD",
-  },
-}
-```
-
-After the PATCH, GET the company countries again and require the intended country row to
+After the update, read the company countries again (`fluid countries list` or GET) and require the intended country row to
 return that entity, `entity_legally_registered: true`, and the expected settlement
 currency. Writing the same values only to `onboarding_info.countries_info` does not attach
 the entity to the live market.

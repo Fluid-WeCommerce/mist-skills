@@ -482,21 +482,18 @@ no-match branch.
 
 The onboarding worksheet and the live selling-country record are separate. After the
 entity write, find the matching country row from the Step 8a
-`GET /api/settings/company_countries` result and PATCH that row using its
-`company_country.id`:
+`GET /api/settings/company_countries` result, take its `country.iso`, and change only
+those fields with the Fluid CLI through `run_cli`:
 
 ```
-fluid_api("/api/settings/company_countries/{company_country_id}", "PATCH", {
-  "company_country": {
-    "entity_id": "{entity_id}",
-    "entity_legally_registered": true,
-    "settlement_currency": "USD"
-  }
-})
+fluid countries update {country_iso} --set entity_id={entity_id} --entity-registered --settlement-currency USD --yes
 ```
 
+`fluid countries update` writes only the named fields and leaves the rest of the country as
+it is. Never PATCH `/api/settings/company_countries` with `fluid_api`: Mist refuses it.
 Use the market's actual settlement currency instead of assuming USD outside a US run.
-GET the company countries again and require the intended row to return the matched entity,
+Verify with `run_cli` `fluid countries list` or `fluid_api("/api/settings/company_countries",
+"GET")`, and require the intended row to return the matched entity,
 `entity_legally_registered: true`, and the expected settlement currency. Populating only
 `onboarding_info.countries_info[].entity_id` is incomplete and must not be reported as a
 linked legal entity.
