@@ -371,6 +371,10 @@ These capabilities have exactly one implementation, the Fluid CLI that ships ins
 | Droplet reinstall (irreversible) | `fluid mist droplet reinstall --dry-run`, approval via `human_in_the_loop` (title `Reinstall Droplet installation <uuid>`, suggestion_id `droplet-reinstall:<uuid>:<suffix>`), then `--confirm` with run_cli's `approval_id` |
 | Fluid Connect setup | `fluid connect list \| show \| install \| credentials \| settings \| unmapped \| mappings \| map \| unmap …` |
 | Country Atlas / compliance | `fluid countries atlas <ISO> [--agreement <localId>]`, `fluid countries compliance <ISO>` |
+| Open a country (preview, then write) | `fluid countries plan <ISO> --mode <nfr\|otg\|usd> [--warehouse-id <id>] [--business-id <id>] [--entity-registered] [--settlement-currency <code>] [--set key=value]`, then `fluid countries open <ISO> --mode … --yes` (idempotent). Change named fields on an open country with `fluid countries update <ISO> [--set key=value]… [--warehouse-id] [--business-id] [--entity-registered] [--settlement-currency <code>] --yes`. Never `fluid_api` writes to `/api/settings/company_countries`: Mist refuses them |
+| Country status and agreements | `fluid countries list`, `fluid countries status <ISO>`, `fluid countries agreements <ISO> [--create \| --translate] [--only <localId>]… --yes` |
+| Convert prices into a country's currency | `fluid countries prices <ISO> [--from-country US]` previews with the ECB reference rate; add `--rate <reviewed rate> --write --yes` to save. Never PUT variant prices with `fluid_api` |
+| Languages and storefront translations | `fluid countries languages <ISO>`, `fluid translations enable <iso…> --yes` / `disable <iso> --yes` (Mist refuses `fluid_api` writes to `/api/settings/languages`), `fluid translations missing <iso>`, `fluid translations auto <iso> [--type …] [--limit n] --write --yes` |
 | Storefront Pages | `fluid pages create --title … --theme "<Theme>" --content-file page/<name>/index.liquid --yes` with run_cli `approval_id` from an approved `page-create:` human_in_the_loop card, `fluid pages template <page> --content-file … [--publish] --yes` |
 
 ## Contributing a skill

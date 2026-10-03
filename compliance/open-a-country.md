@@ -1,6 +1,6 @@
 ---
 name: Open a Country
-description: Guided company-launch flow powered by Fluid's Country Atlas. Detects "open <country>" intent, asks the operating mode, then branches into mode-specific setup (OTG operations status + entity + business id + warehouse; NFR warehouse; USD digital), plus payment methods, missing languages, agreements, and enrollment fields — then runs a workflow that does the writes with QA and chains the mode finalizer.
+description: Guided company-launch flow powered by Fluid's Country Atlas. Detects "open <country>" intent, asks the operating mode, then branches into mode-specific setup (OTG operations status + entity + business id + warehouse; NFR warehouse; USD digital), plus payment methods, missing languages, agreements, and enrollment fields — then runs a workflow that does the writes through the Fluid CLI with QA and chains the mode finalizer.
 ---
 
 <!--
@@ -12,7 +12,7 @@ description: Guided company-launch flow powered by Fluid's Country Atlas. Detect
 
 # Goal
 
-Help {{company.name}} launch a new country the slick way: an interactive `steps` panel that ADAPTS its questions to the operating mode, live data from the Fluid API, and Fluid's **Country Atlas** — the official per-market pre-setup profile. On confirmation, hand off to the `open-country` workflow (which does the writes with per-step QA and bounded rework) and then chain the mode's finalizer. The user should feel taken care of, not interrogated — never ask a question the atlas or API already answers.
+Help {{company.name}} launch a new country the slick way: an interactive `steps` panel that ADAPTS its questions to the operating mode, live data from the Fluid API, and Fluid's **Country Atlas** — the official per-market pre-setup profile. On confirmation, hand off to the `open-country` workflow (which does the writes through the Fluid CLI, with per-step QA and bounded rework) and then chain the mode's finalizer. The user should feel taken care of, not interrogated — never ask a question the atlas or API already answers.
 
 **Trigger** whenever the user expresses intent to sell in / launch / expand into a country: "Open France", "Expand to China", "let's launch in Japan", "start selling in Germany", "add Canada". Resolve the country name to its ISO 3166-1 alpha-2 code and begin Step 0.
 
@@ -20,11 +20,11 @@ Help {{company.name}} launch a new country the slick way: an interactive `steps`
 
 Run these in parallel:
 
-1. `run_cli fluid countries atlas <ISO>` with the country's ISO code (e.g. `DE`). The backbone of the flow. Returns per-mode (`nfr` / `otg` / `usd`) market overviews + launch checklists, `marketNotes`, `agreements` (titles + metadata; full legal bodies come later via `fluid countries atlas <ISO> --agreement <localId>`), `taxSettings`, `legalSettings`, `addressFields`, `paymentMethods` (ranked; `integration_type` matches `integration_class` in `/api/payment_integrations`), `enrollmentFormFields`, `majorLanguages`, `defaultCurrency`, `requires3ds`. If `covered: false`, tell the user Fluid has no atlas for this market yet, offer conservative generic defaults, and skip the atlas-derived enrichment below.
+1. `run_cli fluid countries atlas <ISO>` with the country's ISO code (e.g. `DE`). The backbone of the flow. Returns per-mode (`nfr` / `otg` / `usd`) market overviews + launch checklists, `marketNotes`, `agreements` (titles + metadata; full legal bodies come later via `fluid countries atlas <ISO> --agreement <localId>`), `taxSettings`, `legalSettings`, `addressFields`, `paymentMethods` (ranked; `integration_type` matches `integration_class` in `/api/payment_integrations`), `enrollmentFormFields`, `majorLanguages`, `defaultCurrency`, `requires3ds`. If `covered: false`, tell the user Fluid has no atlas for this market yet and STOP: `fluid countries open` seeds every setting from the atlas and refuses a market without one, and Mist refuses a raw `fluid_api` write to `/api/settings/company_countries`. Point them to Settings > Countries in the admin to add it by hand, without assuming tax, legal or agreement defaults.
 2. `fluid_api` → `GET /api/countries` — the country's record (id, iso, currency_code). The atlas `defaultCurrency` should match; if not, trust the atlas and note it.
-3. `fluid_api` → `GET /api/settings/company_countries` — is the country ALREADY open? If so, offer to review its settings instead of re-opening.
+3. `run_cli fluid countries list` — the countries the company already sells in. If this one is ALREADY open, offer to review it with `run_cli fluid countries status <ISO>` instead of re-opening (`open` changes nothing on an open country).
 4. `fluid_api` → `GET /api/agreements` — existing company agreements (to avoid duplicating atlas agreements by title, case-insensitively).
-5. `fluid_api` → `GET /api/settings/languages` — installed languages (`iso`, `active_in_company`), to diff against the atlas `majorLanguages`.
+5. `run_cli fluid countries languages <ISO>` — the atlas `majorLanguages` with `enabled` (and `languageId`) for each, so you can see which market languages are off.
 6. `fluid_api` → `GET /api/payment_integrations` — which integrations are already configured, to annotate the payment step.
 7. `fluid_api` → `GET /api/settings/warehouses` — the company's existing warehouses (`id`, `name`, `country`). These become the options in the warehouse step for OTG/NFR modes.
 
@@ -35,8 +35,8 @@ Give the user a 2-3 sentence market brief distilled from `marketNotes` before op
 Compute FIRST:
 
 - `themeLanguages` = `atlas.majorLanguages` verbatim (e.g. `['es']` for Mexico). The storefront must be available in these to sell in the market; the workflow translates themes into ALL of them regardless of whether they're already enabled company languages. This is separate from enabling a language.
-- `missingLanguages` = every ISO in `themeLanguages` MINUS every `/api/settings/languages` ISO with `active_in_company === true`. Drives the `languages` step (which ENABLES a language company-wide). If empty, DROP the `languages` step — but translation still happens for `themeLanguages`, so never conclude "nothing to do about language".
-- `fx_rate` for USD → `defaultCurrency` via a reliable public rate (`web_fetch` an FX endpoint). Round to 3 sig figs for display.
+- `missingLanguages` = every ISO in `themeLanguages` whose `fluid countries languages` entry has `enabled: false` (and a non-null `languageId`; an ISO Fluid's catalog lacks can't be enabled). Drives the `languages` step (which ENABLES a language company-wide). If empty, DROP the `languages` step — but translation still happens for `themeLanguages`, so never conclude "nothing to do about language".
+- `fx_rate` for USD → `defaultCurrency` via a reliable public rate (`web_fetch` an FX endpoint), as units of the local currency per US dollar. Round to 3 sig figs for display. For `usd` mode the country charges in US dollars, so `fx_rate` is `1`. The workflow previews the conversion with `fluid countries prices` (which also shows the European Central Bank's reference rate) before writing at this rate, and holds the write if the two differ by more than 5% — so a wrong or inverted rate never reaches prices.
 
 **Conditional visibility works by chaining `show_if` on single_select answers.** A step's `show_if` can reference exactly ONE earlier single_select step (`equals` or `any_of`). There is no compound AND — but gating transitively works: a step hidden because its gate is unanswered can never be answered, so anything depending on ITS answer also stays hidden. Order the steps so each `show_if` points at the nearest gate.
 
@@ -61,7 +61,7 @@ Call `steps` with title like `Open Germany 🇩🇪` and these steps IN THIS ORD
 10. `payment_methods` — multi_select (mode `opt_out`) "Recommended payment methods for <country>" from `atlas.paymentMethods`, in priority order. Option id = `integration_type`, label = `name`. `pre_checked: true` only for `enabled: true`; include the rest unchecked. Note integration status from `/api/payment_integrations`: "already configured" vs "needs onboarding in Payments settings".
 11. `enrollment_fields` — multi_select (mode `opt_out`) "Enrollment fields for <country>" from `atlas.enrollmentFormFields`, in `order`. Option id = field `id`, label = field `label`, description = field `description` (one line). Pre-check `required: true`.
 12. `product_pricing` — single_select "How should existing products be priced in <country>?" — EXACT labels (recommend the first):
-    - id `convert`, label `Convert Product Pricing by <fx_rate> from USD` (interpolate fx_rate), description "Fluid multiplies every existing USD-priced product by <fx_rate> to create the local <currency> price and activates them. Override individual prices later."
+    - id `convert`, label `Convert Product Pricing by <fx_rate> from USD` (interpolate fx_rate), description "Fluid multiplies every existing USD-priced product by <fx_rate> to create the local <currency> price and activates them. Prices already set for <country> are left alone. Override individual prices later."
     - id `leave_inactive`, label `Leave Products Inactive in Country for now`, description "Nothing gets a local price; products stay inactive in <country> until you set prices yourself."
 
 **Do NOT ask about tax, currency, 3DS, address formats, or legal settings.** The atlas fixes them (`taxSettings`, `defaultCurrency`, `requires3ds`, `addressFields`, `legalSettings`); they're configured automatically — just mention them in the summary.
@@ -70,9 +70,9 @@ If the user answers any step by typing instead of clicking, record it with `step
 
 # Step 2 — Confirm, then hand off to the `open-country` workflow
 
-Summarize the plan in 4-7 lines, tailored to the mode: mode; for OTG, whether they already operate (or that Fluid will help set it up), entity name + business id if given, B2B/B2C posture; warehouse choice (existing name or "new — follow-up") for OTG/NFR; **storefront language** — always state that the site will be translated into the market's language(s) from `themeLanguages` (e.g. "Your storefront will be translated to Spanish"), and separately note any language being newly enabled company-wide; agreements to create; payment methods; enrollment fields; pricing choice — plus a one-line "configured automatically" note (currency, <taxSettings.taxName> inclusive/exclusive, 3DS if `requires3ds`, address format, legal settings) and a trailer that after setup they'll get the <mode> launch checklist as their to-do list. Then ask ONE yes/no: open the country now?
+Summarize the plan in 4-7 lines, tailored to the mode: mode; for OTG, whether they already operate (or that Fluid will help set it up), entity name + business id if given, B2B/B2C posture; warehouse choice (existing name or "new — follow-up") for OTG/NFR; **storefront language** — always state that the site will be translated into the market's language(s) from `themeLanguages` (e.g. "Your storefront will be translated to Spanish"), and separately note any language being newly enabled company-wide; agreements to create; payment methods; enrollment fields; pricing choice — plus a one-line "configured automatically" note (currency, <taxSettings.taxName> inclusive/exclusive, 3DS if `requires3ds`, address format, legal settings) and a trailer that after setup they'll get the <mode> launch checklist as their to-do list. Before you ask, preview it: `run_cli fluid countries plan <ISO> --mode <mode>` with the same `--warehouse-id` / `--business-id` / `--entity-registered` flags the workflow will pass (plus `--set currency=USD` for `usd` mode). It changes nothing and returns `companyCountry`, exactly what opening will set, so build the "configured automatically" line from it rather than from memory. Then ask ONE yes/no: open the country now?
 
-**On yes** — do NOT call `fluid_api` yourself. Hand off:
+**On yes** — write nothing yourself: no `fluid_api` writes and no `fluid countries open`. The workflow makes every change through the Fluid CLI. Hand off:
 
 ```
 run_workflow({
@@ -80,7 +80,7 @@ run_workflow({
   context: {
     country_id: <country id from /api/countries>,
     country_iso: <ISO alpha-2>,
-    currency_code: <defaultCurrency from the atlas>,
+    currency_code: <"USD" when mode == "usd"; otherwise defaultCurrency from the atlas>,
     mode: <"nfr" | "otg" | "usd">,
     otg_operations: <"have_it" | "need_setup" | null when mode != "otg">,
     entity_legally_registered: <true when mode == "otg" && otg_operations == "have_it", else false>,
@@ -98,13 +98,13 @@ run_workflow({
     languages_to_add: <array of ISO codes kept in the languages step to ENABLE company-wide; [] when dropped or all opt-outs>,
     theme_languages: <the themeLanguages array (atlas.majorLanguages) — the storefront languages the workflow translates themes into, regardless of what's already enabled>,
     pricing_choice: <"convert" | "leave_inactive">,
-    fx_rate: <numeric fx_rate; still send it when leave_inactive, for the record>,
+    fx_rate: <numeric fx_rate (1 for usd mode); still send it when leave_inactive, for the record>,
     launch_checklist: <the chosen mode's launchChecklist array ({ id, label, description }) from the atlas — verbatim>
   }
 })
 ```
 
-Then END YOUR TURN with a one-line confirmation like "Kicking off the setup — watch the card below." The workflow-run card takes over: it POSTs the company_country (currency, tax profile, 3DS, warehouse, entity-registered flag, business id where given), creates the kept agreements from the atlas legal templates (all languages), enables added languages, converts pricing (or skips), translates the storefront themes into the market's languages (`theme_languages` — so a Spanish market gets a Spanish storefront even if Spanish was already enabled), and runs a final QA sweep that ends with the mode's launch checklist. Every step is QA-reviewed and reworked on failure.
+Then END YOUR TURN with a one-line confirmation like "Kicking off the setup — watch the card below." The workflow-run card takes over: it opens the country with `fluid countries open` (currency, mode, tax profile, 3DS, legal settings, address fields and payment order from the atlas, plus warehouse, entity-registered flag and business id where given), enables added languages with `fluid translations enable`, creates the kept agreements from the atlas legal templates (all languages) with `fluid countries agreements --create`, converts pricing with `fluid countries prices` (preview first, then a write at the reviewed rate) or skips, translates the storefront into the market's languages with `fluid translations auto` (`theme_languages` — so a Spanish market gets a Spanish storefront even if Spanish was already enabled), and runs a final QA sweep that ends with the mode's launch checklist. Every step is QA-reviewed and reworked on failure.
 
 Do NOT poll `workflow_status` in a loop. The user can watch the card live and ask for progress later.
 
@@ -131,7 +131,8 @@ The finalizer reads the country's compliance rulebook via `run_cli fluid countri
 
 # Rules
 
-- READ endpoints during data-gathering are always safe. The ONLY writes are performed by the `open-country` workflow (and the finalizer), and only after the user's explicit yes.
+- READ endpoints during data-gathering are always safe, and so are the read-only CLI commands (`fluid countries atlas | list | languages | plan | status`). The ONLY writes are performed by the `open-country` workflow (and the finalizer), and only after the user's explicit yes.
+- Every write goes through the Fluid CLI (`run_cli` with `fluid countries open | agreements --create | prices --write` and `fluid translations enable | auto --write`), never a raw `fluid_api` write. Mist refuses `fluid_api` writes to `/api/settings/company_countries` and `/api/settings/languages`, and the CLI carries the checks a raw write skips: atlas seeding, the already-open check, the price dry run and the already-priced skip.
 - Never invent tax rates, agreements, payment methods, warehouses, or legal requirements — everything market-specific comes from `fluid countries atlas` / the API. When `covered: false`, be conservative and label the gap honestly.
 - Never ask a question the mode makes irrelevant: no warehouse for USD, no entity/business-id/posture unless OTG, no language step when nothing is missing.
 - The atlas mode overviews and launch checklists are real compliance intelligence — use their specifics (weeks, costs, regulators, statutes) instead of paraphrasing them into mush.

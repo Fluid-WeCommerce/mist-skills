@@ -224,9 +224,15 @@ Before product creates:
 2. `GET /api/settings/company_countries`;
 3. require an entry for that exact market whose `currency` matches the source;
    a different country that uses the same currency is not equivalent;
-4. when an onboarding/import scope authorizes store setup, create a missing
-   exact market through documented `POST /api/settings/company_countries`
-   before any product probe; otherwise stop and request that prerequisite;
+4. when an onboarding/import scope authorizes store setup, open a missing
+   exact market with the Fluid CLI before any product probe: preview with
+   `run_cli` `fluid countries plan <ISO> --mode otg`, require its
+   `companyCountry.currency` to match the source currency, then run
+   `fluid countries open <ISO> --mode otg --yes` (`otg`: the business sells
+   from inside its own market). Never `POST /api/settings/company_countries`
+   with `fluid_api`; Mist refuses it. When the atlas doesn't cover the market,
+   the currency differs, or the scope doesn't authorize store setup, stop and
+   request that prerequisite;
 5. use `company_countries[].country.id` as integer `country_id`, never the
    company-country row's own `id`;
 6. paginate `GET /api/v202604/company/products?page[limit]=100` to understand
