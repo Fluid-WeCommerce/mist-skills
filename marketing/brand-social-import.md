@@ -29,7 +29,7 @@ Do NOT guess handles — a wrong account imports someone else's videos. Resolve 
 1. **From context.** If invoked by the onboarding workflow, the `gather-context` step
    already extracted the site's social links (footer/header) — use the TikTok + YouTube
    URLs it found. The `onboarding/onboarding-prefill` skill captures these.
-2. **From the site.** Otherwise `crawl` the company's homepage and read the social links in
+2. **From the site.** Otherwise crawl the company's homepage (`run_cli fluid theme crawl <url> --no-main-content-only`) and read the social links in
    the header/footer. Official accounts are linked from the brand's own site — trust those
    over search.
 3. **Confirm ambiguous ones.** Only if a platform has no link on the site AND you must find
@@ -54,7 +54,7 @@ Report which fields you set.
   canonical URL, caption, stats, created_at). Paginate with the returned `cursor` up to a
   sensible `count` (default the most recent 20–30; the caller may raise it). Dedupe by `id`.
 - **YouTube:** fetch the channel's uploads feed
-  `https://www.youtube.com/feeds/videos.xml?channel_id=<id>` (via `crawl`/web fetch) → the
+  `https://www.youtube.com/feeds/videos.xml?channel_id=<id>` (via `web_fetch` or `run_cli fluid theme crawl`) → the
   most recent video URLs. For the full back-catalog beyond the ~15 the RSS returns, page the
   channel's videos listing. Collect canonical `watch?v=` URLs.
 
@@ -65,7 +65,7 @@ truncation).
 
 For each video URL, call **`video_ripper`** with tags `brand-content,<platform>,<brand>`
 (lowercased brand). `video_ripper` downloads and uploads to the DAM AND creates a Media
-record in one call — do not call `dam_upload` separately. Caption/title/uploader are pulled
+record in one call — do not run `fluid assets upload` separately. Caption/title/uploader are pulled
 from the source automatically.
 
 - **Idempotent:** before ripping, check whether a Media/DAM asset for that source already

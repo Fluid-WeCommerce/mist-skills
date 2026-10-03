@@ -30,10 +30,11 @@ Tablet is optional and never substitutes for desktop or mobile.
 
 Use Mist's managed capabilities. They are available on a fresh computer and do
 not require a global Fluid CLI, Node package, browser binary, or user-owned
-Firecrawl key:
+Firecrawl key (Mist bundles the Fluid CLI and runs it with your company's token):
 
-- `crawl` — source content, rendered HTML, exact-viewport full-page screenshot,
-  final URL, and HTTP status
+- `run_cli fluid theme crawl` — source content, rendered HTML, exact-viewport
+  full-page screenshot, final URL, and HTTP status, crawled through Fluid
+- `view_project_image` — look at a saved source screenshot
 - `start_preview` — long-lived theme dev server with port management
 - `screenshot_preview` — local same-origin navigation plus exact-viewport
   viewport/full-page capture
@@ -135,31 +136,23 @@ Each route also records:
 - current source and built evidence paths/timestamps
 
 `source_evidence.desktop` and `source_evidence.mobile` are required objects, not
-free-form labels. The path must be the real local path returned by `crawl` under
+free-form labels. The path must be the real local path returned by `fluid theme crawl` under
 `.mist-desktop/source-baselines/`. A hosted URL, `crawl:1440x900`, prose claim,
 or chat attachment ID is not durable source evidence.
 
 ## Step 2 — Capture clean source baselines
 
-For each source route, call `crawl` twice. Keep global chrome:
+For each source route, crawl twice through `run_cli`. Keep global chrome:
 
-```json
-{
-  "url": "https://source.example/",
-  "formats": ["markdown", "html", "screenshot"],
-  "only_main_content": false,
-  "screenshot_options": {
-    "full_page": true,
-    "quality": 90,
-    "viewport": { "width": 1440, "height": 900 }
-  }
-}
+```text
+run_cli fluid theme crawl https://source.example/ --evidence . --viewport 1440x900 --full-page --quality 90 --no-main-content-only --format markdown,html,screenshot
 ```
 
-Repeat with `{ "width": 390, "height": 844 }`.
+Repeat with `--viewport 390x844`. Open each saved screenshot (`evidence.path`)
+with `view_project_image`.
 
-For every successful capture, copy the `<!-- screenshot baseline -->` evidence
-object returned by `crawl` into the matching manifest cell, then add the crawl
+For every successful capture, copy the `evidence` object from the JSON
+`fluid theme crawl` prints into the matching manifest cell, then add the crawl
 metadata's final URL/status and the overlay action used. Do not shorten or
 replace the returned path.
 

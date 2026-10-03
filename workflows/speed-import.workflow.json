@@ -72,7 +72,7 @@
         "kind": "theme",
         "fallbackToManager": true
       },
-      "prompt": "Capture the source home page once so the page steps build from evidence rather than re-crawling. Call run_skill(\"themes/theme-source-inventory\") and follow it.\n\nHome in full at desktop and at 390 wide, formats [\"html\", \"rawHtml\", \"screenshot\"], capturePageEvidence: true \u2014 that retains the site's own CSS labelled by origin and resolved computed styles for every text landmark. Plus a route inventory: the canonical URL for shop, one product, and the main content pages. Do not deep-capture every route.\n\nWrite clone-manifest.json with the route map and evidence paths.\n\nEnd with STEP_OUTPUT: { routes: {...}, evidence: {...} }.",
+      "prompt": "Capture the source home page once so the page steps build from evidence rather than re-crawling. Call run_skill(\"themes/theme-source-inventory\") and follow it.\n\nHome in full at desktop and at 390 wide via `run_cli fluid theme crawl <home url> --evidence . --viewport 1440x900 --full-page --no-main-content-only --format markdown,html,screenshot` (and `--viewport 390x844`) \u2014 that retains the site's own CSS labelled by origin and resolved computed styles for every text landmark. Plus a route inventory: the canonical URL for shop, one product, and the main content pages. Do not deep-capture every route.\n\nWrite clone-manifest.json with the route map and evidence paths.\n\nEnd with STEP_OUTPUT: { routes: {...}, evidence: {...} }.",
       "acceptance": [],
       "qa": {
         "enabled": false

@@ -28,21 +28,18 @@ When run standalone and an input is genuinely missing, ask only for that input.
 
 ## 1. Inspect before implementing
 
-Call `crawl` for the exact source route at every declared viewport:
+Crawl the exact source route at every declared viewport with the Fluid CLI
+through `run_cli`:
 
-```json
-{
-  "url": "<source_url>",
-  "formats": ["markdown", "html", "screenshot"],
-  "only_main_content": false,
-  "capture_page_evidence": true,
-  "screenshot_options": {
-    "full_page": true,
-    "quality": 90,
-    "viewport": { "width": "<declared-width>", "height": "<declared-height>" }
-  }
-}
+```text
+run_cli fluid theme crawl <source_url> --evidence . --viewport <declared-width>x<declared-height> --full-page --quality 90 --no-main-content-only --format markdown,html,screenshot
 ```
+
+The JSON result's `evidence.path` is the retained screenshot and
+`evidence.page_evidence.path` its signed page-evidence sidecar, both under
+`.mist-desktop/source-baselines/`. Open the screenshot with
+`view_project_image`; pass both paths to `compare_preview_to_source` as
+`source_path` and `source_evidence_path`.
 
 The default benchmark cells are `1440 × 900` and `390 × 844`, but they are
 workflow defaults rather than platform laws. Use the returned final URL and
@@ -50,7 +47,8 @@ HTTP status. A redirect to the homepage is not proof that a requested detail
 route exists.
 
 If a cookie, country, age, or newsletter overlay obscures content, inspect the
-returned HTML, repeat with one concrete click selector, and record the action.
+returned HTML, repeat with one concrete click selector
+(`--action '{"type":"click","selector":"<selector>"}'`), and record the action.
 Never delete every dialog or guess a selector.
 
 Open the retained source pixels before reusing them or issuing a verdict. Record
@@ -167,13 +165,14 @@ discarded or automatically promoted to a universal blocker.
 Use direct remote DAM ingestion first:
 
 ```text
-dam_upload({ url: "<exact-public-url>", create_media: true })
+run_cli fluid assets upload --url <exact-public-url> --create-media
 ```
 
 Do not omit a video merely because it looks large. Do not infer a size ceiling
 from a previous run. If DAM reports an actual size rejection, call
 `compress_media({ url: "<exact-public-url>", ... })`, then immediately upload
-the returned temporary path with `dam_upload({ path: ... })` before it expires.
+the returned temporary path with `run_cli fluid assets upload <path> --create-media`
+before it expires.
 Record original bytes, compressed bytes, settings, and the DAM URL.
 
 For responsive video, implement explicit desktop/mobile `source media`
@@ -193,7 +192,7 @@ is a fallback, not a substitute for a source video.
 - Use source copy and DAM assets. Remove every unrelated starter placeholder.
 - Keep page templates structural; section presets own blocks.
 - Do not hand-roll the canonical PDP data section.
-- Push theme files before `create_page`; creating a page first can create
+- Push theme files before `fluid pages create`; creating a page first can create
   application-theme templates that a later push treats as orphans.
 
 Fix root causes in this order:

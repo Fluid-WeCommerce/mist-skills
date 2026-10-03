@@ -45,22 +45,17 @@ the six-cell visual matrix.
 
 ## 3. Capture three independent evidence layers
 
-For each priority route, capture 1440×900 and 390×844 with:
+For each priority route, capture 1440×900 and 390×844 through `run_cli`:
 
-```json
-{
-  "formats": ["markdown", "html", "screenshot"],
-  "only_main_content": false,
-  "capture_page_evidence": true,
-  "screenshot_options": {
-    "full_page": true,
-    "quality": 90,
-    "viewport": { "width": 1440, "height": 900 }
-  }
-}
+```text
+run_cli fluid theme crawl <route url> --evidence . --viewport 1440x900 --full-page --quality 90 --no-main-content-only --format markdown,html,screenshot
 ```
 
-Repeat with the mobile viewport. Keep the exact crawl-returned local paths for:
+Repeat with `--viewport 390x844`. The JSON result's `evidence` object carries
+every path below (`evidence.path`, `evidence.page_evidence.path`,
+`evidence.documents.*.path`); open the screenshot with `view_project_image`.
+
+Keep the exact crawl-returned local paths for:
 
 - complete Markdown: copy and catalog facts;
 - complete rendered HTML: DOM structure, class names, and media references.
@@ -319,7 +314,7 @@ data URI, runtime blob, or custom media element that exposed no URL—uses
 `source_value_sha256`, and `source_unavailable_reason` receipts. Do not invent
 an HTTP URL, drop the element, or edit files under
 `.mist-desktop/source-baselines/`; those Mist-managed bundles are read-only and
-must be replaced with a fresh `crawl` capture when wrong. Video items also
+must be replaced with a fresh `fluid theme crawl --evidence .` capture when wrong. Video items also
 record `autoplay`, `loop`, `muted`, `playsinline`, `controls`, type, and poster.
 Preserve distinct desktop/mobile elements when their selected source differs.
 Do not collapse an entire rail into one item or discard responsive candidates;

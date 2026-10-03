@@ -15,7 +15,7 @@ icon: id-card
 
 Scrapes a company's website AND researches public records to pre-fill the Fluid payments onboarding (KYC) form. The form is a 10-step wizard with 80+ fields. This skill automates gathering publicly available data, cross-verifies it across multiple sources, scores confidence, and only pushes verified data.
 
-The active Fluid company is already selected in Mist Desktop. All Fluid API calls go through the `fluid_api(path, method, body)` tool, which targets the active company's Fluid API with the token already injected — you never collect, validate, or store a Fluid API token or store URL. Website scraping uses the managed `crawl` tool (stored credentials in Mist Desktop). Public-records research uses the web-search/research capability available to the active model and `crawl` for result pages; do not assume a provider-specific tool name.
+The active Fluid company is already selected in Mist Desktop. All Fluid API calls go through the `fluid_api(path, method, body)` tool, which targets the active company's Fluid API with the token already injected — you never collect, validate, or store a Fluid API token or store URL. Website scraping uses `run_cli fluid theme crawl <url>` (the Fluid CLI bundled in Mist, crawling through Fluid with the active company's token). Public-records research uses the web-search/research capability available to the active model and `run_cli fluid theme crawl` for result pages; do not assume a provider-specific tool name.
 
 ## Critical Rules
 
@@ -38,7 +38,7 @@ The active Fluid company is already selected in Mist Desktop. All Fluid API call
 ```
 1. Collect inputs               — company website URL + optional primary contact
 2. Confirm active company       — verify the selected company is the one being onboarded
-3. Scrape company website       — crawl tool extract + page scrapes + Shopify + JSON-LD
+3. Scrape company website       — `fluid theme crawl` extract + page scrapes + Shopify + JSON-LD
                                   + BRAND IDENTITY harvest (palette, type, verbatim voice)
 4. Research public records      — state registry, Google, LinkedIn, BBB, Trustpilot, negative media
 5. Cross-verify & score         — confidence matrix (HIGH / MEDIUM / LOW / CONFLICT)
@@ -83,7 +83,7 @@ Run these two checks in parallel:
 
 | Check                   | Method                                                    | Success                         |
 | ----------------------- | --------------------------------------------------------- | ------------------------------- |
-| Source site reachable   | `GET {company_url}` via the crawl tool (follow redirects) | reachable                       |
+| Source site reachable   | `GET {company_url}` via `run_cli fluid theme crawl` (follows redirects) | reachable                       |
 | Active company identity | `fluid_api("/api/company/v1/companies/me", "GET")`        | returns company `id` and `name` |
 
 The `companies/me` call returns the active company under `data.company` — its human-readable `name` and the numeric company `id` used in later API paths. You'll also fetch country data later via `fluid_api("/api/settings/company_countries", "GET")` for Step 8.
@@ -110,7 +110,7 @@ All sub-steps run in parallel.
 
 ### 3a. Crawl extract (required — do not skip)
 
-Use the crawl tool to extract structured business information from the company site. Crawl these URLs:
+Use `run_cli fluid theme crawl <url>` (the bundled Fluid CLI) to extract structured business information from the company site. Crawl these URLs:
 
 ```
 company_url
@@ -146,7 +146,7 @@ Extract all business information:
 
 ### 3b. Scrape specific pages
 
-For each page type, try all URL patterns in parallel with the crawl tool. Skip 404s silently.
+For each page type, try all URL patterns in parallel with `run_cli fluid theme crawl`. Skip 404s silently.
 
 | Page                 | URL patterns to try                                              | Data to extract                                                            |
 | -------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -174,7 +174,7 @@ If the site is Shopify (check for `cdn.shopify.com` in page source or try `/meta
 
 ### 3d. JSON-LD structured data
 
-Request the raw HTML of the homepage from the crawl tool. Parse `<script type="application/ld+json">` blocks for `Organization`, `LocalBusiness`, and `WebSite` schemas (name, legal name, address, phone, email, logo, social links).
+Request the rendered HTML of the homepage with `run_cli fluid theme crawl <url> --format html --no-main-content-only`. Parse `<script type="application/ld+json">` blocks for `Organization`, `LocalBusiness`, and `WebSite` schemas (name, legal name, address, phone, email, logo, social links).
 
 ### 3e. Social media link harvesting
 
@@ -188,7 +188,7 @@ This sub-step collects the raw material for `brand.md`. Read
 **Palette + typography — from the stylesheet, not from a screenshot.**
 
 1. Pull `<link rel="stylesheet">` hrefs out of the homepage HTML you already fetched in 3d.
-   If managed crawl/rendered HTML omitted `<head>`, immediately call `web_fetch` on the
+   If the crawled/rendered HTML omitted `<head>`, immediately call `web_fetch` on the
    canonical homepage and inspect the raw response body; Hydrogen/Oxygen storefronts expose
    their hashed Shopify CSS bundles there even when Firecrawl strips the head. Resolve
    relative hrefs against the final page URL. Never search Google/Bing for a guessed CDN
@@ -221,7 +221,7 @@ overlays. Record:
 
 Firecrawl screenshots can contain consent/geo modals or opaque blank overlays. If one
 obscures meaningful content, do not infer the visual style from it; capture the rendered
-page cleanly with Mist's managed crawl/browser capture (or an already-available
+page cleanly with `fluid theme crawl` (a `--action '{"type":"click","selector":"…"}'` dismissal) (or an already-available
 project-local browser outside Mist). Do not clone overlays into the brand guide.
 
 **Voice — verbatim, from at least three page types.**
@@ -244,7 +244,7 @@ Everything here is HIGH confidence — it comes from the company's own site.
 
 ## Step 4: Research Public Records
 
-Run all sub-steps in parallel after Step 3 completes. Use the active model's available web-search/research capability and `crawl` for result pages. If search is unavailable, use known authoritative registry URLs and mark anything that cannot be verified as needs-review instead of inventing it.
+Run all sub-steps in parallel after Step 3 completes. Use the active model's available web-search/research capability and `run_cli fluid theme crawl <url>` for result pages. If search is unavailable, use known authoritative registry URLs and mark anything that cannot be verified as needs-review instead of inventing it.
 
 ### 4a. State business registry (US only)
 
@@ -257,7 +257,7 @@ Determine the state from Step 3 results. Look up the registry domain in [referen
 1. Search: `"{legal_name}" site:{registry_domain}`
 2. Search: `"{legal_name}" site:opencorporates.com`
 3. If HQ state is NOT Delaware, also search Delaware (many companies incorporate in DE)
-4. Fetch any result pages found with `crawl`
+4. Fetch any result pages found with `run_cli fluid theme crawl <url>`
 
 **Extract:** entity type, registration/document number, date of incorporation, registered agent, principal office address, officer/director/member names and titles, entity status.
 
@@ -269,14 +269,14 @@ Extract from Knowledge Panel: full street address, phone, business category, hou
 
 ### 4c. LinkedIn company page
 
-If a LinkedIn URL was harvested in 3e, fetch it with `crawl`. Otherwise search `site:linkedin.com/company "{trading_name}"` and fetch the top result.
+If a LinkedIn URL was harvested in 3e, fetch it with `run_cli fluid theme crawl <url>`. Otherwise search `site:linkedin.com/company "{trading_name}"` and fetch the top result.
 
 **Extract:** headquarters location, industry, company size, founded year, description, key employees.
 
 ### 4d. Review and trust platforms
 
 **BBB:** Search `site:bbb.org "{trading_name}"`, then repeat with the exact legal name and
-known phone/address → fetch each candidate profile with `crawl`. Before extracting anything,
+known phone/address → fetch each candidate profile with `run_cli fluid theme crawl <url>`. Before extracting anything,
 prove the profile belongs to this company using the exact website domain or at least two
 independent identifiers (legal/trading name plus address or phone). A name-only match is
 insufficient. Extract rating (A+ through F), accreditation status, years accredited,
