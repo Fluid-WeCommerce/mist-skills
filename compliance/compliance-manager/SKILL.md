@@ -10,7 +10,7 @@ Give {{company.name}} an honest, cited compliance report for one country: what t
 # Step 0 — Resolve the country and load its rulebook
 
 1. Resolve the country ISO (alpha-2). If invoked standalone, take it from the user's message; in a workflow, read `context.country_id` / `context.country_iso` (fall back to `fluid_api` → GET `/api/countries` and match on id).
-2. Run `run_cli fluid countries compliance <ISO>`. It prints the country's compliance rulebook projected from the Country Atlas: `mandatoryDisclosurePages` (each with a citation when one exists), `cookieRule` (framework + requirement + regulator), `vatInclusiveDisplay` (`inclusive` | `exclusive_at_sticker` | `unspecified`), `unitPriceRule` (required + notes), plus `vat`, `paymentMethods`, `languageCode`. If `covered: false`, tell the user Fluid has no atlas for this market yet and audit only the generic essentials (privacy policy, terms, refund policy present) — do not invent country-specific rules.
+2. Run `run_cli fluid countries compliance <ISO>`. It prints the country's compliance rulebook projected from the Country Atlas: `mandatoryDisclosurePages` (each with a citation when one exists), `cookieRule` (framework + requirement + regulator), `vatInclusiveDisplay` (`inclusive` | `exclusive_at_sticker` | `unspecified`), `unitPriceRule` (required + notes), plus `vat`, `paymentMethods`, `languageCode`. If `covered: false`, the code isn't a country Fluid supports (every Fluid country has an atlas): ask the user to check it and stop.
 3. Note the operating mode if you have it (`context.mode` = `otg` | `nfr` | `usd`). It changes how strict each check is (see the mode notes at the end).
 
 # Step 1 — Audit the live storefront against the rulebook
@@ -32,7 +32,7 @@ Produce a compliance report in plain language for a store owner (no internal ids
 - **Critical (fix before launch)** — legal must-haves that are missing or wrong.
 - **Should review** — likely-required items you couldn't fully verify, or soft requirements.
 - **Passed** — what's already compliant (brief).
-- **Follow-ups for a human** — registrations, filings, or credential-gated items Fluid can't complete (VAT registration, gateway KYC, a named Privacy Officer). Where a gap has a Fluid CLI fix, name the command for a separate run, e.g. `fluid countries agreements <ISO> --create --only <localId> --yes` for a missing atlas agreement or `fluid translations auto <iso> --write --yes` for untranslated storefront copy.
+- **Follow-ups for a human** — registrations, filings, or credential-gated items Fluid can't complete (VAT registration, gateway KYC, a named Privacy Officer). Where a gap has a Fluid CLI fix, name the command for a separate run, e.g. `fluid countries agreements <ISO> --create --only <localId> --yes` for a missing atlas agreement or, for untranslated storefront copy, `fluid translations missing <iso>` and then `fluid translations auto <iso> --type … --write --yes` once the user has chosen what to translate (theme strings only / everything / specific types / skip).
 
 Every finding cites the specific rule it rests on (the citation from `fluid countries compliance`, e.g. "Impressum — Telemediengesetz §5", "unit pricing — Price Marking Order 2004") or, for a finding produced by an earlier workflow step, names that step. Drop or reword any finding you can't attribute — never invent a citation.
 
@@ -45,5 +45,5 @@ Every finding cites the specific rule it rests on (the citation from `fluid coun
 # Rules
 
 - READ-only. This skill audits and reports; it never writes to the store, with `fluid_api` or with a `fluid` command that changes anything. Fixes are the user's call (or a separate skill/workflow), and they go through the Fluid CLI.
-- Never invent tax rates, regulators, statutes, or disclosure requirements — everything country-specific comes from `fluid countries compliance <ISO>`. When `covered: false`, say so and stay generic.
+- Never invent tax rates, regulators, statutes, or disclosure requirements — everything country-specific comes from `fluid countries compliance <ISO>`. When `covered: false`, the ISO isn't a country Fluid supports — ask the user to check it and stop.
 - Keep the report scannable: severity groups, one line per finding, citation attached.

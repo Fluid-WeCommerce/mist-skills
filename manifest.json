@@ -331,7 +331,7 @@
       "category": "onboarding",
       "icon": "package-plus",
       "path": "onboarding/fluid-product-admin-import/SKILL.md",
-      "updated_at": "2026-10-03T03:31:45Z"
+      "updated_at": "2026-10-03T04:20:41Z"
     },
     {
       "slug": "marketing/brand-manager",
@@ -385,7 +385,7 @@
       "category": "compliance",
       "icon": "globe",
       "path": "compliance/open-a-country.md",
-      "updated_at": "2026-10-03T03:31:45Z"
+      "updated_at": "2026-10-03T04:20:41Z"
     },
     {
       "slug": "compliance/compliance-manager",
@@ -394,7 +394,7 @@
       "category": "compliance",
       "icon": "scale",
       "path": "compliance/compliance-manager/SKILL.md",
-      "updated_at": "2026-10-03T03:31:45Z"
+      "updated_at": "2026-10-03T04:20:41Z"
     },
     {
       "slug": "themes/iterative-theme-refine",
@@ -563,7 +563,7 @@
     {
       "slug": "open-country",
       "path": "workflows/open-country.workflow.json",
-      "updated_at": "2026-10-03T03:31:45Z"
+      "updated_at": "2026-10-03T04:20:41Z"
     },
     {
       "slug": "finalize-otg-country",
