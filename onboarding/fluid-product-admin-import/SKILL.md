@@ -230,7 +230,7 @@ Before product creates:
    `companyCountry.currency` to match the source currency, then run
    `fluid countries open <ISO> --mode otg --yes` (`otg`: the business sells
    from inside its own market). Never `POST /api/settings/company_countries`
-   with `fluid_api`; Mist refuses it. When the atlas doesn't cover the market,
+   with `fluid_api`; Mist refuses it. When `fluid countries atlas <ISO>` returns no atlas (the ISO isn't a Fluid country),
    the currency differs, or the scope doesn't authorize store setup, stop and
    request that prerequisite;
 5. use `company_countries[].country.id` as integer `country_id`, never the
