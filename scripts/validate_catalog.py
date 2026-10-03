@@ -1081,10 +1081,11 @@ def _validate_header_navigation_contract(workflow: dict[str, Any]) -> None:
         str(step.get("prompt", "")),
         (
             "GET /api/menus",
+            "Fill that menu rather than adding another one",
             "never substitute a title-derived slug",
-            "Set each one's value to the returned slug",
+            "a push alone does not change what the live storefront renders",
             "navbar_locale_dropdown",
-            "whose default and current value are true",
+            "on by default, not forced",
             "Read the rendered DOM of the live home route",
         ),
         "streamlined workflow header-navigation contract",
@@ -1092,8 +1093,8 @@ def _validate_header_navigation_contract(workflow: dict[str, Any]) -> None:
     require_fragments(
         json.dumps(step.get("acceptance", [])),
         (
-            "set to the menu slug returned by the menus API",
-            "behind a checkbox setting that defaults to true",
+            "resolves to that menu's slug as returned by the menus API",
+            "on by default and removable",
             "live home route's rendered header",
         ),
         "streamlined workflow header-navigation acceptance contract",

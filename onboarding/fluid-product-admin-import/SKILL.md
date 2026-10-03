@@ -421,19 +421,28 @@ live header shows it. The payloads are in
    the persisted mappings first. Keep external links unchanged. Report an
    internal link you cannot resolve; never point it at a guessed route or at
    home.
-3. `GET /api/menus` and adopt the matching menu before creating one. Write
-   `linkable_type: "Link"` items with the source's titles, order, and nesting
-   (`sub_menu_items_attributes`), then read the menu back and compare.
-4. Use the `slug` the API returns. Never derive it from the title; older menus
-   can return a null slug.
-5. Set every header `link_list` setting (desktop and mobile, if separate) to
-   that slug in the navbar template's section settings, push, and check the
-   live header's rendered items against the menu.
-6. Keep the country and language selector in the header, beside the menu, on by
-   default behind a setting the merchant can turn off.
+3. Find the menu the header already renders: read each header `link_list`
+   value (the base theme's nav block defaults to `main-menu`; the value can be
+   a slug or an id) and match it in `GET /api/menus`.
+4. Fill that menu instead of creating another. `PUT /api/menus/:id` with
+   `linkable_type: "Link"` items carrying the source's titles, order, and
+   nesting (`sub_menu_items_attributes`), plus `_destroy: true` for every item
+   the source doesn't have. Menu writes are live at once; no theme publish is
+   needed.
+5. Only when the value resolves to no menu, create one whose generated slug
+   equals that value (title "Main menu" gives `main-menu`) and confirm the
+   returned slug. If it differs, set the header's value to the returned slug,
+   push, and publish the theme again. A push alone doesn't change the live
+   storefront.
+6. Every menu needs at least one country: send `country_ids` with the
+   company's countries. Send `active: true`; new menus start inactive.
+7. Read the menu back and compare. Fluid strips query strings from `Link` URLs.
+8. Keep the country and language selector in the header, beside the menu. In
+   the base theme it is a removable `locale_dropdown` / `mobile_locale` block,
+   present by default.
 
-Report `menu_id`, `menu_slug`, the bound header settings, and every unresolved
-item. A menu that exists but isn't bound to the header is not an import.
+Report `menu_id`, `menu_slug`, the header's `link_list` values, and every
+unresolved item. A menu the header doesn't render is not an import.
 
 ### Resolving a page body
 
