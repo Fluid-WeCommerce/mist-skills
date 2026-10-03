@@ -1,19 +1,21 @@
 {
+  "revision": "2026-10-02",
   "slug": "finalize-nfr-country",
   "name": "Finalize NFR (Not For Resale) country setup",
-  "description": "Post-open-country finalizer for NFR mode: verify the international shipping profile, confirm import-duty disclosure at checkout, spot-check product country-of-origin labeling, and run a light compliance review acknowledging the NFR posture. Expects the caller `context` from open-country PLUS `mode: \"nfr\"`.",
+  "description": "Post-open-country finalizer for NFR mode: check the international shipping profile, confirm import-duty disclosure at checkout, spot-check product country-of-origin labeling, and run a light compliance review acknowledging the NFR posture. Read-only: the Fluid CLI has no shipping-zone command, so gaps come back as manual follow-ups. Expects the caller `context` from open-country PLUS `mode: \"nfr\"`.",
   "maxParallel": 3,
   "steps": [
     {
       "id": "shipping-profile-setup",
       "name": "International shipping profile",
-      "prompt": "NFR means the customer imports the product cross-border — every NFR country needs an international shipping zone or the checkout will refuse the address.\n\n1. Read `context.country_id`, `context.mode` (should be `nfr`), and `context.country_iso` (or resolve via GET /api/countries) from the context block. If mode is not `nfr`, emit `STEP_OUTPUT: mode is not nfr; nothing to do` and STOP.\n2. Probe for a shipping-zones endpoint. Try in order:\n   a. GET `/api/shipping/zones` — if 200, look for a zone whose `country_ids` includes `context.country_id`.\n   b. GET `/api/settings/shipping_zones` — same check.\n   c. GET `/api/settings/company_countries/{id}` for a `shipping` sub-block that flags cross-border-shipping-enabled.\n3. If a zone already covers the country, report `already covered by zone <id> (<name>)` and STOP.\n4. If no zone covers it, either:\n   a. POST to whichever endpoint returned a schema in step 2 with a body like `{ zone: { name: 'International — <country>', country_ids: [<context.country_id>], rate_type: 'flat', rate_cents: 0 } }` — pick a conservative flat rate and note that the human should tune it, OR\n   b. If no shipping-zones endpoint exists AT ALL, emit a manual step: `SETUP REQUIRED: navigate to /settings/shipping in the admin and add <country> to an international zone.`\n5. STEP_OUTPUT names the resolution: already-covered / zone-created / manual-step-emitted.",
+      "prompt": "NFR means the customer imports the product cross-border — every NFR country needs an international shipping zone or the checkout will refuse the address. The Fluid CLI has no shipping-zone command, so this step checks and reports; it does not create a zone. Writes go through `run_cli` with the Fluid CLI only; never write with `fluid_api` (Mist refuses `fluid_api` writes to `/api/settings/company_countries`). `fluid_api` GETs are fine for reading.\n\n1. Read `context.country_id`, `context.mode` (should be `nfr`), `context.country_iso` and `context.warehouse_id` from the context block. If mode is not `nfr`, emit `STEP_OUTPUT: mode is not nfr; nothing to do` and STOP.\n2. Confirm the origin warehouse: `run_cli` → `fluid countries list` and read this country's `warehouse`. When it is null, note that the origin warehouse still needs to be set.\n3. Probe for shipping-zone coverage with reads. Try in order:\n   a. GET `/api/shipping/zones` — if 200, look for a zone whose `country_ids` includes `context.country_id`.\n   b. GET `/api/settings/shipping_zones` — same check.\n   c. GET `/api/settings/company_countries` and read this country's record for a `shipping` sub-block that flags cross-border shipping as enabled.\n4. If a zone already covers the country, report `already covered by zone <id> (<name>)` and STOP.\n5. If no zone covers it, emit a manual step: `SETUP REQUIRED: in the admin's shipping settings (/settings/shipping), add <country> to an international zone with a rate you've priced.` Name the endpoint the probe found, if any, so a person knows where the zone lives.\n6. STEP_OUTPUT names the resolution: already-covered / manual-step-emitted, and the warehouse finding from step 2.",
       "target": {
         "type": "manager"
       },
       "acceptance": [
-        "GET /api/shipping/zones (or the alternate endpoint the probe found) shows a zone whose country_ids includes context.country_id, OR the report explicitly notes 'no shipping-zones endpoint available' with a manual follow-up.",
-        "STEP_OUTPUT reports which branch ran: already-covered | zone-created | manual-step-emitted — no silent success."
+        "GET /api/shipping/zones (or the alternate endpoint the probe found) shows a zone whose country_ids includes context.country_id, OR the report emits a concrete manual follow-up to add the country to an international zone (noting when no shipping-zones endpoint is available).",
+        "No shipping zone or company_country was written with `fluid_api`; the step only read.",
+        "STEP_OUTPUT reports which branch ran: already-covered | manual-step-emitted — no silent success."
       ],
       "dependsOn": [],
       "maxReworkRounds": 2

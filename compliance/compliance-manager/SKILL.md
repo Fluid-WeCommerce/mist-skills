@@ -18,12 +18,12 @@ Give {{company.name}} an honest, cited compliance report for one country: what t
 Every finding MUST be checked against real state this turn — read the storefront, call the API. Do not assume. Cover these dimensions:
 
 1. **Mandatory disclosure pages** — for each entry in `mandatoryDisclosurePages`, confirm the storefront actually publishes that page (crawl the storefront footer/legal menu with `run_cli fluid theme crawl <url> --no-main-content-only`, or GET the company's pages/agreements). Report present / missing per page, each tied to its citation.
-2. **Linked agreements** — GET `/api/agreements` and confirm the country's required agreements exist, are active, and are scoped to this country. Cross-reference against the disclosure pages.
+2. **Linked agreements** — run `run_cli fluid countries status <ISO>` and read its `agreement:<localId>` checks: each atlas agreement is on the country and active, with every atlas translation, or the check says what's missing. Use GET `/api/agreements` for the titles and text. Cross-reference against the disclosure pages.
 3. **Price display** — compare `vatInclusiveDisplay` to how prices actually render. `inclusive` markets (most of the EU, UK, AU, JP) must show tax-included consumer prices; `exclusive_at_sticker` (US/CA convention) shows ex-tax with tax at checkout. Flag a mismatch.
 4. **Cookie / privacy** — if `cookieRule.requirement` calls for consent, confirm the storefront has a consent banner meeting it (e.g. an equally-prominent Reject All where required). Name the regulator from `cookieRule.regulator`.
 5. **Unit pricing** — if `unitPriceRule.required`, spot-check that products sold by weight/volume/length show a unit price.
 6. **Product labeling** (physical goods) — spot-check 3 products for country-of-origin and destination-language labeling where the market requires it.
-7. **Storefront language** — confirm the storefront is available in the market's primary language (`languageCode`). A Spanish market served only in English is a critical finding.
+7. **Storefront language** — confirm the storefront is available in the market's primary language (`languageCode`): the `language:<iso>` checks in `fluid countries status <ISO>` say whether it's enabled, and outside a read-only QA turn `run_cli fluid translations missing <iso>` reports what is still untranslated per type. A Spanish market served only in English is a critical finding.
 
 # Step 2 — Report
 
@@ -32,7 +32,7 @@ Produce a compliance report in plain language for a store owner (no internal ids
 - **Critical (fix before launch)** — legal must-haves that are missing or wrong.
 - **Should review** — likely-required items you couldn't fully verify, or soft requirements.
 - **Passed** — what's already compliant (brief).
-- **Follow-ups for a human** — registrations, filings, or credential-gated items Fluid can't complete (VAT registration, gateway KYC, a named Privacy Officer).
+- **Follow-ups for a human** — registrations, filings, or credential-gated items Fluid can't complete (VAT registration, gateway KYC, a named Privacy Officer). Where a gap has a Fluid CLI fix, name the command for a separate run, e.g. `fluid countries agreements <ISO> --create --only <localId> --yes` for a missing atlas agreement or `fluid translations auto <iso> --write --yes` for untranslated storefront copy.
 
 Every finding cites the specific rule it rests on (the citation from `fluid countries compliance`, e.g. "Impressum — Telemediengesetz §5", "unit pricing — Price Marking Order 2004") or, for a finding produced by an earlier workflow step, names that step. Drop or reword any finding you can't attribute — never invent a citation.
 
@@ -44,6 +44,6 @@ Every finding cites the specific rule it rests on (the citation from `fluid coun
 
 # Rules
 
-- READ-only. This skill audits and reports; it never writes to the store. Fixes are the user's call (or a separate skill/workflow).
+- READ-only. This skill audits and reports; it never writes to the store, with `fluid_api` or with a `fluid` command that changes anything. Fixes are the user's call (or a separate skill/workflow), and they go through the Fluid CLI.
 - Never invent tax rates, regulators, statutes, or disclosure requirements — everything country-specific comes from `fluid countries compliance <ISO>`. When `covered: false`, say so and stay generic.
 - Keep the report scannable: severity groups, one line per finding, citation attached.

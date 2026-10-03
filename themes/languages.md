@@ -179,7 +179,9 @@ no trailing commas, no comments.
    keys, no missing keys, same plural shape.
 5. **Never delete an orphan locale file** (exists on disk, not enabled) without asking.
 6. **Edit locale files in place; never push.** No `fluid theme push`, no store write
-   (e.g. `POST /api/settings/languages` to enable a language) without explicit approval.
+   (e.g. `run_cli fluid translations enable <iso> --yes` to enable a language) without explicit
+   approval. Never enable a language with a `fluid_api` write: Mist refuses writes to
+   `/api/settings/languages`.
 7. **Validate JSON after every file.** `jq . locales/{iso}.json` must parse clean.
 
 ---
