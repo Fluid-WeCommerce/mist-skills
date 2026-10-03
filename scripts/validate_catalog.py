@@ -1053,6 +1053,59 @@ def _validate_taxonomy_membership_contract(workflow: dict[str, Any]) -> None:
     )
 
 
+def _validate_header_navigation_contract(workflow: dict[str, Any]) -> None:
+    """Creating a menu changes nothing until the header's link_list names it.
+
+    Menus used to ride along in import-content with no acceptance criterion and
+    no step that bound them to the header, so launches kept the starter theme's
+    menu.
+    """
+    source_step = _streamlined_step(workflow, "source-capture")
+    require_fragments(
+        str(source_step.get("prompt", "")),
+        ("navigation.header", "navigation.header.controls"),
+        "streamlined workflow source-capture navigation contract",
+    )
+
+    step = _streamlined_step(workflow, "header-navigation")
+    for dependency in ("publish-theme", "import-content"):
+        if not depends_transitively(
+            {s["id"]: s for s in workflow["steps"] if isinstance(s, dict)},
+            "header-navigation",
+            dependency,
+        ):
+            raise CatalogValidationError(
+                f"streamlined workflow: header-navigation must wait for {dependency}"
+            )
+    require_fragments(
+        str(step.get("prompt", "")),
+        (
+            "GET /api/menus",
+            "never substitute a title-derived slug",
+            "Set each one's value to the returned slug",
+            "navbar_locale_dropdown",
+            "whose default and current value are true",
+            "Read the rendered DOM of the live home route",
+        ),
+        "streamlined workflow header-navigation contract",
+    )
+    require_fragments(
+        json.dumps(step.get("acceptance", [])),
+        (
+            "set to the menu slug returned by the menus API",
+            "behind a checkbox setting that defaults to true",
+            "live home route's rendered header",
+        ),
+        "streamlined workflow header-navigation acceptance contract",
+    )
+
+    handoff = _streamlined_step(workflow, "handoff")
+    if "header-navigation" not in (handoff.get("dependsOn") or []):
+        raise CatalogValidationError(
+            "streamlined workflow: handoff must wait for header-navigation"
+        )
+
+
 def _validate_handoff_live_counts_contract(workflow: dict[str, Any]) -> None:
     """A step's STEP_OUTPUT is a snapshot from before any later remediation.
 
@@ -1286,6 +1339,7 @@ def validate_streamlined_page_review_contract(workflow: Any) -> None:
     _validate_storefront_code_review(workflow)
     _validate_content_import_body_contract(workflow)
     _validate_taxonomy_membership_contract(workflow)
+    _validate_header_navigation_contract(workflow)
     _validate_handoff_live_counts_contract(workflow)
     _reject_unsupported_page_review_claims(workflow)
 

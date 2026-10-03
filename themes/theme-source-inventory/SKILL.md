@@ -103,7 +103,9 @@ Write `clone-manifest.json` with:
 - verbatim `hero_copy` with Markdown, HTML, and screenshot evidence;
 - `visual_routes.home`, `.shop`, and `.pdp`, each with source URL, future built
   path, ordered landmark mappings, and complete desktop/mobile evidence cells;
-- `priority_media.items`.
+- `priority_media.items`;
+- `navigation.header`, the source's top menu and header controls (see
+  [Capture the header navigation](#capture-the-header-navigation)).
 
 Do not hand-transcribe the evidence-derived arrays. After all six crawl bundles
 are complete, call Mist's local-only deterministic builder exactly once:
@@ -367,6 +369,48 @@ HTTP(S) URL. Split `srcset` strings into individual URLs and remove width/densit
 descriptors such as `800w` or `2x`; never store an entire comma-separated
 `srcset` string as one candidate.
 
+### Capture the header navigation
+
+The header menu is rebuilt later as a Fluid menu, so record it as data, not
+only as screenshots. Read it from the rendered Home DOM at both viewports:
+
+- Expand what hover or click hides. Dropdown and mega-menu children are usually
+  in the DOM but not visible; the mobile drawer can carry items the desktop bar
+  omits.
+- Record each item as `{ "title", "source_url", "order", "children": [...] }`,
+  with the title copied verbatim and the URL absolute. Keep nesting as nesting.
+- Put header controls in `navigation.header.controls`, not in the items: logo,
+  search, account, cart, and any country, language, or currency selector, each
+  with its kind and source position.
+- Note desktop-only and mobile-only items with `viewports`.
+
+```json
+{
+  "navigation": {
+    "header": {
+      "items": [
+        {
+          "title": "Shop",
+          "source_url": "https://source.example/collections/all",
+          "order": 0,
+          "viewports": ["desktop", "mobile"],
+          "children": [
+            { "title": "Best Sellers", "source_url": "https://source.example/collections/best-sellers", "order": 0, "children": [] }
+          ]
+        }
+      ],
+      "controls": [
+        { "kind": "locale_selector", "position": "right" },
+        { "kind": "cart", "position": "right" }
+      ]
+    }
+  }
+}
+```
+
+An empty `items` array needs a reason in `unresolved`; almost every storefront
+has a top menu.
+
 ## 5. Protect local evidence
 
 Preserve existing `.fluidignore` rules and add exact entries for:
@@ -433,6 +477,7 @@ validator: pass
 hero_copy:
 brand_tokens:
 secondary_routes:
+header_navigation: <top-level items>/<nested items>/<controls>
 unresolved:
 ```
 

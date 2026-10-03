@@ -14,6 +14,12 @@ The shape to check templates against: a `link_list` setting resolves to a menu w
 {%- endfor -%}
 ```
 
+## The header menu and the locale selector
+
+A menu doesn't reach the storefront until a `link_list` setting names its slug. For the header, that value lives in the navbar template's section settings. Set it to the `slug` the menus API returned, and check the live header after pushing. Changing the schema's `default` isn't enough. Set the value itself.
+
+Keep the country and language selector in the header by default. It renders beside the menu through `navbar_locale_dropdown`, behind a checkbox setting that defaults to on so the merchant can turn it off. It is never a menu item. See [Build a navbar country and language selector](https://docs.fluid.app/themes/navbar-locale-selector).
+
 ## Findings to surface
 
 | You see | Severity | Fix |
@@ -24,6 +30,9 @@ The shape to check templates against: a `link_list` setting resolves to a menu w
 | Footer columns hardcoded one after another | `should` | One block per column, each with its own `link_list`. |
 | Breadcrumbs, social-link rows, related-links rails: any list of `{ label, url }` pairs | `should` | Use a `link_list`. |
 | A `link_list` `default` that doesn't match an existing menu's slug | `should` | Use a slug returned by the menus API. Don't derive it from the title. |
+| The header's `link_list` still names the starter theme's menu after a store import | `blocker` | Set it to the slug of the imported menu in the navbar template's section settings. |
+| Header nav built from hardcoded source links | `should` | Import the links as a Fluid menu and loop over `menu_items`. |
+| `navbar_locale_dropdown` removed from the header, or rendered with no setting to turn it off | `should` | Render it behind a checkbox setting that defaults to on. Keep its JS hooks. |
 
 ## When to keep nav items singular
 

@@ -157,7 +157,7 @@
       "category": "themes",
       "icon": "scan-search",
       "path": "themes/theme-source-inventory/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-03T07:02:39Z",
       "references": [
         "themes/references/pixel-fidelity-core.md"
       ]
@@ -199,7 +199,7 @@
       "category": "themes",
       "icon": "sparkles",
       "path": "themes/theme-refine/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-03T07:02:39Z",
       "references": [
         "themes/theme-refine/references/dev-preview-visual-diff.md",
         "themes/references/blocks-vs-sections.md",
@@ -331,7 +331,7 @@
       "category": "onboarding",
       "icon": "package-plus",
       "path": "onboarding/fluid-product-admin-import/SKILL.md",
-      "updated_at": "2026-10-03T04:20:41Z"
+      "updated_at": "2026-10-03T07:02:39Z"
     },
     {
       "slug": "marketing/brand-manager",
@@ -583,7 +583,7 @@
     {
       "slug": "streamlined-onboard-launch",
       "path": "workflows/streamlined-onboard-launch.workflow.json",
-      "updated_at": "2026-10-02T06:09:26Z"
+      "updated_at": "2026-10-03T07:02:39Z"
     },
     {
       "slug": "speed-import",
