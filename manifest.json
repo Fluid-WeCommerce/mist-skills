@@ -71,7 +71,7 @@
       "category": "themes",
       "icon": "clipboard-check",
       "path": "themes/theme-review.md",
-      "updated_at": "2026-09-30T14:39:05Z"
+      "updated_at": "2026-10-10T12:00:00Z"
     },
     {
       "slug": "themes/languages",
@@ -221,7 +221,7 @@
       "category": "themes",
       "icon": "scan-eye",
       "path": "themes/clone-page-to-liquid/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-10T12:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -237,7 +237,7 @@
       "category": "themes",
       "icon": "house",
       "path": "themes/clone-home-page/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-10T12:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -254,7 +254,7 @@
       "category": "themes",
       "icon": "shopping-bag",
       "path": "themes/clone-shop-page/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-10T12:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -271,7 +271,7 @@
       "category": "themes",
       "icon": "package",
       "path": "themes/clone-product-page/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-10T12:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -286,7 +286,7 @@
       "category": "themes",
       "icon": "folders",
       "path": "themes/clone-category-page/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-10T12:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -301,7 +301,7 @@
       "category": "themes",
       "icon": "layout-grid",
       "path": "themes/clone-collection-page/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-10T12:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -466,7 +466,7 @@
       "category": "themes",
       "icon": "newspaper",
       "path": "themes/clone-blog-page/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-10T12:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -481,7 +481,7 @@
       "category": "themes",
       "icon": "file-text",
       "path": "themes/clone-post-page/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-10T12:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -496,7 +496,7 @@
       "category": "themes",
       "icon": "shopping-cart",
       "path": "themes/clone-cart-page/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-10T12:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -511,7 +511,7 @@
       "category": "themes",
       "icon": "triangle-alert",
       "path": "themes/clone-system-pages/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-10T12:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",

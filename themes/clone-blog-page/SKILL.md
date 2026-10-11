@@ -90,7 +90,9 @@ Capture and compare:
 
 ## Required interaction proof
 
-- follow one card through to its real Fluid post route and confirm a 200
+- follow one card through to its real Fluid post route and confirm it renders
+  the `post` template, not the home page. A 200 alone doesn't prove it: with no
+  `post` template, the route answers 200 with the home page
 - exercise pagination / load-more where present
 - exercise category filtering where present, and confirm the list changes
 - open and close the mobile navigation from an inspected selector
