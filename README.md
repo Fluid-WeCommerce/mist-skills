@@ -82,9 +82,9 @@ Summarize orders from the last 30 days that used the promo code SUMMER10.
 
 # Steps
 
-1. Hit `GET /api/v202604/orders?filter[promo_code]=SUMMER10&filter[created_at_gte]={{thirty_days_ago}}` against the active company.
-2. Compute total orders, total revenue, AOV, and top 5 customers by spend.
-3. Render a Markdown table.
+1. Hit `GET /api/v202604/orders?filter[start_date]={{thirty_days_ago}}&page[limit]=100` against the active company, following `meta.pagination.next_cursor` as `page[cursor]`.
+2. Keep the orders whose `discount_codes` (from `GET /api/v202506/orders/<id>`) include SUMMER10.
+3. Compute total orders, total revenue, AOV, and top 5 customers by spend, and render a Markdown table.
 ```
 
 ### Frontmatter fields

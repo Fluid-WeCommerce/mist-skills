@@ -17,7 +17,7 @@
       "category": "finance",
       "icon": "receipt",
       "path": "finance/promo-code-summary.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "finance/monthly-close",
@@ -26,7 +26,7 @@
       "category": "finance",
       "icon": "file-text",
       "path": "finance/monthly-close.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "finance/top-customers",
@@ -35,7 +35,7 @@
       "category": "finance",
       "icon": "trophy",
       "path": "finance/top-customers.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/scrape-into-theme",
@@ -44,7 +44,7 @@
       "category": "themes",
       "icon": "globe",
       "path": "themes/scrape-into-theme.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/accessibility-audit",
@@ -53,7 +53,7 @@
       "category": "themes",
       "icon": "accessibility",
       "path": "themes/accessibility-audit.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/image-optimization",
@@ -62,7 +62,7 @@
       "category": "themes",
       "icon": "image",
       "path": "themes/image-optimization.md",
-      "updated_at": "2026-07-09T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/theme-review",
@@ -71,7 +71,7 @@
       "category": "themes",
       "icon": "clipboard-check",
       "path": "themes/theme-review.md",
-      "updated_at": "2026-10-10T12:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/languages",
@@ -80,16 +80,16 @@
       "category": "themes",
       "icon": "languages",
       "path": "themes/languages.md",
-      "updated_at": "2026-10-03T03:31:45Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "mist/scaffold-droplet",
       "name": "Scaffold a new Droplet for a Mist",
-      "description": "Set up the Droplet UI scaffolding (page, route, schema) for a fresh Mist app.",
+      "description": "Set up the Droplet UI scaffolding (embed page, route, droplet config) for a fresh Mist app.",
       "category": "mist",
       "icon": "hammer",
       "path": "mist/scaffold-droplet.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "mist/create-portal-app",
@@ -98,7 +98,7 @@
       "category": "mist",
       "icon": "panels-top-left",
       "path": "mist/create-portal-app.md",
-      "updated_at": "2026-07-30T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "mist/portal-widget-vs-mist-app",
@@ -107,7 +107,7 @@
       "category": "mist",
       "icon": "git-fork",
       "path": "mist/portal-widget-vs-mist-app.md",
-      "updated_at": "2026-08-07T22:09:03Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "mist/env-vars-audit",
@@ -116,7 +116,7 @@
       "category": "mist",
       "icon": "shield-check",
       "path": "mist/env-vars-audit.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "mist/debug-failed-deploy",
@@ -125,7 +125,7 @@
       "category": "mist",
       "icon": "bug",
       "path": "mist/debug-failed-deploy.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/theme-clone",
@@ -134,7 +134,7 @@
       "category": "themes",
       "icon": "copy",
       "path": "themes/theme-clone/SKILL.md",
-      "updated_at": "2026-10-02T06:09:26Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/theme-clone/references/batch-upload-script.md",
         "themes/theme-clone/references/css-js-patterns.md",
@@ -187,7 +187,7 @@
       "category": "themes",
       "icon": "blocks",
       "path": "themes/fluid-block-spec/SKILL.md",
-      "updated_at": "2026-09-30T00:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/fluid-block-spec/references/fluid-block-spec-v3.md"
       ]
@@ -199,7 +199,7 @@
       "category": "themes",
       "icon": "sparkles",
       "path": "themes/theme-refine/SKILL.md",
-      "updated_at": "2026-10-03T07:02:39Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/theme-refine/references/dev-preview-visual-diff.md",
         "themes/references/blocks-vs-sections.md",
@@ -221,7 +221,7 @@
       "category": "themes",
       "icon": "scan-eye",
       "path": "themes/clone-page-to-liquid/SKILL.md",
-      "updated_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -237,7 +237,7 @@
       "category": "themes",
       "icon": "house",
       "path": "themes/clone-home-page/SKILL.md",
-      "updated_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -254,7 +254,7 @@
       "category": "themes",
       "icon": "shopping-bag",
       "path": "themes/clone-shop-page/SKILL.md",
-      "updated_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -271,7 +271,7 @@
       "category": "themes",
       "icon": "package",
       "path": "themes/clone-product-page/SKILL.md",
-      "updated_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -286,7 +286,7 @@
       "category": "themes",
       "icon": "folders",
       "path": "themes/clone-category-page/SKILL.md",
-      "updated_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -301,7 +301,7 @@
       "category": "themes",
       "icon": "layout-grid",
       "path": "themes/clone-collection-page/SKILL.md",
-      "updated_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -316,7 +316,7 @@
       "category": "onboarding",
       "icon": "id-card",
       "path": "onboarding/onboarding-prefill/SKILL.md",
-      "updated_at": "2026-10-03T03:39:52Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "onboarding/onboarding-prefill/references/api-endpoints.md",
         "onboarding/onboarding-prefill/references/brand-md.md",
@@ -331,7 +331,7 @@
       "category": "onboarding",
       "icon": "package-plus",
       "path": "onboarding/fluid-product-admin-import/SKILL.md",
-      "updated_at": "2026-10-03T07:02:39Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "marketing/brand-manager",
@@ -358,7 +358,7 @@
       "category": "marketing",
       "icon": "video",
       "path": "marketing/brand-social-import.md",
-      "updated_at": "2026-10-02T06:09:26Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "marketing/brand-setup",
@@ -367,7 +367,7 @@
       "category": "marketing",
       "icon": "palette",
       "path": "marketing/brand-setup.md",
-      "updated_at": "2026-07-13T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/suggested-changes",
@@ -376,7 +376,7 @@
       "category": "themes",
       "icon": "sparkles",
       "path": "themes/suggested-changes.md",
-      "updated_at": "2026-10-02T06:09:26Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "compliance/open-a-country",
@@ -421,7 +421,7 @@
       "category": "sales",
       "icon": "filter",
       "path": "sales/checkout-funnel-diagnosis.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "sales/stalled-order-recovery",
@@ -430,7 +430,7 @@
       "category": "sales",
       "icon": "shopping-cart",
       "path": "sales/stalled-order-recovery.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "sales/aov-lever-audit",
@@ -439,7 +439,7 @@
       "category": "sales",
       "icon": "trending-up",
       "path": "sales/aov-lever-audit.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "sales/rep-momentum-scoreboard",
@@ -448,7 +448,7 @@
       "category": "sales",
       "icon": "users",
       "path": "sales/rep-momentum-scoreboard.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "sales/non-renewed-subscriptions-summary",
@@ -457,7 +457,7 @@
       "category": "sales",
       "icon": "credit-card",
       "path": "sales/non-renewed-subscriptions-summary.md",
-      "updated_at": "2026-07-31T15:01:18Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/clone-blog-page",
@@ -466,7 +466,7 @@
       "category": "themes",
       "icon": "newspaper",
       "path": "themes/clone-blog-page/SKILL.md",
-      "updated_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -481,7 +481,7 @@
       "category": "themes",
       "icon": "file-text",
       "path": "themes/clone-post-page/SKILL.md",
-      "updated_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -496,7 +496,7 @@
       "category": "themes",
       "icon": "shopping-cart",
       "path": "themes/clone-cart-page/SKILL.md",
-      "updated_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -511,7 +511,7 @@
       "category": "themes",
       "icon": "triangle-alert",
       "path": "themes/clone-system-pages/SKILL.md",
-      "updated_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -526,7 +526,7 @@
       "category": "themes",
       "icon": "link",
       "path": "themes/affiliate-url-standardization.md",
-      "updated_at": "2026-08-27T20:39:48Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "onboarding/brand-from-source",
@@ -563,22 +563,22 @@
     {
       "slug": "open-country",
       "path": "workflows/open-country.workflow.json",
-      "updated_at": "2026-10-03T04:20:41Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "finalize-otg-country",
       "path": "workflows/finalize-otg-country.workflow.json",
-      "updated_at": "2026-10-03T03:39:52Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "finalize-nfr-country",
       "path": "workflows/finalize-nfr-country.workflow.json",
-      "updated_at": "2026-10-03T03:39:52Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "finalize-usd-country",
       "path": "workflows/finalize-usd-country.workflow.json",
-      "updated_at": "2026-10-03T03:39:52Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "streamlined-onboard-launch",

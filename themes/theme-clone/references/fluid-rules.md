@@ -69,11 +69,11 @@ image, poster, gradient, or flat color is a launch-blocking fidelity defect.
 Use these instead of hardcoded values where applicable:
 
 ```liquid
-{{ product.name }}
-{{ product.price | money }}
+{{ product.title }}
+{{ product.price }}                     {%- comment -%} Already formatted for the visitor's currency; Fluid has no `money` filter {%- endcomment -%}
 {{ product.description }}
 {{ product.images }}
-{{ cart.total | money }}
+{{ cart.amount_total_in_currency }}     {%- comment -%} Formatted cart total (cart_page) {%- endcomment -%}
 {{ cart.items }}
 {{ company.name }}
 {{ company.logo_url }}
@@ -97,7 +97,7 @@ Use these instead of hardcoded values where applicable:
 
 - Page-specific
 - Each template stores section instances, order, and optional layout settings.
-- Visible content blocks come from each section's preset when Fluid expands the template.
+- Visible content blocks come from each section's preset: Fluid fills an instance that has no saved blocks from the section's first preset at render.
 - Same section type can have different expanded block data per template after editor saves.
 
 ---

@@ -41,7 +41,7 @@ for d in sections/*/; do
 done
 ```
 
-**False-positive guard:** some sections are added dynamically by users through the editor — these don't appear in any `{% section %}` literal but are still live. Before recommending removal, check `config/sections/*.json` (per-section metadata) — if metadata exists, the section is registered with the editor and probably in use. Drop the severity to `nit` and frame it as "appears unused in templates — confirm before removing".
+**False-positive guard:** sections a merchant adds in the Page Editor are saved into the page template itself — as a `{% section 'name', id: "…" %}` tag plus an entry in that template's `{% schema %}` `"sections"` map — so they only show up in a theme you have pulled recently. Run `fluid theme pull` before the audit, and grep the page templates' schemas for `"type": "name"` as well. If you cannot pull, drop the severity to `nit` and frame it as "appears unused in templates on disk — confirm in the editor before removing".
 
 ### Components — unused
 

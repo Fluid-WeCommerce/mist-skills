@@ -507,9 +507,6 @@ Every section needs RTE heading rules:
 <section
   class="section-name section-{{ section.id }}"
   data-section-id="{{ section.id }}"
-  {{
-  section.fluid_attributes
-  }}
 ></section>
 ```
 
@@ -735,8 +732,8 @@ Defaults in `config/settings_schema.json` don't auto-apply if the key is missing
 **8. Editor drafts aren't persisted — the live render reads saved state.**
 When the user uploads an image in the visual editor but the HTML output still shows `image: null`, they haven't clicked **Save** in the editor. The draft lives in the iframe's local state only. Build a debug-echo (`{{ block.settings.image | json }}` in an HTML comment) as the diagnostic tool when images "don't appear."
 
-**9. Template preset expansion only fires on FRESH template creation.**
-Editing a section's preset doesn't retroactively add blocks to existing templates. Workflow: `fluid_api("/api/application_theme_templates/{id}", "DELETE")` then `fluid_api("/api/application_themes/{theme}/resources", "PUT", {...})` on the template file → preset re-expands on the new template id. (Templates live in a different table than resources — deleting a resource doesn't drop the template.) Fluid auto-reissues a new numeric id each time; update preview links accordingly.
+**9. Presets fill empty section instances at render.**
+When a section instance on a template has no blocks, Fluid fills them from the section's first preset each time the page renders, so a preset edit shows on every template whose instance has no saved blocks — no template delete or re-push needed. Instances whose blocks were saved (for example from the Page Editor) keep their saved blocks; edit those in the editor. An empty section always shows its preset again, so add an explicit empty state in Liquid if it must render nothing.
 
 **10. Navbar overflow: hamburger beats "More" dropdown.**
 When nav items can't fit, the expert pattern (Apple, Shopify, Gucci, Aesop) is to collapse the whole menu into the mobile hamburger — not spill overflow into a "More ▾" popover. Provide both as an option, default to hamburger. Measuring for "More" requires forcing the trigger to temporarily `visibility: hidden` and measuring its `getBoundingClientRect()` width BEFORE deciding which items overflow — otherwise you'll miss the reserve space and clip a link.
@@ -832,7 +829,7 @@ Exit codes: `0` = clean, `1` = violations found, `2` = invocation error.
 | GS012 | A `visible_if` on a setting is paired with a matching `{% if %}` guard in the template.                                                                           |
 | GS013 | No whitespace-trimming dashes on `{% for block in section.blocks %}` or `{% case block.type %}`. (Dashes inside `{%- style -%}` are still safe.)                  |
 | GS014 | No `var(--clr-{{ section.settings.X }})` wrapping — empty settings render `var(--clr-)`, invalid CSS that kills the entire rule block.                            |
-| GS015 | Section files emit `{{ section.fluid_attributes }}` on the root element.                                                                                          |
+| GS015 | Section files don't emit `{{ section.fluid_attributes }}` — it renders nothing; Fluid wraps each section with its own editor attributes.                          |
 | GS016 | `{{ block.fluid_attributes }}` lives on a `<div>` wrapper — never directly on `<h1>`-`<h6>`, `<p>`, or `<span>`.                                                  |
 | GS017 | Canonical breakpoints only — `767px` (mobile) and `991px` (tablet). `749px`, `768px`, and `1023px` are forbidden.                                                 |
 | GS018 | `{% layout 'theme' %}` is on the first non-blank line of template files.                                                                                          |
@@ -1201,7 +1198,7 @@ A live, browsable reference of every schema control lives at `page/schema-refere
 - `richtext` for all visible copy (never `text`/`textarea`)
 - `range` for numeric inputs (never `number`)
 - `select + "options": "background_colors"` for theme-aware colors (never raw `color`)
-- Singular resource pickers return an OBJECT in Fluid (not an ID) — access via `.title`/`.url`/etc.
+- Only `product`, `variant`, `collection`, `category`, `enrollment_pack`, `media`, `link_list`, and `product_list` pickers resolve to Liquid objects — access via `.title`/`.url`/etc. A `post` picker and every other list type (`collection_list`, `posts_list`, …) give the saved ID, not an object
 - List resource pickers cap at 24 items
 
 When you update [references/schema-settings-reference.md](references/schema-settings-reference.md), also update the corresponding card in the live reference page so the two stay in sync.
@@ -1237,8 +1234,8 @@ When you update [references/schema-settings-reference.md](references/schema-sett
 ### Fluid Liquid objects
 
 ```liquid
-{{ product.name }}
-{{ product.price | money }}
+{{ product.title }}
+{{ product.price }}
 {{ product.description }}
 {{ product.images }}
 {{ company.name }}

@@ -117,7 +117,7 @@ Common ImageKit transform codes: `w-` width · `h-` height · `q-` quality (1–
 - [ ] Reach for `media_tag` first — it sets `srcset`/`sizes`/`width`/`height`/`loading`/`decoding`/`alt` for you.
 - [ ] Set `sizes` to the real rendered layout (or pass `width` for a fixed-size image so `sizes` and the retina `srcset` are derived).
 - [ ] `loading: 'eager'` + `fetchpriority: 'high'` for the hero/LCP image; leave the default `lazy` for everything below the fold.
-- [ ] For picker settings (plain strings with no intrinsic size), pass `width`/`height`/`alt` yourself.
+- [ ] For picker settings (plain strings with no intrinsic size), pass `width`/`height` yourself, and `alt` from the editor-managed `<id>_alt` companion setting (e.g. `alt: section.settings.hero_alt`).
 - [ ] Use `image_url`/`img_url` only for CSS backgrounds or markup `media_tag` can't produce — never to rebuild an `<img>` by hand.
 
 ## Common mistakes

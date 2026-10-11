@@ -273,7 +273,7 @@ def validate_shared_skill_contracts() -> None:
             "/openapi/api-reference/storefront-v2026-04.yaml",
             "/api/v202604/company/products",
             "meta.pagination.next_cursor",
-            'status: "active"',
+            'status: "published"',
             "Do not send\n  `currency_code`",
             "external_asset_url",
             'product_subscription_plans_attributes:[{"_destroy":true}]',

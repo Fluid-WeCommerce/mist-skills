@@ -51,12 +51,16 @@ Every one of those values — background, padding, heading text, body text, imag
 
 ```liquid
 {%- assign s = section.settings -%}
-<section style="background:{{ s.bg_color }};padding:{{ s.section_pad }};">
+{%- assign pt = s.section_pad.top -%}
+{%- assign pb = s.section_pad.bottom -%}
+<section style="
+  background: {{ s.bg_color }};
+  padding-top: {% if pt contains 'var' %}{{ pt }}{% else %}{{ pt | default: 0 }}px{% endif %};
+  padding-bottom: {% if pb contains 'var' %}{{ pb }}{% else %}{{ pb | default: 0 }}px{% endif %};
+">
   <h2 style="color:{{ s.text_color }};">{{ s.heading | default: 'Our Bestsellers' }}</h2>
-  <p>{{ s.body }}</p>
-  {%- if s.banner_image != blank -%}
-    <img src="{{ s.banner_image }}" alt="{{ s.heading | escape }}" />
-  {%- endif -%}
+  <div>{{ s.body }}</div>
+  {{ s.banner_image | media_tag: alt: s.banner_image_alt }}
   {%- if s.show_cta -%}
     <a href="{{ s.cta_url }}" class="btn">{{ s.cta_label }}</a>
   {%- endif -%}

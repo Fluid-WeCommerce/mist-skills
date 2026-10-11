@@ -33,7 +33,7 @@ Check every template that reads a resource setting:
 | `type: "select"` or `"radio"` without `options:` | **`blocker`.** Empty dropdown or radio group. |
 | `type: "checkbox"` without `default:` | **`should`.** The value is empty until an editor saves one. Set `default: false` (or `true`). |
 | `type: "product_list"` without `"limit":` | **`nit`.** The stock theme caps list pickers with `limit:`; match it. |
-| `richtext` output passed through `escape` | **`blocker`.** Double-escapes HTML, so shoppers see `&lt;p&gt;`. Output it raw: `{{ value }}`. |
+| `text`, `textarea`, or `richtext` section/block output passed through `escape` | **`blocker`.** These save HTML, so escaping shows shoppers `&lt;p&gt;`. Output it raw: `{{ value }}`. Use `plaintext` for values that go into attributes, CSS, or URLs. |
 | Setting missing `id` / duplicate `id` | **`blocker`.** The validator rejects it. |
 | Block missing `type` or `name` | **`blocker`.** The validator rejects it. (`name` may be omitted only for `@app`, `@theme`, or standalone block refs.) |
 | `"settings": { ... }` inside a block (object, not array) | **`blocker`.** The validator rejects it; it must be an array. |

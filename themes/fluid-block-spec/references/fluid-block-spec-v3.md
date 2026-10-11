@@ -341,7 +341,7 @@ Every setting whose value should be linkable **must** have a CSS custom property
 | Need | Type | Notes |
 |---|---|---|
 | Short single-line text: heading, eyebrow, label, button text, name | `text` | Headings are `text` + a Heading Level select, not `richtext` (§7.1) |
-| Multi-line plain text: quote without formatting, one-item-per-line lists | `textarea` | Say "one per line" in `info` |
+| Multi-line text: quote, one-item-per-line lists | `textarea` | Say "one per line" in `info`. `textarea` is a full rich-text editor and saves HTML, like `text` |
 | Formatted copy: body, answers, descriptions | `richtext` | Defaults are plain HTML (`<p>…</p>`). **Never put inline `style=` in a richtext default**; it silently overrides the block's style settings |
 | A destination | `url` | Setting ID is always `link` |
 | 2–4 visible choices: style, alignment, position | `radio` | Renders as pills |
@@ -359,7 +359,7 @@ Every setting whose value should be linkable **must** have a CSS custom property
 
 Not used in section or block schemas: raw `color`/`color_background` (palette-only rule), `font_picker` (theme settings only), `html` except in `custom_liquid`, and the `border` composite type (split it into Border toggle, width and palette color instead).
 
-`plaintext` is being introduced as a setting type. Until the Fluid docs describe it, keep using `text`.
+`text` and `textarea` save HTML fragments. Use `plaintext` (a single-line input that saves the text as typed) for any value that ends up in an HTML attribute, a CSS value, a URL, or a script. See [Schema components](https://docs.fluid.app/themes/schema-components).
 
 ### 4.2 Standard setting IDs and labels
 
@@ -1982,7 +1982,7 @@ Each content item in a tabbed section gets `{ "type": "select", "id": "tab_key",
 
 ## 13. Commerce Blocks
 
-Prices print through the platform's member-aware price output: `product.price`, variant `display_price`, `money`. Never offer a "price override" text field, because it breaks member pricing. The cart and checkout run through the FairShare SDK (`data-fluid-*` attributes). Never add the SDK script to a theme.
+Prices print through the platform's member-aware price output: `product.price`, variant `display_price`, and the `member_price` filter. Prices are already formatted for the visitor's currency; Fluid has no `money` filter. Never offer a "price override" text field, because it breaks member pricing. The cart and checkout run through the FairShare SDK (`data-fluid-*` attributes). Never add the SDK script to a theme.
 
 ### 13.1 `product_card`
 
@@ -2820,7 +2820,7 @@ Copy patterns from these, not whole files. Paths are relative to `/Users/lane/th
 
 ## Appendix D — Open Items
 
-1. **`plaintext` setting type.** It's being added to the platform. Keep using `text` until the docs describe it, then update §4.1.
+1. **`plaintext` setting type.** Now documented in [Schema components](https://docs.fluid.app/themes/schema-components); §4.1 covers when to use it.
 2. **Combined image/video picker.** When it ships, add a `media` block using the combined picker (§9.2 note). Keep the existing `image`/`video` IDs.
 3. **The "None" palette entry** (`transparent` in `background_colors`, §3.2). Verify in the editor on first use.
 4. **`product.ratings` / `product.reviews` shape.** Verify on a store before the `rating` block's Product Data source relies on it.

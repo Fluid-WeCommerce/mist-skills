@@ -33,13 +33,13 @@ Surface the highest-impact suggested changes for {{company.name}}'s storefront f
 
 Start with active products (expand to media / posts / collections if the user asks):
 
-- `GET /api/v2025-06/products?per_page=25` — list products; skip archived ones.
+- `GET /api/v202604/company/products?page[limit]=25` — list products (in `products`); skip archived ones. Lists use cursor pagination: follow `meta.pagination.next_cursor` with `page[cursor]` until it's null.
 - For each product id:
-  - `GET /api/v202506/products/{id}/lighthouse` — latest Lighthouse scan. The response `item` carries `core_metrics.performance_score` (0-100), `category_scores`, and `optimization_opportunities[]` (`id`, `title`, `description`, `savings_ms`, `savings_bytes`).
-  - `GET /api/v202506/products/{id}/compliance` — latest compliance scan. The response `item` carries `score` (0-10), `status` (poor/fair/good/excellent), `summary`, and `compliance_issues[]` (`id`, `issue_text`, `issue_type`, `severity`, `recommendation`).
+  - `GET /api/v202604/company/products/{id}/lighthouse` — latest Lighthouse scan. The response body carries `core_metrics.performance_score` (0-100), `category_scores`, and `optimization_opportunities[]` (`id`, `title`, `description`, `savings_ms`, `savings_bytes`).
+  - `GET /api/v202604/company/products/{id}/compliance` — latest compliance scan. The response `item` carries `score` (0-10), `status` (poor/fair/good/excellent), `summary`, and `compliance_issues[]` (`id`, `issue_text`, `issue_type`, `severity`, `recommendation`).
 - If either endpoint answers `"No … scan exists. Scan has been triggered automatically."`, a scan is now pending server-side — note the resource and tell the user to re-run this skill later for it. Don't poll.
 
-The same sub-resources exist for `media/{id}`, `playlists/{id}`, `categories/{id}`, `collections/{id}`, `posts/{id}`, and `enrollment_packs/{id}` under `/api/v202506/`.
+The same sub-resources exist for `media/{id}`, `playlists/{id}`, `categories/{id}`, `collections/{id}`, `posts/{id}`, `pages/{id}`, and `enrollment-packs/{id}` under `/api/v202604/company/`.
 
 ## 2. Build and rank suggestions
 

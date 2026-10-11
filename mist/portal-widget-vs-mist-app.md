@@ -15,10 +15,13 @@ The deciding question is:
 
 > Is any of this data from outside Fluid?
 
-If yes, it is a Mist app. If every field comes from Fluid — orders, products,
+If yes, it is a Mist app — unless it is a public HTTP API that needs no
+secret, which is the one narrow exception (see "Network access: the one
+exception" below). If every field comes from Fluid — orders, products,
 account, shares, subscriptions, content, points, todos, calendar — it is a
-portal widget. There is no third option, and the reasons are in "Why there is no
-third case" below.
+portal widget. An `api` data source pointed at a third-party URL is never the
+answer; the reasons are in "Why an `api` data source is not a third case"
+below.
 
 # The two systems
 
@@ -27,21 +30,26 @@ third case" below.
 A portal widget is a Remote DOM package that runs inside a **locked-down Web
 Worker** in the portal. `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource`,
 `localStorage`, `indexedDB` and a dozen more globals are removed before widget
-code runs, and no capability re-grants them. **A portal widget cannot make a
-network request.**
+code runs. The only one that can come back is `fetch`, and only through the
+`networkAccess` capability described below. **Without that grant, a portal
+widget cannot make a network request.**
 
 Its data comes from exactly three places:
 
 - props written into the screen JSON
-- built-in host capabilities — `account`, `store`, `products`, `content`,
-  `mySite`, `todos`, `calendar`, `points`, `localization`, and similar
+- typed portal functions the widget declares in `uses` — account, store,
+  profile, content, catalog, media, calendar, points, todos, MySite, and
+  similar
 - data sources the host resolves and passes in as props: `api` with a **Fluid
   preset**, `custom` for hand-picked Fluid resources, `static` for literal data.
   A preset resolves to a Fluid path against the portal's own base URL. Writing an
   absolute third-party URL into a data source is not a supported way to reach an
   outside API — see below.
 
-Cheap to build, nothing to host, no secrets, no install lifecycle.
+Cheap to build, nothing to host, no secrets, no install lifecycle. A company
+package lives in the portal project and publishes with `fluid portal deploy`;
+a package owned by a droplet lives in its own project and publishes with
+`fluid widget publish`.
 
 ## Mist app
 
@@ -54,7 +62,7 @@ Fluid surfaces it through integration records that **all point at that same
 
 | Record           | What it is                                                                                                                        | Per mist |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| **Droplet**      | Identity and credentials — `FLUID_DROPLET_UUID` / `FLUID_DROPLET_SECRET` / `FLUID_DROPLET_WEBHOOK_AUTH_TOKEN`, OAuth scopes, install lifecycle and webhooks | one      |
+| **Droplet**      | Identity and credentials — `FLUID_DROPLET_UUID` / `FLUID_DROPLET_SECRET` / `FLUID_WEBHOOK_AUTH_TOKEN`, OAuth scopes, install lifecycle and webhooks | one      |
 | **Mobile embed** | A placement in the mobile app: `embed_url` plus a required cover image and height                                                 | many     |
 | **Drop zone**    | A placement in an admin page/zone slot                                                                                            | many     |
 
@@ -68,9 +76,11 @@ also be *installed*, not just created and linked, or install-scoped features
 1. **Classify the request** into one of two cases:
 
    1. **Mist app** — any data or action from outside Fluid. A third-party API,
-      an API key, OAuth, webhooks, background jobs, server-side processing.
-      "Free", "public", "no API key" and "CORS-enabled" do NOT move a request
-      out of this case; see "Why there is no third case".
+      an API key, OAuth, private endpoints, webhooks, background jobs,
+      server-side processing. "Free", "public", "no API key" and
+      "CORS-enabled" do NOT by themselves move a request out of this case;
+      only a reviewed package with an approved `networkAccess` grant does (see
+      "Network access: the one exception").
    2. **Portal widget** — every field comes from Fluid: orders, products,
       account, shares, subscriptions, content, points, todos, calendar.
 
@@ -82,12 +92,16 @@ also be *installed*, not just created and linked, or install-scoped features
    feature.
 
    A request is not ambiguous merely because the outside API is easy to call.
-   "Build me a widget that shows the weather" is a Mist app: the noun the user
-   reached for is not the architecture decision, and they have no way to know a
-   portal widget runs in a worker with `fetch` removed.
+   "Build me a widget that shows the weather" is a Mist app by default: the
+   noun the user reached for is not the architecture decision, and they have no
+   way to know a portal widget runs in a worker with `fetch` removed. Offer the
+   `networkAccess` route only when the user accepts that a portal author must
+   approve the exact package version before it can fetch.
 
 3. **Check whether it already exists before building.** An installed droplet may
    already publish registered widget types. Confirm with
+   `GET /api/company/fluid_os/widget_packages` for approved, active widget
+   packages (company-owned and from installed droplets),
    `GET /api/company/mobile_widgets` for mobile-embed placements, and by
    inspecting a builder-authored screen for registered widget types. Prefer what
    exists over rebuilding it.
@@ -99,7 +113,27 @@ also be *installed*, not just created and linked, or install-scoped features
 5. **For case 2**, build a company portal widget in the portal project and
    publish it with `fluid portal deploy`.
 
-# Why there is no third case
+# Network access: the one exception
+
+A widget may fetch a **public** HTTP API if it declares the `networkAccess`
+capability (imported from `@fluid-app/portal-sdk/widgets/worker` and added to
+the widget's `uses`) and a portal author approves it. The approval is bound to
+the exact package ID, package version and capability version, so any change
+needs a new approval. An interactive `fluid portal push` asks for it; a
+non-interactive push needs `--allow-network-widgets`, and `--yes` does not
+grant it.
+
+Granted requests go out with the worker's native `fetch`. Fluid adds no
+credentials, cookies, tokens or headers, and the URL cannot address
+`fluid.app`, the portal's own origin, loopback or a private-network IP. The
+widget can still send any portal data it receives to that service, so the
+approval is a trust decision about the package and its destinations.
+
+Never use it for secrets, API keys, OAuth, private endpoints, webhooks or
+background work — those are a Mist app. Render a useful state for timeouts,
+rate limits, bad responses and offline use.
+
+# Why an `api` data source is not a third case
 
 An earlier version of this skill offered one: a portal widget whose `api` data
 source names an absolute third-party URL, for "public, unauthenticated,
@@ -133,9 +167,10 @@ snapshot of the response into the screen JSON so the widget renders. Do not do
 that. A widget showing frozen data reads as success in every screenshot and is a
 lie. Report the boundary instead.
 
-If the data is not Fluid's, build the Mist app. It survives an API key being
-added later, it holds its own secrets, and it works in preview, on a scaffolded
-portal, and on a hosted one.
+If the data is not Fluid's, build the Mist app, or — for a public, keyless
+API the portal author will approve — a widget that declares `networkAccess`.
+The Mist app survives an API key being added later, it holds its own secrets,
+and it works in preview, on a scaffolded portal, and on a hosted one.
 
 # Surfacing a Mist app on a portal screen
 
@@ -168,6 +203,7 @@ back empty or 404 for a droplet widget that is installed and working:
 | Endpoint                           | Why it looks empty                                    |
 | ---------------------------------- | ----------------------------------------------------- |
 | `/api/droplets` (`app_extensions`) | Does not list contributed widget types                |
+| `/api/company/fluid_os/widget_packages` | Lists only approved, active packages              |
 | `/__widget-packages__`             | Dev-server route for unpublished *company* packages   |
 | `/api/app/widget-packages`         | Portal-session scoped; 404s for an ordinary API token |
 | `/api/company/mobile_widgets`      | **Lists installed mobile-embed placements**           |
@@ -191,7 +227,8 @@ the page.
 
 # Report
 
-State which of the two cases you chose and why, in one sentence. If you built
+State which case you chose (Mist app, portal widget, or portal widget with
+`networkAccess`) and why, in one sentence. If you built
 a Mist app, report the `public_url`, the droplet uuid, and which placement
 surfaces were attached. If you built a portal widget, report the widget type and
 whether it was published.

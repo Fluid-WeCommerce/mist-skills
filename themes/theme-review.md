@@ -81,7 +81,6 @@ my-theme/
 │   └── ...
 ├── styleguide/index.liquid     ← optional dev-only preview
 ├── cover.png                   ← theme thumbnail for the editor picker
-├── global_styles.css           ← optional theme-wide CSS at root
 ├── .fluid-theme.json           ← CLI metadata (themeId, company, checksums)
 ├── .fluidignore                ← like .gitignore
 └── README.md
@@ -123,8 +122,7 @@ Every artifact has a fixed depth and shape. **No deeper nesting is allowed under
 | Layouts           | `layouts/{name}.liquid` (flat file, no wrapping dir)              | `layouts/theme.liquid`                                           | Multiple layouts possible; each is a flat `.liquid` file.                                          |
 | Global config     | `config/settings_schema.json`, `config/settings_data.json` (flat) | —                                                                | —                                                                                                  |
 | Locales           | `locales/{lang}.json` (flat)                                      | `locales/en.json`, `locales/de.json`                             | —                                                                                                  |
-| Assets            | `assets/{file}` (flat)                                            | `assets/featured.css`, `assets/logo.svg`                         | No sub-folders.                                                                                    |
-| Root-level CSS    | `global_styles.css` at the theme root                             | —                                                                | Optional theme-wide stylesheet.                                                                    |
+| Assets            | `assets/{file}` (flat)                                            | `assets/featured.css`, `assets/global_styles.css`, `assets/logo.svg` | No sub-folders. Theme-wide stylesheets live here too; a root `styles.css` / `global_styles.css` is deprecated and rejected on push for companies on the asset model. |
 | Theme thumbnail   | `cover.png` at the theme root                                     | —                                                                | —                                                                                                  |
 | Styleguide        | `styleguide/index.liquid`                                         | —                                                                | Optional dev-only preview.                                                                         |
 
@@ -157,10 +155,12 @@ If you feel the urge to nest, rename: `assets/icon-social-twitter.svg`, `compone
 
 Every layout file under `layouts/` **must emit both magic drops** for the engine to inject head content and page content:
 
-- `{{ content_for_header }}` — placed inside `<head>`. The engine injects the `<title>`, meta tags, analytics, editor-mode scripts, asset preloads, and the FairShare runtime initialization here.
+- `{{ content_for_header }}` — placed inside `<head>`. The engine injects every active head Global Embed (including the FairShare SDK script), structured data, the canonical and `hreflang` links, the page `<title>` and Open Graph tags, the CSRF tag, Fluid's own scripts, the `--company-color` variable, the theme's stylesheets, and any head markup stored with the template here.
 - `{{ content_for_layout }}` — placed where the page content goes (inside `<body>`, typically inside the main container). The selected page template renders into this slot.
 
 A layout missing either one is broken. Missing `content_for_header` breaks editor mode, analytics, and head-injected assets. Missing `content_for_layout` renders an empty page.
+
+Do not write your own `<title>` (or `og:*` tags): `content_for_header` already emits them, so a second one duplicates or overrides Fluid's. Liquid comments are `{% comment %}…{% endcomment %}` or `{% # … %}`; Jinja-style `{# … #}` is printed as literal text.
 
 ```liquid
 <!doctype html>
@@ -170,13 +170,13 @@ A layout missing either one is broken. Missing `content_for_header` breaks edito
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {{ 'theme.css' | asset_url | stylesheet_tag }}
 
-    {{ content_for_header }}   {# ← required #}
+    {{ content_for_header }}   {%- comment -%} required {%- endcomment -%}
   </head>
   <body>
     {% section 'main_navbar' %}
 
     <main>
-      {{ content_for_layout }}  {# ← required #}
+      {{ content_for_layout }}  {%- comment -%} required {%- endcomment -%}
     </main>
 
     {% section 'main_footer' %}
@@ -192,7 +192,7 @@ A layout missing either one is broken. Missing `content_for_header` breaks edito
 | Component file with a `{% schema %}` block                                                   | `blocker`                                      | Components don't have schemas. Move to `sections/`, or strip the schema.                                                        |
 | Section file without `{% schema %}`                                                          | `blocker`                                      | A section without a schema is just markup — make it a component (move to `components/{name}/index.liquid`).                     |
 | Page template at `{type}/index.liquid` (missing variant dir)                                 | `blocker`                                      | Wrap in a variant directory: `{type}/default/index.liquid`.                                                                     |
-| Asset (`.css`, `.js`, image) outside `assets/` or `global_styles.css` / `cover.png` at root  | `blocker`                                      | Move to `assets/` and reference via `\| asset_url`.                                                                             |
+| Asset (`.css`, `.js`, image) outside `assets/`, or `styles.css` / `global_styles.css` at the theme root, or `cover.png` outside root  | `blocker`                                      | Move to `assets/` and reference via `\| asset_url` (or `\| inline_asset_content`). The `template-stylesheet-to-asset-migration` skill from `fluid theme skills install` moves them. |
 | Sub-folder inside `assets/` (e.g. `assets/icons/`)                                           | `should`                                       | Flatten: rename file to `assets/icon-{whatever}.svg`.                                                                           |
 | Sub-folder inside `sections/{name}/` or `components/{name}/` (e.g. `sections/hero/blocks/`)  | `blocker`                                      | Sections and components don't nest. A reusable block belongs in the top-level `blocks/{name}/` directory, not under a section.  |
 | Co-located `styles.css` / `style.css` next to a section, component, or page template variant | `blocker` for new files, `should` for existing | **Co-located stylesheets are deprecated** — all CSS lives under `assets/`. See [CSS hygiene §1a](references/css-js-hygiene.md). |
@@ -255,7 +255,7 @@ The `fluid theme` command group is how a theme repo syncs with the Fluid API. Th
 | `fluid theme push`        | Validates the schema, then uploads changed files. **Validation runs automatically unless `--force`.** | Suggest before merge                                                                   |
 | `fluid theme pull`        | Download remote theme to disk                                                                         | Mention when local is stale                                                            |
 | `fluid theme lint --json` | Read-only schema validator. **The agent should run/reference this in every review.**                  | Always reference: "this is what `fluid theme lint --json` would flag"                  |
-| `fluid theme navigate`    | Opens browser to the dev theme editor                                                                 | Mention for visual verification                                                        |
+| `fluid theme navigate`    | Picks a storefront route and opens it in the running dev server                                       | Mention for visual verification                                                        |
 
 **`fluid theme lint --json` is the official self-check.** Any finding the validator surfaces (see next section) maps directly to a `blocker` severity in your review — it would fail validation.
 
@@ -276,7 +276,7 @@ The `fluid theme` command group is how a theme repo syncs with the Fluid API. Th
 
 | Tag       | Meaning                                                                                                                                   | Examples                                                                                                                                                                                      |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `blocker` | The validator would reject it on `fluid theme push`, OR it renders wrong / breaks a page / exposes user data. Must be fixed before merge. | Invalid `type:` value, missing `id`, duplicate `id`, missing `type:` on a block, settings shape is object not array, referenced section not on disk, unescaped user HTML, unclosed `{% if %}` |
+| `blocker` | The validator would reject it on `fluid theme push`, OR it renders wrong / breaks a page / exposes user data. Must be fixed before merge. | Invalid `type:` value, missing `id`, duplicate `id`, missing `type:` on a block, settings shape is object not array, referenced section not on disk, `escape` on a section/block `text`/`textarea` value, unclosed `{% if %}` |
 | `should`  | Works today but will hurt later: perf cliff, DRY violation, missing default, missing whitespace control in a hot loop.                    | `asset_url` inside a `for` loop, 3+ identical `{% render %}` snippets, multiple `product` settings playing the same role, missing `default:` on a user-facing setting                         |
 | `nit`     | Cosmetic, style, or low-impact. Leave one comment, do not block.                                                                          | Comment style, optional `default` on internal-only setting, naming nits                                                                                                                       |
 
@@ -341,7 +341,7 @@ touches them. Read the matching file when you hit its topic:
 - **[Global settings](references/global-settings.md)** — typography/color/spacing tokens, dark mode, `config/settings_schema.json` + `theme.liquid` wiring.
 - **[Blocks vs. sections](references/blocks-vs-sections.md)** — when a setting belongs in a block; settings-panel ergonomics.
 - **[Liquid correctness](references/liquid-correctness.md)** — variable scope, balanced tags, whitespace control, typoed ids.
-- **[Editor attributes](references/editor-attributes.md)** — `section.fluid_attributes` / `block.fluid_attributes`.
+- **[Editor attributes](references/editor-attributes.md)** — `block.fluid_attributes` (sections are wrapped automatically).
 - **[FairShare attributes](references/fairshare-attributes.md)** — `data-fluid-*` cart / add-to-cart behavioral attributes + the CDN script.
 - **[Performance](references/performance.md)** — `asset_url` in loops, render hygiene.
 - **[Security & accessibility](references/security-accessibility.md)** — escaping user content, alt text, semantic clickables.
@@ -359,7 +359,7 @@ eyeballing the text.
 
 This is one of the most common smells.
 
-**If a section or block has two or more singular resource pickers playing the _same role_, collapse them to one `*_list` setting.**
+**If a section or block has two or more singular `product` pickers playing the _same role_, collapse them to one `product_list` setting.** For every other resource, collapse to **blocks** instead — see the table below.
 
 The test: would a user reasonably want N+1 items in the same role? If yes, it's a list. If the section needs _exactly one_ hero product _and separately_ one upsell product, those are two different roles — keep them singular.
 
@@ -407,18 +407,19 @@ The test: would a user reasonably want N+1 items in the same role? If yes, it's 
 {%- endfor -%}
 ```
 
-### Same rule for every resource
+### Other resources: blocks, not lists
 
-| Singular smell                                          | List fix                                    |
-| ------------------------------------------------------- | ------------------------------------------- |
-| 2+ `product` (or `products`) settings, same role        | `product_list`                              |
-| 2+ `collection` settings, same role                     | `collection_list`                           |
-| 2+ `category` settings, same role                       | `category_list`                             |
-| 2+ `post` settings, same role                           | `posts_list`                                |
-| 2+ `enrollment` / `enrollment_pack` settings, same role | `enrollment_list` / `enrollment_packs_list` |
-| 2+ `blog` settings, same role                           | `blog_list`                                 |
+`product_list` is the **only** list type Fluid resolves into objects. `collection_list`, `category_list`, `posts_list`, `enrollment_packs_list`, and the rest hand Liquid an array of **IDs**, so a loop that reads `item.title` or `item.url` renders nothing. Do not "fix" repeated singular pickers into those lists.
 
-The benefit isn't just lines of code — a `*_list` setting lets the merchant **add or remove** items without a code change and drops the fixed per-slot count. It does **not** give per-item drag-and-drop reorder, though — that's a _blocks_ feature. If the merchant needs to reorder items, model them as blocks instead.
+| Singular smell                                          | Fix                                                                                                    |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 2+ `product` settings, same role                        | One `product_list` (resolved)                                                                          |
+| 2+ `collection` settings, same role                     | One block type with a single `collection` setting; the merchant adds a block per collection           |
+| 2+ `category` settings, same role                       | One block type with a single `category` setting                                                        |
+| 2+ `enrollment_pack` settings, same role                | One block type with a single `enrollment_pack` setting                                                 |
+| 2+ `post` / `blog` settings, same role                  | One block type with a single `post` setting (still an unresolved ID — look it up in `posts`)           |
+
+`product_list` lets the merchant **add or remove** products without a code change, but it does **not** give per-item drag-and-drop reorder — that's a *blocks* feature. If the merchant needs to reorder products, model them as blocks with a `product` setting instead.
 
 ---
 
@@ -639,9 +640,9 @@ When reviewing any theme file, run through this in order. Anything unchecked is 
 
 **Global settings (config + layout)**
 
-- [ ] `config/settings_schema.json` defines `typography`, `color_schema`, and `spacing` groups (at minimum)
-- [ ] `layouts/theme.liquid` reads those settings and emits CSS variables on `:root`
-- [ ] Sections consume `var(--font-*)`, `var(--color-*)`, `var(--space-*)` rather than re-reading `settings.*` directly
+- [ ] `config/settings_schema.json` defines `typography` and `color_schema` groups, plus `padding` and `corner_radius` when sections use those controls — the editor builds presets only from these exact group names
+- [ ] `layouts/theme.liquid` reads those settings and emits a `--<setting_id>` CSS variable for each on `:root`
+- [ ] Sections consume those variables rather than re-reading `settings.*` directly
 - [ ] No section-level setting duplicates a global token (per-section overrides are the exception, default `unset`)
 - [ ] Schema is grouped by `name:` (not a flat array)
 - [ ] If dark mode is in schema, it's wired in `theme.liquid` (`@media (prefers-color-scheme: dark)` or `[data-theme="dark"]`)
@@ -656,13 +657,13 @@ When reviewing any theme file, run through this in order. Anything unchecked is 
 **Settings ergonomics**
 
 - [ ] Section settings panel under ~15 fields, OR repeated variations moved to blocks
-- [ ] No 2+ singular resource pickers playing the same role (collapse to `*_list`)
+- [ ] No 2+ singular `product` pickers playing the same role (collapse to `product_list`); other repeated resource pickers become blocks
 - [ ] No `X_1` / `X_2` / `X_3` parallel-named settings (use blocks)
-- [ ] No `*s_list` where the canonical `*_list` exists (e.g. `product_list`, not `products_list`)
+- [ ] No `products_list` / `products` where resolved products were meant (`product_list` is the only resolved list)
 
 **Dead code**
 
-- [ ] No section files with zero `{% section 'name' %}` references (after confirming editor metadata)
+- [ ] No section files with zero `{% section 'name' %}` references in a freshly pulled theme (editor-added sections are saved into page templates)
 - [ ] No component files with zero `{% render 'name' %}` references
 - [ ] No `{% schema %}` `blocks:` declaring a `type:` the template never handles
 - [ ] No `assets/` files with zero references in any `.liquid` or `.css` (greppable from the theme root)
@@ -695,9 +696,9 @@ When reviewing any theme file, run through this in order. Anything unchecked is 
 - [ ] JS tags have `defer` (or a justification for not)
 - [ ] No dead assets under `assets/`
 
-**Editor attributes (`section.fluid_attributes` / `block.fluid_attributes`)**
+**Editor attributes (`block.fluid_attributes`)**
 
-- [ ] Every section file emits `{{ section.fluid_attributes }}` on its root wrapper element
+- [ ] Sections carry no editor attributes of their own — Fluid wraps each section with `data-fluid-section` automatically; `section.fluid_attributes` does not exist and renders empty
 - [ ] Every block iterated via `{% for block in section.blocks %}` carries `{{ block.fluid_attributes }}` on its own root element
 - [ ] No typos (`fluid_attribute`, `fluid_attr`, `fluidAttributes`)
 - [ ] No hand-rolled `data-fluid-section-*` attributes — always go through the helper
@@ -711,11 +712,11 @@ When reviewing any theme file, run through this in order. Anything unchecked is 
 - [ ] `data-fluid-subscription-plan-id` carries a single integer (never comma-separated)
 - [ ] JSON-valued attributes (`bundled-items`, `bundle-selections`) are valid JSON with numeric IDs and quantities
 - [ ] Attributes live on `<button>` or `<a>` (not `<div>` without semantics)
-- [ ] Exactly one `<script id="fluid-cdn-script">` with `data-fluid-shop` set is loaded by the layout
+- [ ] The theme doesn't load the FairShare SDK itself — no `<script id="fluid-cdn-script">` in theme files; Fluid loads it from a storefront Global Embed
 
 **Security & a11y**
 
-- [ ] User content escaped (`| escape`) unless it's a HTML-shaped type (`richtext`/`html`/`html_textarea`)
+- [ ] Plain strings escaped (`| escape`): `plaintext` settings, global `settings.*` of type `text` (a plain input in the Theme panel), and resource fields such as `product.title`. HTML-shaped section/block settings — `text`, `textarea`, `richtext`/`rich_text`, `html`/`html_textarea` — render raw and never sit inside an attribute
 - [ ] Images have `alt`; below-the-fold images have `loading="lazy"`
 - [ ] Clickable elements use `<button>` (action) or `<a href>` (nav) — never `<div>`
 
