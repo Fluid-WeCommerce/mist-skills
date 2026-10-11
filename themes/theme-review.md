@@ -54,6 +54,11 @@ my-theme/
 ├── cart_page/default/index.liquid
 ├── collection/default/index.liquid
 ├── collection_page/default/index.liquid
+├── category/default/index.liquid
+├── category_page/default/index.liquid
+├── post/default/index.liquid
+├── post_page/default/index.liquid
+├── shop_page/default/index.liquid
 ├── enrollment_pack/default/index.liquid
 ├── join_page/default/index.liquid
 ├── page/default/index.liquid
@@ -88,7 +93,7 @@ my-theme/
 
 ## Directory & file structure — validate first
 
-Before reading any Liquid, walk the repo root. `fluid theme lint --json` only checks schema JSON — it doesn't enforce layout. The reviewer enforces layout.
+Before reading any Liquid, walk the repo root. `fluid theme lint --json` checks schema JSON and section references, and newer CLI versions warn about routed page types with no template (`target.kind: "template"`). It doesn't enforce the rest of the layout. The reviewer does.
 
 A valid theme is recognized by the presence of an `assets/` or `config/` directory. In practice every published theme has `assets/`, `config/`, `layouts/`, and the page-type and section folders below.
 
@@ -98,6 +103,7 @@ A valid theme is recognized by the presence of an `assets/` or `config/` directo
 | ----------------------------- | --------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------- |
 | `config/settings_schema.json` | `blocker` for any new theme             | Theme-wide settings. Even an empty `[]` is acceptable; absence is not. |
 | `layouts/theme.liquid`        | `blocker` if the theme renders any page | At least one layout must exist for pages to render.                    |
+| `{page_type}/default/index.liquid` for every routed page type | `blocker` if the store uses that page type, `should` otherwise | Routed types: `home_page`, `shop_page`, `product`, `collection`, `collection_page`, `category`, `category_page`, `post`, `post_page`, `page`, `enrollment_pack`, `library`, `medium`, `cart_page`, `join_page`. With no template, Fluid shows the home page at that URL (HTTP 200, `request.page_type` `home_page`, `request.path` `/home`). Fix it by adding the template. Never redirect, meta-refresh, or `location.replace` from `layouts/theme.liquid`. |
 | `assets/`                     | `should`                                | Almost every theme needs at least images.                              |
 | `locales/en.json`             | `should`                                | If the theme uses `{{ 'foo'                                            | t }}`translations anywhere, this is`blocker`. |
 | `cover.png`                   | `nit`                                   | Used by the editor as the theme thumbnail.                             |
@@ -206,6 +212,12 @@ From the theme repo root, this gives a one-shot health view:
 [ -f config/settings_schema.json ] && echo "OK  config/settings_schema.json" || echo "MISSING  config/settings_schema.json"
 [ -f layouts/theme.liquid ]        && echo "OK  layouts/theme.liquid"        || echo "MISSING  layouts/theme.liquid"
 
+# Routed page types with no template (each one shows the home page instead)
+for t in home_page shop_page product collection collection_page category category_page \
+         post post_page page enrollment_pack library medium cart_page join_page; do
+  ls "$t"/*/index.liquid >/dev/null 2>&1 || echo "NO TEMPLATE  $t"
+done
+
 # Sections without schemas
 for f in sections/*/index.liquid; do
   grep -q '{% schema %}' "$f" || echo "NO SCHEMA  $f"
@@ -304,6 +316,10 @@ For each entry in `"blocks": [...]`:
 ### Section references
 
 - Every `{% section 'name' %}` in a Liquid template must have a matching section file on disk. Missing sections produce errors.
+
+### Missing template types
+
+- Each routed page type with no template folder produces a warning naming the file to add, such as `post/default/index.liquid`. Treat it as a `blocker` when the store uses that page. Older CLI versions don't report it; run the quick structural audit instead.
 
 ### Template vs section block shape
 

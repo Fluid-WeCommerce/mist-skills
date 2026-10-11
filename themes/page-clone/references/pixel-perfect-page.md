@@ -312,6 +312,9 @@ Hard requirements:
   outcome
 - every declared viewport has a signed comparison receipt for the exact route
 - requested and final routes match and local HTTP status is 200
+- the route renders its own template type, not the home page. A theme with no
+  template for a routed type answers 200 with the home page, so add
+  `<type>/default/index.liquid` rather than redirecting from the layout
 - every stable landmark exists once, in order, with no unrelated placeholder
 - every stable-copy cell is exact; every variable difference is classified
 - page-contract priority media is DAM-backed and ready
