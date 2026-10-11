@@ -14,8 +14,8 @@ This file keeps only the review checks.
 
 ### The pattern to check for
 
-1. `config/settings_schema.json` declares theme-wide settings in named groups.
-2. `layouts/theme.liquid` reads `{{ settings.* }}` and emits CSS custom properties on `:root`.
+1. `config/settings_schema.json` declares theme-wide settings in named groups. The editor gives four group names special meaning — `typography` (text-preset cards), `color_schema`, `padding`, and `corner_radius` (the presets offered by section and block controls). Other groups render as plain lists.
+2. `layouts/theme.liquid` reads `{{ settings.* }}` and emits CSS custom properties on `:root`, one `--<setting_id>` per setting.
 3. Sections consume those properties with `var(--...)` rather than re-reading `settings.*`.
 
 ### What belongs at the global level
@@ -26,13 +26,12 @@ Anything that should stay consistent across the whole theme:
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
 | `typography`    | Body + heading font families, font weights, font size scale (`xs`–`9xl`), heading sizes (h1–h6), line height |
 | `color_schema`  | Brand palette (primary, secondary, accent, text, surface, border), plus dark-mode variants                   |
-| `spacing`       | Spacing scale, section padding scale                                                                         |
+| `padding`       | Spacing scale, section padding scale (the group name the editor's padding presets read)                      |
 | `layout`        | Max container width, gutter, grid breakpoints                                                                |
-| `border_radius` | Radius scale (sm, md, lg, full)                                                                              |
+| `corner_radius` | Radius scale (sm, md, lg, full) (the group name the editor's radius presets read)                            |
 | `shadows`       | Shadow scale (sm, md, lg)                                                                                    |
 | `cards`         | Card-wide defaults (radius, shadow, padding) that per-card-type groups inherit                               |
 | `appearance`    | Dark mode toggle, motion-reduce, animation preferences                                                       |
-| `theme_info`    | Theme name, version, author, docs URL — **metadata only, no `settings:`**                                    |
 
 ### What does NOT belong at the global level
 
@@ -49,7 +48,7 @@ The test: _would changing this break the visual coherence of the rest of the the
 | --- | --- | --- |
 | A section adds its own `font_family` / `font_size` / `color_*` setting when a global already exists | `should` | Use the global's CSS variable. Keep per-section overrides as the exception, defaulting to the global. |
 | No global typography settings, and every section hardcodes fonts | `blocker` | Add a `typography` group to `config/settings_schema.json` and a `:root` block in `layouts/theme.liquid`. |
-| No global color settings, and hex values are hardcoded everywhere | `blocker` | Add a color group. |
+| No global color settings, and hex values are hardcoded everywhere | `blocker` | Add a `color_schema` group. Editors can link content only to colors in that group. |
 | `layouts/theme.liquid` reads `settings.*` but emits no CSS variables | `should` | Wire the settings into `:root` custom properties so sections can consume them. |
 | A font setting in `config/settings_schema.json` whose type isn't `font_picker` | `should` | Use `font_picker`. Other font types render no control in the theme panel. |
 | Typography settings in a group not named exactly `typography` | `should` | Rename the group. Only `typography` becomes preset cards. |

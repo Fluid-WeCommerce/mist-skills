@@ -106,11 +106,9 @@ Rendering:
 <div class="features features--cols-{{ section.settings.columns }}">
   {%- for block in section.blocks -%}
     <article class="feature" {{ block.fluid_attributes }}>
-      {%- if block.settings.icon != blank -%}
-        <img src="{{ block.settings.icon }}" alt="{{ block.settings.title | escape }}" />
-      {%- endif -%}
+      {{ block.settings.icon | media_tag: alt: block.settings.icon_alt }}
       <h3>{{ block.settings.title }}</h3>
-      <p>{{ block.settings.body }}</p>
+      <div>{{ block.settings.body }}</div>
     </article>
   {%- endfor -%}
 </div>

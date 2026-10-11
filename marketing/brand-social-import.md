@@ -42,11 +42,11 @@ Record, per platform: canonical account URL, handle, and (YouTube) channel id.
 
 ## Step 2 — Register accounts in Fluid social-media settings
 
-`PATCH /api/settings/social_media` with the confirmed handles/URLs (fields include
-`facebook`, `instagram`, `tiktok`, `twitter`, `linkedin`; include `youtube` if the schema
-supports it — GET the endpoint first to see the current shape, and only set fields you
-confirmed). GET-before-PATCH; don't clobber an existing correct value with a worse one.
-Report which fields you set.
+`PUT /api/settings/social_media` with the confirmed handles/URLs wrapped in a
+`social_media` object (fields: `facebook`, `instagram`, `tiktok`, `twitter`, `linkedin`,
+`youtube`, `pinterest`). Fields you omit stay unchanged and `null` clears one, so send only
+the fields you confirmed. GET the endpoint first; don't clobber an existing correct value
+with a worse one. Report which fields you set.
 
 ## Step 3 — Enumerate each account's videos
 

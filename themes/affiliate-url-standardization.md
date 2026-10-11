@@ -23,12 +23,14 @@ Target pattern for every affiliate storefront link, wherever it appears — sche
 2. **Hardcoded guid/ID segments used as the URL prefix** — a numeric or short-hex segment right after the leading slash, followed by a storefront path. Examples seen in real themes:
    - `/85e354/shop` → `/{{username}}/shop`
    - `/506/pages/enrollment-page` → `/{{username}}/pages/enrollment-page`
-   - `/5c72f2/collection/shop-rose-cole` → `/{{username}}/collection/shop-rose-cole`
+   - `/5c72f2/collection/shop-rose-cole` → `/{{username}}/collections/shop-rose-cole`
    - `/005d8d/products/somanight-2092` → `/{{username}}/products/somanight-2092`
 
-   Storefront path segments that identify these links: `shop`, `products`, `product`, `collections`, `collection`, `pages`, `page`, `categories`, `category`, `posts`, `post`, `enrollments`, `join`, `cart`.
+   Storefront path segments that identify these links: `shop`, `products`, `product`, `collections`, `collection`, `pages`, `page`, `categories`, `category`, `posts`, `post`, `blog`, `media`, `libraries`, `enrollments`, `join`. When the segment is singular (`collection`, `product`, `page`, `category`, `post`), also switch it to the plural route from [Supported paths](https://docs.fluid.app/themes/supported-paths) (`/5c72f2/collection/shop-rose-cole` → `/{{username}}/collections/shop-rose-cole`).
 
-3. **Hardcoded `home` used as the URL prefix** — authors write `home` thinking it is the username value, but `home` is only the *anonymous fallback* the router resolves when no username is present; hardcoding it strips affiliate attribution from the link. Replace when `home` occupies the username slot of a storefront path:
+   **The cart is the exception:** it is always `/cart`, never credit-prefixed. Rewrite `/85e354/cart`, `/{{ share_guid }}/cart`, and `/home/cart` to plain `/cart`.
+
+3. **Hardcoded `home` used as the URL prefix** — authors write `home` thinking it is the username value, but `home` is only the *anonymous fallback* the SDK resolves when no affiliate is present; hardcoding it drops the affiliate from the link, so a copied or shared link establishes no credit. Replace when `home` occupies the username slot of a storefront path:
    - `"url": "/home/enrollments/affiliate-enrollment"` → `"/{{username}}/enrollments/affiliate-enrollment"`
    - `href="/home/products/make-3-breakthrough"` → `href="/{{username}}/products/make-3-breakthrough"`
    - `href="/home"` (link to store home) → `href="/{{username}}"`
@@ -50,9 +52,9 @@ Target pattern for every affiliate storefront link, wherever it appears — sche
 
 1. **Search** the theme with `list_dir` + file search across `*.liquid` and `*.json`:
    - `affiliate_guid` and `share_guid` (all spacings)
-   - guid-like prefixes: regex `["'(=]/([0-9]{2,6}|[0-9a-f]{4,8})/(shop|products?|collections?|pages?|categor(y|ies)|posts?|enrollments|join|cart)`
+   - guid-like prefixes: regex `["'(=]/([0-9]{2,6}|[0-9a-f]{4,8})/(shop|products?|collections?|pages?|categor(y|ies)|posts?|blog|media|libraries|enrollments|join|cart)`
    - hardcoded home prefixes: regex `["'(=]/home(/|["')])`
 2. **Apply the replacements** above with `edit_file`, one file at a time. Preserve surrounding formatting; change only the URL prefix or variable name.
 3. **Verify**: re-run every search from step 1 and confirm zero remaining matches in URL positions. Report:
-   - every file changed, with a count of replacements per class (variable / guid / home / logic),
+   - every file changed, with a count of replacements per class (variable / guid / home / cart / logic),
    - every occurrence intentionally left, with the reason (SDK key, external domain, variable name, comment, asset path).

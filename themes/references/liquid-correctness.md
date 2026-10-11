@@ -23,7 +23,7 @@ The variables a template can read fall into three buckets:
 
 | Bucket                       | Available in…                                           | Examples                                                                                                                   |
 | ---------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **Always available globals** | every template                                          | `company`, `request`, `affiliate`, `localization`, `settings` (global). Check the rest in [Theme variables](https://docs.fluid.app/themes/theme-variables) |
+| **Always available globals** | every rendered storefront template                     | `company`, `request`, `params`, `localization`, `country`, `affiliate`, `username`, `routes`, `settings` (global), and the on-demand collections `products`, `collections`, `categories`, `posts`, `enrollment_packs`. No `cart` (only in `cart_page`), and no Shopify `shop`, `customer`, or `linklists`. Check the rest in [Theme variables](https://docs.fluid.app/themes/theme-variables) |
 | **Resource context**         | the matching page template, plus any section it renders | `product` (only on `product/{variant}/index.liquid` and sections rendered from it); `collection`, `category`, `post`, etc. |
 | **Section / block scope**    | inside that section only                                | `section`, `section.settings`, `section.blocks`, `block`, `block.settings`                                                 |
 | **Component args**           | inside a component only when explicitly passed          | only the keys passed to `{% render 'name', key: value %}`                                                                  |
@@ -34,7 +34,7 @@ Things that go wrong:
 | -------------------------------------------------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
 | `{{ product.title }}` inside a section that's rendered on the homepage (`home_page/default/index.liquid`) without an explicit `product:` arg | `blocker` | `product` is only in scope on product page templates. On `home_page` it's `nil`, silently rendering empty.                                                            |
 | `{{ collection.products }}` inside `sections/main_navbar/index.liquid`                                                                       | `blocker` | `collection` is not in scope in a navbar section. Pass the resource explicitly via a block setting (`collection` type) and read `block.settings.collection.products`. |
-| `{{ cart.item_count }}` in a component without `cart` passed as a `render` arg                                                               | `should`  | `cart` is global, so this often works, but if the component is intended to be self-contained, accept `cart:` explicitly.                                              |
+| `{{ cart.item_count }}` (or any `cart.*`) outside a `cart_page` template                                                                    | `blocker` | `cart` exists only in `cart_page` templates; elsewhere it renders empty. Use the SDK's `<span id="fluid-cart-count">` for a live count.                              |
 | `{{ section.settings.thing }}` where the schema does not declare `thing`                                                                     | `blocker` | Typo or stale reference. Validator does not catch this — it only checks the schema, not the template. Grep the schema for the `id` and fix.                           |
 | `{{ block.settings.thing }}` where the block's `settings:` array does not declare `thing`                                                    | `blocker` | Same as above for blocks.                                                                                                                                             |
 | `{{ block.settings.x }}` inside a section that has `blocks` declared but NOT inside a `{% for block in section.blocks %}` loop               | `blocker` | `block` is only in scope inside the iteration; outside it's `nil`.                                                                                                    |
@@ -81,18 +81,20 @@ Liquid is forgiving. `nil.foo` does not raise — it renders empty. That's worse
 <h2>{{ section.settings.heading | default: 'Featured products' }}</h2>
 ```
 
-**`blocker`** when a method-chain on a resource picker is unguarded and the page can render with a blank picker:
+**`blocker`** when markup around a resource picker is unguarded and the page can render with a blank picker. An unset resolved setting is an empty object — the chain renders empty rather than raising, leaving an empty `<span>` or a broken link behind. Guard with `!= blank` (a bare `{% if p %}` is always true for an empty object):
 
 ```liquid
-{%- comment -%} Bad: `.first_variant.price` chain blows up if product is blank {%- endcomment -%}
-<span>{{ section.settings.product.first_variant.price | money }}</span>
+{%- comment -%} Bad: renders an empty <span> when no product is picked {%- endcomment -%}
+<span>{{ section.settings.product.selected_or_first_available_variant.price }}</span>
 
 {%- comment -%} Good {%- endcomment -%}
 {%- assign p = section.settings.product -%}
-{%- if p != blank and p.first_variant != blank -%}
-  <span>{{ p.first_variant.price | money }}</span>
+{%- if p != blank -%}
+  <span>{{ p.selected_or_first_available_variant.price }}</span>
 {%- endif -%}
 ```
+
+Prices on products and variants are already formatted for the visitor's currency. Fluid has no `money` filter.
 
 ### 2. Whitespace control
 

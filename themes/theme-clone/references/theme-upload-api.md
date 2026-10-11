@@ -41,10 +41,10 @@ fluid_api("/api/application_themes/{themeId}", "PATCH", {
 ### Find an existing theme
 
 ```
-fluid_api("/api/application_themes", "GET")
+fluid_api("/api/v202604/themes", "GET")
 ```
 
-Returns `{ "application_themes": [...] }`. Find the one you want and use its `id`.
+Returns `{ "themes": [...] }`. Find the one you want and use its `id`. `GET /api/v202604/themes/active` returns the live theme.
 
 ## Step 2: Upload Theme Resources
 
@@ -55,7 +55,7 @@ Each file in the theme becomes a resource. The `key` is the file path relative t
 ```
 fluid_api("/api/application_themes/{themeId}/resources", "PUT", {
   "key": "sections/editorial_hero/index.liquid",
-  "content": "<section class=\"editorial-hero\" {{ section.fluid_attributes }}>...</section>\n\n{% schema %}\n...\n{% endschema %}"
+  "content": "<section class=\"editorial-hero\">...</section>\n\n{% schema %}\n...\n{% endschema %}"
 })
 ```
 

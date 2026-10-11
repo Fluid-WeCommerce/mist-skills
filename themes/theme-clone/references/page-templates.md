@@ -153,9 +153,9 @@ corresponding Fluid page resource separately.
 ```
 
 This is invalid for Fluid theme templates. Put the default blocks in
-`sections/hero_centered/index.liquid`'s preset and let Fluid expand them when the template
-record is created.
+`sections/hero_centered/index.liquid`'s preset. When a section instance has no blocks,
+Fluid fills them from the section's first preset each time the page renders.
 
-After changing a preset for an existing template, delete the stale
-`application_theme_template` record and re-PUT the template resource so the preset expands
-again. Editing a preset does not retroactively mutate already-expanded template data.
+A preset edit therefore shows on every template whose instance has no saved blocks. You
+don't need to delete or recreate the template. Instances whose blocks were saved (for
+example from the Page Editor) keep their saved blocks.

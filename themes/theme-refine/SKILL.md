@@ -295,7 +295,7 @@ Missing slots make `{{ settings.font_family_italic | font_family }}` silently fa
 | Input        | Required | Description                                                                                                                                         |
 | ------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SOURCE_URL` | Yes      | The original page to match (e.g. `https://yellowbirdfoods.com`)                                                                                     |
-| `THEME_ID`   | Yes\*    | The application theme ID to update. If not provided, fetch via `fluid_api("/api/application_themes", "GET")` and ask the user to confirm which one. |
+| `THEME_ID`   | Yes\*    | The application theme ID to update. If not provided, fetch via `fluid_api("/api/v202604/themes", "GET")` and ask the user to confirm which one. |
 | `THEME_DIR`  | No       | Local working directory with theme files. If not provided, work directly against the Fluid API.                                                     |
 
 Also ask:
@@ -315,7 +315,7 @@ The active Fluid company is already selected in Mist Desktop — no token, store
 #    run_cli fluid theme crawl SOURCE_URL
 
 # 2. List themes and confirm THEME_ID
-fluid_api("/api/application_themes", "GET")
+fluid_api("/api/v202604/themes", "GET")
 # Find the theme, confirm theme_id
 ```
 
@@ -586,7 +586,7 @@ The checklist below covers items the script can't catch (data shape, runtime con
 
 **Preset expansion**
 
-- [ ] Presets only fire on FRESH template creation. After editing a section's preset, `fluid_api("/api/application_theme_templates/{id}", "DELETE")` then re-`PUT` the template file to trigger re-expansion.
+- [ ] Presets fill any section instance that has no saved blocks, at every render. A preset edit shows wherever the instance has no saved blocks; instances with editor-saved blocks keep them.
 - [ ] Template schema does NOT contain `blocks` — blocks come from section presets only. Including blocks in a template schema breaks `fluid_attributes` bindings.
 
 **Navbar overflow**
@@ -893,48 +893,20 @@ Same root cause as above. The `select + option_group` pattern is how Fluid gets 
 background-color: {{ section.settings.background_color | default: 'transparent' }};
 ```
 
-### Section preset blocks don't populate on an existing template
+### Section preset blocks don't populate
 
-**Symptom:** You define a section with 40 preset blocks. You push the theme. The section renders in the editor but has ZERO blocks — the preset didn't apply.
+**Symptom:** You define a section with 40 preset blocks. You push the theme. The section renders but has ZERO blocks.
 
-**Root cause:** Fluid only applies section presets when a section is **first added** to a template. An existing template that already has the section (even with zero blocks) never retroactively gets the preset. API `PUT` on resources doesn't trigger preset expansion.
+**How presets apply:** when a section instance on a template has no blocks, Fluid fills in the blocks from the section's first preset that has blocks — at every render, not only when the section is first added. So an empty section always shows its preset blocks again (to render nothing on purpose, add an explicit empty state in the section's Liquid).
 
-**Fix:** delete the template via API, then re-push the page template. That forces Fluid to create a fresh template record, and fresh-creation runs preset expansion.
+**If the preset still doesn't show, check:**
 
-```python
-# 1. Delete the resource (this deletes the template record)
-fluid_api(f"/api/application_themes/{THEME_ID}/resources", "DELETE",
-    {"key": "page/<slug>/index.liquid"})
+1. The section's schema JSON parses (`fluid theme lint --json`), and the preset you expect is the **first** preset with a non-empty `blocks` array.
+2. Every preset block `type` is accepted by the section's `"blocks"` array — an inline block definition, a named reference to a standalone block in `blocks/<name>/index.liquid` (`{ "type": "schema_entry" }`), or `{ "type": "@theme" }`.
+3. The template's saved section instance really has no blocks. Block instances saved on the template (for example by the editor) win over the preset.
+4. The Liquid actually renders them: `{% content_for 'blocks' %}` for standalone blocks, or a `{% for block in section.blocks %}` loop for inline blocks.
 
-# 2. Re-push the page template content
-with open(local_path) as f: content = f.read()
-fluid_api(f"/api/application_themes/{THEME_ID}/resources", "PUT",
-    {"key": "page/<slug>/index.liquid", "content": content})
-# A new template ID is created. Find it via fluid_api(f"/api/application_themes/{THEME_ID}", "GET").
-```
-
-**Additional requirement for preset expansion to fire:** the section's `"blocks"` array in its schema must declare blocks with **inline settings**, not as a standalone reference:
-
-```json
-/* WRONG — Fluid won't run preset expansion on this shape */
-"blocks": [
-  { "type": "schema_entry" }
-]
-
-/* RIGHT — inline settings, matches main_navbar convention */
-"blocks": [
-  {
-    "type": "schema_entry",
-    "name": "Schema Entry",
-    "settings": [
-      { "type": "text", "id": "control_name", "label": "Control Name" },
-      { "type": "richtext", "id": "description", "label": "Description" }
-    ]
-  }
-]
-```
-
-Note: even if you have a standalone `blocks/schema_entry/index.liquid` file with its own schema, the section still needs the inline copy for preset expansion to work. Keep the block file for markup reuse OR delete it if you're rendering blocks inline in the section.
+See [Blocks and components](https://docs.fluid.app/themes/blocks-and-components) and [Common theme pitfalls](https://docs.fluid.app/themes/common-pitfalls#expect-presets-to-fill-empty-sections).
 
 ### Blocks render in HTML but aren't clickable in the editor
 
@@ -959,26 +931,23 @@ data-fluid-block-attribute="{...}"
 
 **Root cause:** the blocks were injected via inline template schema rather than via the section's preset. `{{ block.fluid_attributes }}` returns empty for pseudo-blocks.
 
-**Fix:** see "Section preset blocks don't populate" above — delete + recreate the template with the inline-blocks pattern in the section's schema.
+**Fix:** remove the block instances from the template schema so the section instance has no blocks; Fluid then fills them from the section's first preset at render, with editor attributes. See "Section preset blocks don't populate" above.
 
 ### `{% render block %}` and `{% include 'block_name' %}` don't emit markup
 
 **Symptom:** You have `blocks/my_block/index.liquid` with markup, and you call `{% render block %}` from a section's for-loop. Nothing renders.
 
-**Root cause:** Fluid doesn't auto-render standalone block templates via `render` or `include`. The convention in Fluid themes is to render block markup **inline in the section** via `case/when`:
+**Root cause:** `{% render block %}` renders only app blocks from Droplet theme extensions, and `render` / `include` target `components/`, not `blocks/`. A theme block rendered that way outputs nothing.
+
+**Fix:** render the section's standalone blocks with `content_for`, which renders each block through its own `blocks/<name>/index.liquid` template:
 
 ```liquid
-{% for block in section.blocks %}
-  {% case block.type %}
-    {% when 'heading' %}
-      <div class="heading" {{ block.fluid_attributes }}>{{ block.settings.text }}</div>
-    {% when 'button' %}
-      <a class="btn" {{ block.fluid_attributes }} href="{{ block.settings.url }}">{{ block.settings.label }}</a>
-  {% endcase %}
-{% endfor %}
+<div class="my-section__content">
+  {% content_for 'blocks' %}
+</div>
 ```
 
-The `blocks/<name>/index.liquid` file's `{% schema %}` defines the block's settings (editor UI). Its markup body is ignored in the Fluid section-block rendering path — everything renders inline in the section.
+Accept the blocks in the section schema with `{ "type": "@theme" }` or named references such as `{ "type": "heading" }`. For one block in a fixed position, use `{% content_for 'block', type: 'heading', id: 'intro' %}`. Each standalone block emits `{{ block.fluid_attributes }}` on its own outer element. Don't also loop over `section.blocks` for the same blocks — they render twice. Inline blocks (defined with `name` and `settings` in the section schema) are still rendered from a `{% for block in section.blocks %}` loop with `case/when`. See [Blocks and components](https://docs.fluid.app/themes/blocks-and-components).
 
 ### Block loop whitespace dashes break the editor
 
@@ -992,19 +961,11 @@ Per Fluid's editor requirements — no `{%- -%}` dashes on block-loop tags. Insi
 
 Dashes ARE safe inside `{%- style -%}` blocks (CSS generation), just not inside the block iteration / case-when.
 
-### Section root missing `{{ section.fluid_attributes }}` breaks section selection
+### Don't add `{{ section.fluid_attributes }}` to the section root
 
-**Symptom:** You can't click the section itself in the editor to open its settings.
+**Symptom:** A section carries `{{ section.fluid_attributes }}` on its root, or someone suggests adding it to fix section selection.
 
-**Fix:** the outermost element in the section's markup needs `{{ section.fluid_attributes }}`:
-
-```liquid
-<section class="my-section section-{{ section.id }}" {{ section.fluid_attributes }}>
-  …
-</section>
-```
-
-Without this, Fluid doesn't know where the section starts/ends in the DOM, so it can't bind selection handles.
+**Fact:** `section.fluid_attributes` doesn't exist and renders nothing. Fluid wraps every section in its own element with the editor attributes, so a section is selectable without any attributes of its own. Remove it (`theme_audit.py` GS015 flags it). Only blocks need `{{ block.fluid_attributes }}` on their outer element. If the section itself can't be selected, check that the template renders it as a section (a `{% section %}` tag or an editor-added instance), not as a component.
 
 ### Binary theme assets (images) fail to upload via API
 
@@ -1026,7 +987,7 @@ To update live content after changing defaults:
 
 - **Quick:** edit each affected block manually in the editor.
 - **Bulk:** patch the template's saved JSON directly via API — GET the template content, find the `blocks` object under the section, update the settings there, PUT it back.
-- **Nuclear:** delete + recreate the template (see preset-expansion fix above). Loses any editor customizations.
+- **Reset to preset:** remove the section instance's saved `blocks` from the template so Fluid fills it from the section's first preset at render (see "Section preset blocks don't populate" above). Loses any editor customizations.
 
 ### API push → editor Save workflow
 
@@ -1037,7 +998,7 @@ After pushing section code via `fluid_api("/api/application_themes/{id}/resource
 3. This triggers Fluid's block registration system for any blocks already on the canvas
 4. Blocks become clickable in both the Layers panel and the preview
 
-This is different from preset expansion — Save registers blocks that already exist. Preset expansion only happens on fresh template creation.
+This is different from presets — Save registers blocks that already exist. Presets fill an instance that has no saved blocks, at render.
 
 ### Required templates (18)
 
@@ -1141,7 +1102,7 @@ CSS wire-up in `{%- style -%}`:
   @media (max-width: 767px) { .my-section.section-{{ section.id }} .my-section__container { padding-left: 16px; padding-right: 16px; } }
 {%- endstyle -%}
 
-<section class="my-section section-{{ section.id }}" {{ section.fluid_attributes }}>
+<section class="my-section section-{{ section.id }}">
   <div class="my-section__container">
     …
   </div>
@@ -1611,7 +1572,7 @@ fluid_api(f"/api/application_theme_templates/{TEMPLATE_ID}", "DELETE")
 # → { "message": "Template was successfully destroyed." }
 ```
 
-Same pattern works for the `home_page/default` template when you need to force preset re-expansion after changing a section's block structure: destroy the template, then re-push `home_page/default/index.liquid`. Fluid creates a fresh template record and runs preset expansion, picking up the new blocks.
+You don't need this to pick up a changed preset: Fluid fills any section instance with no saved blocks from the section's first preset at every render.
 
 ---
 
@@ -1637,7 +1598,7 @@ Then walk this list for anything the audit doesn't catch (file structure, settin
 
 | Manual check                                                                        | Audit rule(s) |
 | ----------------------------------------------------------------------------------- | ------------- |
-| Section root has `{{ section.fluid_attributes }}`                                   | GS015         |
+| Section root has no `{{ section.fluid_attributes }}` (it renders nothing)          | GS015         |
 | Block root has `{{ block.fluid_attributes }}` (and only on `<div>`)                 | GS007, GS016  |
 | Block loops use `{% %}` not `{%- -%}`                                               | GS013         |
 | No unsupported types (`number`, `article`, `video`, `video_url`, `inline_richtext`) | GS011         |
@@ -1689,7 +1650,6 @@ Drop-in fixes for every pattern that shows up in legacy themes. Each recipe: (1)
   { "type": "image", "name": "Image", "limit": 1,
     "settings": [
       { "type": "image_picker", "id": "image", "label": "Image" },
-      { "type": "text", "id": "alt", "label": "Alt Text" },
       { "type": "select", "id": "aspect_ratio", "label": "Aspect ratio", "default": "1/1",
         "options": [ { "value": "1/1", "label": "Square" }, { "value": "4/5", "label": "Portrait (4:5)" }, { "value": "3/4", "label": "Portrait (3:4)" }, { "value": "4/3", "label": "Standard (4:3)" }, { "value": "16/9", "label": "Widescreen (16:9)" } ]
       },
@@ -1708,7 +1668,8 @@ Drop-in fixes for every pattern that shows up in legacy themes. Each recipe: (1)
 ```liquid
 {%- assign image_block = section.blocks | where: 'type', 'image' | first -%}
 {% if image_block %}
-  {%- assign _alt = image_block.settings.alt | default: '' -%}
+  {%- comment -%} The editor stores alt text in the image picker's `image_alt` companion; don't declare an alt setting {%- endcomment -%}
+  {%- assign _alt = image_block.settings.image_alt | default: '' -%}
   {%- capture _wrap_style -%}
     aspect-ratio: {{ image_block.settings.aspect_ratio | default: '1/1' }};
     {%- assign br = image_block.settings.border_radius -%}{% if br %}border-radius: {{ br.tl }}px {{ br.tr }}px {{ br.br }}px {{ br.bl }}px;{% endif %}

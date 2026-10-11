@@ -32,7 +32,7 @@ Referenced via `asset_url`:
 
 ### 1a. Deprecated — co-located `styles.css` / `style.css`
 
-The earlier theme convention placed a `styles.css` next to each template, section, or component (e.g. `sections/featured/styles.css`). **This is being phased out** in favor of `assets/`-only. The reference `base-theme` still contains `styles.css` files inside section / page-variant directories — these are being migrated.
+The earlier theme convention placed a `styles.css` next to each template, section, or component (e.g. `sections/featured/styles.css`). **This is deprecated** in favor of `assets/`-only, and companies on the asset model reject these files on push. The reference `base-theme` still contains `styles.css` files inside section / page-variant directories — these are being migrated.
 
 **`should`** when a PR adds or modifies a co-located stylesheet. **`blocker`** for any new file added under this pattern (new code must follow the assets-only convention).
 
@@ -42,7 +42,8 @@ The earlier theme convention placed a `styles.css` next to each template, sectio
 | New file `components/{name}/style.css`                                                                             | `blocker` | Same — `assets/{name}.css` and `asset_url`.                                                                       |
 | New file under a page-variant directory like `{type}/{variant}/styles.css`                                         | `blocker` | Move to `assets/{name}.css`.                                                                                      |
 | Existing co-located stylesheet edited in the PR                                                                    | `should`  | Suggest migrating to `assets/` as part of the same PR if the diff is small, or a follow-up if not.                |
-| Global / custom stylesheets anywhere outside `assets/` (other than the engine-recognized root `global_styles.css`) | `blocker` | Move to `assets/`.                                                                                                |
+| Theme-level `styles.css` or `global_styles.css` at the theme root (pre-migration shape)                            | `blocker` | Deprecated, and companies on the asset model reject them on push. Move to `assets/` and reference from `layouts/theme.liquid` via `\| asset_url \| stylesheet_tag` or `\| inline_asset_content`. The `template-stylesheet-to-asset-migration` skill from `fluid theme skills install` does this for you. |
+| Global / custom stylesheets anywhere else outside `assets/`                                                        | `blocker` | Move to `assets/`.                                                                                                |
 | Hardcoded path like `<link rel="stylesheet" href="/sections/{name}/styles.css">` (bypassing `asset_url`)           | `blocker` | Move the file and switch to `asset_url`.                                                                          |
 
 Migration recipe (suggest in the comment when applicable):

@@ -32,7 +32,7 @@ professional localizer would ship — not raw machine output.
 | `locales/en.json` | Source locale. Keys → English strings. Defines the canonical key set. |
 | `locales/{iso}.json` | One file per language (`es`, `de`, `fr`, `fil`, …). Same keys, translated values. |
 | `{{ 'key.path' | t }}` | The Liquid filter that resolves a dotted key against the active locale, falling back to `en`. |
-| `{{ 'key' | t: count: n, name: x }}` | Interpolation — placeholders are passed as filter args and referenced as `%{name}` in the value. |
+| `{{ 'key' | t: count: n, name: x }}` | Interpolation — placeholders are passed as filter args and referenced as Liquid `{{ name }}` in the value. |
 | `<html lang="{{ localization.language.iso_code \| default: 'en' }}">` | The visitor's language. Read it from `localization`; `request` has no locale. |
 
 Locale files are **nested JSON**, dotted in Liquid:
@@ -42,7 +42,7 @@ Locale files are **nested JSON**, dotted in Liquid:
   "cart": {
     "title": "Your cart",
     "checkout": "Checkout",
-    "item_count": { "one": "%{count} item", "other": "%{count} items" }
+    "item_count": { "one": "{{ count }} item", "other": "{{ count }} items" }
   }
 }
 ```
@@ -149,11 +149,13 @@ This is the part that separates a real localization from a `Google-Translate` du
   stays premium. Pick the right formality for the market (e.g. German *Sie* vs *du*, French
   *vous* vs *tu*; default to the polite form for commerce unless the brand is deliberately
   casual) and stay consistent across the whole file.
-- **Respect placeholders exactly.** `%{count}`, `%{name}`, `%{price}` must survive verbatim and
+- **Respect placeholders exactly.** `{{ count }}`, `{{ name }}`, `{{ price }}` must survive verbatim and
   read naturally in the translated word order. Never translate, reorder away, or drop a token.
-- **Handle plurals per language.** Keep the `one`/`other` shape where the source has it, and add
-  the forms the *target* language needs — many languages have more than two
-  (e.g. Polish `one`/`few`/`many`/`other`, Arabic up to six). Don't collapse them to one string.
+- **Handle plurals the way Fluid resolves them.** Keep the `one`/`other` shape where the source has it.
+  Fluid picks `one` when `count` is 1 and `other` for every other count; it never selects CLDR
+  forms such as `few`, so don't add them. For languages with more plural forms (Polish, Arabic,
+  Russian…), word `other` so it reads correctly for any count other than 1, and flag strings that
+  can't be made natural that way. Don't collapse `one`/`other` to one string.
 - **Keep UI strings tight.** Buttons and labels have limited space. Prefer the concise native
   term over a long literal phrase so the layout doesn't break.
 - **Preserve non-translatables.** Brand/product names, SKUs, units, currency/number/date
@@ -163,7 +165,7 @@ This is the part that separates a real localization from a `Google-Translate` du
 - **Flag, don't guess.** If a string is ambiguous without context (a bare "Free", "Order"),
   note it for the user rather than picking a meaning at random.
 
-Write valid JSON: UTF-8, real accented characters (`Ã¼`, `Ã©`, `Ã±` — not escapes), double quotes,
+Write valid JSON: UTF-8, real accented characters (`ü`, `é`, `ñ` — not escapes), double quotes,
 no trailing commas, no comments.
 
 ---
@@ -206,7 +208,7 @@ no trailing commas, no comments.
 - [ ] Asked: re-translate all or fill missing only? Confirmed before any overwrite
 - [ ] Created `locales/{iso}.json` for every enabled-but-missing language
 - [ ] Every locale file mirrors `en.json`'s key set exactly (`comm` check clean)
-- [ ] Placeholders (`%{...}`) preserved; plural forms correct for each language
+- [ ] Placeholders (`{{ ... }}`) preserved; `one`/`other` plural forms read correctly for each language
 - [ ] Brand voice, register, and e-commerce vocabulary appropriate per market
 - [ ] All files valid UTF-8 JSON (`jq .` clean)
 - [ ] No `fluid theme push` / no store write without explicit approval
