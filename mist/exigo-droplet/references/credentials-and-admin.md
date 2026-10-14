@@ -132,6 +132,8 @@ import { createFluidClientForInstallation } from "@/lib/fluid/client";
 import type { FluidInstallationContext } from "@/lib/fluid/installation-context";
 import { verifySessionToken, type SessionTokenIdentity } from "@/lib/fluid/session-token";
 
+const STORE_ADMIN_SUBJECT = "urn:fluid:store_admin:";
+
 export class AdminSessionError extends Error {}
 
 // The browser sends the Bridge session token on every admin request; the dri alone is refused.
@@ -141,16 +143,20 @@ export async function requireAdminSession(
 ): Promise<SessionTokenIdentity> {
   const token = request.headers.get("authorization")?.match(/^Bearer (\S+)$/)?.[1];
   if (!token) throw new AdminSessionError("Session token required");
+  let identity: SessionTokenIdentity;
   try {
     const store = await createFluidClientForInstallation(ctx.installation).getServingStore(ctx.companyId);
-    return verifySessionToken(token, store);
+    identity = verifySessionToken(token, store);
   } catch {
     throw new AdminSessionError("Session token invalid");
   }
+  // Store members get valid tokens too (urn:fluid:store_member:...); only store admins may touch credentials.
+  if (!identity.sub.startsWith(STORE_ADMIN_SUBJECT)) throw new AdminSessionError("Store admin required");
+  return identity;
 }
 ```
 
-The `Authorization` header is this app's own browser-to-server transport for the Bridge token; never forward that token to a Fluid API (use the installation's DIT). Call `requireAdminSession` right after `resolveFluidInstallation` in GET, PUT and the test route, and map `AdminSessionError` to 401.
+The `Authorization` header is this app's own browser-to-server transport for the Bridge token; never forward that token to a Fluid API (use the installation's DIT). Call `requireAdminSession` right after `resolveFluidInstallation` in GET, PUT and the test route, and map `AdminSessionError` to 401. A verified token is not enough on its own: Fluid mints session tokens for store members (`urn:fluid:store_member:<id>`) as well as store admins (`urn:fluid:store_admin:<id>`), so credential routes must require the `urn:fluid:store_admin:` prefix on `sub`. Check only the prefix; the trailing id is opaque.
 - Scope every read and write to `ctx.installation.id`.
 - GET returns `{ host, port, database, username, restBaseUrl, restUsername, restCompany, passwordSet: boolean, restPasswordSet: boolean }`. It never returns a password or ciphertext.
 - PUT validates the host and `restBaseUrl` (below) before saving, so a bad value never lands in the DB for a later callback to dial.
