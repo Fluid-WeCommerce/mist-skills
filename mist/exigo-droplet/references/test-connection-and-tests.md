@@ -9,6 +9,7 @@ A bare connect passes a wrong database, a user without rights on the table, or a
 import { NextRequest, NextResponse } from "next/server";
 import { FluidInstallationContextError, resolveFluidInstallation } from "@/lib/fluid/installation-context";
 import { ensureSchema } from "@/lib/ensure-schema";
+import { AdminSessionError, requireAdminSession } from "@/lib/admin/session";
 
 export const runtime = "nodejs";
 
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
   try {
     await ensureSchema();
     const ctx = await resolveFluidInstallation(request);
-    // verify session_token here once Fluid supplies it (see credentials-and-admin.md)
+    await requireAdminSession(request, ctx); // Bridge session token; 401 on dri-only (credentials-and-admin.md)
     const credentials = await resolveExigoCredentials(ctx.installation);
 
     const probe = (async () => {
@@ -39,6 +40,9 @@ export async function POST(request: NextRequest) {
     ]);
     return NextResponse.json({ ok: true, ...counts });
   } catch (error) {
+    if (error instanceof AdminSessionError) {
+      return NextResponse.json({ ok: false, error: "Session required" }, { status: 401 });
+    }
     if (error instanceof FluidInstallationContextError) {
       return NextResponse.json({ ok: false, error: "Installation not found" }, { status: 401 });
     }
@@ -57,7 +61,7 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-- Only driver and connection failures answer 200 `{ ok: false, error }` with the translated message, so the admin UI can show it. An unresolved installation is 401 (the template's session-example also answers 401), not configured is 409, a refused host is 422.
+- Only driver and connection failures answer 200 `{ ok: false, error }` with the translated message, so the admin UI can show it. A missing or invalid session token, or an unresolved installation, is 401 (the template's session-example also answers 401), not configured is 409, a refused host is 422.
 - Reachable even while a feature kill switch is on: testing is how a merchant decides whether to enable anything. It writes nothing.
 - Accept an optional single-customer probe (`?customerId=`), parsed and validated before any connection opens, to answer "why is this person not eligible?" with the same query the live path uses.
 - For REST, hit a real endpoint and treat a 200 with a non-JSON body as failure; the API root serves HTML with 200 for any credentials. The SDK throws `ExigoApiError` for this.

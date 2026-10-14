@@ -9,6 +9,8 @@ category: mist
 
 Give the droplet in the active Mist app read access to {{company.name}}'s Exigo tenant: the SQL reporting database (eligibility, subscriptions, autoships, point balances) and/or the Exigo REST API. Exigo authorises callers by **source IP**, and Mist apps run on Vercel with rotating egress, so every connection goes through Fluid's egress proxy, a CONNECT-only forward proxy with static IPs the tenant allowlists. TLS stays end to end; the proxy never sees Exigo credentials. Known gap: with the required `trustServerCertificate: true`, nothing proves the far end of the TLS is Exigo (see `setup-and-proxy.md`); say so to the user.
 
+**If the app was created from the Exigo starter, the SDK, proxy, encrypted credentials and test route are already wired with session-token auth; do not add dri-only admin routes.** Use this skill to extend that wiring, not to rebuild it.
+
 Code for each step lives in the references appended below. Business queries stay in the app; the SDK owns connection, auth, pooling and typed errors only.
 
 # Steps
@@ -37,7 +39,8 @@ Code for each step lives in the references appended below. Business queries stay
 - **Bound parameters only** (`request.input`). Never interpolate. Validate numeric ids before the query: an `NaN` or empty id bound as Int matches nothing and reads as a confident "no".
 - **Never close the pool.** The SDK caches it per host/port/database/user/password and reclaims idle ones.
 - **No env-var fallback to shared Exigo credentials.** A fork once nearly connected to another client's Exigo. A missing credential row is an error.
-- **Write-only password.** Admin routes return `passwordSet: boolean`, never the value or ciphertext. Admin routes authorise on a `dri`, which is a lookup key and not a credential, so validate the admin-entered SQL host and REST base URL (DNS hostname only, refuse every IP literal, https for REST, optional allowlist), and keep a stored password only while its target is unchanged.
+- **Write-only password.** Admin routes return `passwordSet: boolean`, never the value or ciphertext.
+- **Session-token auth on every credential route.** The Droplet Bridge is live: every credential read, write and test route verifies the signed Bridge session token on the server (`lib/fluid/session-token.ts`, `lib/fluid/embedded-session.ts`) and answers 401 to a `dri`-only request. The `dri` only finds the installation; it is not a credential. Also validate the admin-entered SQL host and REST base URL (DNS hostname only, refuse every IP literal, https for REST, optional allowlist), and keep a stored password only while its target is unchanged.
 - **Unreadable is not false.** Throw when Exigo cannot be read so callers hold; return `false` only when Exigo answered no. Do not retry in the hot path.
 - **Budget shopper-facing callbacks** with `Promise.race`; the SDK's connect and request timeouts are not a checkout budget.
 - **Prefer status columns over next-run or scheduled-date columns** for eligibility. Those are stored at midnight, so `NextRunDate >= GETDATE()` demotes a member on the day their order is due.

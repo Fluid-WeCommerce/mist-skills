@@ -123,14 +123,41 @@ No env-var fallback to shared Exigo credentials, ever. A missing row is an error
 
 ## Admin routes
 
-- The template's baseline: admin pages authorise by `dri` through `resolveFluidInstallation()` until Fluid supplies `session_token`. Do not invent another viewer JWT, OAuth gate or token. When Fluid supplies `session_token`, verify it on the server with `verifySessionToken(token, servingStore)` from `lib/fluid/session-token.ts` before any credential read or write, following `app/embed/session-example/route.ts` exactly: expected store from `createFluidClientForInstallation(context.installation).getServingStore(context.companyId)`, never from the token or the browser; later documents use the short app session from `lib/fluid/embedded-session.ts`. Extract that logic into a shared helper rather than writing a second scheme, and fail closed (401) when configuration or identity is missing.
+- The Droplet Bridge is live, so every credential read, write and test route verifies the signed Bridge session token on the server and refuses a `dri`-only request with 401. The `dri` only finds the installation (`resolveFluidInstallation()`); it never authorises. Verify with `verifySessionToken(token, servingStore)` from `lib/fluid/session-token.ts`, following `app/embed/session-example/route.ts`: expected store from `createFluidClientForInstallation(context.installation).getServingStore(context.companyId)`, never from the token or the browser; later requests may use the short app session from `lib/fluid/embedded-session.ts`. Put this in one shared helper used by GET, PUT and the test route, and fail closed (401) when configuration, token or identity is missing. Do not invent another viewer JWT, OAuth gate or token, and do not add a bypass that can engage in production.
+- If the app was created from the Exigo starter, this is already wired; do not add `dri`-only admin routes.
+
+```ts
+// lib/admin/session.ts
+import { createFluidClientForInstallation } from "@/lib/fluid/client";
+import type { FluidInstallationContext } from "@/lib/fluid/installation-context";
+import { verifySessionToken, type SessionTokenIdentity } from "@/lib/fluid/session-token";
+
+export class AdminSessionError extends Error {}
+
+// The browser sends the Bridge session token on every admin request; the dri alone is refused.
+export async function requireAdminSession(
+  request: Request,
+  ctx: FluidInstallationContext,
+): Promise<SessionTokenIdentity> {
+  const token = request.headers.get("authorization")?.match(/^Bearer (\S+)$/)?.[1];
+  if (!token) throw new AdminSessionError("Session token required");
+  try {
+    const store = await createFluidClientForInstallation(ctx.installation).getServingStore(ctx.companyId);
+    return verifySessionToken(token, store);
+  } catch {
+    throw new AdminSessionError("Session token invalid");
+  }
+}
+```
+
+The `Authorization` header is this app's own browser-to-server transport for the Bridge token; never forward that token to a Fluid API (use the installation's DIT). Call `requireAdminSession` right after `resolveFluidInstallation` in GET, PUT and the test route, and map `AdminSessionError` to 401.
 - Scope every read and write to `ctx.installation.id`.
 - GET returns `{ host, port, database, username, restBaseUrl, restUsername, restCompany, passwordSet: boolean, restPasswordSet: boolean }`. It never returns a password or ciphertext.
 - PUT validates the host and `restBaseUrl` (below) before saving, so a bad value never lands in the DB for a later callback to dial.
 
 ### Blank password keeps the stored one only if the target is unchanged
 
-A saved password must not be replayed to a destination the admin just changed, or a `dri` holder could point the stored login at a host they control.
+A saved password must not be replayed to a destination the admin just changed, or anyone who gets past admin auth could point the stored login at a host they control.
 
 ```ts
 export function keepsStoredPassword(
@@ -152,7 +179,7 @@ export function keepsStoredPassword(
 
 ## lib/admin/exigo-host.ts
 
-The `dri` is a lookup key that travels in an iframe query string, so whoever holds one could otherwise store any hostname and have the server connect to it. Hostnames only: the proxy refuses IP literals anyway, so refuse every IP literal here (dotted, short-form like `127.1`, integer like `2130706433`, hex, bracketed IPv6) rather than trying to classify private ranges.
+The `dri` is a lookup key that travels in an iframe query string; even behind session-token auth, an admin-entered host is untrusted input, so an unchecked field could store any hostname and have the server connect to it. Hostnames only: the proxy refuses IP literals anyway, so refuse every IP literal here (dotted, short-form like `127.1`, integer like `2130706433`, hex, bracketed IPv6) rather than trying to classify private ranges.
 
 ```ts
 const ALLOWLIST_ENV = "EXIGO_HOST_ALLOWLIST"; // comma-separated hosts or *.suffix
