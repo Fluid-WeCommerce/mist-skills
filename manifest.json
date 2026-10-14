@@ -415,6 +415,22 @@
       "updated_at": "2026-07-23T00:00:00Z"
     },
     {
+      "slug": "mist/exigo-droplet",
+      "name": "Exigo SDK + egress proxy",
+      "description": "Connect a Mist droplet to an Exigo tenant's SQL reporting database and/or REST API with @fluid-app/exigo-connection-sdk, routed through Fluid's egress proxy so the tenant's IP allowlist works from Vercel.",
+      "category": "mist",
+      "icon": "database",
+      "path": "mist/exigo-droplet/SKILL.md",
+      "updated_at": "2026-10-14T00:00:00Z",
+      "references": [
+        "mist/exigo-droplet/references/setup-and-proxy.md",
+        "mist/exigo-droplet/references/credentials-and-admin.md",
+        "mist/exigo-droplet/references/sql-patterns.md",
+        "mist/exigo-droplet/references/rest-patterns.md",
+        "mist/exigo-droplet/references/test-connection-and-tests.md"
+      ]
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
