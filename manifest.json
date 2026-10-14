@@ -421,7 +421,7 @@
       "category": "mist",
       "icon": "database",
       "path": "mist/exigo-droplet/SKILL.md",
-      "updated_at": "2026-10-14T00:00:00Z",
+      "updated_at": "2026-10-14T12:00:00Z",
       "references": [
         "mist/exigo-droplet/references/setup-and-proxy.md",
         "mist/exigo-droplet/references/credentials-and-admin.md",

@@ -55,7 +55,8 @@ export async function query<T extends Record<string, unknown>>(
   bind: (request: ReturnType<ConnectionPool["request"]>, mssql: typeof import("mssql")) => void,
 ): Promise<T[]> {
   return withPool(creds, async (pool) => {
-    const mssql = await import("mssql");
+    const m = await import("mssql");
+    const mssql = m.default ?? m; // mssql is CommonJS; under ESM its API may be the default export
     const request = pool.request();
     bind(request, mssql);
     const result = await request.query<T>(statement);
@@ -73,15 +74,16 @@ One app-local error class and one translator. Use the app's own class, not the S
 ```ts
 import {
   ExigoAuthError,
+  ExigoConnectionError as SdkConnectionError,
   ExigoCredentialsError,
   ExigoProxyError,
   ExigoTimeoutError,
 } from "@fluid-app/exigo-connection-sdk";
 
-export class ExigoConnectionError extends Error {
+export class ExigoUnavailableError extends Error {
   constructor(message: string, readonly cause?: unknown) {
     super(message);
-    this.name = "ExigoConnectionError";
+    this.name = "ExigoUnavailableError";
   }
 }
 
@@ -93,35 +95,41 @@ const PROXY_MESSAGES: Record<number, string> = {
   503: "Fluid's egress proxy is unavailable or at capacity. Transient; retry later.",
 };
 
-export function asConnectionError(error: unknown): ExigoConnectionError {
-  if (error instanceof ExigoConnectionError) return error;
-  // FIRST: ExigoProxyError extends the SDK's connection error and would otherwise
-  // be reported as "could not reach Exigo" when the refusal came from Fluid's proxy.
+export function asConnectionError(error: unknown): ExigoUnavailableError {
+  if (error instanceof ExigoUnavailableError) return error;
+  // FIRST: ExigoProxyError extends the SDK's ExigoConnectionError, so the generic
+  // SdkConnectionError branch below would swallow it and report "could not reach
+  // Exigo" when the refusal came from Fluid's proxy.
   if (error instanceof ExigoProxyError) {
-    return new ExigoConnectionError(
+    return new ExigoUnavailableError(
       PROXY_MESSAGES[error.status] ?? `Fluid's egress proxy refused the connection (HTTP ${error.status}).`,
       error,
     );
   }
   if (error instanceof ExigoTimeoutError) {
-    return new ExigoConnectionError(
+    return new ExigoUnavailableError(
       "Timed out reaching the Exigo SQL Server. Usually an IP allowlist or a wrong host or port, not a bad password.",
       error,
     );
   }
   if (error instanceof ExigoAuthError) {
-    return new ExigoConnectionError("Exigo rejected the username or password.", error);
+    return new ExigoUnavailableError("Exigo rejected the username or password.", error);
   }
   if (error instanceof ExigoCredentialsError) {
-    return new ExigoConnectionError(`Exigo connection is not configured correctly: ${error.message}`, error);
+    return new ExigoUnavailableError(`Exigo connection is not configured correctly: ${error.message}`, error);
+  }
+  // The SDK has already translated DNS, refused-connection and TLS failures and
+  // its message says what to check.
+  if (error instanceof SdkConnectionError) {
+    return new ExigoUnavailableError(error.message, error);
   }
   const raw = error instanceof Error ? error.message : String(error);
-  if (/ETIMEOUT|ETIMEDOUT|timeout/i.test(raw)) return new ExigoConnectionError("Timed out reaching the Exigo SQL Server.", error);
-  if (/ELOGIN|Login failed/i.test(raw)) return new ExigoConnectionError("Exigo rejected the username or password.", error);
-  if (/ENOTFOUND|EAI_AGAIN|getaddrinfo/i.test(raw)) return new ExigoConnectionError(`Could not resolve the Exigo host. ${raw}`, error);
-  if (/ECONNREFUSED/i.test(raw)) return new ExigoConnectionError("The Exigo host refused the connection. Check the port.", error);
-  if (/self.signed|certificate/i.test(raw)) return new ExigoConnectionError(`TLS problem reaching Exigo: ${raw}`, error);
-  return new ExigoConnectionError(`Exigo query failed: ${raw}`, error);
+  if (/ETIMEOUT|ETIMEDOUT|timeout/i.test(raw)) return new ExigoUnavailableError("Timed out reaching the Exigo SQL Server.", error);
+  if (/ELOGIN|Login failed/i.test(raw)) return new ExigoUnavailableError("Exigo rejected the username or password.", error);
+  if (/ENOTFOUND|EAI_AGAIN|getaddrinfo/i.test(raw)) return new ExigoUnavailableError(`Could not resolve the Exigo host. ${raw}`, error);
+  if (/ECONNREFUSED/i.test(raw)) return new ExigoUnavailableError("The Exigo host refused the connection. Check the port.", error);
+  if (/self.signed|certificate/i.test(raw)) return new ExigoUnavailableError(`TLS problem reaching Exigo: ${raw}`, error);
+  return new ExigoUnavailableError(`Exigo query failed: ${raw}`, error);
 }
 ```
 
@@ -152,10 +160,12 @@ Expose it behind an admin route that returns names and types, never data. Invent
 
 ## Representative query shapes
 
-Tables and columns vary per tenant: confirm each against the probe before using it.
+Tables and columns vary per tenant: confirm each against the probe before using it. Which rows count as eligible (the status ids, whether an expiry day is inclusive, a minimum volume) is a business decision: confirm each predicate with the user rather than copying these. Note that `ExpireDate` is stored at midnight, so `>= GETDATE()` stops qualifying a subscription at 00:00 on its last day; ask whether that is intended.
+
+Avoid gating eligibility on next-run or scheduled-date columns (for example an autoship's `NextRunDate >= GETDATE()`): they are stored at midnight, so a healthy order compares as past from 00:00 on its own due day and the member is demoted that morning. Prefer the status column.
 
 ```ts
-// Active standing orders (autoships). Use the status column, not a date.
+// Active standing orders (autoships): status column, no next-run date filter.
 const ACTIVE_AUTOORDERS_SQL = `
   SELECT DISTINCT ao.CustomerID AS customerId
   FROM dbo.AutoOrders ao
@@ -166,7 +176,9 @@ const ACTIVE_AUTOORDERS_SQL = `
 const ACTIVE_SUBSCRIPTION_SQL = `
   SELECT DISTINCT cs.CustomerID AS customerId
   FROM dbo.CustomerSubscriptions cs
-  WHERE cs.SubscriptionID = @subscriptionId AND cs.IsActive = 1
+  WHERE cs.SubscriptionID = @subscriptionId
+    AND cs.IsActive = 1
+    AND cs.ExpireDate >= GETDATE()
 `;
 
 // One customer.
