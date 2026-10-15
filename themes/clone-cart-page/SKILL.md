@@ -59,6 +59,17 @@ the wrong currency symbol is a hard failure, not a cosmetic delta.
   totals that do not recompute are the defining failure of a cloned cart.
 - Reuse the PDP's product-card/image contract for line-item thumbnails.
 
+## Drawer cart code
+
+A cloned drawer is not the SDK drawer, so its code must follow the async-cart contract (carts fill in the background, so a new cart is empty for up to about 2 s):
+
+- Open the drawer at the click, before the add resolves: on its own click handler, or on the `CART_ITEMS_ADDING` window event. A script that calls `addCartItems` and wants the SDK drawer calls `FairShareSDK.cart.control.open()` at the click.
+- Draw `getPendingCartItems()` on top of the cart's lines and redraw on `onCartChange()`. Do not redraw only on `CART_OPERATION_SUCCESS`.
+- Never call `FairShareSDK.createCart()` to read data such as the country. It replaces the shopper's cart. Use `getCountryCode()`, `getLanguage()` or `getLocalCart()`.
+- Wait with `await FairShareSDK.waitForCheckoutReady()` before a hand-made redirect to checkout; `FairShareSDK.checkout()` already waits.
+
+See [Custom cart drawers](https://docs.fluid.app/themes/custom-cart-drawer).
+
 ## Cart-specific inventory
 
 Capture and compare:

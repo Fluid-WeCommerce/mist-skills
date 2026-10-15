@@ -69,6 +69,17 @@ The reviewer should flag these on any element that uses `data-fluid-*`:
 | `data-fluid-quantity` built from a setting with no `default:` | `should` | Add `\| default: 1` so an empty setting doesn't render an empty value. |
 | `data-fluid-bundled-items` JSON built from unescaped Liquid (commas or quotes from user content) | `blocker` | Output strings with the `json` filter, or build it only from numeric IDs. User-controlled strings inside a JSON attribute are an XSS path. |
 
+#### Cart calls in theme JavaScript
+
+Every storefront creates carts in the background: a new cart is empty and `population_status: "pending"` for a few hundred ms to about 2 s. `addCartItems`, `addEnrollmentPack` and `setEnrollment` wait for the fill and resolve with the filled cart (`undefined` when the add or the fill fails). See [Carts that fill in the background](https://docs.fluid.app/sdk/cart-api#carts-that-fill-in-the-background) and [Custom cart drawers](https://docs.fluid.app/themes/custom-cart-drawer).
+
+| You see | Severity | Fix |
+| --- | --- | --- |
+| `FairShareSDK.createCart()` (or `createCart(`) used to read data such as the country | `blocker` | `createCart()` always creates a NEW empty cart and replaces the shopper's cart token. Read with `getCountryCode()`, `getLanguage()` or `getLocalCart()`. |
+| A theme script calls `addCartItems(...)` for a button that should show the SDK cart drawer, and never calls `FairShareSDK.cart.control.open()` | `should` | Call `FairShareSDK.cart.control.open()` at the click, before awaiting the add. The drawer opens at click only for declarative `data-fluid-add-to-cart` buttons. |
+| A hand-built drawer redraws only when the add resolves, or on `CART_OPERATION_SUCCESS` | `should` | Render `getPendingCartItems()` on top of the cart lines and redraw on `onCartChange()`. Open the drawer at click. |
+| `getLocalCart()` read right after an add without waiting | `should` | `await whenCartSettled()` first, or use the cart the add resolved with. |
+
 ### Quick audit
 
 From the theme repo root:
@@ -90,6 +101,9 @@ grep -rln 'data-fluid-quantity' --include='*.liquid' . 2>/dev/null | while read 
   fi
 done
 
+# createCart() used to read data (it replaces the shopper's cart)
+grep -rnE 'createCart\(' --include='*.liquid' --include='*.js' . 2>/dev/null
+
 # Cart action values other than open / close / toggle
 grep -rnoE 'data-fluid-cart="[^"]*"' --include='*.liquid' . 2>/dev/null | grep -vE '"(open|close|toggle)"$'
 ```
@@ -103,3 +117,5 @@ grep -rnoE 'data-fluid-cart="[^"]*"' --include='*.liquid' . 2>/dev/null | grep -
 - [ ] `data-fluid-subscription-plan-id` carries a single integer
 - [ ] `data-fluid-bundled-items` / `data-fluid-bundle-selections` are valid JSON arrays with numeric IDs and quantities
 - [ ] Attributes live on a `<button>` or `<a>` (or an element with ARIA and click semantics)
+- [ ] No `FairShareSDK.createCart()` call reads data; it replaces the shopper's cart
+- [ ] A custom `addCartItems` button opens the SDK drawer at click with `FairShareSDK.cart.control.open()`
