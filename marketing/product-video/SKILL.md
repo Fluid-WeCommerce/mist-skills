@@ -66,6 +66,8 @@ Before planning a new film or addressing long holds/repeated framing, read **Pac
 
 For a new standalone setup, read **Portable scene player and MP4 export** first and use its bundled kit. For an existing editor workflow or compatible path-traced finish, read **Mist rendering bridge**. Inspect the active project scripts and actual local requirements. A working website preview is not evidence of an export path.
 
+The portable kit also captures source-faithful flyover layers with system Chrome/Edge and its bundled PNG codec; it does not require the full editor or Playwright. Read the flyover guide for source selectors, capture configuration and exact reassembly checks.
+
 For the editor route, the supplied adapter is documented in **Mist rendering bridge**. Use its installed `video` project script for preflight, synchronization, frame captures, asynchronous export and collection. Use only tools and scripts actually available. Mist's `run_cli` accepts `fluid`, `npm`, `pnpm`, and `git`; install/add/clone/fetch/push are blocked in the inspected runtime. Do not invent `fluid video` commands, an accessible Storyboard MCP server, or an automatic Windows render transfer. Do not work around command policy.
 
 If an approved renderer is configured, verify its version, models/assets, output location, GPU and short job-submission/status path before generation. A full render must outlive a short CLI tool call through a verified job API, not through an unbounded synchronous command.

@@ -6,17 +6,18 @@
     "communityFetch": true,
     "skillResolution": true,
     "allDeclaredAssetBytesExact": true,
-    "assetCount": 98,
+    "assetCount": 101,
     "repeatMaterializationIdempotent": true,
     "activeCompanySubstitution": true,
     "multipleChoiceAndCustomTextQuiz": true,
-    "runCliSetupDoctorBuild": true
+    "runCliSetupDoctorBuild": true,
+    "runCliFreshSourceCapture": true
   },
   "promptContext": {
     "referenceBytesBefore": 122246,
     "referenceBytesAfter": 8039,
-    "loadedBodyBytes": 21501,
-    "runSkillOutputBytes": 33077,
+    "loadedBodyBytes": 21762,
+    "runSkillOutputBytes": 33656,
     "onDemandGuides": 12
   },
   "independentZipTrial": {
@@ -46,9 +47,52 @@
     "No paid model-generated fresh film or live Mist UI chat was run in this publication test.",
     "Native Mist tool tests run app code with isolated Electron/auth context and localhost catalog; they are not a production catalog refresh.",
     "The ZIP trial used existing source, not newly generated UI or creative.",
-    "Portable export tested on macOS; Windows remains untested for this kit.",
-    "Standalone kit uses standard Three.js; path tracing needs a compatible separate adapter.",
-    "Automatic DOM-to-layer capture helper still needs an installed Storyboard capture environment; the portable renderer accepts pre-frozen page layers."
+    "Standalone kit uses standard Three.js; path tracing needs a compatible separate adapter."
   ],
-  "publication": "PR for maintainer review; not merged"
+  "publication": "PR for maintainer review; not merged",
+  "standaloneSourceCapture": {
+    "dependencies": "Existing Node22.12+ and Chrome/Edge; bundled pngjs7(MIT). No Storyboard/Playwright/npm install.",
+    "actualPublicSource": "Sunrider1440x6302 at2x",
+    "pieces": 13,
+    "baseTiles": 5,
+    "reassemblyChangedPixels": 0,
+    "newLayersRenderedAndEncoded": {
+      "width": 1920,
+      "height": 1080,
+      "fps": 12,
+      "frames": 6,
+      "duration": 0.5,
+      "fullDecode": true,
+      "framesVisuallyInspected": true
+    },
+    "independentTechnicalTests": 10,
+    "covered": [
+      "1x/2x reassembly",
+      "blocked POST",
+      "missing-image failure",
+      "shadow reconstruction mismatch",
+      "bounded infinite-scroll",
+      "preserve existing output",
+      "overlap rejection",
+      "browser cleanup",
+      "visibility-visible descendants hidden",
+      "materialize then CLI capture"
+    ],
+    "symlinkedTemporaryPathsTested": true
+  },
+  "windowsExporter": {
+    "commit": "a3efccd40eeba22187fc45f9eb4abda37fb9fa00",
+    "fixture": "Real DeviceStage phone plus time-driven animation",
+    "width": 640,
+    "height": 360,
+    "fps": 12,
+    "frames": 6,
+    "duration": 0.5,
+    "independentProbeAndFullDecode": true,
+    "exportedFramesVisuallyInspected": true,
+    "buildSeconds": 0.36,
+    "workerSeconds": 5.55,
+    "defectsObserved": [],
+    "scope": "Short technical smoke only; not full-film/GPU quality/performance certification."
+  }
 }

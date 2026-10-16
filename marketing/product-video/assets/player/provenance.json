@@ -1,6 +1,6 @@
 {
   "name": "Portable Storyboard player",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "builtAt": "2026-10-16T04:29:30.049Z",
   "runtime": {
     "name": "Storyboard",
@@ -15,7 +15,8 @@
     "react-dom": "19.3.0",
     "sucrase": "3.35.1",
     "es-module-lexer": "3.0.4",
-    "three": "bundled Storyboard vendor snapshot"
+    "three": "bundled Storyboard vendor snapshot",
+    "pngjs": "7.0.0 (bundled source-layer capture codec; MIT)"
   },
   "models": {
     "laptop": "runtime/device-stage/laptop-LICENSE.txt",
@@ -23,7 +24,8 @@
   },
   "requirements": {
     "preview": "Node >=22.12; browser with WebGL2",
-    "export": "Existing Chrome/Edge, FFmpeg and FFprobe"
+    "export": "Existing Chrome/Edge, FFmpeg and FFprobe",
+    "capture": "Node >=22.12; existing Chrome/Edge/Chromium; no Storyboard/Playwright install"
   },
   "files": [
     {

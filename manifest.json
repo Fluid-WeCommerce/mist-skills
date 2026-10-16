@@ -581,7 +581,7 @@
       "category": "marketing",
       "icon": "clapperboard",
       "path": "marketing/product-video/SKILL.md",
-      "updated_at": "2026-10-16T05:45:29.897223+00:00",
+      "updated_at": "2026-10-16T06:08:35.717918+00:00",
       "references": [
         "marketing/product-video/references/mist-intake.md"
       ],
@@ -683,7 +683,10 @@
         "marketing/product-video/assets/guides/reverse-engineer-reference.md",
         "marketing/product-video/assets/guides/source-ui-fidelity.md",
         "marketing/product-video/assets/guides/storyboard-workflow.md",
-        "marketing/product-video/assets/guides/visual-direction-and-budget.md"
+        "marketing/product-video/assets/guides/visual-direction-and-budget.md",
+        "marketing/product-video/assets/flyover/capture-browser.mjs",
+        "marketing/product-video/assets/flyover/vendor/png.cjs",
+        "marketing/product-video/assets/flyover/vendor/pngjs-LICENSE.txt"
       ]
     }
   ],

@@ -111,13 +111,16 @@ async function main(){const project=path.resolve(opt('project',process.cwd())),s
   await fs.mkdir(dest,{recursive:true});
   for(const dir of ['runtime','licenses'])await copyTree(path.join(kit,dir),path.join(dest,dir));
   for(const file of ['cli.mjs','compiler.mjs','export.mjs','index.html','frame.html','viewer.mjs','frame.mjs','package.json','provenance.json','package-fragment.json'])await fs.copyFile(path.join(kit,file),path.join(dest,file));
+  const captureSource=await exists(path.join(kit,'capture'))?path.join(kit,'capture'):path.join(kit,'../flyover');
+  await copyTree(captureSource,path.join(dest,'capture'));
   console.log(JSON.stringify({kit:dest,installRequired:false,storyboardServerRequired:false}));return;
  }
+ if(command==='capture'){const local=await exists(path.join(kit,'capture/capture-layers.mjs'))?'./capture/capture-layers.mjs':'../flyover/capture-layers.mjs';const {captureLayers}=await import(local);console.log(JSON.stringify(await captureLayers(await json(path.resolve(project,opt('config','capture-config.json')))),null,2));return}
  if(command==='build'){console.log(JSON.stringify(await build(project,source,opt('out','video-player')),null,2));return}
  if(command==='preview'){const p=await json(path.join(out,'project.json'));const s=await serve(out,Number(opt('port',0)));console.log(JSON.stringify({url:s.url,duration:p.duration,stop:'Ctrl+C'}));for(const sig of ['SIGINT','SIGTERM'])process.once(sig,()=>s.server.close(()=>process.exit(0)));return}
- if(command==='doctor'){const browser=await browserPath(),ffmpeg=opt('ffmpeg',process.env.VIDEO_FFMPEG??'ffmpeg');let encoder=false;try{await exec(ffmpeg,['-version']);encoder=true}catch{}let probe=false;try{await exec(opt('ffprobe',process.env.VIDEO_FFPROBE??'ffprobe'),['-version']);probe=true}catch{}console.log(JSON.stringify({node:process.version,browser,ffmpeg:encoder?ffmpeg:null,previewReady:true,exportReady:!!browser&&encoder&&probe,storyboardServerRequired:false},null,2));return}
+ if(command==='doctor'){const browser=await browserPath(),ffmpeg=opt('ffmpeg',process.env.VIDEO_FFMPEG??'ffmpeg');let encoder=false;try{await exec(ffmpeg,['-version']);encoder=true}catch{}let probe=false;try{await exec(opt('ffprobe',process.env.VIDEO_FFPROBE??'ffprobe'),['-version']);probe=true}catch{}console.log(JSON.stringify({node:process.version,browser,ffmpeg:encoder?ffmpeg:null,previewReady:true,sourceCaptureReady:!!browser,exportReady:!!browser&&encoder&&probe,storyboardServerRequired:false},null,2));return}
  if(command==='frames'){const dest=path.resolve(project,opt('dest','player-checks'));await fs.mkdir(dest,{recursive:true});const times=String(opt('times','0')).split(',').map(Number);if(times.length>4)throw Error('Capture at most four frames per call');console.log(JSON.stringify({files:await captureFrames(out,times,dest)},null,2));return}
  if(['export','worker','status','cancel'].includes(command)){const {runExport}=await import('./export.mjs');await runExport({command,argv,project,out,opt,serve,openCapture,exec,kit,projectDestination});return}
- console.log('node cli.mjs materialize|build|preview|doctor|frames|export|status|cancel --project <project> --source video --out video-player');
+ console.log('node cli.mjs materialize|capture|build|preview|doctor|frames|export|status|cancel --project <project> --source video --out video-player');
 }
-if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(e=>{console.error(JSON.stringify({ok:false,error:e.message}));process.exitCode=1});
+if(process.argv[1]&&await fs.realpath(process.argv[1]).catch(()=>null)===await fs.realpath(fileURLToPath(import.meta.url)))main().catch(e=>{console.error(JSON.stringify({ok:false,error:e.message}));process.exitCode=1});

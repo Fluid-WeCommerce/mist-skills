@@ -1,6 +1,6 @@
 {
   "name": "mist-video-player",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,6 +11,7 @@
     "video:preview": "node cli.mjs preview",
     "video:doctor": "node cli.mjs doctor",
     "video:export": "node cli.mjs export",
-    "video:status": "node cli.mjs status"
+    "video:status": "node cli.mjs status",
+    "video:capture": "node cli.mjs capture"
   }
 }
