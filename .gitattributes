@@ -1,0 +1,6 @@
+# Keep third-party engines and frozen runtime bundles collapsed in code review.
+marketing/product-video/assets/flyover/vendor/*.js linguist-vendored=true
+marketing/product-video/assets/player/compiler.mjs linguist-generated=true
+marketing/product-video/assets/player/runtime/*.mjs linguist-generated=true
+marketing/product-video/assets/player/runtime/fonts/* linguist-vendored=true
+marketing/product-video/assets/player/runtime/device-stage/*.glb linguist-vendored=true

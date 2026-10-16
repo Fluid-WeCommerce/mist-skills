@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "video": "node tools/product-video/renderer.mjs"
+  }
+}

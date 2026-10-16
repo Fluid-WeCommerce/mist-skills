@@ -1,0 +1,54 @@
+{
+  "status": "passed local publication checks",
+  "mistSourceCommit": "f6c5095d506f5a5cc1831bbeeabe48615393ec4e",
+  "paidMistGenerationRuns": 0,
+  "nativeMistToolTests": {
+    "communityFetch": true,
+    "skillResolution": true,
+    "allDeclaredAssetBytesExact": true,
+    "assetCount": 98,
+    "repeatMaterializationIdempotent": true,
+    "activeCompanySubstitution": true,
+    "multipleChoiceAndCustomTextQuiz": true,
+    "runCliSetupDoctorBuild": true
+  },
+  "promptContext": {
+    "referenceBytesBefore": 122246,
+    "referenceBytesAfter": 8039,
+    "loadedBodyBytes": 21501,
+    "runSkillOutputBytes": 33077,
+    "onDemandGuides": 12
+  },
+  "independentZipTrial": {
+    "input": "Previously authored Sunrider source, kept outside this repository",
+    "manualPackageFixes": 0,
+    "npmInstalls": 0,
+    "storyboardInstallationUsed": false,
+    "build": {
+      "seconds": 31,
+      "scenes": 5,
+      "modules": 28
+    },
+    "representativeFlyoverFrameInspected": true,
+    "encodedFrameInspected": true,
+    "sample": {
+      "seconds": 0.5,
+      "width": 1920,
+      "height": 1080,
+      "fps": 12,
+      "frames": 6,
+      "audioCodec": "aac",
+      "videoCodec": "h264",
+      "fullDecodePassed": true
+    }
+  },
+  "limitations": [
+    "No paid model-generated fresh film or live Mist UI chat was run in this publication test.",
+    "Native Mist tool tests run app code with isolated Electron/auth context and localhost catalog; they are not a production catalog refresh.",
+    "The ZIP trial used existing source, not newly generated UI or creative.",
+    "Portable export tested on macOS; Windows remains untested for this kit.",
+    "Standalone kit uses standard Three.js; path tracing needs a compatible separate adapter.",
+    "Automatic DOM-to-layer capture helper still needs an installed Storyboard capture environment; the portable renderer accepts pre-frozen page layers."
+  ],
+  "publication": "PR for maintainer review; not merged"
+}
