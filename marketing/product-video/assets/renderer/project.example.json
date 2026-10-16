@@ -1,0 +1,12 @@
+{
+  "name": "Company product walkthrough",
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "scenes": [
+    { "id": "intro", "name": "Introduction", "duration": 5 },
+    { "id": "product", "name": "Product demonstration", "duration": 8 }
+  ],
+  "requiredAssets": ["assets/company-logo.svg"],
+  "music": null
+}

@@ -1,0 +1,64 @@
+{
+  "name": "Portable Storyboard player",
+  "version": "0.1.1",
+  "builtAt": "2026-10-16T04:29:30.049Z",
+  "runtime": {
+    "name": "Storyboard",
+    "upstream": "https://github.com/britonbaker/storyboard",
+    "baseCommit": "169366bb1b56e17e75d3b488e044c187bdb00803",
+    "snapshotIncludesLocalChanges": true,
+    "license": "licenses/Storyboard-MIT.txt",
+    "note": "Frozen SceneProps.t runtime, resource fencing and built-in Three.js DeviceStage. Does not include the editor, server, MuTracer or path tracing."
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sucrase": "3.35.1",
+    "es-module-lexer": "3.0.4",
+    "three": "bundled Storyboard vendor snapshot",
+    "pngjs": "7.0.0 (bundled source-layer capture codec; MIT)"
+  },
+  "models": {
+    "laptop": "runtime/device-stage/laptop-LICENSE.txt",
+    "phone": "runtime/device-stage/phone-LICENSE.txt"
+  },
+  "requirements": {
+    "preview": "Node >=22.12; browser with WebGL2",
+    "export": "Existing Chrome/Edge, FFmpeg and FFprobe",
+    "capture": "Node >=22.12; existing Chrome/Edge/Chromium; no Storyboard/Playwright install"
+  },
+  "files": [
+    {
+      "file": "runtime/react.mjs",
+      "sha256": "530f5e977c727e468b2fd53832c5cca1d018052ee0ba0918330437c6200ac3d8"
+    },
+    {
+      "file": "runtime/jsx-runtime.mjs",
+      "sha256": "12d67891a80383148dee1b047d8f63ef80c2c98b8356fe017b33cca7ebac42db"
+    },
+    {
+      "file": "runtime/react-dom.mjs",
+      "sha256": "775cce2b4f3822bc534f5cf388c47b6a43f86e9c13e026d8009c04fbebaf49fc"
+    },
+    {
+      "file": "runtime/storyboard.mjs",
+      "sha256": "8142bb662fab2f1031c07ea9c49656b89cc9f588228091f6e7b3f4f5f46fa2a2"
+    },
+    {
+      "file": "compiler.mjs",
+      "sha256": "5eeaad2d49b929a8dba86dd958504d9ebb0149f0d6ddaf12dcfde113824c5856"
+    },
+    {
+      "file": "runtime/fonts.css",
+      "sha256": "a967c059cd9a09cd39ceeb64e64a1cd03350573d892b847ff74ee0869e85868c"
+    },
+    {
+      "file": "runtime/device-stage/laptop.glb",
+      "sha256": "a0e7369e062cb29fd12a7c91c3cf6120e5ab65cfc3dfc428a57139162d6e144d"
+    },
+    {
+      "file": "runtime/device-stage/phone.glb",
+      "sha256": "b2b37ceca07acb374b16a0717852547a35de3ea916c65ef92f4e33374bde9cfa"
+    }
+  ]
+}
