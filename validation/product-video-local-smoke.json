@@ -78,7 +78,17 @@
       "visibility-visible descendants hidden",
       "materialize then CLI capture"
     ],
-    "symlinkedTemporaryPathsTested": true
+    "symlinkedTemporaryPathsTested": true,
+    "platformTests": {
+      "macOS": {
+        "passed": 10
+      },
+      "Windows": {
+        "passed": 10,
+        "seconds": 17.94,
+        "commit": "e225c185834266a31bccf4b2c77c37bc0a1df1b5"
+      }
+    }
   },
   "windowsExporter": {
     "commit": "a3efccd40eeba22187fc45f9eb4abda37fb9fa00",
