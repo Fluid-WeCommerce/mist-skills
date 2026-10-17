@@ -233,6 +233,7 @@ set only `id`, `name`, one of `prompt`/`skill`, and `acceptance`.
       "maxReworkRounds": 2,                    // 0-5, default 2. Fix-and-recheck rounds before onFail applies
 
       "runIf": { "flag": "build_theme" },      // optional: only run when this run-context flag is truthy (see below)
+      "runUnless": { "flag": "publish_theme" }, // optional: run unless this run-context flag is explicitly false (see below)
       "recovery": { "mode": "manual" }         // optional: opt in to retrying THIS step after a failure. Absent = no recovery
     }
   ],
@@ -308,6 +309,14 @@ Guidance for implementers:
 - `runIf` gates a **whole step**. For finer-grained skips inside a step, branch in the step's `prompt` instead (a prompt step can self-skip and emit `STEP_OUTPUT { skipped: true }`).
 - Prefer `runIf` over per-scope workflow copies — it keeps one source of truth and the progress card shows the skip explicitly.
 - Requires desktop engine support (fluid-mono `mist-desktop` ≥ the runIf release). Older builds ignore the unknown key and simply run the step, so tagging is backward-safe — but don't rely on skipping until the engine ships it.
+
+#### Skippable steps — `runUnless` (optional)
+
+`"runUnless": { "flag": "<contextKey>" }` is `runIf` the other way round: the step runs **unless that flag is explicitly `false`** in the run context. Unset or `true`, it runs as usual, so a step that should normally happen stays the default. Explicitly `false`, it is condition-skipped the same way, and its dependents still run.
+
+Speed Import uses it on `publish-theme` with `publish_theme`, so "build it all, but don't publish" skips the publish and still ends with the handoff. Without it, that run failed its publish gate (which can only pass by going live) and dependency-skipped the handoff.
+
+Requires desktop engine support (fluid-mono `mist-desktop` ≥ the runUnless release). Older builds ignore the unknown key and run the step, so they behave exactly as before.
 
 #### Version gating — read before publishing
 

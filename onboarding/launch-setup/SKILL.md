@@ -143,6 +143,11 @@ For a request resolved to `speed-import`, preserve the lightweight behavior:
 3. Call `run_workflow` with slug `speed-import`, a searchable
    `Launch <domain>` title, and context containing the canonical
    `website_url` plus `setup_mode: "speed"`.
+4. If the user asked to build the store without putting it live ("build it
+   all, but don't publish"), also put `publish_theme: false` in the context.
+   The workflow then skips its publish step and still ends with its handoff,
+   which says the theme is built and unpublished. Leave the key out
+   otherwise: an absent `publish_theme` publishes as usual.
 
 Do not show the Quality picker for Speed.
 
