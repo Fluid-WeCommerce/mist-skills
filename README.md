@@ -316,6 +316,8 @@ Guidance for implementers:
 
 Speed Import uses it on `publish-theme` with `publish_theme`, so "build it all, but don't publish" skips the publish and still ends with the handoff. Without it, that run failed its publish gate (which can only pass by going live) and dependency-skipped the handoff.
 
+Because an unset switch means the step runs, Mist's `run_workflow` won't start a run that leaves a `runUnless` flag out of its context (unless `deriveContext` sets it): it names the switch and the step it gates and asks for a second call with it set, so a caller who didn't know the switch existed can't publish against the user's wishes. Fronting skills should set it every time.
+
 Requires desktop engine support (fluid-mono `mist-desktop` ≥ the runUnless release). Older builds ignore the unknown key and run the step, so they behave exactly as before.
 
 #### Version gating — read before publishing
