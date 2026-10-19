@@ -104,5 +104,33 @@
     "workerSeconds": 5.55,
     "defectsObserved": [],
     "scope": "Short technical smoke only; not full-film/GPU quality/performance certification."
+  },
+  "revalidation": {
+    "checkedAt": "2026-10-19T15:43:44.468291+00:00",
+    "catalogTestsPassed": 29,
+    "catalogValid": true,
+    "standaloneCaptureTestsPassedOnMac": 10,
+    "nativeIntegrationTestsPassed": 4,
+    "nativeIntegrationTestSourceCommit": "f6c5095d506f5a5cc1831bbeeabe48615393ec4e",
+    "latestMistSourceCompatibility": {
+      "repository": "fluid-commerce/fluid",
+      "commit": "76a4873d38f29844fdb1abef7cdbfdf84dc6f3a8",
+      "method": "Targeted source comparison, not a live app generation run.",
+      "observed": [
+        "Community fetcher byte-identical; skill service differs only in a comment.",
+        "Asset materialization and quiz schema/completion format match tested implementation.",
+        "New skill gates apply to growth/integrations, not product-video.",
+        "Additional quiz waiting_for_user field is compatible with this question-only intake.",
+        "Declared npm run commands remain allowed."
+      ]
+    },
+    "localPreflight": {
+      "preview": true,
+      "sourceCapture": true,
+      "export": true
+    },
+    "prState": "open and mergeable; no reviews or remote checks recorded",
+    "paidMistGenerationRuns": 0,
+    "fullVideoRendered": false
   }
 }
