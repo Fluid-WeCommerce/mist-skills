@@ -1,6 +1,6 @@
 ---
 name: Ads Creative
-description: Use when the user wants ads for their store on Facebook, Instagram or Google (including YouTube). Writes ad copy per placement from the store's products and brand voice, picks product images for each aspect ratio, checks every line against Meta and Google health, income and testimonial rules, asks for approval on each asset, then saves an ad pack and, after approval, launches it as paused campaigns in the merchant's own Meta and Google Ads accounts.
+description: Use when the user wants ads for their store on Facebook, Instagram or Google (including YouTube). Writes ad copy per placement from the store's products and brand voice, picks product images for each aspect ratio (generating any that are missing), checks every line against Meta and Google health, income and testimonial rules, asks for approval on each asset, then saves an ad pack and, after approval, launches it as paused campaigns in the merchant's own Meta and Google Ads accounts.
 icon: share-2
 ---
 
@@ -85,9 +85,9 @@ Run these checks before any card. Supplement, wellness, weight, beauty and perso
 
 ## 5. Pick images
 
-Mist cannot generate images yet. Use the product's own images.
+Use the product's own images first. When none fits a placement, generate one (5a).
 
-| Placement | Ratio | Minimum size |
+| Placement | Ratio | Recommended size |
 |---|---|---|
 | Meta feed | 1:1 or 4:5 | 1080 × 1080 or 1080 × 1350 |
 | Meta Stories and Reels | 9:16 | 1080 × 1920 |
@@ -96,6 +96,17 @@ Mist cannot generate images yet. Use the product's own images.
 | Google logo | 1:1 | 128 × 128 (1200 × 1200 recommended) |
 
 For each placement, name the product image that fits and whether it needs cropping, or say that none fits and what photo the user should add. Check each image you use: no invented before-and-after, no doctor or lab-coat figure, no badge or seal ("FDA approved", "clinically proven"), no star ratings or reviews, and the label text is readable. Say an image passed only if you looked at its pixels: download it into the project (for example `.mist-desktop/ads/<campaign slug>/images/`) and open it with `view_project_image`. If you could not look at it, write "not checked: please look at this image" next to it, and keep that note on its approval card so the user checks it before approving.
+
+### 5a. Generate a missing image
+
+Generating costs AI credits on the company's account, so propose it first on a `human_in_the_loop` card (`source: "ads"`, `suggestion_id`: `ads:image:<campaign slug>:<ratio>:<short hash of the prompt>`) naming the product, the ratio and the scene. After approval:
+
+1. `fluid_api` `POST /api/v202506/company/ads/images` with `{"prompt": "<the scene>", "aspect_ratio": "1:1" | "4:5" | "9:16" | "1.91:1", "product_id": <id>, "count": 2}`. Pass `product_id` so the image keeps the real product's look; describe the scene, not the product. The answer is `202` with `generation.id`.
+2. Poll `GET /api/v202506/company/ads/images/<id>` every 10 seconds, up to 3 minutes, until `generation.status` is `completed` or `failed`.
+3. On `completed`, each `generation.images[].url` is in the company's DAM (tagged `ads`). Download it, look at it with `view_project_image`, and run the same image check as above. Use its `url` as the ad's `image_url`.
+4. On `failed`, show `generation.error` and fall back to the product's own images.
+
+Generated images are 1024 px on the short side (1216 × 640 for 1.91:1), which Meta and Google accept. With a product they come from the reference-image model, whose ratio can be off by a few percent; Meta crops to fit.
 
 ## 6. Ask for approval
 
