@@ -123,13 +123,15 @@ Only when a Meta ad account is selected (2a) and every Meta asset is approved. A
    ```json
    {"name": "...", "daily_budget": 2000, "countries": ["US"], "age_min": 18,
     "link_url": "https://...", "utm_campaign": "<campaign slug>",
+    "idempotency_key": "<the suggestion_id>",
     "ads": [{"primary_text": "...", "headline": "...", "description": "...",
              "call_to_action": "SHOP_NOW", "image_url": "https://..."}]}
    ```
 
-   Use `age_min` 18 or higher, and 18 for weight products. `image_url` must be the product image's https URL.
+   Use `age_min` 18 or higher, and 18 for weight products. `image_url` must be the product image's https URL. `idempotency_key` is the card's `suggestion_id`: if the call times out or errors in transit, retry with the same key and Fluid returns the first launch instead of creating a second campaign. After you change any copy, the pack hash and so the key change too.
 3. Read the answer:
    - **201:** the campaign, ad set and ads exist, all paused. Give the user `launch.manage_url` and tell them to review it and switch it on in Ads Manager when ready.
+   - **422 with `error.details.link_url` or `ads.N.image_url`:** the URL isn't a valid https URL. Fix it and retry.
    - **422 `claims_blocked`:** Fluid's claims check flagged lines (`error.details.violations`). Show them, rewrite (section 4), get approval again, and retry.
    - **404 `no_ad_account` or 409 `not_connected`:** go back to 2a.
    - **503:** the claims check couldn't run; try again later. Nothing was sent to Meta.
@@ -147,6 +149,7 @@ Only when a Google Ads account is selected (2b). Fluid creates a **paused Search
    ```json
    {"name": "...", "daily_budget": 2000, "countries": ["US"],
     "link_url": "https://...", "utm_campaign": "<campaign slug>",
+    "idempotency_key": "<the suggestion_id>",
     "headlines": ["3 to 15, each 30 characters or fewer"],
     "descriptions": ["2 to 4, each 90 characters or fewer"],
     "keywords": ["up to 20 phrase-match keywords"]}
