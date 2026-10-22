@@ -22,7 +22,7 @@ If `write_file` or `human_in_the_loop` is not offered, this is a read-only turn:
 
 Make these calls in one turn:
 
-1. **Product.** Call `product_card`, or `fluid_api` with `GET /api/v202604/company/products/{id}`. Note the title, price, description, canonical URL and every image URL. Use only facts from this response and the user.
+1. **Product.** Call `fluid_api` with `GET /api/v202604/company/products/{id}` for the full product: title, price, description, canonical URL and every image URL. If the user named the product rather than giving an id, find the id first (`GET /api/v202604/company/products` with a search, or `product_card`), then read the full product; `product_card` alone returns only a summary and one image. Use only facts from the full product and the user.
 2. **Brand voice.** Use the brand voice already in your context. If there is none, write in plain, friendly sentences and say so.
 3. **Meta account.** Call `fluid_api` with `GET /api/v202506/meta/connection` and `GET /api/v202506/company/ads/meta/ad-account`. Then follow "2a" below.
 
@@ -87,7 +87,7 @@ Mist cannot generate images yet. Use the product's own images.
 | Google square | 1:1 | 1200 × 1200 |
 | Google logo | 1:1 | 128 × 128 (1200 × 1200 recommended) |
 
-For each placement, name the product image that fits and whether it needs cropping, or say that none fits and what photo the user should add. Check each image you use: no invented before-and-after, no doctor or lab-coat figure, no badge or seal ("FDA approved", "clinically proven"), no star ratings or reviews, and the label text is readable.
+For each placement, name the product image that fits and whether it needs cropping, or say that none fits and what photo the user should add. Check each image you use: no invented before-and-after, no doctor or lab-coat figure, no badge or seal ("FDA approved", "clinically proven"), no star ratings or reviews, and the label text is readable. Say an image passed only if you looked at its pixels: download it into the project (for example `.mist-desktop/ads/<campaign slug>/images/`) and open it with `view_project_image`. If you could not look at it, write "not checked: please look at this image" next to it, and keep that note on its approval card so the user checks it before approving.
 
 ## 6. Ask for approval
 
