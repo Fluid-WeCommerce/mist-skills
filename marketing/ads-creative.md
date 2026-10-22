@@ -168,6 +168,10 @@ Only when a Google Ads account is selected (2b). Fluid creates a **paused Search
 
 3. Read the answer as in step 8: 201 gives `launch.manage_url` (tell the user to review and enable it in Google Ads); 422 `claims_blocked` means rewrite and re-approve; 422 `unsupported_country` means drop that country; 404 or 409 means go back to 2b; 503 means try again later; 502 means Google refused and created nothing.
 
+## 8c. Check results
+
+When the user asks how a launched campaign is doing, `GET /api/v202506/company/ads/meta/launches` (or `/google/launches`) lists the launches; then `GET .../launches/<id>/insights?since=YYYY-MM-DD&until=YYYY-MM-DD` returns the campaign's status, `spend` (in the ad account's currency), impressions, clicks, CTR and CPC, read live from the platform. Leave out the dates for launch-to-today. Report the numbers as they are; don't predict results. A `campaign_status` of `PAUSED` means it hasn't been switched on, so zero spend is expected. For orders, point to Fluid's campaigns report under the launch's `utm_campaign`.
+
 ## 9. Finish
 
 - The pack path, and for Meta the `manage_url` from step 8 (or `ads_manager_url` from section 2 when you didn't launch).
