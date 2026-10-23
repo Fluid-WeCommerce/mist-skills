@@ -572,7 +572,7 @@
       "category": "onboarding",
       "icon": "rocket",
       "path": "onboarding/launch-setup/SKILL.md",
-      "updated_at": "2026-07-30T23:10:00Z"
+      "updated_at": "2026-10-17T19:07:10Z"
     },
     {
       "slug": "onboarding/catalog-hygiene-audit",
@@ -613,7 +613,7 @@
     {
       "slug": "speed-import",
       "path": "workflows/speed-import.workflow.json",
-      "updated_at": "2026-10-02T06:09:26Z"
+      "updated_at": "2026-10-17T19:07:10Z"
     }
   ]
 }

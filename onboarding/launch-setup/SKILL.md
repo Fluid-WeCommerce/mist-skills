@@ -143,6 +143,12 @@ For a request resolved to `speed-import`, preserve the lightweight behavior:
 3. Call `run_workflow` with slug `speed-import`, a searchable
    `Launch <domain>` title, and context containing the canonical
    `website_url` plus `setup_mode: "speed"`.
+4. Put `publish_theme` in the context: `false` when the user asked to build
+   the store without putting it live ("build it all, but don't publish"),
+   `true` otherwise. With `false` the workflow skips its publish step and
+   still ends with its handoff, which says the theme is built and
+   unpublished. Mist asks for the switch before it starts the run when it
+   is missing.
 
 Do not show the Quality picker for Speed.
 
