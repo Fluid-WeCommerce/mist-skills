@@ -372,11 +372,11 @@
     {
       "slug": "marketing/ads-creative",
       "name": "Ads Creative",
-      "description": "Use when the user wants ads for their store on Facebook, Instagram or Google (including YouTube). Writes ad copy per placement from the store's products and brand voice, picks product images for each aspect ratio, checks every line against Meta and Google health, income and testimonial rules, asks for approval on each asset, then saves an ad pack with links into Ads Manager and Google Ads. Never launches, spends or posts.",
+      "description": "Use when the user wants ads for their store on Facebook, Instagram or Google (including YouTube). Writes ad copy per placement from the store's products and brand voice, picks product images for each aspect ratio (generating any that are missing), checks every line against Meta and Google health, income and testimonial rules, asks for approval on each asset, then saves an ad pack and, after approval, launches it as paused campaigns in the merchant's own Meta and Google Ads accounts.",
       "category": "marketing",
       "icon": "share-2",
       "path": "marketing/ads-creative.md",
-      "updated_at": "2026-10-22T11:00:54Z"
+      "updated_at": "2026-10-22T12:05:46Z"
     },
     {
       "slug": "themes/suggested-changes",
