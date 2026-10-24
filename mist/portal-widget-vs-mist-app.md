@@ -202,7 +202,7 @@ back empty or 404 for a droplet widget that is installed and working:
 
 | Endpoint                           | Why it looks empty                                    |
 | ---------------------------------- | ----------------------------------------------------- |
-| `/api/droplets` (`app_extensions`) | Does not list contributed widget types                |
+| `/api/company/v2026-10/droplets/{uuid}` (`app_extensions`) | Does not list contributed widget types |
 | `/api/company/fluid_os/widget_packages` | Lists only approved, active packages              |
 | `/__widget-packages__`             | Dev-server route for unpublished *company* packages   |
 | `/api/app/widget-packages`         | Portal-session scoped; 404s for an ordinary API token |
