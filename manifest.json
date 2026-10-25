@@ -621,14 +621,22 @@
       "key": "revenue_head",
       "version": 1,
       "path": "bots/revenue_head/v1.json",
-      "sha256": "315e510a9aa3686ebe62d9fa5c256c5fbe729534794eb8248984a0cb59802fbe",
+      "sha256": "849c73564e47d1131d85923baaebf04d51bd52301e5dcd506762a092b5bd2f2b",
+      "files": {
+        "instructions.md": "cff85500f2e267173b458bdb25e253b20186b58fb2564283c816035b52a996d9",
+        "persona.md": "a73b92f638f97db6bf4aedfb173b3816cc1a0b5c325381db40316528e238fa7e"
+      },
       "updated_at": "2026-10-25T00:00:00Z"
     },
     {
       "key": "moderator",
       "version": 1,
       "path": "bots/moderator/v1.json",
-      "sha256": "920655b1a2375d81bde4df000a903e631525f1550cafd3fb9d027bb17554e43e",
+      "sha256": "fd3c5bf6bbf1cd24dda8897b10fa853e6f1cef4586f29a1d53d9780d67ad4ef6",
+      "files": {
+        "instructions.md": "7c168071cc8e7875d09140daf6e510c701fd2af4e0bdae83eb1be3bdd6bd6782",
+        "persona.md": "dc0db962338d65184b48110ed0f542e08f1e6a073cdcf1cd250ce04915da023b"
+      },
       "updated_at": "2026-10-25T00:00:00Z"
     }
   ]

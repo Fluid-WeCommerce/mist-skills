@@ -40,6 +40,10 @@ mist-skills/
 │   ├── open-a-country.md          ← flat skill (front-end steps flow)
 │   └── compliance-manager/        ← folder skill
 │       └── SKILL.md
+├── bots/                          ← We-Bots templates for Fluid (see Bot templates)
+│   └── moderator/
+│       ├── v1.json
+│       └── v1/{persona,instructions}.md
 ├── workflows/                     ← declarative multi-step chains (JSON, not skills)
 │   ├── open-country.workflow.json
 │   ├── finalize-otg-country.workflow.json
@@ -376,6 +380,45 @@ These capabilities have exactly one implementation, the Fluid CLI that ships ins
 | Convert prices into a country's currency | `fluid countries prices <ISO> [--from-country US]` previews with the ECB reference rate; add `--rate <reviewed rate> --write --yes` to save. Never PUT variant prices with `fluid_api` |
 | Languages and storefront translations | `fluid countries languages <ISO>`, `fluid translations enable <iso…> --yes` / `disable <iso> --yes` (Mist refuses `fluid_api` writes to `/api/settings/languages`), `fluid translations missing <iso>`, `fluid translations auto <iso> [--type …] [--limit n] --write --yes` |
 | Storefront Pages | `fluid pages create --title … --theme "<Theme>" --content-file page/<name>/index.liquid --yes` with run_cli `approval_id` from an approved `page-create:` human_in_the_loop card, `fluid pages template <page> --content-file … [--publish] --yes` |
+
+## Bot templates
+
+`bots/` holds We-Bots marketplace templates for Fluid. Mist Desktop ignores them; Fluid Rails syncs them when a root admin pins a full 40-character commit SHA (`WeBots::TemplateRepoSync`), then a second root admin publishes each version.
+
+```
+bots/<key>/
+├── v<n>.json            ← the template definition (profile, model, keys, listing, …)
+└── v<n>/
+    ├── persona.md       ← the bot's starter persona, plain Markdown
+    └── instructions.md  ← how the bot works on Fluid, plain Markdown
+```
+
+In the JSON, `persona` and `instructions` are each either an inline string or a reference to a Markdown file in the version's directory:
+
+```json
+"persona": { "file": "persona.md" },
+"instructions": { "file": "instructions.md" }
+```
+
+A file name is lowercase letters, digits, `_` and `-` ending in `.md`; no directories and no `..`. Fluid inlines each file's text exactly as written before validating the template, so the template schema's limits apply to the Markdown (each at most 16,000 characters), and the stored version never reads this repo again.
+
+Each template has a `bots[]` entry in `manifest.json` that pins the JSON and every Markdown file it names:
+
+```json
+{
+  "key": "moderator",
+  "version": 1,
+  "path": "bots/moderator/v1.json",
+  "sha256": "<sha256 of v1.json>",
+  "files": {
+    "instructions.md": "<sha256 of v1/instructions.md>",
+    "persona.md": "<sha256 of v1/persona.md>"
+  },
+  "updated_at": "2026-10-25T00:00:00Z"
+}
+```
+
+`files` lists exactly the files the template names: Fluid refuses the entry if one is missing or extra, or if any digest differs. A published version never changes, so a change to the JSON or either Markdown file is a new version (`v<n+1>.json` and `v<n+1>/`). `scripts/validate_catalog.py` checks every `bots[]` entry's path, digests and file references.
 
 ## Contributing a skill
 
