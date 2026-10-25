@@ -618,74 +618,18 @@
   ],
   "bots": [
     {
-      "key": "logistics_scout",
-      "version": 2,
-      "path": "bots/logistics_scout/v2.json",
-      "sha256": "88c24beb4d0d00ffc8624ac0caa7705e9992e3acc0ba3b6d9381b7e1be0452ee",
-      "updated_at": "2026-10-23T00:00:00Z"
+      "key": "revenue_head",
+      "version": 1,
+      "path": "bots/revenue_head/v1.json",
+      "sha256": "315e510a9aa3686ebe62d9fa5c256c5fbe729534794eb8248984a0cb59802fbe",
+      "updated_at": "2026-10-25T00:00:00Z"
     },
     {
-      "key": "site_tuner",
-      "version": 2,
-      "path": "bots/site_tuner/v2.json",
-      "sha256": "00f86a4d34285e21b3d459e8fba71f0e056ac08a1023ba5ef4886e1ebffa4d9d",
-      "updated_at": "2026-10-23T00:00:00Z"
-    },
-    {
-      "key": "rep_welcome",
-      "version": 2,
-      "path": "bots/rep_welcome/v2.json",
-      "sha256": "0ee09115104f9f01ee893462802b18e734f5512fd0729fa956f831283883b47c",
-      "updated_at": "2026-10-23T00:00:00Z"
-    },
-    {
-      "key": "finance_pulse",
-      "version": 2,
-      "path": "bots/finance_pulse/v2.json",
-      "sha256": "660e715ec1919786aabe49d9047b6a7b9ecc348c641a7939f821a9ba7a1893bf",
-      "updated_at": "2026-10-23T00:00:00Z"
-    },
-    {
-      "key": "support_helper",
-      "version": 2,
-      "path": "bots/support_helper/v2.json",
-      "sha256": "a1938472e618d914feef86bc26b410748677ca8dcceeae54487dec4b58c298ab",
-      "updated_at": "2026-10-23T00:00:00Z"
-    },
-    {
-      "key": "cheer_squad",
-      "version": 2,
-      "path": "bots/cheer_squad/v2.json",
-      "sha256": "a1264305c9d61f1bbcdc7ad84ad39d8a937789dc5d96bfc39efbd04f9e1a728b",
-      "updated_at": "2026-10-23T00:00:00Z"
-    },
-    {
-      "key": "onboarding_coach",
-      "version": 2,
-      "path": "bots/onboarding_coach/v2.json",
-      "sha256": "c23a78ef550b8e08097ac01caab1a26e8838be5004121a3d438d962b8b94159d",
-      "updated_at": "2026-10-23T00:00:00Z"
-    },
-    {
-      "key": "weekly_analyst",
-      "version": 2,
-      "path": "bots/weekly_analyst/v2.json",
-      "sha256": "d3669e793b6f793bc34ee30b297caa46c715ab0b1fc4a7d7939beb8268ca8adf",
-      "updated_at": "2026-10-23T00:00:00Z"
-    },
-    {
-      "key": "compliance_reviewer",
-      "version": 2,
-      "path": "bots/compliance_reviewer/v2.json",
-      "sha256": "3633b61f58dcc650dc8c3ade00c727fd05fa4f69e205b8e2dd9e9a26a7780f6e",
-      "updated_at": "2026-10-23T00:00:00Z"
-    },
-    {
-      "key": "cart_rescuer",
-      "version": 2,
-      "path": "bots/cart_rescuer/v2.json",
-      "sha256": "7934936e1f23721472de05bc3a6eab08b6c1cf169be87b3e16d8336a3db8cc2c",
-      "updated_at": "2026-10-23T00:00:00Z"
+      "key": "moderator",
+      "version": 1,
+      "path": "bots/moderator/v1.json",
+      "sha256": "920655b1a2375d81bde4df000a903e631525f1550cafd3fb9d027bb17554e43e",
+      "updated_at": "2026-10-25T00:00:00Z"
     }
   ]
 }
