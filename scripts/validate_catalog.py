@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 import sys
 from collections.abc import Iterable
 from pathlib import Path
@@ -184,6 +186,103 @@ def validate_manifest(manifest: Any) -> tuple[int, int]:
     validate_unique(workflow_identities, "workflow slug")
     validate_unique(workflow_paths, "workflow path")
     return len(skills), len(workflows)
+
+
+BOT_KEY_PATTERN = re.compile(r"[a-z][a-z0-9_]{1,62}")
+BOT_FILE_NAME_PATTERN = re.compile(r"[a-z0-9_-]+\.md")
+SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
+BOT_FILE_FIELDS = ("persona", "instructions")
+
+
+def sha256_of(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def bot_file_references(template: Any, label: str) -> set[str]:
+    """The Markdown files a bot template names in persona or instructions.
+
+    Each field is an inline string or exactly {"file": "<name>.md"}, a file in
+    the directory named for the version (bots/<key>/v<n>/), as Fluid Rails
+    (WeBots::TemplateMarkdownResolver) reads it.
+    """
+    if not isinstance(template, dict):
+        raise CatalogValidationError(f"{label}: template must be a JSON object")
+    named: set[str] = set()
+    for field in BOT_FILE_FIELDS:
+        reference = template.get(field)
+        if not isinstance(reference, dict):
+            continue
+        name = reference.get("file")
+        if (
+            set(reference) != {"file"}
+            or not isinstance(name, str)
+            or not BOT_FILE_NAME_PATTERN.fullmatch(name)
+        ):
+            raise CatalogValidationError(
+                f"{label}: {field} must be a string or {{\"file\": \"<name>.md\"}}"
+            )
+        named.add(name)
+    return named
+
+
+def validate_bot_entry(entry: Any, label: str) -> str:
+    if not isinstance(entry, dict):
+        raise CatalogValidationError(f"{label}: entry must be an object")
+    key = require_string(entry, "key", label)
+    version = entry.get("version")
+    if not BOT_KEY_PATTERN.fullmatch(key):
+        raise CatalogValidationError(f"{label}: key {key!r} is not a valid bot key")
+    if not isinstance(version, int) or isinstance(version, bool) or version < 1:
+        raise CatalogValidationError(f"{label}: version must be a positive integer")
+    path = require_string(entry, "path", label)
+    if path != f"bots/{key}/v{version}.json":
+        raise CatalogValidationError(f"{label}: path must be bots/{key}/v{version}.json")
+    require_string(entry, "updated_at", label)
+
+    template_path = validate_relative_file(path, label)
+    if entry.get("sha256") != sha256_of(template_path):
+        raise CatalogValidationError(f"{label}: sha256 does not match {path}")
+
+    pinned = entry.get("files", {})
+    if not isinstance(pinned, dict) or not all(
+        isinstance(name, str)
+        and BOT_FILE_NAME_PATTERN.fullmatch(name)
+        and isinstance(digest, str)
+        and SHA256_PATTERN.fullmatch(digest)
+        for name, digest in pinned.items()
+    ):
+        raise CatalogValidationError(
+            f"{label}: files must map <name>.md to a SHA-256 digest"
+        )
+    named = bot_file_references(load_json(template_path), label)
+    if named != set(pinned):
+        raise CatalogValidationError(
+            f"{label}: files must list exactly the files the template names "
+            f"(named {sorted(named)}, pinned {sorted(pinned)})"
+        )
+    directory = path.removesuffix(".json")
+    for name, digest in pinned.items():
+        if sha256_of(validate_relative_file(f"{directory}/{name}", label)) != digest:
+            raise CatalogValidationError(
+                f"{label}: files[{name!r}] does not match {directory}/{name}"
+            )
+    return f"{key}@{version}"
+
+
+def validate_bots(manifest: Any) -> int:
+    """Check manifest bots[]: each template's digest, and each Markdown file
+    its persona or instructions name is pinned in files with its digest."""
+    bots = manifest.get("bots", [])
+    if not isinstance(bots, list):
+        raise CatalogValidationError("manifest bots must be an array")
+    validate_unique(
+        (
+            (validate_bot_entry(entry, f"bots[{index}]"), f"bots[{index}]")
+            for index, entry in enumerate(bots)
+        ),
+        "bot key and version",
+    )
+    return len(bots)
 
 
 def require_fragments(text: str, fragments: tuple[str, ...], label: str) -> None:
@@ -1347,7 +1446,9 @@ def validate_streamlined_page_review_contract(workflow: Any) -> None:
 def validate_published_catalog(
     *, streamlined_workflow: Any | None = None
 ) -> tuple[int, int]:
-    skill_count, workflow_count = validate_manifest(load_json(MANIFEST_PATH))
+    manifest = load_json(MANIFEST_PATH)
+    skill_count, workflow_count = validate_manifest(manifest)
+    validate_bots(manifest)
     validate_shared_skill_contracts()
     validate_streamlined_product_import_contract()
     validate_streamlined_page_review_contract(
