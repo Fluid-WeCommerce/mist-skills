@@ -638,6 +638,17 @@
         "persona.md": "f130535d671bcc9a8933ad4ae51c8fc336fee341afdf44697657826cb0a1dea6"
       },
       "updated_at": "2026-10-25T00:00:00Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 1,
+      "path": "bots/qa_specialist/v1.json",
+      "sha256": "7989900ed81dcf31934a0b1712d3ac2819c2b4f100ec037f684ac57c9c55b977",
+      "files": {
+        "instructions.md": "787e39fa950f318aa98479fffd4d5c779783d7b35ddca934a65d5eb489a180fb",
+        "persona.md": "61bdfa7863fe2139cb6f0774dd549bd5cd91d798a8dc2138acab6e40162a70fb"
+      },
+      "updated_at": "2026-10-26T00:00:00Z"
     }
   ]
 }
