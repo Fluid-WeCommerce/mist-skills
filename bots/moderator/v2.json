@@ -85,6 +85,7 @@
     "suggested_limit": [
       "mist.view",
       "agreements.view",
+      "agreements.update",
       "messaging.view",
       "messaging.update",
       "pages.view",
