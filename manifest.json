@@ -165,7 +165,7 @@
     {
       "slug": "themes/theme-section-report",
       "name": "Theme Section Report",
-      "description": "Report the section-usage health of a company's active theme — inline (unsectioned) template code, broken section references, and unused sections. Read-only, never blocks.",
+      "description": "Report the section-usage health of a company's active theme \u2014 inline (unsectioned) template code, broken section references, and unused sections. Read-only, never blocks.",
       "category": "themes",
       "icon": "clipboard-list",
       "path": "themes/theme-section-report/SKILL.md",
@@ -183,7 +183,7 @@
     {
       "slug": "themes/fluid-block-spec",
       "name": "Fluid Block Spec",
-      "description": "Build or review Fluid theme sections and blocks against the Block & Section Specification v3 — canonical block types, setting IDs, control order, shared control groups, rendering rules and the pre-ship checklist.",
+      "description": "Build or review Fluid theme sections and blocks against the Block & Section Specification v3 \u2014 canonical block types, setting IDs, control order, shared control groups, rendering rules and the pre-ship checklist.",
       "category": "themes",
       "icon": "blocks",
       "path": "themes/fluid-block-spec/SKILL.md",
@@ -336,7 +336,7 @@
     {
       "slug": "marketing/brand-manager",
       "name": "Brand Manager",
-      "description": "Use when someone wants to know who their brand is really for and whether their marketing speaks to those people — defining core customers, auditing brand voice, positioning, message hierarchy and journey against them, then delivering a substantial report, approve-one-at-a-time improvements, and writing what it learned back to brand.md. Not for catalog data QA.",
+      "description": "Use when someone wants to know who their brand is really for and whether their marketing speaks to those people \u2014 defining core customers, auditing brand voice, positioning, message hierarchy and journey against them, then delivering a substantial report, approve-one-at-a-time improvements, and writing what it learned back to brand.md. Not for catalog data QA.",
       "category": "marketing",
       "icon": "compass",
       "path": "marketing/brand-manager/SKILL.md",
@@ -577,7 +577,7 @@
     {
       "slug": "onboarding/catalog-hygiene-audit",
       "name": "Catalog Hygiene Audit",
-      "description": "Sweep a product catalog for data-integrity defects — duplicate SKUs, defective live slugs, inconsistent family naming, reused images, unpriced purchasable products — rank them by customer-visible impact, and apply only the fixes the user approves one at a time.",
+      "description": "Sweep a product catalog for data-integrity defects \u2014 duplicate SKUs, defective live slugs, inconsistent family naming, reused images, unpriced purchasable products \u2014 rank them by customer-visible impact, and apply only the fixes the user approves one at a time.",
       "category": "onboarding",
       "icon": "list-checks",
       "path": "onboarding/catalog-hygiene-audit.md",
@@ -678,7 +678,7 @@
       "path": "bots/developer/v2.json",
       "sha256": "011ab224344da2162c805b0fd2e8dc76951a6510b3603b26a146502e0f0099df",
       "files": {
-        "instructions.md": "9dbd7b9e480696069fb3c6a028248c66a382ce9ffa9ca1ef7d46c1adb4bfd4ec",
+        "instructions.md": "d01d2db1ea82a3da0fe65c55aa915dbbeae62fc4e17bcf356fad47b6a3677cf1",
         "persona.md": "ff38eef9a4b043429e4f0b55515135560489e8f8ddfc34cf23e7178c316c8e0d"
       },
       "updated_at": "2026-10-26T00:00:00Z"
@@ -689,7 +689,7 @@
       "path": "bots/chief_of_staff/v2.json",
       "sha256": "b27751ade850f4acefa28cd3e9f9b369e3d0ab88e9145bf3b490a2613e14e945",
       "files": {
-        "instructions.md": "6de177ed127312cf4b737b04e4cb8429ba93cec5db6d9e6d796dcf0a73e214a9",
+        "instructions.md": "11bfd35d6db12c1befb0f04e6017ae3eddb1d4ec3190255088607c092467c96a",
         "persona.md": "dad8121e285b69a1c16b5829a2e9f39a360429962479a78a96cc9b06145a89c0"
       },
       "updated_at": "2026-10-26T00:00:00Z"
