@@ -660,6 +660,17 @@
         "persona.md": "dad8121e285b69a1c16b5829a2e9f39a360429962479a78a96cc9b06145a89c0"
       },
       "updated_at": "2026-10-26T00:00:00Z"
+    },
+    {
+      "key": "developer",
+      "version": 1,
+      "path": "bots/developer/v1.json",
+      "sha256": "053d96afd800fe779036cccedd47000ff65813c22193e42c45a503fe18cdb8ff",
+      "files": {
+        "instructions.md": "e1e34e57efbf7437579f12949002ba04b5a6ccd699f58a9a9a116505f931ef21",
+        "persona.md": "ff38eef9a4b043429e4f0b55515135560489e8f8ddfc34cf23e7178c316c8e0d"
+      },
+      "updated_at": "2026-10-26T00:00:00Z"
     }
   ]
 }
