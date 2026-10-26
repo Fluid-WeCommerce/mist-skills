@@ -12,12 +12,6 @@
   },
   "model": "auto",
   "min_model_tier": "complex",
-  "required_keys": [
-    "mist.view",
-    "droplets.view",
-    "application_themes.view"
-  ],
-  "optional_keys": [],
   "capabilities": [
     "use_ai"
   ],
@@ -65,30 +59,6 @@
         "cron": "0 9 * * 1",
         "timezone": "America/Denver"
       }
-    ],
-    "suggested_limit": [
-      "mist.view",
-      "mist.code",
-      "developer.view",
-      "developer.update",
-      "company_admins.view",
-      "droplets.view",
-      "drop_zones.view",
-      "application_themes.view",
-      "application_themes.update",
-      "my_site_themes.view",
-      "github_installations.view",
-      "company_settings.view",
-      "orders.view",
-      "products.view",
-      "multiplayer_tasks.view",
-      "multiplayer_tasks.create",
-      "multiplayer_tasks.update",
-      "messaging.view",
-      "outbound_messages.view",
-      "outbound_messages.flow",
-      "outbound_messages.sms",
-      "outbound_messages.push"
     ],
     "name_suggestions": [
       "Developer",
