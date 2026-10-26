@@ -693,6 +693,39 @@
         "persona.md": "dad8121e285b69a1c16b5829a2e9f39a360429962479a78a96cc9b06145a89c0"
       },
       "updated_at": "2026-10-26T00:00:00Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 2,
+      "path": "bots/revenue_head/v2.json",
+      "sha256": "849c73564e47d1131d85923baaebf04d51bd52301e5dcd506762a092b5bd2f2b",
+      "files": {
+        "instructions.md": "3c388516f1daa4e95750dac2fa061d81b76442e9d95298be19dca796829ca1d1",
+        "persona.md": "a73b92f638f97db6bf4aedfb173b3816cc1a0b5c325381db40316528e238fa7e"
+      },
+      "updated_at": "2026-10-26T13:00:00Z"
+    },
+    {
+      "key": "moderator",
+      "version": 2,
+      "path": "bots/moderator/v2.json",
+      "sha256": "fd3c5bf6bbf1cd24dda8897b10fa853e6f1cef4586f29a1d53d9780d67ad4ef6",
+      "files": {
+        "instructions.md": "7eb7c9b1c33b2a7f4d33dc95808bda14bde062f409aa2a8206971d232673d40d",
+        "persona.md": "f130535d671bcc9a8933ad4ae51c8fc336fee341afdf44697657826cb0a1dea6"
+      },
+      "updated_at": "2026-10-26T13:00:00Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 2,
+      "path": "bots/qa_specialist/v2.json",
+      "sha256": "7989900ed81dcf31934a0b1712d3ac2819c2b4f100ec037f684ac57c9c55b977",
+      "files": {
+        "instructions.md": "12a8f8bf2f705761b03e1cbd4e9e097bfeb4b5b00dc26fd05c98e941002e672b",
+        "persona.md": "61bdfa7863fe2139cb6f0774dd549bd5cd91d798a8dc2138acab6e40162a70fb"
+      },
+      "updated_at": "2026-10-26T13:00:00Z"
     }
   ]
 }
