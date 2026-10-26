@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Developer",
+    "description": "Your technical expert: maps your droplets, drop zones, themes and Mist apps, watches checkout for conflicts and slowdowns, reviews pushes for security risks, and builds what you or your other bots need, with QA testing before anything goes live."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "required_keys": [
+    "mist.view",
+    "droplets.view",
+    "application_themes.view"
+  ],
+  "optional_keys": [],
+  "capabilities": [
+    "use_ai"
+  ],
+  "singleton": true,
+  "listing": {
+    "category": "operations",
+    "pitch": "Your technical guardian: keeps checkout fast and conflict-free, reviews code for security risks, and builds what your bots need.",
+    "character": {
+      "body": "square",
+      "color": "#0F172A",
+      "eyes": "sleepy",
+      "accessory": "glasses"
+    },
+    "highlights": [
+      "Maps your droplets, drop zones, themes and Mist apps",
+      "Spots droplets and callbacks that could conflict at checkout",
+      "Audits API keys and admins, and watches webhook failures",
+      "Reviews Mist app deployments and theme changes for security risks",
+      "Reads Mist app logs to find recurring errors",
+      "Never calls work done until QA Specialist has tested it"
+    ],
+    "example_prompts": [
+      "Could any of our droplets conflict at checkout?",
+      "What changed in our Mist apps this week, and is any of it risky?",
+      "Is our main theme built so the theme editor can change it?",
+      "Why is the commission preview app throwing errors?",
+      "How would you build a purchase link Revenue Head can track?",
+      "Give me this month's technical summary."
+    ],
+    "suggested_triggers": [
+      {
+        "label": "When company health changes",
+        "kind": "event",
+        "topic": "company_health.changed"
+      },
+      {
+        "label": "Every 4 hours: review new deployments and theme changes",
+        "kind": "schedule",
+        "cron": "0 */4 * * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 9am: technical summary",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      }
+    ],
+    "suggested_limit": [
+      "mist.view",
+      "mist.code",
+      "developer.view",
+      "developer.update",
+      "company_admins.view",
+      "droplets.view",
+      "drop_zones.view",
+      "application_themes.view",
+      "application_themes.update",
+      "my_site_themes.view",
+      "github_installations.view",
+      "company_settings.view",
+      "orders.view",
+      "products.view",
+      "multiplayer_tasks.view",
+      "multiplayer_tasks.create",
+      "multiplayer_tasks.update",
+      "messaging.view",
+      "outbound_messages.view",
+      "outbound_messages.flow",
+      "outbound_messages.sms",
+      "outbound_messages.push"
+    ],
+    "name_suggestions": [
+      "Developer",
+      "Dev",
+      "Architect"
+    ]
+  }
+}

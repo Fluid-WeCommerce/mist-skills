@@ -383,7 +383,7 @@ These capabilities have exactly one implementation, the Fluid CLI that ships ins
 
 ## Bot templates
 
-`bots/` holds We-Bots marketplace templates for Fluid. Mist Desktop ignores them; Fluid Rails syncs them when a root admin pins a full 40-character commit SHA (`WeBots::TemplateRepoSync`), then a second root admin publishes each version.
+`bots/` holds We-Bots marketplace templates for Fluid. Mist Desktop ignores them. Fluid Rails pulls `main` every hour and publishes each new version that validates (`WeBots::TemplateAutoSync`); a root admin can still sync a pinned commit, publish or withdraw a version by hand.
 
 ```
 bots/<key>/

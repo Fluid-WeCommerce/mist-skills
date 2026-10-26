@@ -671,6 +671,17 @@
         "persona.md": "ff38eef9a4b043429e4f0b55515135560489e8f8ddfc34cf23e7178c316c8e0d"
       },
       "updated_at": "2026-10-26T00:00:00Z"
+    },
+    {
+      "key": "developer",
+      "version": 2,
+      "path": "bots/developer/v2.json",
+      "sha256": "011ab224344da2162c805b0fd2e8dc76951a6510b3603b26a146502e0f0099df",
+      "files": {
+        "instructions.md": "9dbd7b9e480696069fb3c6a028248c66a382ce9ffa9ca1ef7d46c1adb4bfd4ec",
+        "persona.md": "ff38eef9a4b043429e4f0b55515135560489e8f8ddfc34cf23e7178c316c8e0d"
+      },
+      "updated_at": "2026-10-26T00:00:00Z"
     }
   ]
 }
