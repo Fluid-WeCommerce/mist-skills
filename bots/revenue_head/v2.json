@@ -12,13 +12,6 @@
   },
   "model": "auto",
   "min_model_tier": "complex",
-  "required_keys": [
-    "mist.view",
-    "reports.view",
-    "dashboard.view",
-    "orders.view"
-  ],
-  "optional_keys": [],
   "capabilities": [
     "use_ai",
     "list_orders"
@@ -83,41 +76,6 @@
         "kind": "event",
         "topic": "member_ranks.changed"
       }
-    ],
-    "suggested_limit": [
-      "mist.view",
-      "reports.view",
-      "dashboard.view",
-      "orders.view",
-      "members.view",
-      "contacts.view",
-      "visitors.view",
-      "subscriptions.view",
-      "subscriptions.update",
-      "products.view",
-      "categories.view",
-      "collections.view",
-      "pages.view",
-      "media.view",
-      "media.update",
-      "enrollment_packs.view",
-      "share_pages.view",
-      "sitemap.view",
-      "domains.view",
-      "ranks.view",
-      "company_countries.view",
-      "company_languages.view",
-      "payment_accounts.view",
-      "company_settings.view",
-      "company_settings.update",
-      "coupons.view",
-      "coupons.update",
-      "messaging.view",
-      "outbound_messages.view",
-      "outbound_messages.email",
-      "outbound_messages.sms",
-      "outbound_messages.push",
-      "outbound_messages.flow"
     ],
     "name_suggestions": [
       "Revenue Head",

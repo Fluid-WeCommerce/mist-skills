@@ -12,12 +12,6 @@
   },
   "model": "auto",
   "min_model_tier": "complex",
-  "required_keys": [
-    "mist.view",
-    "messaging.view",
-    "orders.view"
-  ],
-  "optional_keys": [],
   "capabilities": [
     "use_ai",
     "list_orders"
@@ -71,21 +65,6 @@
         "cron": "0 17 * * 1-5",
         "timezone": "America/Denver"
       }
-    ],
-    "suggested_limit": [
-      "mist.view",
-      "messaging.view",
-      "company_settings.view",
-      "orders.view",
-      "reports.view",
-      "dashboard.view",
-      "subscriptions.view",
-      "members.view",
-      "multiplayer_tasks.view",
-      "outbound_messages.view",
-      "outbound_messages.flow",
-      "outbound_messages.sms",
-      "outbound_messages.push"
     ],
     "name_suggestions": [
       "Chief of Staff",
