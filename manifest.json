@@ -682,6 +682,17 @@
         "persona.md": "ff38eef9a4b043429e4f0b55515135560489e8f8ddfc34cf23e7178c316c8e0d"
       },
       "updated_at": "2026-10-26T00:00:00Z"
+    },
+    {
+      "key": "chief_of_staff",
+      "version": 2,
+      "path": "bots/chief_of_staff/v2.json",
+      "sha256": "b27751ade850f4acefa28cd3e9f9b369e3d0ab88e9145bf3b490a2613e14e945",
+      "files": {
+        "instructions.md": "6de177ed127312cf4b737b04e4cb8429ba93cec5db6d9e6d796dcf0a73e214a9",
+        "persona.md": "dad8121e285b69a1c16b5829a2e9f39a360429962479a78a96cc9b06145a89c0"
+      },
+      "updated_at": "2026-10-26T00:00:00Z"
     }
   ]
 }
