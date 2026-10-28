@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Chief of Staff",
+    "description": "Coordinates all of your bots: hears what each one reports, keeps work moving without you prompting every bot, decides within the authority you give it, and turns it all into a clear, well-timed briefing."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "capabilities": [
+    "use_ai",
+    "list_orders"
+  ],
+  "singleton": true,
+  "listing": {
+    "category": "operations",
+    "pitch": "Your bots' coordinator: keeps every bot on your priorities and brings you decisions, not noise.",
+    "character": {
+      "body": "round",
+      "color": "#7C3AED",
+      "eyes": "happy",
+      "accessory": "headset"
+    },
+    "highlights": [
+      "Knows every bot you run and hears each report as it lands",
+      "Routes work between bots and follows up on anything stalled",
+      "Resolves conflicts between bots, and never overrides compliance",
+      "Sends Critical and Severe issues to you straight away",
+      "Briefs you when and how you like, with a recommendation",
+      "Earns more authority only as its calls match yours"
+    ],
+    "example_prompts": [
+      "What happened today across all the bots?",
+      "What needs my decision right now?",
+      "Which bot work is stalled, and why?",
+      "Keep every bot focused on subscription growth this quarter.",
+      "How often have your decisions matched mine?",
+      "Brief me every morning at 7 instead of end of day."
+    ],
+    "suggested_triggers": [
+      {
+        "label": "When company health changes",
+        "kind": "event",
+        "topic": "company_health.changed"
+      },
+      {
+        "label": "When someone posts in a channel I watch",
+        "kind": "event",
+        "topic": "channel_messages.posted"
+      },
+      {
+        "label": "Every weekday at 12pm: check on the bots",
+        "kind": "schedule",
+        "cron": "0 12 * * 1-5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every weekday at 5pm: end-of-day briefing",
+        "kind": "schedule",
+        "cron": "0 17 * * 1-5",
+        "timezone": "America/Denver"
+      }
+    ],
+    "name_suggestions": [
+      "Chief of Staff",
+      "Chief",
+      "Ops Lead"
+    ]
+  }
+}
