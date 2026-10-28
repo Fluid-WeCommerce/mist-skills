@@ -12,6 +12,13 @@
   },
   "model": "auto",
   "min_model_tier": "complex",
+  "required_keys": [
+    "mist.view",
+    "company_settings.view",
+    "products.view",
+    "orders.view"
+  ],
+  "optional_keys": [],
   "capabilities": [
     "use_ai",
     "list_orders"
@@ -71,6 +78,36 @@
         "cron": "0 9 * * 1",
         "timezone": "America/Denver"
       }
+    ],
+    "suggested_limit": [
+      "mist.view",
+      "mist.code",
+      "company_settings.view",
+      "droplets.view",
+      "products.view",
+      "subscription_plans.view",
+      "orders.view",
+      "pages.view",
+      "posts.view",
+      "media.view",
+      "enrollment_packs.view",
+      "categories.view",
+      "menus.view",
+      "agreements.view",
+      "sitemap.view",
+      "domains.view",
+      "application_themes.view",
+      "company_languages.view",
+      "company_countries.view",
+      "members.view",
+      "multiplayer_tasks.view",
+      "multiplayer_tasks.create",
+      "multiplayer_tasks.update",
+      "messaging.view",
+      "outbound_messages.view",
+      "outbound_messages.flow",
+      "outbound_messages.sms",
+      "outbound_messages.push"
     ],
     "name_suggestions": [
       "QA Specialist",
