@@ -1,5 +1,5 @@
 {
-  "revision": "2026-07-30-speed-import-theme-first-wave+context-budget+publish-gate+launcher-skill+recovery-restored",
+  "revision": "2026-07-30-speed-import-theme-first-wave+context-budget+publish-gate+launcher-skill+recovery-restored+publish-hold",
   "slug": "speed-import",
   "name": "Speed Import",
   "launcherSkill": "onboarding/launch-setup",
@@ -174,6 +174,9 @@
         "shop-page",
         "product-page"
       ],
+      "runUnless": {
+        "flag": "publish_theme"
+      },
       "maxReworkRounds": 2,
       "recovery": {
         "mode": "manual"
@@ -186,7 +189,7 @@
       "target": {
         "type": "manager"
       },
-      "prompt": "Write the handoff. Pull each step's STEP_OUTPUT; re-do nothing.\n\nLead with the live storefront URL and one honest sentence on whether this company could take an order today. Then: what is live, with counts; what is blocking, each with the single action that clears it; and what this run deliberately skipped \u2014 business profile and onboarding form, collections and content pages, media and UGC, and any broad storefront QA. Those are not failures, they are the trade this workflow makes for speed, and the operator needs to know they are outstanding.\n\nCounts, routes, and ids \u2014 not adjectives.\n\nEnd with STEP_OUTPUT: { live_url, can_take_an_order: true|false, live: {...}, blocking: [...], not_attempted: [...] }.",
+      "prompt": "Write the handoff. Pull each step's STEP_OUTPUT; re-do nothing.\n\nLead with the live storefront URL and one honest sentence on whether this company could take an order today. If publish-theme was skipped because this run was told not to publish (`publish_theme: false`), nothing went live: say the theme is built and unpublished, name the theme, set live_url to null, and list publishing it as the one action left. Then: what is live, with counts; what is blocking, each with the single action that clears it; and what this run deliberately skipped \u2014 business profile and onboarding form, collections and content pages, media and UGC, and any broad storefront QA. Those are not failures, they are the trade this workflow makes for speed, and the operator needs to know they are outstanding.\n\nCounts, routes, and ids \u2014 not adjectives.\n\nEnd with STEP_OUTPUT: { live_url, can_take_an_order: true|false, live: {...}, blocking: [...], not_attempted: [...] }.",
       "acceptance": [],
       "qa": {
         "enabled": false
