@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Moderator",
+    "description": "Protects your company, members and customers from legal, regulatory and reputational harm: reviews agreements, storefronts, the Today feed, public channels and social media, grades every finding by severity, and takes content down only as far as you allow."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "capabilities": [
+    "use_ai"
+  ],
+  "singleton": true,
+  "listing": {
+    "category": "operations",
+    "pitch": "Your compliance guard: catches risky claims and harmful posts, grades them, and acts only as far as you allow.",
+    "character": {
+      "body": "square",
+      "color": "#2563EB",
+      "eyes": "dots",
+      "accessory": "magnifier"
+    },
+    "highlights": [
+      "Reviews agreements for every country you sell in",
+      "Checks storefront pages, products, media and enrollment packs for risky claims",
+      "Watches the Today feed and public channels, never private messages",
+      "Searches social media for income and product claims about your brand",
+      "Grades findings Severe, Medium or Minor and explains each one",
+      "Asks before every takedown until it has learned your tolerance"
+    ],
+    "example_prompts": [
+      "Are our agreements compliant in every country we operate in?",
+      "Which product pages make claims we should fix?",
+      "Show me this week's flagged posts by severity.",
+      "Is anyone on social media making income claims about us?",
+      "How often have you and I agreed on takedowns so far?",
+      "Check this campaign copy before Revenue Head sends it."
+    ],
+    "suggested_triggers": [
+      {
+        "label": "When someone posts on Today",
+        "kind": "event",
+        "topic": "today_posts.created"
+      },
+      {
+        "label": "When someone comments on Today",
+        "kind": "event",
+        "topic": "today_comments.created"
+      },
+      {
+        "label": "When a message is posted in a channel I watch",
+        "kind": "event",
+        "topic": "channel_messages.posted"
+      },
+      {
+        "label": "Every morning at 6am: storefront and social sweep",
+        "kind": "schedule",
+        "cron": "0 6 * * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 8am: moderation report",
+        "kind": "schedule",
+        "cron": "0 8 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "First of the month: agreement review",
+        "kind": "schedule",
+        "cron": "0 9 1 * *",
+        "timezone": "America/Denver"
+      }
+    ],
+    "name_suggestions": [
+      "Moderator",
+      "Guardian",
+      "Compliance"
+    ]
+  }
+}

@@ -12,6 +12,12 @@
   },
   "model": "auto",
   "min_model_tier": "complex",
+  "required_keys": [
+    "mist.view",
+    "agreements.view",
+    "messaging.view"
+  ],
+  "optional_keys": [],
   "capabilities": [
     "use_ai"
   ],
@@ -75,6 +81,35 @@
         "cron": "0 9 1 * *",
         "timezone": "America/Denver"
       }
+    ],
+    "suggested_limit": [
+      "mist.view",
+      "agreements.view",
+      "messaging.view",
+      "messaging.update",
+      "pages.view",
+      "pages.update",
+      "posts.view",
+      "posts.update",
+      "products.view",
+      "products.update",
+      "media.view",
+      "media.update",
+      "enrollment_packs.view",
+      "enrollment_packs.update",
+      "categories.view",
+      "collections.view",
+      "playlists.view",
+      "sitemap.view",
+      "domains.view",
+      "application_themes.view",
+      "members.view",
+      "orders.view",
+      "company_countries.view",
+      "company_languages.view",
+      "outbound_messages.view",
+      "outbound_messages.flow",
+      "outbound_messages.email"
     ],
     "name_suggestions": [
       "Moderator",

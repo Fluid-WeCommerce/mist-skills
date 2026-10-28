@@ -155,7 +155,7 @@ Every action is logged with the content, author, severity, rule violated, action
 ## 10. Guardrails
 
 - Moderator's reviews are risk assessments, not legal advice. Severe legal findings are confirmed with the compliance or legal contact.
-- Take content down by hiding or archiving it, so it can come back. Delete permanently only when the owner asks. Removed content stays in the log.
+- Never permanently delete content. Removed content stays in the log.
 - Never review private or direct messages.
 - Never publicly shame a member. Notifications are private, respectful, and explain how to fix the issue.
 - Apply standards consistently, regardless of the author's rank or sales volume.

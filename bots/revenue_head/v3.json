@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Revenue Head",
+    "description": "Finds and captures every revenue opportunity across storefront, subscriptions, field sales, channels, ads and new markets, acts within the limits you set, measures the lift, and quarterbacks your other revenue bots."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "capabilities": [
+    "use_ai",
+    "list_orders"
+  ],
+  "singleton": true,
+  "listing": {
+    "category": "sales",
+    "pitch": "Your revenue quarterback: hunts every missed sale, acts within your limits and proves the lift.",
+    "character": {
+      "body": "round",
+      "color": "#16A34A",
+      "eyes": "wide",
+      "accessory": "coin"
+    },
+    "highlights": [
+      "Scans carts, subscriptions, lapsed customers, field reps, channels, ads and new markets",
+      "Asks your budget and limits right before it first needs them, then stays inside them",
+      "Credits sponsors and tags every link so each sale can be traced",
+      "Tests with control groups and reports true lift, not lucky timing",
+      "Posts early wins, weekly summaries and an opportunity backlog",
+      "Coordinates your other revenue bots in one group chat with you"
+    ],
+    "example_prompts": [
+      "Where are we leaving the most revenue on the table this month?",
+      "Which lapsed customers should we win back first, and with what offer?",
+      "Which reps are close to their next rank, and how can we help them get there?",
+      "Is our TikTok Shop set up well, and do our prices fit it?",
+      "How are we tracking against the baseline and our 90-day goal?",
+      "Which playbooks should we scale, and which should we retire?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every morning at 7am: revenue scan",
+        "kind": "schedule",
+        "cron": "0 7 * * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 8am: weekly summary",
+        "kind": "schedule",
+        "cron": "0 8 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "First of the month: monthly review",
+        "kind": "schedule",
+        "cron": "0 9 1 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When a cart is abandoned",
+        "kind": "event",
+        "topic": "cart.abandoned"
+      },
+      {
+        "label": "When a subscription is cancelled",
+        "kind": "event",
+        "topic": "subscription.cancelled"
+      },
+      {
+        "label": "When a member's rank changes",
+        "kind": "event",
+        "topic": "member_ranks.changed"
+      }
+    ],
+    "name_suggestions": [
+      "Revenue Head",
+      "Closer",
+      "Quarterback"
+    ]
+  }
+}

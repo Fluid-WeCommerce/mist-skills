@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "QA Specialist",
+    "description": "Finds problems before anyone else does: watches company health, your sites, pricing, checkout, attribution, apps, droplets and translations, explains each issue calmly, routes it to the right fixer and re-tests before closing it."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "capabilities": [
+    "use_ai",
+    "list_orders"
+  ],
+  "singleton": true,
+  "listing": {
+    "category": "operations",
+    "pitch": "Your early-warning teammate: catches broken checkouts, wrong prices and missing translations before your customers do.",
+    "character": {
+      "body": "capsule",
+      "color": "#0D9488",
+      "eyes": "wide",
+      "accessory": "clipboard"
+    },
+    "highlights": [
+      "Listens to company health and learns what normal looks like",
+      "Checks every page loads, with no 404s or broken links",
+      "Compares product prices with what each storefront shows",
+      "Watches completed orders and attribution for drops",
+      "Checks every language you support for missing translations",
+      "Opens tickets, routes them to Fluid Studios, your team or the developer bot, and re-tests fixes"
+    ],
+    "example_prompts": [
+      "Is anything broken right now?",
+      "Which product pages are missing Spanish translations?",
+      "Did any prices change this week?",
+      "Are orders being attributed to the right reps?",
+      "What's the status of every open ticket?",
+      "What did you catch before a customer reported it?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "When company health changes",
+        "kind": "event",
+        "topic": "company_health.changed"
+      },
+      {
+        "label": "When an order payment fails",
+        "kind": "event",
+        "topic": "orders.payment_failed"
+      },
+      {
+        "label": "Every hour: site and pricing check",
+        "kind": "schedule",
+        "cron": "0 * * * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every morning at 8am: daily summary",
+        "kind": "schedule",
+        "cron": "0 8 * * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 9am: weekly review",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      }
+    ],
+    "name_suggestions": [
+      "QA Specialist",
+      "Sentinel",
+      "Watchtower"
+    ]
+  }
+}
