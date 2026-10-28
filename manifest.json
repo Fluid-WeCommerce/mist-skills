@@ -756,7 +756,7 @@
       "sha256": "3da47659f79a4db524f25ca7274f417dadeda7cfc3c162101d5bf621276a2ea9",
       "files": {
         "instructions.md": "9b3f8991e32b5d312e42d043cbda14670e7b14e732a16f90fb361375b851e66b",
-        "persona.md": "6d866149537a866a297949e6dbfe98b26253caef3b2a7833f70ddcdbcbb8534b"
+        "persona.md": "726d88abb3494bdfdc44a2cf421155e18843475aea0d1e024bce42f4d291a95b"
       },
       "updated_at": "2026-10-28T04:59:52Z"
     },
@@ -767,7 +767,7 @@
       "sha256": "fe57d902ac2aef18ce6e53b6e9ec63cbc72d042413b82adcac5f95e28d673415",
       "files": {
         "instructions.md": "9f471a2d1392c1b5857dbc4f2b340c1ec65efb8b009b0696cdcef7b6f4569fb4",
-        "persona.md": "6dd14fc02d1f0fbe38834ecbb61a4af4c2c6caf38b4b4ead3a4458995566ad0f"
+        "persona.md": "00172f305ac555549693a5f9c381283b0a3ef740201d9cda0b2960beae3d73c6"
       },
       "updated_at": "2026-10-28T04:59:52Z"
     },
@@ -778,7 +778,7 @@
       "sha256": "b7bdd9de7cfdb2a1769f927ed5077f050d3f90ee112c0fbda7f2be1e79a3a417",
       "files": {
         "instructions.md": "8e5c306866e8302f1faa0e596898cb3963438c836357bf79ab9c32b24763e3ad",
-        "persona.md": "3b54fbe67fb7e59b85dcaf22148f5399f7b8c7ae6aec1945368b0b363be5f927"
+        "persona.md": "e4084603d7a9fe7abac9a3806797b9a314de45f908d5d09084c41c14876b5a1b"
       },
       "updated_at": "2026-10-28T04:59:52Z"
     },
@@ -788,8 +788,8 @@
       "path": "bots/qa_specialist/v3.json",
       "sha256": "f6812990deb1b81df50e47b910f07980e7a40f3aa6ef2aa1887a17e1b6d2c6fc",
       "files": {
-        "instructions.md": "40e5b8f7e3ddc9d108dde8e585ffd4764053a917afb3fb6396587b60744a4de4",
-        "persona.md": "3fde2e3873e9c2874c30f75ced00500845cd77f31b16066a41c7de8fb98339cd"
+        "instructions.md": "27014b0167f935b8ed15287c46fcf677b24d2804dfe491eaf6915447bc8e94d4",
+        "persona.md": "778ee30f8471e5e589e9c96603ace9fb3ad3ab24c36095d48a12d2350f704a48"
       },
       "updated_at": "2026-10-28T04:59:52Z"
     },
@@ -800,7 +800,7 @@
       "sha256": "e32bcf849a1cf93c90b5622f94673ca001dbf5c4bf2c2a728fd36c67b6a4706c",
       "files": {
         "instructions.md": "10f5314585c2a186c08d83d2f2769b691354e84171d7950c8a5235bb16bf5900",
-        "persona.md": "9b8701a6c4bcf3d236e3cd9cd122b84d5761dbea6d17ae86109581c253bb8d9d"
+        "persona.md": "4540942e3b3d6cff915612d0fb1a4147c397dada29da80affcad8ebea29dd36e"
       },
       "updated_at": "2026-10-28T04:59:52Z"
     }
