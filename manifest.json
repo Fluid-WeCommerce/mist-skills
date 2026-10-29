@@ -756,7 +756,7 @@
       "sha256": "3da47659f79a4db524f25ca7274f417dadeda7cfc3c162101d5bf621276a2ea9",
       "files": {
         "instructions.md": "9b3f8991e32b5d312e42d043cbda14670e7b14e732a16f90fb361375b851e66b",
-        "persona.md": "726d88abb3494bdfdc44a2cf421155e18843475aea0d1e024bce42f4d291a95b"
+        "persona.md": "8ef858448dee943625032d6fe384cc57652f1420a7e50dbc6f5db1b9fe51a24a"
       },
       "updated_at": "2026-10-28T04:59:52Z"
     },
@@ -767,7 +767,7 @@
       "sha256": "fe57d902ac2aef18ce6e53b6e9ec63cbc72d042413b82adcac5f95e28d673415",
       "files": {
         "instructions.md": "9f471a2d1392c1b5857dbc4f2b340c1ec65efb8b009b0696cdcef7b6f4569fb4",
-        "persona.md": "00172f305ac555549693a5f9c381283b0a3ef740201d9cda0b2960beae3d73c6"
+        "persona.md": "c5924a7976040bfab58fc0c4372dbe0b8ff33e8680e8c7289274fb07f4e89eb7"
       },
       "updated_at": "2026-10-28T04:59:52Z"
     },
@@ -778,7 +778,7 @@
       "sha256": "b7bdd9de7cfdb2a1769f927ed5077f050d3f90ee112c0fbda7f2be1e79a3a417",
       "files": {
         "instructions.md": "8e5c306866e8302f1faa0e596898cb3963438c836357bf79ab9c32b24763e3ad",
-        "persona.md": "e4084603d7a9fe7abac9a3806797b9a314de45f908d5d09084c41c14876b5a1b"
+        "persona.md": "2b7f5a55a0883bcab1307abf7a017f124f7c73216edaf730bad327d72420617d"
       },
       "updated_at": "2026-10-28T04:59:52Z"
     },
@@ -789,7 +789,7 @@
       "sha256": "f6812990deb1b81df50e47b910f07980e7a40f3aa6ef2aa1887a17e1b6d2c6fc",
       "files": {
         "instructions.md": "27014b0167f935b8ed15287c46fcf677b24d2804dfe491eaf6915447bc8e94d4",
-        "persona.md": "778ee30f8471e5e589e9c96603ace9fb3ad3ab24c36095d48a12d2350f704a48"
+        "persona.md": "eec824bce120a03e93ee6d5d15b8a58cd50e9db2007cb1b815201c256663346e"
       },
       "updated_at": "2026-10-28T04:59:52Z"
     },
@@ -800,7 +800,7 @@
       "sha256": "e32bcf849a1cf93c90b5622f94673ca001dbf5c4bf2c2a728fd36c67b6a4706c",
       "files": {
         "instructions.md": "10f5314585c2a186c08d83d2f2769b691354e84171d7950c8a5235bb16bf5900",
-        "persona.md": "4540942e3b3d6cff915612d0fb1a4147c397dada29da80affcad8ebea29dd36e"
+        "persona.md": "745ae811852e970235c3e7f47abe448436d0c1ff5b2df493c3662e427c30e7b8"
       },
       "updated_at": "2026-10-28T04:59:52Z"
     }
