@@ -1,0 +1,8 @@
+{
+  "rendererUrl": "http://127.0.0.1:5199",
+  "projectsDir": "/absolute/path/to/storyboard/projects",
+  "runtimeDir": "/absolute/path/to/storyboard",
+  "sourceDir": "video",
+  "outputDir": "exports",
+  "render": { "renderer": "three", "scale": 1, "fps": 30 }
+}

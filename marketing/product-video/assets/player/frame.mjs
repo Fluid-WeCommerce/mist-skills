@@ -1,0 +1,28 @@
+import React,{Component} from 'react';
+import {createRoot,flushSync} from 'react-dom';
+import {setAssetBase,SceneContext,createMusic,settleDeviceStages,readCue} from 'storyboard';
+const p=await(await fetch('./project.json')).json();
+const modules=await Promise.all(p.scenes.map(s=>import(s.module)));
+const root=createRoot(document.querySelector('#root'));let lastErrors=[],epoch=0,current=0;
+setAssetBase(new URL('./assets/',location.href).href);document.documentElement.dataset.sbRenderer='three';
+const music=s=>createMusic({analysis:p.musicAnalysis??null,musicStart:p.music?.start??0,sceneStart:s.start,sceneDuration:s.duration});
+const props=(s,t)=>({t,duration:s.duration,width:p.width,height:p.height,fps:p.fps,music:music(s),scene:{id:s.id,name:s.name,index:s.index,count:p.scenes.length,start:s.start}});
+class Boundary extends Component{state={error:null};static getDerivedStateFromError(error){return{error}}componentDidCatch(e){lastErrors.push(e.message)}render(){return this.state.error?React.createElement('pre',{style:{padding:40,color:'#b42318',fontSize:24}},this.state.error.message):this.props.children}}
+function render(t){current=Math.max(0,Math.min(p.duration,t));if(lastErrors.length)epoch++;lastErrors=[];const s=p.scenes.find(s=>current<s.start+s.duration)??p.scenes.at(-1),local=Math.max(0,Math.min(s.duration,current-s.start));const Scene=modules[s.index].default;
+flushSync(()=>root.render(React.createElement('div',{style:{position:'absolute',width:p.width,height:p.height,overflow:'hidden',fontFamily:"'Inter Variable',system-ui,sans-serif",background:'#fff',color:'#0a0a0a',WebkitFontSmoothing:'antialiased',contain:'strict'}},React.createElement(SceneContext.Provider,{value:props(s,local)},React.createElement(Boundary,{key:s.id+':'+epoch},React.createElement(Scene,props(s,local)))))));
+return {sceneId:s.id,localTime:local,errors:lastErrors};}
+const raf=()=>new Promise(r=>requestAnimationFrame(r));
+async function settle(){await settleDeviceStages();void document.body.offsetHeight;await document.fonts.ready;await Promise.all([...document.images].map(i=>i.decode().catch(()=>{throw Error('Image failed to decode: '+i.currentSrc)})));await raf();await raf()}
+function cues(){const result=[];for(const s of p.scenes){let list=modules[s.index].sounds;if(typeof list==='function')list=list(props(s,0));if(list==null)continue;if(!Array.isArray(list))throw Error('Invalid sounds export in '+s.id);for(const raw of list){const c=readCue(raw);if(typeof c==='string')throw Error(s.id+': '+c);const file=p.soundFiles[c.sound];if(!file)throw Error('Missing rendered sound file: '+c.sound+' (materialize synth cues to audio files first)');result.push({...c,t:s.start+c.at,file})}}return result}
+const ready=(async()=>{await Promise.all(["400 32px 'Inter Variable'","700 32px 'Inter Variable'","italic 400 32px 'Inter Variable'","400 32px 'Geist Variable'","400 32px 'JetBrains Mono Variable'"].map(f=>document.fonts.load(f)));render(0);await settle()})();
+window.__sb={ready,project:p,duration:()=>p.duration,errors:()=>lastErrors,sounds:cues,async renderAsync(t){await ready;const r=render(t);await settleDeviceStages();return{...r,errors:lastErrors}},async seek(t){await ready;const r=render(t);await settle();return{...r,errors:lastErrors}},audio:async(from,to)=>{
+const rate=48000,ctx=new OfflineAudioContext(2,Math.ceil((to-from)*rate),rate),cache=new Map();
+async function audio(file){if(!cache.has(file))cache.set(file,fetch(new URL(file,location.href)).then(r=>{if(!r.ok)throw Error('Missing audio '+file);return r.arrayBuffer()}).then(b=>ctx.decodeAudioData(b)));return cache.get(file)}
+const all=cues();if(p.music)all.unshift({t:0,file:'music/'+p.music.file,volume:p.music.volume??.3,pitch:0,pan:0,align:'start',offset:p.music.start??0});
+for(const cue of all){const buffer=await audio(cue.file),speed=2**((cue.pitch??0)/12);let peak=0;if(cue.align==='peak'){let max=0;for(let c=0;c<buffer.numberOfChannels;c++){const data=buffer.getChannelData(c);for(let i=0;i<data.length;i++)if(Math.abs(data[i])>max){max=Math.abs(data[i]);peak=i/buffer.sampleRate}}}
+const start=cue.t-peak/speed,stop=Math.min(to,start+(cue.duration??buffer.duration/speed));if(stop<=from||start>=to)continue;const s=ctx.createBufferSource();s.buffer=buffer;s.playbackRate.value=speed;const gain=ctx.createGain();gain.gain.value=cue.volume??1;const pan=ctx.createStereoPanner();pan.pan.value=cue.pan??0;s.connect(gain).connect(pan).connect(ctx.destination);const offset=(cue.offset??0)+Math.max(0,from-start)*speed;if(offset<buffer.duration){s.start(Math.max(0,start-from),offset);s.stop(Math.max(0,stop-from))}}
+const buffer=await ctx.startRendering();let peak=0;for(let c=0;c<2;c++)for(const v of buffer.getChannelData(c))peak=Math.max(peak,Math.abs(v));const gain=peak>.89125?.89125/peak:1;
+const bytes=new Uint8Array(44+buffer.length*4),dv=new DataView(bytes.buffer);const str=(at,s)=>{for(let i=0;i<s.length;i++)bytes[at+i]=s.charCodeAt(i)};str(0,'RIFF');dv.setUint32(4,bytes.length-8,true);str(8,'WAVE');str(12,'fmt ');dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,2,true);dv.setUint32(24,rate,true);dv.setUint32(28,rate*4,true);dv.setUint16(32,4,true);dv.setUint16(34,16,true);str(36,'data');dv.setUint32(40,bytes.length-44,true);
+for(let i=0;i<buffer.length;i++)for(let c=0;c<2;c++){const t=from+i/rate,fade=Math.min(1,(to-t)/.12);dv.setInt16(44+(i*2+c)*2,Math.max(-32768,Math.min(32767,Math.round(buffer.getChannelData(c)[i]*gain*Math.max(0,fade)*32767))),true)}
+let binary='';for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));return{base64:btoa(binary),sampleRate:rate,masterGain:gain,cues:all.length};
+}};
