@@ -379,6 +379,18 @@
       "updated_at": "2026-10-22T12:05:46Z"
     },
     {
+      "slug": "marketing/build-and-share-form",
+      "name": "Build and Share a Form",
+      "description": "Create a standalone Fluid form through the API, activate it to mint its public share token, set embed access controls, hand back the share link and embed code, and read or export the responses. Use for a reseller application, an RSVP, a product-interest survey — any form shared by link or embed rather than shown at enrollment checkout.",
+      "category": "marketing",
+      "icon": "clipboard-list",
+      "path": "marketing/build-and-share-form/SKILL.md",
+      "updated_at": "2026-11-02T20:02:05Z",
+      "references": [
+        "marketing/build-and-share-form/references/forms-api.md"
+      ]
+    },
+    {
       "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
