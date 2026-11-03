@@ -12,10 +12,6 @@
   },
   "model": "auto",
   "min_model_tier": "complex",
-  "capabilities": [
-    "use_ai",
-    "list_orders"
-  ],
   "singleton": true,
   "listing": {
     "category": "sales",

@@ -12,9 +12,6 @@
   },
   "model": "auto",
   "min_model_tier": "complex",
-  "capabilities": [
-    "use_ai"
-  ],
   "singleton": true,
   "listing": {
     "category": "operations",

@@ -753,56 +753,56 @@
       "key": "chief_of_staff",
       "version": 4,
       "path": "bots/chief_of_staff/v4.json",
-      "sha256": "3da47659f79a4db524f25ca7274f417dadeda7cfc3c162101d5bf621276a2ea9",
+      "sha256": "e307d16f3a13bc86272b57bb37fc599f29c94d85ed8396e44b2db4002d05eeef",
       "files": {
-        "instructions.md": "9b3f8991e32b5d312e42d043cbda14670e7b14e732a16f90fb361375b851e66b",
-        "persona.md": "726d88abb3494bdfdc44a2cf421155e18843475aea0d1e024bce42f4d291a95b"
+        "instructions.md": "8b99f31cc551e305ce266bd0a265ee78439a87c17c755857e96e862ed7016b51",
+        "persona.md": "b60ca616939e86084434247c5e048bd33dc7128a9c3c556a83a34d05147d51fc"
       },
-      "updated_at": "2026-10-28T04:59:52Z"
+      "updated_at": "2026-11-02T09:20:51Z"
     },
     {
       "key": "developer",
       "version": 4,
       "path": "bots/developer/v4.json",
-      "sha256": "fe57d902ac2aef18ce6e53b6e9ec63cbc72d042413b82adcac5f95e28d673415",
+      "sha256": "356b552e1c1d07612518c0db3f22495cff47c075bdc3f835114c3e528c3ef1d6",
       "files": {
-        "instructions.md": "9f471a2d1392c1b5857dbc4f2b340c1ec65efb8b009b0696cdcef7b6f4569fb4",
-        "persona.md": "00172f305ac555549693a5f9c381283b0a3ef740201d9cda0b2960beae3d73c6"
+        "instructions.md": "03ed640be1c7e09b476ec8da6b3306e8c4be7fcdcf17a3c5a90737332246d4d4",
+        "persona.md": "2a6f96763478f4c2ed208221c5985db4141f86842910e8142afa452ca6364987"
       },
-      "updated_at": "2026-10-28T04:59:52Z"
+      "updated_at": "2026-11-02T09:20:51Z"
     },
     {
       "key": "moderator",
       "version": 3,
       "path": "bots/moderator/v3.json",
-      "sha256": "b7bdd9de7cfdb2a1769f927ed5077f050d3f90ee112c0fbda7f2be1e79a3a417",
+      "sha256": "a90ca0382c77f4cab4de391bcba590533d0eddbe8770cf366f8716ac6f69eff0",
       "files": {
-        "instructions.md": "8e5c306866e8302f1faa0e596898cb3963438c836357bf79ab9c32b24763e3ad",
-        "persona.md": "e4084603d7a9fe7abac9a3806797b9a314de45f908d5d09084c41c14876b5a1b"
+        "instructions.md": "38bab4a8c507bdab171ecf6e61cd7b0c14d59d00efc756ba1cc5096735f6f474",
+        "persona.md": "89ed30e67486940b561860033ce8b903f37a6b460b3edd73ee490b477e6f0ebf"
       },
-      "updated_at": "2026-10-28T04:59:52Z"
+      "updated_at": "2026-11-02T09:20:51Z"
     },
     {
       "key": "qa_specialist",
       "version": 3,
       "path": "bots/qa_specialist/v3.json",
-      "sha256": "f6812990deb1b81df50e47b910f07980e7a40f3aa6ef2aa1887a17e1b6d2c6fc",
+      "sha256": "b9efd5eeb3b13cf09d4e27802cf70409e1dfa985fa427fb3b513007fcbee2753",
       "files": {
-        "instructions.md": "27014b0167f935b8ed15287c46fcf677b24d2804dfe491eaf6915447bc8e94d4",
-        "persona.md": "778ee30f8471e5e589e9c96603ace9fb3ad3ab24c36095d48a12d2350f704a48"
+        "instructions.md": "1126348052181093e9e5891cef2d8793708273a8a69351be3e4701285f924589",
+        "persona.md": "223474686abc13d4f1af4bc67bb4c7d536e9448eab0e79b428e1d816e95fae60"
       },
-      "updated_at": "2026-10-28T04:59:52Z"
+      "updated_at": "2026-11-02T09:20:51Z"
     },
     {
       "key": "revenue_head",
       "version": 3,
       "path": "bots/revenue_head/v3.json",
-      "sha256": "e32bcf849a1cf93c90b5622f94673ca001dbf5c4bf2c2a728fd36c67b6a4706c",
+      "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
       "files": {
         "instructions.md": "10f5314585c2a186c08d83d2f2769b691354e84171d7950c8a5235bb16bf5900",
-        "persona.md": "4540942e3b3d6cff915612d0fb1a4147c397dada29da80affcad8ebea29dd36e"
+        "persona.md": "1abcd78afb6a5372cd177e3b104efebd06cf1039eaadc012b005cdc1f3370790"
       },
-      "updated_at": "2026-10-28T04:59:52Z"
+      "updated_at": "2026-11-02T09:20:51Z"
     }
   ]
 }
