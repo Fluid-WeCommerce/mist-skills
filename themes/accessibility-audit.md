@@ -10,7 +10,7 @@ Audit the active Fluid theme for common accessibility problems and produce a pri
 
 # Steps
 
-1. `list_dir("sections")` and `list_dir("templates")` in the active theme.
+1. `list_dir("sections")`, `list_dir("blocks")`, `list_dir("components")`, `list_dir("layouts")`, and the page-template folders (`home_page/`, `product/`, `page/`, …) in the active theme. Fluid themes have no `templates/` directory.
 2. For each `.liquid` file, read it and check for:
    - `<img>` tags missing `alt` attributes (flag `alt=""` only if it's clearly decorative — explain the call)
    - Buttons/links with no accessible name (no text content, no `aria-label`, no inner `<span class="sr-only">`)
