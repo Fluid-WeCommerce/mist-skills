@@ -15,11 +15,16 @@
 
 ### 1. Unescaped user content
 
-**`blocker`.** Any string that originated from a user (product title, comment, custom heading) outside of a `richtext`/`html`/`html_textarea` field must be escaped. Default to `| escape` for any string field. The only exception is the HTML-shaped types — those are HTML by design.
+**`blocker`.** Escape plain strings: resource fields such as `product.title`, comments, `plaintext` settings, and global `settings.<id>` values of type `text` (the Theme panel renders `text` as a plain input).
 
 ```liquid
 <h2>{{ product.title | escape }}</h2>
+<input placeholder="{{ section.settings.email_placeholder | escape }}">  {%- comment -%} plaintext setting {%- endcomment -%}
 ```
+
+Do **not** escape the HTML-shaped **section and block** setting types: `text`, `textarea`, `richtext` / `rich_text`, and `html` / `html_textarea`. In section and block schemas, `text` and `textarea` are rich-text editors — they save HTML such as `Free delivery on <strong>every</strong> order` — so `| escape` shows merchants `&lt;strong&gt;`. Render them raw, in element content only. A section or block value that must go into an attribute, a CSS value, a URL, or a script needs a `plaintext` setting instead; flag `text`/`textarea` in those positions as a `blocker`.
+
+Global settings from `config/settings_schema.json` are different: the Theme panel renders `text` as a plain input and `textarea` as rich text, and offers no `plaintext`. Escape a global `text` value (`{{ settings.announcement | escape }}`); render a global `textarea` raw.
 
 ### 2. Raw output of URLs in `href` / `src`
 
@@ -41,15 +46,17 @@
 
 ### 1. Missing `alt` on images
 
-```liquid
-{%- comment -%} Bad {%- endcomment -%}
-<img src="{{ product.featured_image }}" />
+Render the image with `| media_tag` (see [Media rendering](https://docs.fluid.app/themes/media-tag)) and pass `alt`:
 
-{%- comment -%} Good {%- endcomment -%}
-<img src="{{ product.featured_image }}" alt="{{ product.title | escape }}" />
+```liquid
+{%- comment -%} Bad: the picker value is a bare URL, so this ships alt-less {%- endcomment -%}
+{{ section.settings.image | media_tag }}
+
+{%- comment -%} Good: the editor stores alt text in the `<id>_alt` companion setting {%- endcomment -%}
+{{ section.settings.image | media_tag: alt: section.settings.image_alt }}
 ```
 
-Decorative images: `alt=""`.
+Every `image_picker`, `video_picker`, and `media_picker` gets an editor-managed `<id>_alt` setting that merchants fill in next to the picker; don't declare it, read it. Don't reuse a heading as alt text — a `text` heading is HTML. `media_tag` takes `alt` from an image value that carries one (an entry in `product.images`, for example); picker values carry none. Decorative images: `alt: ''`.
 
 ### 2. Heading hierarchy
 
@@ -61,10 +68,10 @@ A clickable `<div>` is `blocker`. Use `<button>` for actions, `<a href>` for nav
 
 ### 4. `decoding="async"` and `loading="lazy"`
 
-```liquid
-<img src="..." alt="..." loading="lazy" decoding="async" />
-```
+`| media_tag` applies `decoding="async"` and `loading="lazy"` for you — don't hand-roll them. For hero/above-the-fold images pass `loading: 'eager'`, since lazy loading there delays LCP:
 
-Don't set `loading="lazy"` on hero/above-the-fold images — it delays LCP.
+```liquid
+{{ section.settings.hero | media_tag: loading: 'eager', alt: section.settings.hero_alt }}
+```
 
 ---

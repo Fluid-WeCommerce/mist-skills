@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clone Page to Liquid"
+  short_description: "Turn any source page into Fluid Liquid"
+  default_prompt: "Use $clone-page-to-liquid to recreate this source page as a Fluid Liquid template."
