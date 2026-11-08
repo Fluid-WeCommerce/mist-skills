@@ -12,43 +12,82 @@ icon: copy
 
 # Theme Clone
 
-You are an expert Fluid theme developer. Your goal is to clone any website — or individual page — into pixel-perfect Fluid theme sections that work in the Fluid visual editor. You scrape content, audit visuals, upload images to the DAM, build sections, assemble page templates, push everything to the Fluid theme API, and **visually verify your work against the source site using `fluid theme dev` + Playwright before declaring the clone complete**.
+You are an expert Fluid theme developer. Your goal is to clone any website — or individual page — into pixel-perfect Fluid theme sections that work in the Fluid visual editor. You scrape content, audit visuals, upload images to the DAM, build sections, assemble page templates, push everything to the Fluid theme API, and **visually verify your work against matched managed-browser source + local-preview evidence before declaring the clone complete**.
 
 This skill supports two modes:
+
 - **Single page clone** — clone one specific URL
 - **Full site clone** — systematically clone all key pages of a website
 
-**Workflow mode (phased execution).** When you were launched by the
-`onboard-launch-company` workflow, the clone is split into six small,
-individually-QA'd steps and your step prompt names the ONLY phases you own
-(1: discovery/scrape/assets → 2: tokens/skeleton → 3: header/footer →
-4: homepage → 5: product/collection templates → 6: content pages + audit +
-push). Execute just those phases, read/write the shared `clone-manifest.json`
+**Workflow mode (phased execution).** When a workflow launches you with a
+page-scoped step prompt, the clone is split into individually-QA'd
+discovery, shell, page-archetype, and final-integration gates. The home golden
+route must pass before shop; the shop golden list route must pass before the
+remaining catalog/detail pages. Your step prompt or page skill names the ONLY
+surface you own. Execute just that scope, read/write the shared `clone-manifest.json`
 at the theme project root instead of re-scraping, and record cosmetic
 deviations as notes for the refine pass rather than fixing everything in one
-step. The rules and gotchas below apply to whichever phase you're executing.
+step. `clone-manifest.json`, `.mist-desktop/source-baselines/`, and `baselines/`
+are local QA artifacts, not Fluid theme resources: preserve existing rules in
+the root `.fluidignore` and add exact entries for all three before starting
+theme dev. Source evidence must be the real crawl-returned local file plus
+timestamp, SHA-256, byte count, decoded dimensions, requested viewport, final
+URL/status, and overlay handling. Opaque labels such as `crawl:1440x900` and
+hosted URLs do not count. The rules and gotchas below apply to whichever phase
+you're executing.
 
 ## Every run is a fresh run
 
 This skill is used across many different sites. **Never reuse data from a previous run.** Always start with a fresh working directory. The active Fluid company is already selected in Mist Desktop — you do not collect or validate a Fluid token or store URL.
 
+## Read `brand.md` before you write a single line of copy
+
+Mist injects the company's brand guide into your context as a **`<brand_voice>` block** —
+that block _is_ `brand.md`. It is written by the onboarding run (skill
+`onboarding/onboarding-prefill`, Step 8g) and carries the brand's real palette, its real
+typeface and license status, its audience, the words it uses and the words it never uses,
+and verbatim examples of on-brand and off-brand copy.
+
+**Read it first. Every headline, subhead, button label, alt text, empty-state string and
+placeholder you author must obey it.**
+
+Why this is a rule and not a nicety: without the current company's brand context, a
+technically valid clone can silently ship generic template copy, palette, and type. Nothing
+errors, but the theme is still wrong in the most visible way possible.
+
+- Scraped source copy always wins. Use the real string from the source page.
+- When you MUST author a string the source doesn't provide, write it in the voice
+  `brand.md` describes, and check it against that file's Do's and Don'ts before you keep it.
+- If a base-theme placeholder string survives into a section you built ("Shop the drop",
+  "Trusted by thousands", "Lorem ipsum"), that is a defect, not filler.
+- If the `<brand_voice>` block says no brand guide has been filled in, say so in your
+  report — do not silently invent a voice.
+
 ## Prerequisites
 
-This skill requires local tooling so the agent can spin up the theme on `localhost`, drive a headless browser, and visually verify each page against the live source. Before any clone work begins, run the preflight in [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#preflight-check) and warn the user (offering to install) if anything is missing:
+Inside Fluid Mist, use the managed capabilities documented in
+[references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#capability-contract).
+They are designed to work on a fresh computer:
 
-| Tool | Purpose |
-|------|---------|
-| Node.js ≥ 18 | Required by `fluid` CLI and Playwright |
-| `fluid` CLI + `fluid theme` | Local dev preview (`fluid theme dev`) |
-| Playwright + Chromium | Paired source/localhost screenshots at desktop / tablet / mobile |
+| Tool                 | Purpose                                                              |
+| -------------------- | -------------------------------------------------------------------- |
+| `run_cli fluid theme crawl` | Source HTML/content + clean exact-viewport screenshots (via Fluid) |
+| `view_project_image` | Look at a saved source screenshot                                    |
+| `start_preview`      | Bundled CLI, dependency setup, long-lived server, port allocation    |
+| `screenshot_preview` | Exact-viewport/full-page local screenshots + route/overflow evidence |
+| `interact_preview`   | Constrained local menu/accordion/tab state checks                    |
+| preview/log tools    | URL awareness, browser console, and server logs                      |
 
-The `fluid` CLI is installed and already authenticated to the active company. Never install local tooling silently — surface the install commands and wait for explicit user approval. If the user opts out, fall back to a single full-page screenshot pass and note the missing capability in the final report.
+Do not require a global Fluid CLI, Node, Playwright, or browser install inside
+Mist. Outside Mist, an already-locked project-local Playwright harness is an
+acceptable fallback. If neither capture path exists, return
+`STATUS: needs-review`; never silently downgrade to screenshot-free review.
 
 ### Fonts & licensing (surface this to the user)
 
 Typography is a big part of pixel fidelity, and brand sites usually run a **custom/licensed web font** (e.g. a Klim/Commercial-Type face). Handle it like this:
 
-- **Extract the real font.** From the source page, read the `@font-face` rules and the actual loaded font files (Playwright: capture responses matching `\.(woff2?|otf|ttf)` and evaluate `document.styleSheets` for `CSSFontFaceRule`). Note the family name(s), weights, and the file URLs.
+- **Extract the real font.** From the source page's rendered HTML, linked stylesheets, and `@font-face` rules, identify the actual font files (`.woff2`, `.woff`, `.otf`, `.ttf`). Note family names, weights, styles, file URLs, and license status.
 - **If the font file is reachable, import it — with a disclaimer.** When you're cloning the company's OWN site, they almost certainly hold the license, so `@font-face` the real file (self-hosted `.woff2` on their CDN, or a Google Fonts link) into the theme for a true match — upload the file to the DAM or reference the URL. **Always add a disclaimer in your report:** the company must confirm they hold a license to use this font in the new theme.
 - **If the font is NOT importable** (no reachable file, or a proprietary face you can't legally embed): **call it out explicitly** — name the font, state that type won't be 100% identical, pick the closest free fallback (a grotesque/geometric sans that matches the metrics), and ask the user to either provide a licensed copy or approve the fallback. Never silently substitute a font and imply a perfect match.
 
@@ -60,19 +99,19 @@ This is also the standard reason a section is otherwise pixel-perfect but "feels
 
 Ask the user for ALL of these before doing anything:
 
-| Input | Required | Description |
-|-------|----------|-------------|
-| `SOURCE_SITE` | Yes | Base URL of the site to clone (e.g. `https://yellowbirdfoods.com`) |
+| Input         | Required | Description                                                        |
+| ------------- | -------- | ------------------------------------------------------------------ |
+| `SOURCE_SITE` | Yes      | Base URL of the site to clone (e.g. `https://yellowbirdfoods.com`) |
 
 **Do not ask for a section-naming prefix.** Derive a short `SITE_PREFIX` yourself from `SOURCE_SITE` — take the domain's second-level name, strip `www.` and the TLD, and shorten to a 2–5 char slug (e.g. `yellowbirdfoods.com` → `yb`, `hiyahealth.com` → `hiya`). You only need it in the rare case noted under section naming; canonical section names never use it.
 
 For **single page clone**, also collect:
 
-| Input | Required | Description |
-|-------|----------|-------------|
-| `SOURCE_URL` | Yes | Full URL of the specific page to clone |
-| `PAGE_TYPE` | Yes | `"home"` \| `"page"` \| `"product"` \| `"collection"` |
-| `PAGE_SLUG` | Yes | Slug for the Fluid template (e.g. `about`, `our-story`) |
+| Input        | Required | Description                                             |
+| ------------ | -------- | ------------------------------------------------------- |
+| `SOURCE_URL` | Yes      | Full URL of the specific page to clone                  |
+| `PAGE_TYPE`  | Yes      | `"home"` \| `"page"` \| `"product"` \| `"collection"`   |
+| `PAGE_SLUG`  | Yes      | Slug for the Fluid template (e.g. `about`, `our-story`) |
 
 ---
 
@@ -80,16 +119,21 @@ For **single page clone**, also collect:
 
 Verify the source site is reachable and the local toolchain is present. The Fluid company is already selected in Mist Desktop, so there is no token or store-URL check.
 
-- **Source site reachable** — fetch `SOURCE_SITE` with the crawl tool (or WebFetch); expect a successful response before continuing.
+- **Source site reachable** — fetch `SOURCE_SITE` with `run_cli fluid theme crawl <SOURCE_SITE>` (or the active model's available web-fetch capability outside Mist); expect a successful response before continuing.
 
-Also verify the local toolchain — see [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#preflight-check) for the full preflight commands. Required: `node --version` (≥ 18), `fluid --version`, `fluid theme --help`, and Playwright + Chromium present. If any are missing, surface the install commands and ask the user before installing.
+Verify the managed capability path from
+[references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#capability-contract).
+In Mist, check the bundled CLI with bounded `run_cli fluid --version` and
+`run_cli fluid theme --help`, then use `start_preview` for the server. Do not
+probe `command -v fluid` or require Playwright.
 
 Print results:
+
 ```
 [Preflight] Source site:  OK yellowbirdfoods.com
-[Preflight] Node:         OK v22.5.0
-[Preflight] fluid CLI:    OK v0.4.2 (theme commands available)
-[Preflight] Playwright:   OK chromium installed
+[Preflight] Fluid CLI:    OK bundled theme commands available
+[Preflight] Source crawl: OK exact viewport/full page available
+[Preflight] Preview:      OK start_preview + screenshot_preview available
 ```
 
 ```
@@ -138,8 +182,10 @@ See the [Fluid Theme Architecture](#fluid-theme-architecture) section below for 
 
 When cloning an entire site, discover all pages before building.
 
-### 4a: Use the crawl tool to scrape the homepage for navigation structure
+### 4a: Crawl the homepage for navigation structure (`run_cli fluid theme crawl <url> --no-main-content-only`)
+
 ### 4b: Open the site in the browser, inspect nav menus and footer links
+
 ### 4c: Build a page manifest
 
 ```
@@ -167,18 +213,26 @@ TOTAL: X pages
 ```
 
 ### 4d: Identify shared sections (CTA banners, testimonials, newsletter signup) — build once, reuse
-### 4e: Clone order — nav/footer first, homepage, products, collections, static pages
+
+### 4e: Clone order
+
+Build the global shell first, then prove the homepage, then prove the canonical
+shop/all-products list. Only after both golden routes pass should the workflow
+continue through collection/category/blog/search list archetypes, their detail
+archetypes (PDP, post, content), cart/system states, and final cross-route
+linking/regression.
 
 ---
 
 ## Phase 1: Content Scraping
 
-Use the crawl tool to extract text and image URLs from the source page (you can also use Claude's native WebFetch for individual pages).
+Use `run_cli fluid theme crawl` to extract text and image URLs from the source page. Outside Mist, use the web-fetch capability available to the active model; do not assume a provider-specific tool name.
 
 ```
-Use the crawl tool to scrape <SOURCE_URL> and extract the page as markdown
-(content + image/video URLs + structure). Save the markdown to
-/tmp/scraped-<PAGE_SLUG>.md.
+run_cli fluid theme crawl <SOURCE_URL> --no-main-content-only --format markdown
+extracts the page as markdown (content + image/video URLs + structure). With
+--evidence . the complete Markdown is saved under .mist-desktop/source-baselines/;
+otherwise save the printed `content` to /tmp/scraped-<PAGE_SLUG>.md.
 ```
 
 Extract: all text content, all image URLs, all video URLs, page structure (identify sections), navigation structure, footer structure. Create a **section inventory**.
@@ -190,17 +244,31 @@ Extract: all text content, all image URLs, all video URLs, page structure (ident
 Screenshots are the **primary reference** for building sections.
 
 ### 2a: Navigate to SOURCE_URL, remove overlays/popups
+
 ```javascript
-document.querySelectorAll('[data-acsb-custom-trigger],.acsb-trigger,.acsb-widget,.acsb-overlay,.popup,.modal,[class*="cookie"],[class*="banner"]').forEach(e => e.remove());
+document
+  .querySelectorAll(
+    '[data-acsb-custom-trigger],.acsb-trigger,.acsb-widget,.acsb-overlay,.popup,.modal,[class*="cookie"],[class*="banner"]',
+  )
+  .forEach((e) => e.remove());
 ```
 
 ### 2b: Scroll through entire page, screenshot each section boundary
 
 ### 2c: Extract exact CSS values per section
+
 ```javascript
-var el = document.querySelector('.hero-section');
+var el = document.querySelector(".hero-section");
 var s = getComputedStyle(el);
-[s.backgroundColor, s.color, s.fontFamily, s.fontSize, s.fontWeight, s.padding, s.margin].join(' | ');
+[
+  s.backgroundColor,
+  s.color,
+  s.fontFamily,
+  s.fontSize,
+  s.fontWeight,
+  s.padding,
+  s.margin,
+].join(" | ");
 ```
 
 ### 2d: Note animations (scroll, hover, carousel, parallax)
@@ -208,6 +276,7 @@ var s = getComputedStyle(el);
 ### 2e: Check responsive at 375px, 768px, 1280px
 
 ### Output: Section Inventory
+
 ```
 SECTION INVENTORY FOR <SOURCE_URL>:
 
@@ -231,33 +300,60 @@ TOTAL SECTIONS: X
 
 ---
 
-## Phase 3: Image Extraction & DAM Upload
+## Phase 3: Media Extraction & DAM Upload
 
-### Extract all image URLs from the browser:
+### Extract every image and video URL from the rendered DOM
+
 ```javascript
-var imgs = [];
-document.querySelectorAll('img').forEach(function(i) {
-  var s = (i.src || i.currentSrc || '').split('?')[0];
-  if (s && s.indexOf('http') === 0 && imgs.indexOf(s) === -1) imgs.push(s);
+var media = [];
+document.querySelectorAll("img,video,video source").forEach(function (el) {
+  var src = el.currentSrc || el.src || el.getAttribute("src") || el.dataset.src;
+  if (src && src.indexOf("http") === 0 && media.indexOf(src) === -1) {
+    media.push(src);
+  }
 });
-document.title = imgs.length + ' images: ' + imgs.join(' | ');
+document.title = media.length + " media: " + media.join(" | ");
 ```
 
-Also check: background images in CSS, lazy-loaded (`data-src`), inline SVGs (copy markup directly).
+Repeat this at every required viewport because responsive sites often return
+different desktop/mobile video sources. Also inspect background images in CSS,
+lazy-loaded `data-src`, `<picture>/<source>`, inline SVGs, poster URLs, and
+embedded media. A section identified as video in rendered HTML or the visual
+baseline MUST keep its exact source URL, viewport, playback attributes, and
+poster in the manifest; recording only `"media": "video"` is incomplete.
 
 ### Upload to Fluid DAM
 
-**All images must go to the DAM. Never hotlink to source CDNs.**
+**All source images and self-hosted videos used by priority routes must go to
+the DAM. Never hotlink to source CDNs or silently replace a video with an image
+or flat color.**
 
-Use the **`dam_upload` tool** — never `curl`/POST to `upload.fluid.app` yourself (auth, ImageKit registration, and the company-scoped folder are all handled for you). It takes a file inside the project sandbox plus optional `name` / `description` / `tags` / `create_media`, and returns the asset record — use `asset.default_variant_url` as the image URL in your sections and `settings_data.json`.
+Use **`run_cli fluid assets upload`** — never `curl`/POST to `upload.fluid.app`
+yourself. Pass either `--url <public source URL>` or a sandbox file path, never
+both. Remote uploads are fetched server-side through the upload service's
+`external_asset_url` field; do not download a normal-sized remote asset first.
+Pass `--create-media` for video so it is also visible in the Fluid Media
+library. Use the returned `asset.default_variant_url` in the theme.
 
-Source-site images live on a remote CDN, and `dam_upload` uploads a **local file**, so for each image:
+For every required source asset:
 
-1. Fetch it into the project sandbox (the `crawl` tool can pull page assets, or download the URL directly).
-2. Call `dam_upload` with the saved path. Run one call per file — **parallel tool calls in a single turn batch-upload many images at once**.
-3. If an asset is too large for the upload service, chain `compress_media` → `dam_upload`.
+1. Run `fluid assets upload` with its public `url` (`--url <url>`). Parallel calls may batch assets.
+2. If the service rejects the asset for size, call `compress_media` with the
+   same public `url`, then **immediately** run `fluid assets upload <output_path>`
+   with the returned compressed path. Mist streams the remote source into a
+   bounded temporary sandbox file and removes it after compression; the
+   default compressed handoff expires after one hour so hidden cache files do
+   not accumulate. No manual download is needed. Do not treat a size error as
+   permission to omit the media.
+3. Record source URL, viewport/role, media kind, byte size when known, DAM URL,
+   upload status, and any compression result in `priority_media`.
 
-`asset.default_variant_url` from each result is the DAM URL to reference. (Alternatively, the `fluid dam upload --url <SOURCE_IMAGE_URL> --name <name>` CLI fetches a remote URL directly without a local download.) See [references/batch-upload-script.md](references/batch-upload-script.md) for the batch pattern.
+Before discovery passes, reconcile every priority `<img>`, `<video>`,
+`<source>`, and CSS media URL from the retained rendered HTML against
+`priority_media`. Every required item must have a working DAM URL, or a
+structured failure with the attempted upload/compression evidence. Missing
+priority video is a hard failure, not a cosmetic refine note. See
+[references/batch-upload-script.md](references/batch-upload-script.md).
 
 ---
 
@@ -301,7 +397,12 @@ See [theme-refine.md](../theme-refine/SKILL.md#section-shell-pattern--enforce-on
 ALL text content uses `richtext` type — the WYSIWYG handles font, size, weight, color, alignment. Defaults must be wrapped in HTML tags.
 
 ```json
-{ "type": "richtext", "id": "text", "label": "Heading", "default": "<h2>Your heading here</h2>" }
+{
+  "type": "richtext",
+  "id": "text",
+  "label": "Heading",
+  "default": "<h2>Your heading here</h2>"
+}
 ```
 
 **NEVER** use `text` or `textarea` for visible content — those create plain text that can't be styled in the editor.
@@ -336,6 +437,7 @@ Dashes ARE safe inside `{%- style -%}` blocks (CSS generation, not block renderi
 ```
 
 Wire in the `{%- style -%}` block:
+
 ```liquid
 {%- assign p = section.settings.section_padding -%}
 {%- if p -%}
@@ -355,7 +457,13 @@ Wire in the `{%- style -%}` block:
 Use `select` with `"options": "background_colors"` — NOT `color_background` (raw hex picker disconnected from theme):
 
 ```json
-{ "type": "select", "id": "background_color", "label": "Background Color", "options": "background_colors", "default": "transparent" }
+{
+  "type": "select",
+  "id": "background_color",
+  "label": "Background Color",
+  "options": "background_colors",
+  "default": "transparent"
+}
 ```
 
 **CRITICAL BUG:** Never write `background-color: var(--clr-{{ section.settings.background_color }})`. When the setting is empty, this renders `var(--clr-)` — invalid CSS that **silently breaks the entire rule block** including padding and border-radius. The correct pattern:
@@ -370,7 +478,7 @@ The `background_colors` option group values ARE already CSS values like `var(--c
 
 ```css
 /* WRONG */
-font-family: 'Spartan', sans-serif;
+font-family: "Spartan", sans-serif;
 color: #023026;
 padding: 0 64px;
 
@@ -381,6 +489,7 @@ padding: 0 var(--space-9xl, 64px);
 ```
 
 Every section needs RTE heading rules:
+
 ```css
 .section-class .rte h1,
 .section-class .rte h2,
@@ -398,21 +507,29 @@ Every section needs RTE heading rules:
 <section
   class="section-name section-{{ section.id }}"
   data-section-id="{{ section.id }}"
-  {{ section.fluid_attributes }}
->
+></section>
 ```
 
 #### Consistent Container and Breakpoints
 
 All sections use 1280px max-width with theme variable horizontal padding:
+
 ```css
 .container {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 var(--space-9xl, 64px);
 }
-@media (max-width: 991px) { .container { padding: 0 var(--space-3xl, 24px); } }
-@media (max-width: 767px) { .container { padding: 0 var(--space-lg, 16px); } }
+@media (max-width: 991px) {
+  .container {
+    padding: 0 var(--space-3xl, 24px);
+  }
+}
+@media (max-width: 767px) {
+  .container {
+    padding: 0 var(--space-lg, 16px);
+  }
+}
 ```
 
 Standardized breakpoints: `991px` (tablet), `767px` (mobile). Never use 749px, 768px, or 1023px.
@@ -422,19 +539,29 @@ Standardized breakpoints: `991px` (tablet), `767px` (mobile). Never use 749px, 7
 Never use `image_picker` for a content image. Ever. All user-uploaded content images come through the canonical `blocks/image` block, which ships aspect ratio, fit, object position, overlay, border width/color, and corner radius. When you inline an `image_picker` directly, merchants lose every one of those controls and the block can't be duplicated independently.
 
 **ALLOWED uses of `image_picker`:**
+
 - Section shell: `background_image` (decorative full-section bg)
 - Container: `container_background_image` (decorative container bg)
 - Inside the canonical `image` block itself: `image` (the one control)
 - Inside data-driven wrappers like `blocks/post_image`: fallback when the resource's own image is blank
 
 **FORBIDDEN uses of `image_picker`** — all of these are wrong and must be refactored to a canonical `image` block:
+
 - Section-level content images (`hero_image`, `logo_image`, `before_image`, `after_image`)
 - Image fields on other blocks (`avatar` on a review card, `photo` on a testimonial, `logo_image` on a press card)
 - "Image override" fields on resource-picker blocks (instead, a canonical image block added alongside)
 
 When a section needs one image, inline the canonical image settings into `blocks` and add `{ "type": "image" }` to the preset:
+
 ```json
-{ "type": "image", "name": "Image", "limit": 1, "settings": [ /* full canonical image settings */ ] }
+{
+  "type": "image",
+  "name": "Image",
+  "limit": 1,
+  "settings": [
+    /* full canonical image settings */
+  ]
+}
 ```
 
 When a section needs **images per card** (review grid, testimonial grid, logo bar, step list, before/after, ingredient list): use the **divider block pattern** — a divider block with no image field (e.g. `review`, `logo_item`, `step`) plus canonical `image` block instances that render inside the current divider's scope via a stateful walk. See product_how_to_use for the reference implementation.
@@ -448,6 +575,7 @@ For Fluid Media (video / UGC), use `blocks/fluid_media` — and handle both shap
 #### Dynamic Product Data — Never Static Blocks
 
 For product grids, use Fluid's data system instead of static blocks:
+
 - `product_list` setting type for curated product carousels
 - `products` global variable for automatic product loops
 - `collection.enrollment_packs | parse_json` for enrollment pack grids
@@ -455,6 +583,7 @@ For product grids, use Fluid's data system instead of static blocks:
 Static product blocks disappear on editor save. Dynamic data never does.
 
 ### Schema rules
+
 - Use `range` — NOT `number` (unsupported, breaks the editor)
 - Use `post` — NOT `article` (unsupported)
 - Use `video_picker` or `url` — NOT `video` or `video_url` (unsupported)
@@ -522,30 +651,30 @@ Every one of these ships with Section Shell + Container + theme-token colors + c
 
 **Heroes (3)**
 
-| Section | Purpose |
-|---|---|
-| `hero_centered`     | Full-bleed background with centered content, dual CTAs, status-pill badge, trust bar with stars, animated scroll cue. 80vh min-height. Style: Allbirds / Athletic Greens. |
-| `hero_split_stats`  | 50/50 split (text + canonical image block, flippable) with bottom dark stats strip (4 stat blocks). Style: Tesla / Liquid Death. |
-| `hero_editorial`    | 3-column magazine: vertical rotated meta column + main text (uses `var(--ff-italic)` Playfair) + portrait canonical image with caption pill, tag pills + byline. Style: Aesop / Aimé Leon Dore. |
+| Section            | Purpose                                                                                                                                                                                         |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hero_centered`    | Full-bleed background with centered content, dual CTAs, status-pill badge, trust bar with stars, animated scroll cue. 80vh min-height. Style: Allbirds / Athletic Greens.                       |
+| `hero_split_stats` | 50/50 split (text + canonical image block, flippable) with bottom dark stats strip (4 stat blocks). Style: Tesla / Liquid Death.                                                                |
+| `hero_editorial`   | 3-column magazine: vertical rotated meta column + main text (uses `var(--ff-italic)` Playfair) + portrait canonical image with caption pill, tag pills + byline. Style: Aesop / Aimé Leon Dore. |
 
 **Content & conversion (14)**
 
-| Section | Purpose |
-|---|---|
-| `image_text_split`   | Hero / story — 50/50 with flip, accepts canonical image + heading + text + button blocks |
-| `logo_bar`           | Press / partner logos grid, canonical image blocks |
-| `feature_grid`       | Benefits grid — divider + canonical image + heading + text + button (one card per divider) |
-| `featured_products`  | Collection-driven product grid (collection picker + products_to_show range). Uses `product.images[0].src → image_url → image \| image_url` fallback chain. |
-| `stats_bar`          | Numbers row (prefix/value/suffix/label per stat block) |
-| `cta_banner_v2`      | Final full-width CTA |
-| `faq_accordion`      | Native `<details>`/`<summary>` with bordered or card style |
-| `rich_content`       | Flexible single-column composer (eyebrow/heading/text/image/fluid_media/button) |
-| `ugc_carousel`       | CSS scroll-snap carousel of fluid_media blocks with UGC defaults (9:16, popover embed) — Splide-free |
-| `comparison_table`   | Us-vs-Them table with check/X/text per row, "Recommended" badge |
-| `testimonial_grid`   | Masonry or grid with divider-block testimonial cards (rating + image + quote + author sub-blocks) |
-| `before_after`       | Drag slider with configurable initial position, labels, aspect ratio |
-| `process_steps`      | Horizontal or vertical steps with divider + number (own block) + image + heading + text sub-blocks, connector line |
-| `collection_tiles`   | Shop-by-category tiles with hover zoom, overlay gradient, CTA chip, auto-fills from Fluid collection. Uses `collection.canonical_url` for link, `image_url → image_path → first product image` fallback chain. |
+| Section             | Purpose                                                                                                                                                                                                        |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `image_text_split`  | Hero / story — 50/50 with flip, accepts canonical image + heading + text + button blocks                                                                                                                       |
+| `logo_bar`          | Press / partner logos grid, canonical image blocks                                                                                                                                                             |
+| `feature_grid`      | Benefits grid — divider + canonical image + heading + text + button (one card per divider)                                                                                                                     |
+| `featured_products` | Collection-driven product grid (collection picker + products_to_show range). Uses `product.images[0].src → image_url → image \| image_url` fallback chain.                                                     |
+| `stats_bar`         | Numbers row (prefix/value/suffix/label per stat block)                                                                                                                                                         |
+| `cta_banner_v2`     | Final full-width CTA                                                                                                                                                                                           |
+| `faq_accordion`     | Native `<details>`/`<summary>` with bordered or card style                                                                                                                                                     |
+| `rich_content`      | Flexible single-column composer (eyebrow/heading/text/image/fluid_media/button)                                                                                                                                |
+| `ugc_carousel`      | CSS scroll-snap carousel of fluid_media blocks with UGC defaults (9:16, popover embed) — Splide-free                                                                                                           |
+| `comparison_table`  | Us-vs-Them table with check/X/text per row, "Recommended" badge                                                                                                                                                |
+| `testimonial_grid`  | Masonry or grid with divider-block testimonial cards (rating + image + quote + author sub-blocks)                                                                                                              |
+| `before_after`      | Drag slider with configurable initial position, labels, aspect ratio                                                                                                                                           |
+| `process_steps`     | Horizontal or vertical steps with divider + number (own block) + image + heading + text sub-blocks, connector line                                                                                             |
+| `collection_tiles`  | Shop-by-category tiles with hover zoom, overlay gradient, CTA chip, auto-fills from Fluid collection. Uses `collection.canonical_url` for link, `image_url → image_path → first product image` fallback chain. |
 
 All 17 use the Section Shell (6) + Container (9) pattern and reference `background_colors` / `font_families` option groups exclusively. Heroes additionally use the **canonical block primacy** pattern for hero images — the image is added as a `blocks/image` instance (not a section setting), with CSS `aspect-ratio: unset !important` override to fill the column.
 
@@ -573,6 +702,7 @@ Put `block.fluid_attributes` on the OUTER wrapper, swap the inner content (image
 
 **3. Image-picker return shape varies — resolve defensively.**
 `block.settings.image` can be: an object with `.url`, an object with `.src`, a Fluid media object that needs `| img_url:'w-N'`, or a raw URL string. Try each in order:
+
 ```liquid
 {%- if img.url != blank -%}{%- assign _u = img.url -%}
 {%- elsif img.src != blank -%}{%- assign _u = img.src -%}
@@ -585,7 +715,10 @@ Put `block.fluid_attributes` on the OUTER wrapper, swap the inner content (image
 When rendering a merchant-picked menu (nav, footer columns): iterate `block.settings.menu.menu_items` and read `item.url` / `item.title`. Fluid's own `navbar_primary_nav` uses this shape.
 
 **5. The `collections` global in Liquid ≠ the REST API shape.**
-- REST `/api/company/v1/collections` returns `image_url`, `image_path`, `canonical_url`, `product_collections` etc.
+
+- REST `/api/v202604/company/collections` returns the documented company
+  collection shape; inspect it with `query_docs` rather than assuming Liquid
+  keys exist on the REST object.
 - Liquid `{% for c in collections %}` returns `{id, handle, title, description, image (often null), url, products (inlined), position}` — no `image_url`, no `product_collections`.
 
 Image fallback for collection cards: `c.image` → `c.image_url` (rare) → `c.image_path` (rare) → `c.products[0].image_url`. **Never** rely on `.product_collections` in the Liquid iteration context.
@@ -599,8 +732,8 @@ Defaults in `config/settings_schema.json` don't auto-apply if the key is missing
 **8. Editor drafts aren't persisted — the live render reads saved state.**
 When the user uploads an image in the visual editor but the HTML output still shows `image: null`, they haven't clicked **Save** in the editor. The draft lives in the iframe's local state only. Build a debug-echo (`{{ block.settings.image | json }}` in an HTML comment) as the diagnostic tool when images "don't appear."
 
-**9. Template preset expansion only fires on FRESH template creation.**
-Editing a section's preset doesn't retroactively add blocks to existing templates. Workflow: `fluid_api("/api/application_theme_templates/{id}", "DELETE")` then `fluid_api("/api/application_themes/{theme}/resources", "PUT", {...})` on the template file → preset re-expands on the new template id. (Templates live in a different table than resources — deleting a resource doesn't drop the template.) Fluid auto-reissues a new numeric id each time; update preview links accordingly.
+**9. Presets fill empty section instances at render.**
+When a section instance on a template has no blocks, Fluid fills them from the section's first preset each time the page renders, so a preset edit shows on every template whose instance has no saved blocks — no template delete or re-push needed. Instances whose blocks were saved (for example from the Page Editor) keep their saved blocks; edit those in the editor. An empty section always shows its preset again, so add an explicit empty state in Liquid if it must render nothing.
 
 **10. Navbar overflow: hamburger beats "More" dropdown.**
 When nav items can't fit, the expert pattern (Apple, Shopify, Gucci, Aesop) is to collapse the whole menu into the mobile hamburger — not spill overflow into a "More ▾" popover. Provide both as an option, default to hamburger. Measuring for "More" requires forcing the trigger to temporarily `visibility: hidden` and measuring its `getBoundingClientRect()` width BEFORE deciding which items overflow — otherwise you'll miss the reserve space and clip a link.
@@ -625,76 +758,94 @@ For full-bleed split layouts (image hero with half-width text): remove `.section
 Each section goes through an iterative cycle until it matches the source AND passes the deterministic schema/Liquid audit. **Do NOT move to the next section until the current one passes both visual comparison and `theme_audit.py`.**
 
 1. **COMPARE** — Study the source screenshot from Phase 2
-2. **CODE** — Build the section using exact extracted values (hex colors, px sizes, font weights)
+2. **CODE** — Build the section using the exact extracted layout and typography values.
+   Map source colors/fonts into theme tokens first; section CSS consumes those tokens and
+   never repeats raw brand hexes or font-family literals.
 3. **AUDIT** — Run the deterministic gold-star audit on the section file before pushing. This catches schema/Liquid bugs that the visual diff cannot — `image_picker` on content images, raw hex defaults, missing Section Shell / Container settings, missing `fluid_attributes`, dashes in block loops, `var(--clr-{{ ... }})` footguns, etc. Visual diff can't see these — but they break the editor silently.
    ```bash
-   python3 scripts/theme_audit.py "$THEME_DIR/sections/<section_name>/index.liquid"
+   python3 <THEME_AUDIT_PATH> "$THEME_DIR/sections/<section_name>/index.liquid"
    ```
    Exit code 0 = clean. Exit code 1 = violations printed as `file:line: RULE_ID: message`. Fix every violation before moving to step 4. Use `--rules GS001,GS002,...` to scope a re-run to specific rules. The full rule list is in [Schema & Liquid audit (theme_audit.py)](#schema--liquid-audit-theme_auditpy) below.
-4. **PREVIEW** — Push the section, then run `fluid theme dev --port 9292` from `THEME_DIR`. The dev server proxies the storefront and renders local theme files at `http://127.0.0.1:9292/<route>` with a filesystem watcher that hot-reloads on save. See [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#start-the-dev-server).
-5. **DIFF** — Run the Playwright diff script against the page that contains this section: same viewport on both browsers, captures desktop / tablet / mobile pairs, scrolls section-by-section. Read the matched screenshot pairs, classify each finding as **auto-fix** (color, spacing, typography, border, shadow — clear numeric or token mismatch) or **flag for user** (layout structure, image asset swap, missing canonical font, third-party widget). See [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#reading-the-output-the-agent-loop).
+4. **PREVIEW** — Call `start_preview`; let Mist select and own the port. Confirm
+   the local URL with `preview_state`, then inspect browser/server errors with
+   `read_preview_console` and `read_local_server_logs`.
+5. **DIFF** — Follow the semantic landmark matrix in
+   [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md):
+   `run_cli fluid theme crawl --evidence .` for source desktop/mobile evidence and
+   `screenshot_preview` for the same exact local viewports. Classify each
+   finding as **auto-fix** (clear token/geometry/component mismatch) or
+   **flag for user** (missing licensed asset/font or a real product decision).
 6. **REFINE** — Apply auto-fixes directly to the section file. The dev watcher uploads on save; the localhost preview hot-reloads. Re-run AUDIT on the changed file, then loop back to step 5 for the next visual round.
 
 Aim for 1-3 rounds per section. After 3 rounds, note remaining deviations in a comment and move on. Surface any flagged findings to the user before declaring the section complete. **Do not skip AUDIT — visual parity without structural correctness ships sections that look right in screenshots but break in the Builder.**
 
 ### Schema & Liquid audit (`theme_audit.py`)
 
-A deterministic, non-subjective companion to the visual diff. The script lives at `scripts/theme_audit.py` and runs 26 gold-star rules over `.liquid` section, block, and template files. Each rule has a stable ID (GS001-GS026) and a high signal-to-noise ratio.
+A deterministic, non-subjective companion to the visual diff. Mist ships this
+skill's script as a runtime asset. `run_skill("themes/theme-clone")` prints its
+exact project-relative path under `.mist-desktop/skill-assets/`; use that path
+as `<THEME_AUDIT_PATH>` below. Never assume a newly cloned theme already has
+`scripts/theme_audit.py`, and never copy or edit the materialized audit script.
+The script runs 26 gold-star rules over `.liquid` section, block, and template
+files. Each rule has a stable ID (GS001-GS026) and a high signal-to-noise ratio.
 
 ```bash
 # Audit one file
-python3 scripts/theme_audit.py "$THEME_DIR/sections/hero/index.liquid"
+python3 <THEME_AUDIT_PATH> "$THEME_DIR/sections/hero/index.liquid"
 
 # Audit a whole directory
-python3 scripts/theme_audit.py "$THEME_DIR/sections/"
+python3 <THEME_AUDIT_PATH> "$THEME_DIR/sections/"
 
 # Audit only files changed since last commit (CI-style gate)
-python3 scripts/theme_audit.py --since-commit
+python3 <THEME_AUDIT_PATH> --since-commit
 
 # Audit modified files vs HEAD (pre-push gate)
-python3 scripts/theme_audit.py --diff
+python3 <THEME_AUDIT_PATH> --diff
 
 # JSON output for tool integration
-python3 scripts/theme_audit.py --json "$THEME_DIR/"
+python3 <THEME_AUDIT_PATH> --json "$THEME_DIR/"
 
 # Run a subset of rules
-python3 scripts/theme_audit.py --rules GS001,GS002,GS014 "$THEME_DIR/sections/"
+python3 <THEME_AUDIT_PATH> --rules GS001,GS002,GS014 "$THEME_DIR/sections/"
 ```
 
 Exit codes: `0` = clean, `1` = violations found, `2` = invocation error.
 
 **Rule catalogue** (each violation prints `file:line: RULE_ID: message`):
 
-| ID | Catches |
-|----|---------|
-| GS001 | Section Shell + Container required settings present (the 6 + 9 layout controls). |
-| GS002 | Section-level color settings use `select` + `options: "background_colors"` — not raw hex via `color` / `color_background`. |
-| GS003 | Section-level fonts use `font_families` option group — not `font_picker`. |
-| GS004 | `image_picker` only allowed on `background_image`, `container_background_image`, or inside the canonical `image` block. |
-| GS005 | Visible headings are richtext blocks, not section-level `text`/`textarea` settings. |
-| GS006 | `{% render %}` only targets `components/`, never `blocks/`. |
-| GS007 | Every `{% for block in section.blocks %}` body emits `{{ block.fluid_attributes }}` somewhere. |
-| GS008 | Section schema declares a non-empty `presets` array. |
-| GS009 | Schema JSON parses cleanly. (Parse errors silently render the section as "Unknown Section" in the Builder.) |
-| GS010 | `block.settings.X` is only read inside a `{% for block in ... %}` loop body. |
+| ID    | Catches                                                                                                                                                           |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GS001 | Section Shell + Container required settings present (the 6 + 9 layout controls).                                                                                  |
+| GS002 | Section-level color settings use `select` + `options: "background_colors"` — not raw hex via `color` / `color_background`.                                        |
+| GS003 | Section-level fonts use `font_families` option group — not `font_picker`.                                                                                         |
+| GS004 | `image_picker` only allowed on `background_image`, `container_background_image`, or inside the canonical `image` block.                                           |
+| GS005 | Visible headings are richtext blocks, not section-level `text`/`textarea` settings.                                                                               |
+| GS006 | `{% render %}` only targets `components/`, never `blocks/`.                                                                                                       |
+| GS007 | Every `{% for block in section.blocks %}` body emits `{{ block.fluid_attributes }}` somewhere.                                                                    |
+| GS008 | Section schema declares a non-empty `presets` array.                                                                                                              |
+| GS009 | Schema JSON parses cleanly. (Parse errors silently render the section as "Unknown Section" in the Builder.)                                                       |
+| GS010 | `block.settings.X` is only read inside a `{% for block in ... %}` loop body.                                                                                      |
 | GS011 | Unsupported schema types blocked: `number`, `paragraph`, `inline_richtext`, `video`, `video_url`, `color_scheme`, `page`, `liquid`, `metaobject`, `article`, etc. |
-| GS012 | A `visible_if` on a setting is paired with a matching `{% if %}` guard in the template. |
-| GS013 | No whitespace-trimming dashes on `{% for block in section.blocks %}` or `{% case block.type %}`. (Dashes inside `{%- style -%}` are still safe.) |
-| GS014 | No `var(--clr-{{ section.settings.X }})` wrapping — empty settings render `var(--clr-)`, invalid CSS that kills the entire rule block. |
-| GS015 | Section files emit `{{ section.fluid_attributes }}` on the root element. |
-| GS016 | `{{ block.fluid_attributes }}` lives on a `<div>` wrapper — never directly on `<h1>`-`<h6>`, `<p>`, or `<span>`. |
-| GS017 | Canonical breakpoints only — `767px` (mobile) and `991px` (tablet). `749px`, `768px`, and `1023px` are forbidden. |
-| GS018 | `{% layout 'theme' %}` is on the first non-blank line of template files. |
-| GS019 | Template schemas (top-level `sections` + `order`) do NOT include `blocks` data on a section instance — blocks come from the section's own presets. |
-| GS020 | Iterates `menu.menu_items`, not the non-existent `menu.links`. |
-| GS021 | No native `border` schema type — split into `range` (width 0-10) + `select` `options: "background_colors"` (color). |
-| GS022 | Every `range` setting declares `min`, `max`, `step`. |
-| GS023 | Section files contain a `{% schema %}` block. |
-| GS024 | Section schemas declare a non-empty `name` (the Builder picker label). |
-| GS025 | `richtext` defaults are wrapped in HTML tags so the WYSIWYG can initialize them. |
-| GS026 | Typo guard: `fluid_attribute` (singular) renders nothing — the accessor is `fluid_attributes` (plural). |
+| GS012 | A `visible_if` on a setting is paired with a matching `{% if %}` guard in the template.                                                                           |
+| GS013 | No whitespace-trimming dashes on `{% for block in section.blocks %}` or `{% case block.type %}`. (Dashes inside `{%- style -%}` are still safe.)                  |
+| GS014 | No `var(--clr-{{ section.settings.X }})` wrapping — empty settings render `var(--clr-)`, invalid CSS that kills the entire rule block.                            |
+| GS015 | Section files don't emit `{{ section.fluid_attributes }}` — it renders nothing; Fluid wraps each section with its own editor attributes.                          |
+| GS016 | `{{ block.fluid_attributes }}` lives on a `<div>` wrapper — never directly on `<h1>`-`<h6>`, `<p>`, or `<span>`.                                                  |
+| GS017 | Canonical breakpoints only — `767px` (mobile) and `991px` (tablet). `749px`, `768px`, and `1023px` are forbidden.                                                 |
+| GS018 | `{% layout 'theme' %}` is on the first non-blank line of template files.                                                                                          |
+| GS019 | Template schemas (top-level `sections` + `order`) do NOT include `blocks` data on a section instance — blocks come from the section's own presets.                |
+| GS020 | Iterates `menu.menu_items`, not the non-existent `menu.links`.                                                                                                    |
+| GS021 | No native `border` schema type — split into `range` (width 0-10) + `select` `options: "background_colors"` (color).                                               |
+| GS022 | Every `range` setting declares `min`, `max`, `step`.                                                                                                              |
+| GS023 | Section files contain a `{% schema %}` block.                                                                                                                     |
+| GS024 | Section schemas declare a non-empty `name` (the Builder picker label).                                                                                            |
+| GS025 | `richtext` defaults are wrapped in HTML tags so the WYSIWYG can initialize them.                                                                                  |
+| GS026 | Typo guard: `fluid_attribute` (singular) renders nothing — the accessor is `fluid_attributes` (plural).                                                           |
 
-**Pairing with visual diff.** `theme_audit.py` and the Playwright visual diff are complementary. The audit catches structural / schema / Liquid bugs that screenshots cannot see (an editor that won't let merchants click a block, a `var(--clr-)` that kills padding only when empty, a section that looks fine in your run but fails on a fresh template). The visual diff catches pixel-level deltas the audit cannot see. **A section is gold-star only when both pass.** Treat the audit's exit code as a gate: never push a section with violations, never declare a clone complete with violations across the theme.
+**Pairing with visual diff.** `theme_audit.py` and the managed visual-parity
+matrix are complementary. The audit catches structural/schema/Liquid defects
+screenshots cannot see; the matched source/local evidence catches pixel-level
+deltas the audit cannot see. A section is gold-star only when both pass.
 
 ---
 
@@ -702,19 +853,31 @@ Exit codes: `0` = clean, `1` = violations found, `2` = invocation error.
 
 Read [references/page-templates.md](references/page-templates.md) for the correct template structure per page type.
 
-| PAGE_TYPE | Template Location |
-|-----------|------------------|
-| `home` | `home_page/default/index.liquid` |
-| `page` | `page/<PAGE_SLUG>/index.liquid` |
-| `product` | `product/<PAGE_SLUG>/index.liquid` |
+| PAGE_TYPE    | Template Location                     |
+| ------------ | ------------------------------------- |
+| `home`       | `home_page/default/index.liquid`      |
+| `page`       | `page/<PAGE_SLUG>/index.liquid`       |
+| `product`    | `product/<PAGE_SLUG>/index.liquid`    |
 | `collection` | `collection/<PAGE_SLUG>/index.liquid` |
 
+> A template's name **is** its directory name on disk. Always use slug-shaped
+> names (`[a-z0-9-]`) — never dates, slashes, colons, or other punctuation
+> (`/ \ : * ? " < > |`), which break `fluid theme pull` on Windows and produce
+> nested junk directories elsewhere.
+
 ### Key rules
+
 - `{% layout 'theme' %}` is always line 1
 - Each `{% section 'name', id: 'unique_id' %}` needs a unique `id`
 - The `{% schema %}` block maps each `id` to a section `type` with optional `settings` overrides
 - The `order` array controls rendering order
-- **Product pages**: always include `{% section 'main_product', id: 'product_main' %}` first — never replace it. Build the `product/default/index.liquid` template to **match the source PDP's section structure and order** (hero/gallery layout, benefits, ingredients, how-to-use, reviews, related — whatever the source uses). This one `default` template is what **every** product renders through, so matching it once makes all PDPs faithful; only add a `product/<slug>/index.liquid` when a specific product genuinely needs a bespoke layout. A generic default template = every product page looks off.
+- **Product pages**: inspect the scaffold and include its canonical product-data section
+  first (`product_hero` in current starters, `main_product` in older starters). Never
+  replace or hand-roll it. Build `product/default/index.liquid` to **match the source
+  PDP's section structure and order** (hero/gallery layout, benefits, ingredients,
+  how-to-use, reviews, related — whatever the source uses). This one `default` template
+  drives normal PDPs, so matching it once makes all products faithful; only add a
+  `product/<slug>/index.liquid` when the source genuinely uses a bespoke structure.
 - Read [references/fluid-rules.md](references/fluid-rules.md) for what NOT to touch
 - Read [references/template-variables.md](references/template-variables.md) for available variables per page type
 
@@ -726,7 +889,7 @@ Read [references/page-templates.md](references/page-templates.md) for the correc
 /* WRONG — breaks fluid_attributes bindings */
 "sections": {
   "hero": {
-    "type": "exact-rain-hero",
+    "type": "hero_centered",
     "blocks": { "heading_1": { "type": "heading", ... } }
   }
 }
@@ -734,7 +897,7 @@ Read [references/page-templates.md](references/page-templates.md) for the correc
 /* RIGHT — section type + settings only */
 "sections": {
   "hero": {
-    "type": "exact-rain-hero",
+    "type": "hero_centered",
     "settings": { "section_padding": { "top": 80, "bottom": 80, "left": 0, "right": 0 } }
   }
 }
@@ -747,6 +910,7 @@ Section preset values (including `section_padding`) only take effect when a sect
 ### API push → editor Save workflow
 
 After pushing section code (`fluid theme push`, or `fluid_api("/api/application_themes/{id}/resources", "PUT", {...})`):
+
 1. Open the visual editor
 2. Click **Save** (even with no changes)
 3. This triggers Fluid's block registration system
@@ -758,19 +922,23 @@ After pushing section code (`fluid theme push`, or `fluid_api("/api/application_
 
 Phase 4 ensures each section matches. Phase 6 ensures the **assembled page** matches end-to-end across breakpoints. This phase is gated by the dev-preview workflow — do not declare a page complete without it.
 
-### 6a: Run paired Playwright captures of source vs. localhost
+### 6a: Capture the matched managed-browser matrix
 
-With `fluid theme dev` still running on port 9292, capture the full page at desktop / tablet / mobile and walk it section-by-section:
+With `start_preview` healthy, capture home/shop/PDP at desktop and mobile:
 
-```bash
-node tools/visual-diff.mjs <SOURCE_URL> http://127.0.0.1:9292/<route> --label=<page>
-```
+- Source: `run_cli fluid theme crawl <url> --evidence . --viewport WxH --full-page --no-main-content-only`.
+- Built: `screenshot_preview` with the matching `path`, `width`, `height`, and
+  `mode:"full"`.
+- Interactions: `interact_preview` followed by a fresh screenshot.
 
-Outputs `diff/<page>/<label>-{desktop,tablet,mobile}-{source,built}-{full,sec01,sec02,...}.png` with matched scroll positions on both sides. See [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#the-diff-script).
+Pair by the semantic landmarks in `clone-manifest.json`, never equal scroll
+offset. Follow the complete matrix, overlay, route, evidence, and pass rules in
+[references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md).
 
 ### 6b: Read the pairs and classify findings
 
-Walk the desktop pairs in order, then tablet, then mobile. Read each `source` / `built` PNG pair with the Read tool. For each finding, classify:
+Walk desktop then mobile evidence in landmark order. For each finding,
+classify:
 
 - **Auto-fix** → background colors, padding/margin/gap, font sizes/line-height, border-radius, box-shadow, missing or wrong text content, icon size. Apply directly to the section file; the watcher uploads on save.
 - **Flag for user** → layout structure changes, image asset swaps, custom-font substitutions, missing third-party widgets, animation differences. Print a list and wait for the user before touching them.
@@ -784,7 +952,7 @@ Print the findings table per breakpoint, then loop. After 3 rounds with no conve
 Run the gold-star audit across the whole theme. **This is the final gate before Phase 7 — the theme does not ship with violations.**
 
 ```bash
-python3 scripts/theme_audit.py "$THEME_DIR"
+python3 <THEME_AUDIT_PATH> "$THEME_DIR"
 ```
 
 Exit code 0 = ready to upload. Exit code 1 = fix every violation, then re-run. The audit covers all 26 GS rules — see the [rule catalogue](#schema--liquid-audit-theme_auditpy) for what each catches and how to fix it.
@@ -794,6 +962,7 @@ The script's per-rule rollup at the end (`audit: 12 violation(s) across 18 file(
 **Items the audit checks deterministically (don't repeat manually):** section + block `fluid_attributes` placement, schema parse, presets, Section Shell + Container required settings, theme-token color/font controls, image_picker placement, render targets, block-loop dashes, breakpoints, `var(--clr-{{ ... }})` footgun, `fluid_attribute` typo, range bounds, richtext defaults, template schemas free of blocks, layout-tag-first.
 
 **Items the audit cannot check (verify manually):**
+
 - [ ] All images use DAM URLs (audit checks placement, not URL host)
 - [ ] All Liquid variable access uses `| default:` fallbacks
 - [ ] All text content matches source exactly
@@ -812,7 +981,9 @@ After all pages are built and QA'd, push the entire theme to Fluid.
 fluid theme push
 ```
 
-See the `fluid theme` CLI (see the theme-review skill) for `fluid login` / `fluid theme dev` / `fluid theme push` details.
+See the theme-review skill for pull/push semantics. In Mist, auth is managed,
+`start_preview` owns the long-lived dev process, and `run_cli` is for bounded
+one-shot commands.
 
 ### Fallback: drive the resource API directly
 
@@ -829,7 +1000,7 @@ theme_id = resp["application_theme"]["id"]
 
 ### 7b: Upload every file
 
-Walk the working directory and PUT each file as a theme resource. Text files go through `fluid_api`; for each binary, call the **`dam_upload` tool** (never POST to `upload.fluid.app` yourself), then register the returned `asset.default_variant_url`:
+Walk the working directory and PUT each file as a theme resource. Text files go through `fluid_api`; for each binary, run **`run_cli fluid assets upload <path>`** (never POST to `upload.fluid.app` yourself), then register the returned `asset.default_variant_url`:
 
 ```python
 TEXT_EXTS = {'.liquid', '.css', '.js', '.json', '.html', '.txt', '.svg'}
@@ -847,9 +1018,9 @@ for root, dirs, files in os.walk(WORK_DIR):
             fluid_api(f"/api/application_themes/{theme_id}/resources", "PUT",
                 {"key": key, "content": content})
         else:
-            # Binary: call the dam_upload tool with the file path; it returns
-            # the asset record. Register asset.default_variant_url as the resource.
-            dam_url = dam_upload(file=filepath, name=fname)["asset"]["default_variant_url"]
+            # Binary: run_cli fluid assets upload <path> --name <fname>; it prints
+            # the asset record as JSON. Register asset.default_variant_url as the resource.
+            dam_url = run_cli("fluid", ["assets", "upload", filepath, "--name", fname])["asset"]["default_variant_url"]
             if dam_url:
                 fluid_api(f"/api/application_themes/{theme_id}/resources", "PUT",
                     {"key": key, "dam_asset": dam_url})
@@ -872,23 +1043,23 @@ The base theme defines a **12-color palette** and a **5-font palette**. Extract 
 ```json
 {
   "current": {
-    "color_primary":   "#023026",
+    "color_primary": "#023026",
     "color_secondary": "#1F2937",
-    "color_accent":    "#fc6f39",
-    "color_white":     "#FFFFFF",
-    "color_light":     "#FAF8F1",
-    "color_gray":      "#F2F2F2",
-    "color_muted":     "#9CA3AF",
-    "color_dark":      "#111827",
-    "color_black":     "#000000",
-    "color_body":      "#1F2937",
-    "color_success":   "#10B981",
-    "color_warning":   "#F59E0B",
+    "color_accent": "#fc6f39",
+    "color_white": "#FFFFFF",
+    "color_light": "#FAF8F1",
+    "color_gray": "#F2F2F2",
+    "color_muted": "#9CA3AF",
+    "color_dark": "#111827",
+    "color_black": "#000000",
+    "color_body": "#1F2937",
+    "color_success": "#10B981",
+    "color_warning": "#F59E0B",
 
-    "font_family_body":        "Inter",
-    "font_family_heading":     "Spartan",
-    "font_family_accent":      "Inter",
-    "font_family_italic":      "Playfair Display",
+    "font_family_body": "Inter",
+    "font_family_heading": "Spartan",
+    "font_family_accent": "Inter",
+    "font_family_italic": "Playfair Display",
     "font_family_handwriting": "Caveat",
 
     "font_size_h1": 60,
@@ -971,6 +1142,7 @@ Sections reference these as `var(--clr-primary)` / `var(--ff-heading)` — theme
 ## Fluid Theme Architecture
 
 ### Directory structure
+
 ```
 your-theme/
 ├── layouts/theme.liquid              # Global wrapper (nav + content + footer)
@@ -996,7 +1168,7 @@ your-theme/
 │   ├── main_footer/index.liquid      # Global footer
 │   ├── main_product/index.liquid     # DO NOT MODIFY — Fluid's built-in
 │   ├── schema_reference/index.liquid # Live schema controls reference
-│   └── exact-<prefix>-*/index.liquid # Your cloned sections
+│   └── <descriptive_name>/index.liquid # Custom only when no canonical section fits
 ├── components/                       # Developer partials (no schema)
 ├── blocks/                           # Standalone reusable blocks (optional)
 ├── locales/                          # Translation files
@@ -1022,15 +1194,17 @@ A live, browsable reference of every schema control lives at `page/schema-refere
 3. If unsure — especially around `color` vs theme-color dropdowns, or resource pickers — stop and ask the user. Do **not** guess control names. Unsupported types (`number`, `article`, `video_url`, `inline_richtext`, etc.) break the editor silently.
 
 **Key patterns this page encodes:**
+
 - `richtext` for all visible copy (never `text`/`textarea`)
 - `range` for numeric inputs (never `number`)
 - `select + "options": "background_colors"` for theme-aware colors (never raw `color`)
-- Singular resource pickers return an OBJECT in Fluid (not an ID) — access via `.title`/`.url`/etc.
+- Only `product`, `variant`, `collection`, `category`, `enrollment_pack`, `media`, `link_list`, and `product_list` pickers resolve to Liquid objects — access via `.title`/`.url`/etc. A `post` picker and every other list type (`collection_list`, `posts_list`, …) give the saved ID, not an object
 - List resource pickers cap at 24 items
 
 When you update [references/schema-settings-reference.md](references/schema-settings-reference.md), also update the corresponding card in the live reference page so the two stay in sync.
 
 ### layouts/theme.liquid
+
 ```liquid
 <!DOCTYPE html>
 <html>
@@ -1042,7 +1216,7 @@ When you update [references/schema-settings-reference.md](references/schema-sett
 <body>
   {% section 'main_navbar' %}
   <main>
-    {% content_for_layout %}
+    {{ content_for_layout }}
   </main>
   {% section 'main_footer' %}
 </body>
@@ -1050,16 +1224,18 @@ When you update [references/schema-settings-reference.md](references/schema-sett
 ```
 
 ### DO NOT REPLACE
-| Section | Why |
-|---------|-----|
+
+| Section                 | Why                                                                  |
+| ----------------------- | -------------------------------------------------------------------- |
 | `sections/main_product` | Wired to Fluid's product object (name, price, variants, add-to-cart) |
-| Cart templates | Fluid-controlled |
-| Checkout | Fluid-controlled |
+| Cart templates          | Fluid-controlled                                                     |
+| Checkout                | Fluid-controlled                                                     |
 
 ### Fluid Liquid objects
+
 ```liquid
-{{ product.name }}
-{{ product.price | money }}
+{{ product.title }}
+{{ product.price }}
 {{ product.description }}
 {{ product.images }}
 {{ company.name }}
@@ -1073,7 +1249,11 @@ When you update [references/schema-settings-reference.md](references/schema-sett
 ## Related Skills
 
 - [theme-refine.md](../theme-refine/SKILL.md) — Pixel-perfect QA pass after clone. Canonical source of truth for Section Shell + Container patterns, divider-block pattern, canonical block primacy, media_picker fallback, and template-destroy preset refresh workflow.
-- The `fluid theme` CLI (see the theme-review skill) — Authoritative reference for `fluid login` / `fluid theme dev` / `fluid theme push`. Read before running any CLI command.
-- [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md) — Shared dev-preview + Playwright visual-diff protocol used by both clone and refine.
+- The `fluid theme` CLI (see the theme-review skill) — command semantics for
+  pull/push; inside Mist, use `start_preview` for dev and bounded `run_cli` for
+  one-shot commands.
+- [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md) —
+  shared fresh-machine managed-browser visual-parity protocol used by clone
+  and refine.
 - **fluid-product-admin-import** — For importing products, categories, and admin settings (run before theme clone).
-- [../onboarding/onboarding-prefill.md](../onboarding/onboarding-prefill/SKILL.md) — For pre-filling KYC/onboarding forms.
+- [Onboarding Pre-Fill](../../onboarding/onboarding-prefill/SKILL.md) — For pre-filling KYC/onboarding forms.

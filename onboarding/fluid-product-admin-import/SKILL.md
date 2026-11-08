@@ -1,0 +1,514 @@
+---
+name: fluid-product-admin-import
+description: >-
+  Import a complete source catalog and related store resources into the active
+  Fluid company. Builds an evidence-backed source manifest, preserves product
+  and taxonomy identity, verifies category and collection membership, resumes
+  safely, and proves one-to-one coverage before reporting completion.
+---
+
+# Fluid Product & Admin Import
+
+Use this skill when a workflow or user asks to import products, collections,
+categories, pages, posts, menus, brand assets, or related store setup from an
+existing commerce site.
+
+Inside Mist, the active company and credentials are already selected:
+
+- use `fluid_api(path, method, body)` for Fluid API calls;
+- use `run_cli fluid theme crawl <url>` for public source pages;
+- use `run_cli fluid assets upload` for source image bytes;
+- never ask for a Fluid token, store URL, Firecrawl key, or global CLI install.
+
+This is an execution contract. A row count is not proof of a complete import.
+
+## Authoritative API contract
+
+The documented admin catalog surface is the April 2026 storefront API:
+
+- `GET/POST /api/v202604/company/products`
+- `GET/PATCH/DELETE /api/v202604/company/products/{id}`
+- the same `/api/v202604/company/{resource}` CRUD pattern for categories,
+  collections, enrollment packs, posts, media, playlists, and pages.
+
+Before the first write in a run, use `query_docs` against
+`/openapi/api-reference/storefront-v2026-04.yaml` and inspect the exact path
+and write schema you need. The docs beat copied examples in this skill if the
+contract changes. Do not fall back to `/api/company/v1/*` when a documented
+v202604 call fails; report the docs/runtime mismatch instead of silently using
+a legacy surface.
+
+## Safety and scope
+
+Honor the caller's scope. A manifest/discovery step is read-only against Fluid.
+Only create or update destination records when the parent workflow or user has
+authorized an import.
+
+Never:
+
+- overwrite an unrelated existing product based on title alone;
+- invent copy, prices, variants, currency, subscriptions, or exclusions;
+- hotlink source CDN images;
+- treat a page/batch limit as catalog completion;
+- treat HTTP 200 as proof that a requested PDP still exists;
+- claim completion with unresolved source routes or missing checkpoints.
+
+## 1. Build the source catalog manifest
+
+Before any product write, create a fresh run-specific `source-catalog.json`.
+Record the absolute path, observation time, and final SHA-256.
+
+Discovery is a union:
+
+1. Parse `sitemap.xml` and every referenced child sitemap. Preserve product
+   URLs, last-modified timestamps, and sitemap images.
+2. Exhaust structured catalog endpoints when available. Follow documented
+   cursors or pages until their real terminator; do not stop at the first
+   successful page.
+3. Exhaust every collection/category pagination and collect product links. A
+   collection whose bounded retries ended in a network/fetch error is
+   unresolved, not exhausted; retry it independently and fail the manifest
+   gate if it still has no content-based terminal page/cursor.
+4. Fetch every unique PDP. Use an advertised `.md` twin for copy and simple
+   facts, but recover images, JSON-LD, embedded application state, options, and
+   variants from rendered HTML, sitemap images, or structured APIs. Capture the
+   complete product gallery from JSON-LD, embedded state,
+   `src`/`srcset`/`data-src`, and gallery thumbnails while excluding unrelated
+   recommendation and chrome images. One sitemap or Open Graph image is not a
+   complete gallery when the rendered PDP exposes more.
+5. Reconcile all sets. Every discovered product URL becomes one live manifest
+   product or one evidence-backed exclusion.
+
+Do not synthesize variant combinations as a Cartesian product unless the
+source explicitly proves every combination exists. Before finalizing, re-open
+a deterministic sample of at least 10 PDPs that includes the
+flagship/most-complex product, most-expensive product, one single-variant
+product, and multiple multi-variant products. The manifest's exact gallery
+URLs/count and real variant options/count must match the rendered or embedded
+source evidence for every sample. Store that compact `fidelity_sample` plus the
+whole-manifest image-count distribution in the manifest and step output; a
+mismatch is repair work, not a note.
+
+Required shape:
+
+```json
+{
+  "source_url": "https://example.com",
+  "observed_at": "2026-07-25T18:00:00Z",
+  "discovery": {
+    "sitemap_urls": 343,
+    "api_urls": 0,
+    "collection_urls": 324,
+    "unique_product_urls": 343,
+    "collection_errors": 0
+  },
+  "products": [
+    {
+      "source_id": "https://example.com/products/source-product-123",
+      "source_url": "https://example.com/products/source-product-123",
+      "source_handle": "source-product-123",
+      "final_url": "https://example.com/products/source-product-123",
+      "http_status": 200,
+      "content_type": "text/html",
+      "title": "Exact Source Product Title",
+      "description": "Exact source description",
+      "price": "29.99",
+      "compare_price": null,
+      "currency": "USD",
+      "image_urls": ["https://source.example/source-product-123.jpg"],
+      "option_axes": { "Size": ["Small", "Large"] },
+      "category_membership": {
+        "source_id": "source-category-10",
+        "source_handle": "supplements",
+        "title": "Supplements"
+      },
+      "collection_membership": [
+        {
+          "source_id": "source-collection-20",
+          "source_handle": "best-sellers",
+          "title": "Best Sellers"
+        }
+      ],
+      "variants": [
+        {
+          "source_variant_id": "source-variant-456",
+          "options": ["Small"],
+          "price": "29.99"
+        }
+      ],
+      "evidence": ["sitemap", "rendered-html", "json-ld"]
+    }
+  ],
+  "image_count_distribution": [
+    { "image_count": 1, "product_count": 12 },
+    { "image_count": 6, "product_count": 331 }
+  ],
+  "fidelity_sample": [
+    {
+      "source_url": "https://example.com/products/source-product-123",
+      "manifest_image_count": 6,
+      "source_image_count": 6,
+      "manifest_variant_count": 2,
+      "source_variant_count": 2,
+      "status": "match"
+    }
+  ],
+  "excluded": [
+    {
+      "source_url": "https://example.com/products/old-item",
+      "reason": "redirects to the home page; no product evidence",
+      "evidence": {
+        "final_url": "https://example.com/",
+        "http_status": 200
+      }
+    }
+  ]
+}
+```
+
+A stale PDP can redirect to the home page and still return a large HTTP 200
+body. Require the final URL to remain a product route and require product
+evidence such as an offer/price or Product JSON-LD.
+
+Do not exclude a product merely because:
+
+- one parser failed;
+- Markdown omitted an image;
+- a collection card did not include it;
+- a tool returned only its first 100/200/250 items;
+- the title duplicates another product.
+
+Only classify a `$0` route as junk when independent evidence identifies it as an
+internal/test/app-helper item. A legitimate free source product remains part of
+the catalog.
+
+## 2. Persist immutable identity and resume state
+
+Create `id-mapping.json` and a per-item checkpoint next to the source manifest.
+For products, the key is the normalized source ID or canonical source URL,
+never title.
+
+```json
+{
+  "products": {
+    "https://example.com/products/source-product-123": {
+      "fluid_product_id": 123,
+      "fluid_slug": "source-product-title-2f91",
+      "source_handle": "source-product-123"
+    }
+  }
+}
+```
+
+Duplicate titles are normal in parts catalogs. Report duplicate-title groups
+before import. If a mapping is missing and an existing destination product must
+be recovered, require a unique composite fingerprint such as verified
+`external_id`, source handle + SKU, or another stable source identifier.
+Ambiguous matches stop for review.
+
+After each successful destination write:
+
+1. persist the returned Fluid ID and slug;
+2. re-read the record;
+3. mark the checkpoint successful;
+4. only then start the next item.
+
+On restart, verify checkpointed records and resume the remaining identities.
+
+## 3. Resolve company country and destination state
+
+Before product creates:
+
+1. prove the source manifest has one common currency and determine its market
+   ISO from source/business localization evidence—never from currency alone;
+2. `GET /api/settings/company_countries`;
+3. require an entry for that exact market whose `currency` matches the source;
+   a different country that uses the same currency is not equivalent;
+4. when an onboarding/import scope authorizes store setup, open a missing
+   exact market with the Fluid CLI before any product probe: preview with
+   `run_cli` `fluid countries plan <ISO> --mode otg`, require its
+   `companyCountry.currency` to match the source currency, then run
+   `fluid countries open <ISO> --mode otg --yes` (`otg`: the business sells
+   from inside its own market). Never `POST /api/settings/company_countries`
+   with `fluid_api`; Mist refuses it. When `fluid countries atlas <ISO>` returns no atlas (the ISO isn't a Fluid country),
+   the currency differs, or the scope doesn't authorize store setup, stop and
+   request that prerequisite;
+5. use `company_countries[].country.id` as integer `country_id`, never the
+   company-country row's own `id`;
+6. paginate `GET /api/v202604/company/products?page[limit]=100` to understand
+   existing destination state. Follow each opaque
+   `meta.pagination.next_cursor` via `page[cursor]` until it is `null`; this
+   surface does not promise a `total_count`.
+
+Do not substitute `country_iso` or the company-country row id for `country_id`.
+Do not create a one-product contract probe until the market/currency preflight
+passes; a CAD numeric price written against a US/USD company country is stored
+as USD and is not a harmless probe.
+
+## 4. Move source images into Fluid DAM
+
+For every real product/gallery/variant image:
+
+1. ingest the source asset with `run_cli fluid assets upload <path>` when it is
+   already in the sandbox, or `run_cli fluid assets upload --url <SOURCE_URL>`
+   for a remote URL;
+2. take `asset.default_variant_url` from the result;
+3. store source URL → DAM URL in `id-mapping.json`;
+4. use only the Fluid DAM URL in product payloads.
+
+The underlying `POST https://upload.fluid.app/upload` service accepts either:
+
+- multipart file bytes (`fileName`, then `file` for large streaming uploads); or
+- multipart `external_asset_url`, which the service fetches server-side and
+  auto-detects `fileName` from when it is omitted.
+
+The exact remote field is `external_asset_url`, not `external_url`, and it is a
+multipart field rather than a JSON payload. JSON mode is reserved for
+`b64_json`/`data_uri`. A placeholder image is an unfinished import when the
+source has a real image.
+
+## 5. Create or update products
+
+Create products with nested attributes:
+
+```jsonc
+{
+  "product": {
+    "title": "Exact Source Product Title",
+    "description": "Exact source description",
+    "status": "published",
+    "public": true,
+    "product_subscription_plans_attributes": [
+      {
+        "_destroy": true
+      }
+    ],
+    "images_attributes": [
+      {
+        "image_url": "https://ik.imagekit.io/fluid/...",
+        "position": 1
+      }
+    ],
+    "option_attrs": ["Size"],
+    "variants_attributes": [
+      {
+        "is_master": true,
+        "option_attrs": ["Small"],
+        "variant_countries_attributes": [
+          {
+            "country_id": 123, // example only; replace from company_countries
+            "active": true,
+            "price": "29.99",
+            "compare_price": null
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Endpoint: `POST /api/v202604/company/products`
+
+Contract:
+
+- Use the documented Product lifecycle on writes: `status: "published"` plus
+  `public: true` for a live product. The v202604 `ProductWrite` schema accepts
+  `draft`, `scheduled` (with a future `publish_at`), `published`, or
+  `archived`. The raw `status: "active"` is still accepted for back-compat but
+  is undocumented; do not send it.
+- `images_attributes` uses `image_url`, not `url`.
+- Exactly one variant has `is_master: true`.
+- Product `option_attrs` are option names.
+- Variant `option_attrs` are values in the same order.
+- Create every real axis and variant combination on the first POST.
+- Every variant country includes integer `country_id`, `active`, exact decimal
+  string `price`, and `compare_price` when present. Do not send
+  `currency_code`: the selected country determines currency on this contract.
+  Verify the exact returned target-country row and its configured
+  company-country currency against the source. When multiple markets exist,
+  top-level `pricing.currency_code` may describe a different/default market and
+  is not sufficient evidence by itself.
+- Preserve source description, gallery order, option names/values, and exact
+  prices.
+- Omit `description` entirely when the source description is genuinely blank.
+  Do not send `null` or `""`: the outer v202604 validator normalizes the empty
+  string to null, then the delegated create returns
+  `422 product.description must be a string`, even though some generated and
+  docs-side schemas describe the field as nullable.
+- Do not attach a subscription plan unless the source offers that plan. Fluid
+  companies can have a company-default plan that the product create action
+  attaches when `product_subscription_plans_attributes` is omitted or empty.
+  For a source product with no subscription offer, send the non-empty skip
+  sentinel `product_subscription_plans_attributes:[{"_destroy":true}]`. The
+  v202604 create contract accepts `_destroy`; the write action treats the
+  non-empty array as an instruction to skip its default and creates no join.
+  An empty array is not equivalent. Re-read every created product and require
+  `has_subscription_plans:false` plus zero active/default subscription joins.
+  For a pre-existing join on the current production contract, PATCH the
+  returned join `id` with `active:false` and `default:false`, then re-read it;
+  never disable the company-wide plan to repair one import. Although the
+  v202604 update schema advertises `_destroy`, its delegated product-update
+  validator currently drops `_destroy` for this nested association, so do not
+  claim physical deletion unless the re-read proves the join is gone.
+- Static bundle links use documented `product_bundles_attributes`. Dynamic
+  `product_bundle_groups_attributes` are not writable on v202604; if the source
+  requires that unsupported shape, stop and report the exact gap instead of
+  flattening or silently dropping bundle choices.
+- Use each returned Fluid slug/canonical URL for destination navigation; do not
+  assume the source handle became the Fluid slug.
+
+For Connect imports, trigger the provider's documented product sync, wait for it
+to settle, then run this same manifest reconciliation. A Connect sync is not
+self-certifying.
+
+## 6. Import related resources when in scope
+
+Use GET-before-write and persist source identity → Fluid ID mappings.
+
+| Resource           | Endpoint                                                   | Important rule                                                                                                                                                    |
+| ------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Categories         | `POST /api/v202604/company/categories`                     | Create parents before children; resolve `parent_id` from the mapping. Products accept one `category_id`.                                                         |
+| Collections        | `POST /api/v202604/company/collections`                    | Preserve source identity. `product_ids` is a full replacement; omission leaves membership unchanged.                                                             |
+| Product membership | `PATCH /api/v202604/company/products/{id}`                 | Send the verified `category_id` and complete `collection_ids`; PATCH is partial and does not require resending `title`.                                          |
+| Static pages       | `run_cli fluid pages create`; underlying `/api/v202604/company/pages` | Write the Liquid to `page/<template-name>/index.liquid`, then get the user's human_in_the_loop approval (title exactly `Create Page "<Title>" in Theme "<Theme>" with its brand style`, or `without` for a blank page; suggestion_id `page-create:<random>`) and run `fluid pages create --title "<Title>" --theme "<Theme>" --template-name <name> --content-file page/<template-name>/index.liquid [--blank] --yes` with run_cli's `approval_id` set to it, so the page and its theme template are created and linked together; then `start_preview` on the page. Resolve the body before writing (below). |
+| Blog posts         | `POST /api/v202604/company/posts`                          | Preserve documented source fields, lifecycle, the response's canonical URL, and DAM hero/SEO image.                                                              |
+| Playlists          | `POST /api/v202604/company/playlists`                      | The route says playlists but the documented request wrapper is intentionally `library`.                                                                         |
+| Menus              | `POST /api/menus`                                          | Menus are the explicit legacy exception; use destination canonical routes and preserve nesting/order. Follow [Rebuild the header menu](#rebuild-the-header-menu). |
+
+Theme pushes happen before page creates because page creation can auto-generate
+theme templates that a later push may try to remove.
+
+### Preserve and prove taxonomy membership
+
+Treat taxonomy definitions and taxonomy membership as one import contract. A
+successful category or collection write does not prove that its products were
+attached.
+
+1. During source discovery, record immutable identity, handle, and title for
+   every category and collection. Record each product's
+   `category_membership` and complete `collection_membership` in the source
+   manifest. Reconcile those fields against every exhausted taxonomy listing;
+   do not infer membership from marketing copy or menu placement.
+2. Record genuinely empty source categories and collections separately. If a
+   source taxonomy listing contains products but none resolve into the
+   manifest, the manifest is incomplete rather than empty.
+3. Create or adopt taxonomy records before assigning products. Resolve source
+   taxonomy identities and source product identities through the persisted
+   mappings, then PATCH each destination product once with its `category_id`
+   and complete `collection_ids`. Fluid supports one product category; if the
+   source requires multiple unrelated categories and no primary/deepest
+   category is proven, report the representation gap instead of choosing one.
+4. Re-read every non-empty destination category and collection through its
+   products endpoint. Compare the exact expected and actual destination product
+   ID sets. Missing, extra, or unresolvable identities belong in
+   `membership_failures` and keep the step out of a pass state.
+
+Never report taxonomy counts as membership proof. A run that created four
+categories and assigned zero products imported four empty navigation targets.
+
+### Rebuild the header menu
+
+Creating a menu changes nothing on the storefront. The header renders whichever
+menu its `link_list` setting names, so a menu import is finished only when the
+live header shows it. The payloads are in
+[Navigation menus](https://docs.fluid.app/themes/navigation-menus).
+
+1. Start from the recorded source navigation (`navigation.header` in
+   `clone-manifest.json`). Header controls such as the logo, search, account,
+   cart, and the country/language/currency selector are not menu items.
+2. Import menus after the records they link to. Resolve each internal source
+   URL to the canonical URL the API returned for the destination record, using
+   the persisted mappings first. Keep external links unchanged. Report an
+   internal link you cannot resolve; never point it at a guessed route or at
+   home.
+3. `GET /api/menus` and adopt the matching menu before creating one. Write
+   `linkable_type: "Link"` items with the source's titles, order, and nesting
+   (`sub_menu_items_attributes`), then read the menu back and compare.
+4. Use the `slug` the API returns. Never derive it from the title; older menus
+   can return a null slug.
+5. Set every header `link_list` setting (desktop and mobile, if separate) to
+   that slug in the navbar template's section settings, push, and check the
+   live header's rendered items against the menu.
+6. Keep the country and language selector in the header, beside the menu, on by
+   default behind a setting the merchant can turn off.
+
+Report `menu_id`, `menu_slug`, the bound header settings, and every unresolved
+item. A menu that exists but isn't bound to the header is not an import.
+
+### Resolving a page body
+
+`body_html` is not the page. On Shopify it is empty for every section-built or
+page-builder page, because the copy lives in template sections — so an import
+that reads only `body_html` publishes a blank page and counts it as a success.
+Legal and policy pages have real `body_html`; visually composed marketing pages
+(quizzes, comparison tables, buying guides, About, Contact) generally do not,
+and those are usually the commercially important ones.
+
+For each page:
+
+1. Take `body_html` when it is non-empty.
+2. Otherwise fetch the page's rendered DOM and take the main content region.
+3. If the rendered page is also empty, the source page is genuinely empty.
+   Record it in `empty_at_source` with the URL and what rendered, and do not
+   count it as an import failure.
+
+Never publish a page whose body resolved to nothing without listing it.
+
+Report two page counts, never one: pages with a non-empty body, and pages
+published empty. A single record count hides the failure it should announce.
+
+Legitimately empty resource types are reported as zero with evidence. Do not
+fabricate content to make a count nonzero.
+
+## 7. Bounded performance and recovery
+
+- Fetch source pages with at most 10 concurrent requests.
+- Start DAM downloads/uploads at 5 concurrent items.
+- Start product writes at 2 concurrent requests.
+- On 429/5xx, honor `Retry-After`, apply exponential backoff with jitter, and
+  temporarily reduce concurrency.
+- Retry each item a bounded number of times, then record the terminal error
+  beside its source identity.
+- Print progress at least every 20 products.
+- Never hold the complete image catalog in memory.
+- Resume missing items after slow Wi-Fi, process restart, or provider failure.
+
+These are starting limits, not targets. Reduce them on a lower-end computer or
+when the source/destination begins throttling.
+
+## 8. Prove completion
+
+Paginate the destination until exhausted and reconcile it against the hashed
+source manifest.
+
+The product import passes only when:
+
+- every live source identity maps to one distinct Fluid product ID;
+- no two source identities map to the same Fluid product;
+- every discovered route is live or has an evidence-backed exclusion;
+- unresolved source and destination counts are zero;
+- coverage is exactly 100%;
+- destination products resolve as the documented live lifecycle
+  (`active: true` plus read `status: "published"`); writes used ProductWrite
+  `status: "published"`;
+- exact price and currency match;
+- source option axes and variant counts match;
+- every available source image is represented by a resolving Fluid DAM URL;
+- descriptions match the source;
+- no placeholder images or accidental `$0` shells remain;
+- a second run verifies idempotency without duplicates.
+
+Report discovered, live, excluded, imported, and failed counts separately, and
+split imported into created and adopted. A re-run that CREATES what it should
+have adopted is duplicating the catalog; merged into one "imported" number that
+run reports the same clean pass as a correct one.
+
+End with:
+
+```text
+STEP_OUTPUT: manifest=<absolute path> sha256=<hash> discovered=<n> live=<n> excluded=<n> imported=<n> created=<n> adopted=<n> coverage=100% unresolved=0 duplicate_title_groups=<n> checkpoint=<absolute path> match_rates={title,price,currency,images,variants,description} related_resources={categories,collections,pages,pages_empty,posts,menus}
+```
+
+If any gate is unmet, report `BLOCKED` or `needs-review` with exact identities
+and evidence. Never downgrade partial work into a pass.
