@@ -1,0 +1,1477 @@
+#!/usr/bin/env python3
+"""Validate the published Mist skill and workflow catalog without dependencies."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import sys
+from collections.abc import Iterable
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parent.parent
+MANIFEST_PATH = ROOT / "manifest.json"
+STREAMLINED_WORKFLOW_PATH = (
+    ROOT / "workflows/streamlined-onboard-launch.workflow.json"
+)
+SHARED_CONTRACT_FILES = (
+    ROOT / "onboarding/fluid-product-admin-import/SKILL.md",
+    ROOT / "onboarding/onboarding-prefill/SKILL.md",
+    ROOT / "onboarding/onboarding-prefill/references/api-endpoints.md",
+    ROOT / "onboarding/onboarding-prefill/references/brand-md.md",
+    ROOT / "themes/theme-clone/SKILL.md",
+    ROOT / "themes/theme-source-inventory/SKILL.md",
+    ROOT / "themes/references/pixel-fidelity-core.md",
+    ROOT / "themes/page-clone/references/pixel-perfect-page.md",
+    ROOT / "themes/clone-page-to-liquid/SKILL.md",
+    ROOT / "themes/clone-home-page/SKILL.md",
+    ROOT / "themes/clone-shop-page/SKILL.md",
+    ROOT / "themes/clone-product-page/SKILL.md",
+    ROOT / "themes/clone-category-page/SKILL.md",
+    ROOT / "themes/clone-collection-page/SKILL.md",
+)
+
+
+# Models permitted for the two gates that were previously pinned to a single id.
+# Cross-vendor review is still enforced separately; these sets only widen WHICH
+# model may hold a role, so the choice can be settled by measured runs rather
+# than frozen into the validator.
+SOURCE_DISCOVERY_MODELS = {
+    "google/gemini-3.6-flash",
+    "openai/gpt-5.6-sol",
+    "anthropic/claude-opus-5",
+}
+PAGE_QA_MODELS = {
+    "google/gemini-3.6-flash",
+    "openai/gpt-5.6-sol",
+    "anthropic/claude-opus-5",
+}
+
+
+def depends_transitively(steps: dict, start: str, target: str) -> bool:
+    """True when `start` cannot run until `target` has run.
+
+    Ordering rules below assert "X waits for Y". Asserting that as a literal
+    dependsOn list makes the chain unextendable: inserting a legitimate step
+    between X and Y breaks a rule that is still satisfied. Walk the graph
+    instead so the invariant survives new steps in the middle.
+    """
+    seen: set[str] = set()
+    frontier = [start]
+    while frontier:
+        current = frontier.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        step = steps.get(current)
+        if not isinstance(step, dict):
+            continue
+        for dependency in step.get("dependsOn") or []:
+            if dependency == target:
+                return True
+            frontier.append(dependency)
+    return False
+
+
+class CatalogValidationError(Exception):
+    """A deterministic catalog validation failure."""
+
+
+def reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise CatalogValidationError(f"duplicate JSON key: {key!r}")
+        result[key] = value
+    return result
+
+
+def load_json(path: Path) -> Any:
+    try:
+        return json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=reject_duplicate_keys,
+        )
+    except (json.JSONDecodeError, CatalogValidationError) as error:
+        raise CatalogValidationError(f"{path.relative_to(ROOT)}: {error}") from error
+
+
+def require_string(entry: dict[str, Any], key: str, label: str) -> str:
+    value = entry.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise CatalogValidationError(f"{label}: {key!r} must be a non-empty string")
+    return value
+
+
+def validate_relative_file(raw_path: str, label: str) -> Path:
+    relative = Path(raw_path)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise CatalogValidationError(f"{label}: path must stay inside the repository")
+
+    resolved = ROOT / relative
+    if not resolved.is_file():
+        raise CatalogValidationError(f"{label}: missing file {raw_path!r}")
+    return resolved
+
+
+def validate_unique(values: Iterable[tuple[str, str]], noun: str) -> None:
+    seen: dict[str, str] = {}
+    for value, label in values:
+        previous = seen.get(value)
+        if previous is not None:
+            raise CatalogValidationError(
+                f"duplicate {noun} {value!r}: {previous} and {label}"
+            )
+        seen[value] = label
+
+
+def validate_manifest(manifest: Any) -> tuple[int, int]:
+    if not isinstance(manifest, dict):
+        raise CatalogValidationError("manifest root must be an object")
+    if manifest.get("version") != 1:
+        raise CatalogValidationError("manifest version must be 1")
+
+    skills = manifest.get("skills")
+    workflows = manifest.get("workflows")
+    if not isinstance(skills, list) or not isinstance(workflows, list):
+        raise CatalogValidationError("manifest skills and workflows must be arrays")
+
+    skill_identities: list[tuple[str, str]] = []
+    skill_paths: list[tuple[str, str]] = []
+    for index, entry in enumerate(skills):
+        label = f"skills[{index}]"
+        if not isinstance(entry, dict):
+            raise CatalogValidationError(f"{label}: entry must be an object")
+
+        slug = require_string(entry, "slug", label)
+        require_string(entry, "name", label)
+        require_string(entry, "description", label)
+        require_string(entry, "category", label)
+        require_string(entry, "icon", label)
+        path = require_string(entry, "path", label)
+        require_string(entry, "updated_at", label)
+        validate_relative_file(path, label)
+
+        references = entry.get("references", [])
+        if not isinstance(references, list) or not all(
+            isinstance(reference, str) for reference in references
+        ):
+            raise CatalogValidationError(f"{label}: references must be string paths")
+        for reference in references:
+            validate_relative_file(reference, label)
+
+        skill_identities.append((slug, label))
+        skill_paths.append((path, label))
+
+    workflow_identities: list[tuple[str, str]] = []
+    workflow_paths: list[tuple[str, str]] = []
+    for index, entry in enumerate(workflows):
+        label = f"workflows[{index}]"
+        if not isinstance(entry, dict):
+            raise CatalogValidationError(f"{label}: entry must be an object")
+
+        slug = require_string(entry, "slug", label)
+        path = require_string(entry, "path", label)
+        require_string(entry, "updated_at", label)
+        workflow_path = validate_relative_file(path, label)
+        load_json(workflow_path)
+
+        workflow_identities.append((slug, label))
+        workflow_paths.append((path, label))
+
+    validate_unique(skill_identities, "skill slug")
+    validate_unique(skill_paths, "skill path")
+    validate_unique(workflow_identities, "workflow slug")
+    validate_unique(workflow_paths, "workflow path")
+    return len(skills), len(workflows)
+
+
+BOT_KEY_PATTERN = re.compile(r"[a-z][a-z0-9_]{1,62}")
+BOT_FILE_NAME_PATTERN = re.compile(r"[a-z0-9_-]+\.md")
+SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
+BOT_FILE_FIELDS = ("persona", "instructions")
+
+
+def sha256_of(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def bot_file_references(template: Any, label: str) -> set[str]:
+    """The Markdown files a bot template names in persona or instructions.
+
+    Each field is an inline string or exactly {"file": "<name>.md"}, a file in
+    the directory named for the version (bots/<key>/v<n>/), as Fluid Rails
+    (WeBots::TemplateMarkdownResolver) reads it.
+    """
+    if not isinstance(template, dict):
+        raise CatalogValidationError(f"{label}: template must be a JSON object")
+    named: set[str] = set()
+    for field in BOT_FILE_FIELDS:
+        reference = template.get(field)
+        if not isinstance(reference, dict):
+            continue
+        name = reference.get("file")
+        if (
+            set(reference) != {"file"}
+            or not isinstance(name, str)
+            or not BOT_FILE_NAME_PATTERN.fullmatch(name)
+        ):
+            raise CatalogValidationError(
+                f"{label}: {field} must be a string or {{\"file\": \"<name>.md\"}}"
+            )
+        named.add(name)
+    return named
+
+
+def validate_bot_entry(entry: Any, label: str) -> str:
+    if not isinstance(entry, dict):
+        raise CatalogValidationError(f"{label}: entry must be an object")
+    key = require_string(entry, "key", label)
+    version = entry.get("version")
+    if not BOT_KEY_PATTERN.fullmatch(key):
+        raise CatalogValidationError(f"{label}: key {key!r} is not a valid bot key")
+    if not isinstance(version, int) or isinstance(version, bool) or version < 1:
+        raise CatalogValidationError(f"{label}: version must be a positive integer")
+    path = require_string(entry, "path", label)
+    if path != f"bots/{key}/v{version}.json":
+        raise CatalogValidationError(f"{label}: path must be bots/{key}/v{version}.json")
+    require_string(entry, "updated_at", label)
+
+    template_path = validate_relative_file(path, label)
+    if entry.get("sha256") != sha256_of(template_path):
+        raise CatalogValidationError(f"{label}: sha256 does not match {path}")
+
+    pinned = entry.get("files", {})
+    if not isinstance(pinned, dict) or not all(
+        isinstance(name, str)
+        and BOT_FILE_NAME_PATTERN.fullmatch(name)
+        and isinstance(digest, str)
+        and SHA256_PATTERN.fullmatch(digest)
+        for name, digest in pinned.items()
+    ):
+        raise CatalogValidationError(
+            f"{label}: files must map <name>.md to a SHA-256 digest"
+        )
+    named = bot_file_references(load_json(template_path), label)
+    if named != set(pinned):
+        raise CatalogValidationError(
+            f"{label}: files must list exactly the files the template names "
+            f"(named {sorted(named)}, pinned {sorted(pinned)})"
+        )
+    directory = path.removesuffix(".json")
+    for name, digest in pinned.items():
+        if sha256_of(validate_relative_file(f"{directory}/{name}", label)) != digest:
+            raise CatalogValidationError(
+                f"{label}: files[{name!r}] does not match {directory}/{name}"
+            )
+    return f"{key}@{version}"
+
+
+def validate_bots(manifest: Any) -> int:
+    """Check manifest bots[]: each template's digest, and each Markdown file
+    its persona or instructions name is pinned in files with its digest."""
+    bots = manifest.get("bots", [])
+    if not isinstance(bots, list):
+        raise CatalogValidationError("manifest bots must be an array")
+    validate_unique(
+        (
+            (validate_bot_entry(entry, f"bots[{index}]"), f"bots[{index}]")
+            for index, entry in enumerate(bots)
+        ),
+        "bot key and version",
+    )
+    return len(bots)
+
+
+def require_fragments(text: str, fragments: tuple[str, ...], label: str) -> None:
+    for fragment in fragments:
+        if fragment not in text:
+            raise CatalogValidationError(
+                f"{label}: required contract fragment is missing: {fragment!r}"
+            )
+
+
+def validate_shared_skill_contracts() -> None:
+    banned_fragments = (
+        "/api/company/v1/products",
+        "/api/company/v1/collections",
+        "POST /api/company/pages",
+        "POST /api/posts",
+        "brand_guidelines has NO font field",
+        "There is no `external_asset_url`",
+        "does not accept an `external_asset_url`",
+        "cowboy.com",
+        "Suisse Intl",
+    )
+
+    for path in SHARED_CONTRACT_FILES:
+        text = path.read_text(encoding="utf-8")
+        for fragment in banned_fragments:
+            if fragment in text:
+                raise CatalogValidationError(
+                    f"{path.relative_to(ROOT)}: stale or fixture-specific "
+                    f"contract fragment found: {fragment!r}"
+                )
+
+    product_import_skill = (
+        ROOT / "onboarding/fluid-product-admin-import/SKILL.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        product_import_skill,
+        (
+            '"category_membership"',
+            '"collection_membership"',
+            "Send the verified `category_id` and complete `collection_ids`",
+            "Re-read every non-empty destination category and collection",
+            "taxonomy counts as membership proof",
+        ),
+        "fluid-product-admin-import taxonomy membership contract",
+    )
+
+    manifest = load_json(MANIFEST_PATH)
+    manifest_skills = {
+        entry.get("slug"): entry.get("path")
+        for entry in manifest.get("skills", [])
+        if isinstance(entry, dict)
+    }
+    expected_page_skills = {
+        "themes/clone-page-to-liquid": "themes/clone-page-to-liquid/SKILL.md",
+        "themes/clone-home-page": "themes/clone-home-page/SKILL.md",
+        "themes/clone-shop-page": "themes/clone-shop-page/SKILL.md",
+        "themes/clone-product-page": "themes/clone-product-page/SKILL.md",
+        "themes/clone-category-page": "themes/clone-category-page/SKILL.md",
+        "themes/clone-collection-page": "themes/clone-collection-page/SKILL.md",
+    }
+    for slug, expected_path in expected_page_skills.items():
+        if manifest_skills.get(slug) != expected_path:
+            raise CatalogValidationError(
+                f"manifest must publish {slug!r} at {expected_path!r}"
+            )
+
+    page_reference = (
+        ROOT / "themes/page-clone/references/pixel-perfect-page.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        page_reference,
+        (
+            "baseline_admissibility",
+            "contaminated",
+            "repeated fixed overlays",
+        ),
+        "pixel-perfect-page",
+    )
+
+    product_skill = (
+        ROOT / "onboarding/fluid-product-admin-import/SKILL.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        product_skill,
+        (
+            "/openapi/api-reference/storefront-v2026-04.yaml",
+            "/api/v202604/company/products",
+            "meta.pagination.next_cursor",
+            'status: "published"',
+            "Do not send\n  `currency_code`",
+            "external_asset_url",
+            'product_subscription_plans_attributes:[{"_destroy":true}]',
+        ),
+        "fluid-product-admin-import",
+    )
+
+    brand_reference = (
+        ROOT / "onboarding/onboarding-prefill/references/api-endpoints.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        brand_reference,
+        (
+            '"brand_md":',
+            '"fonts":',
+            '"name":',
+            '"file_url":',
+            "external_asset_url",
+            "update_brand_voice",
+        ),
+        "onboarding brand API reference",
+    )
+
+    theme_clone_skill = (ROOT / "themes/theme-clone/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    require_fragments(
+        theme_clone_skill,
+        (
+            'document.querySelectorAll("img,video,video source")',
+            "different desktop/mobile video sources",
+            "Run `fluid assets upload` with its public `url`",
+            "`compress_media`",
+            "`priority_media`",
+            "video is a hard failure",
+        ),
+        "theme-clone priority media contract",
+    )
+
+    source_inventory_skill = (
+        ROOT / "themes/theme-source-inventory/SKILL.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        source_inventory_skill,
+        (
+            "evidence_run_started_at",
+            "30 minutes after it",
+            "union of all six rendered sidecars",
+            "build_theme_source_inventory",
+            "documents.html",
+            "path/SHA-256/byte-length receipts",
+            "`SOURCE_INVENTORY_BUILD: written`",
+            "`SOURCE_INVENTORY_VALIDATION: pass`",
+            "validate_theme_source_inventory",
+        ),
+        "theme source-inventory contract",
+    )
+
+    page_contract = (
+        ROOT / "themes/page-clone/references/pixel-perfect-page.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        page_contract,
+        (
+            "source_copy_sha256",
+            "`stable`, `resource`, `dynamic`, or `external`",
+            "run_cli fluid assets upload --url <exact-public-url> --create-media",
+            "compress_media",
+            "`currentSrc`",
+            "`read_preview_dom",
+            "signed Agent Surface receipt",
+            'geometry_mode:"diagnostic"',
+            'media_mode:"diagnostic"',
+            "A successful diagnostic call",
+            "failed/refused `interact_preview`",
+            "tool_failures:[]",
+            "page-type reviewer",
+            "Do not use a universal minor-count or geometry percentage",
+            'status:"pass"|"needs_adjudication"|"blocked"',
+        ),
+        "shared pixel-perfect page contract",
+    )
+
+    universal_page_skill = (
+        ROOT / "themes/clone-page-to-liquid/SKILL.md"
+    ).read_text(encoding="utf-8")
+    require_fragments(
+        universal_page_skill,
+        (
+            "This skill owns visual reconstruction only",
+            "page_contract",
+            "data_contract",
+            "`stable`",
+            "`resource`",
+            "`dynamic`",
+            "`external`",
+            'copy_mode:"exact"',
+            'copy_mode:"diagnostic"',
+            'geometry_mode:"diagnostic"',
+            'media_mode:"diagnostic"',
+            "Diagnostic comparison success",
+            "failed or refused page-contract interaction",
+            "tool_failures:[]",
+            "independent reviewer",
+            'status:"pass"|"needs_adjudication"|"blocked"',
+        ),
+        "universal page-to-Liquid skill",
+    )
+
+    specialist_contracts = {
+        "themes/clone-home-page/SKILL.md": (
+            'run_skill("themes/clone-page-to-liquid")',
+            "Home semantics",
+        ),
+        "themes/clone-shop-page/SKILL.md": (
+            'run_skill("themes/clone-page-to-liquid")',
+            "Do not start, await, or grade a complete product import",
+        ),
+        "themes/clone-product-page/SKILL.md": (
+            'run_skill("themes/clone-page-to-liquid")',
+            "bulk catalog import",
+            "canonical product-data/add-to-cart section",
+        ),
+        "themes/clone-category-page/SKILL.md": (
+            'run_skill("themes/clone-page-to-liquid")',
+            "do not await a complete catalog",
+            "`category_index`",
+            "`category_showcase`",
+        ),
+        "themes/clone-collection-page/SKILL.md": (
+            'run_skill("themes/clone-page-to-liquid")',
+            "page-copy prerequisite",
+            "`collection_index`",
+            "`collection_showcase`",
+        ),
+    }
+    for relative_path, fragments in specialist_contracts.items():
+        require_fragments(
+            (ROOT / relative_path).read_text(encoding="utf-8"),
+            fragments,
+            f"{relative_path} specialist contract",
+        )
+
+
+
+def validate_streamlined_product_import_contract() -> None:
+    workflow = load_json(STREAMLINED_WORKFLOW_PATH)
+    if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
+        raise CatalogValidationError("streamlined workflow steps must be an array")
+
+    steps = {
+        step.get("id"): step
+        for step in workflow["steps"]
+        if isinstance(step, dict) and isinstance(step.get("id"), str)
+    }
+    catalog_manifest = steps.get("catalog-manifest")
+    products_import = steps.get("import-products")
+    if not isinstance(catalog_manifest, dict):
+        raise CatalogValidationError(
+            "streamlined workflow: catalog-manifest step is missing"
+        )
+    if "manifest_sha256" not in str(catalog_manifest.get("prompt", "")):
+        raise CatalogValidationError(
+            "streamlined workflow: catalog-manifest must expose its SHA-256 "
+            "to import-products"
+        )
+    if not isinstance(products_import, dict):
+        raise CatalogValidationError(
+            "streamlined workflow: import-products step is missing"
+        )
+    if products_import.get("dependsOn") != ["catalog-manifest"]:
+        raise CatalogValidationError(
+            "streamlined workflow: import-products must wait for catalog-manifest"
+        )
+    if products_import.get("model") != "google/gemini-3.6-flash":
+        raise CatalogValidationError(
+            "streamlined workflow: import-products must use "
+            "google/gemini-3.6-flash"
+        )
+    if products_import.get("maxReworkRounds") != 0:
+        raise CatalogValidationError(
+            "streamlined workflow: deterministic product imports must not rework"
+        )
+    if "skill" in products_import:
+        raise CatalogValidationError(
+            "streamlined workflow: import-products must use its inline tool prompt"
+        )
+
+    prompt = products_import.get("prompt")
+    if not isinstance(prompt, str):
+        raise CatalogValidationError(
+            "streamlined workflow: import-products prompt must be a string"
+        )
+    require_fragments(
+        prompt,
+        (
+            "manifest_path",
+            "manifest_sha256",
+            "exactly once",
+            "write mode",
+            "compact receipt",
+        ),
+        "streamlined workflow import-products",
+    )
+    if prompt.count("fluid_product_import") != 1:
+        raise CatalogValidationError(
+            "streamlined workflow: work prompt must contain exactly one "
+            "fluid_product_import invocation"
+        )
+    for banned_tool in ("fluid_api", "assets upload"):
+        if banned_tool in prompt:
+            raise CatalogValidationError(
+                "streamlined workflow: import-products must not direct the "
+                f"model to call {banned_tool}"
+            )
+
+    qa = products_import.get("qa")
+    expected_requirement = {
+        "tool": "fluid_product_import",
+        "input": {"verify_only": True},
+        "minSuccessfulCalls": 1,
+    }
+    if not isinstance(qa, dict) or qa.get("enabled") is not True:
+        raise CatalogValidationError(
+            "streamlined workflow: import-products independent QA must be enabled"
+        )
+    if qa.get("model") != "google/gemini-3.6-flash":
+        raise CatalogValidationError(
+            "streamlined workflow: import-products QA must use "
+            "google/gemini-3.6-flash"
+        )
+    if qa.get("strictness") != "lenient":
+        raise CatalogValidationError(
+            "streamlined workflow: import-products QA must remain lenient"
+        )
+    if qa.get("onFail") != "continue":
+        raise CatalogValidationError(
+            "streamlined workflow: import-products QA must continue on failure"
+        )
+    if qa.get("requiredTools") != [expected_requirement]:
+        raise CatalogValidationError(
+            "streamlined workflow: import-products QA must require one "
+            "verify-only fluid_product_import call"
+        )
+
+    acceptance = json.dumps(products_import.get("acceptance", []))
+    require_fragments(
+        acceptance,
+        (
+            "exactly one live Fluid product",
+            "no duplicates, no silent drops",
+            "Prices, variants, and images match",
+            "multi-variant product",
+        ),
+        "streamlined workflow import-products fidelity",
+    )
+
+
+def _validate_streamlined_home_review_contract(workflow: Any) -> None:
+    if not isinstance(workflow, dict) or not isinstance(workflow.get("steps"), list):
+        raise CatalogValidationError("streamlined workflow steps must be an array")
+
+    home_step = next(
+        (
+            step
+            for step in workflow["steps"]
+            if isinstance(step, dict) and step.get("id") == "home-page"
+        ),
+        None,
+    )
+    if not isinstance(home_step, dict):
+        raise CatalogValidationError("streamlined workflow: home-page step is missing")
+    if "skill" in home_step:
+        raise CatalogValidationError(
+            "streamlined workflow: home-page must use its inline code-review prompt"
+        )
+    prompt = home_step.get("prompt")
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise CatalogValidationError(
+            "streamlined workflow: home-page prompt must be a non-empty string"
+        )
+    require_fragments(
+        prompt,
+        (
+            "clone-manifest.json",
+            "retained source HTML",
+            "source CSS",
+            "resolved landmark styles",
+            "exact stable copy",
+            "optional, non-authoritative design input only",
+            "open only the retained source screenshot paths",
+            "Fluid Liquid data",
+            "shared shell",
+            "multiple named Liquid sections",
+            "monolithic page-sized section",
+            "base-theme scaffold filler",
+            "inline binary media",
+            "hardcoded development theme ids",
+            "layout-hiding hacks",
+            "fluid theme lint --json",
+            "read the rendered DOM",
+            "browser console",
+            "local server logs",
+            "priority_media.items",
+            "theme_media_reconcile",
+            'mode: "theme_only"',
+            ".mist-desktop/home-catalog-index.json",
+            "priority_media.delivery_items",
+        ),
+        "streamlined workflow home-page implementation contract",
+    )
+    qa = home_step.get("qa")
+    if (
+        home_step.get("dependsOn") != ["source-capture"]
+        or home_step.get("maxReworkRounds") != 1
+        or not isinstance(qa, dict)
+        or qa.get("enabled") is not True
+        or qa.get("strictness") != "lenient"
+        or qa.get("onFail") != "continue"
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: home-page must preserve its lenient "
+            "fail-open contract"
+        )
+    expected_qa_tools = [
+        {
+            "tool": "run_cli",
+            "input": {
+                "command": "fluid",
+                "args": ["theme", "lint", "--json"],
+            },
+            "minSuccessfulCalls": 1,
+        },
+        {
+            "tool": "read_file",
+            "input": {"path": "clone-manifest.json"},
+        },
+        {
+            "tool": "read_file",
+            "input": {"path": "home_page/default/index.liquid"},
+        },
+        {
+            "tool": "read_file",
+            "minSuccessfulCalls": 3,
+            "distinctBy": ["path"],
+        },
+        {
+            "tool": "search_files",
+            "minSuccessfulCalls": 2,
+            "distinctBy": ["query"],
+        },
+        {
+            "tool": "read_preview_dom",
+            "input": {"path": "/", "mode": "all"},
+            "minSuccessfulCalls": 1,
+        },
+        {
+            "tool": "read_preview_console",
+            "minSuccessfulCalls": 1,
+        },
+        {
+            "tool": "read_local_server_logs",
+            "minSuccessfulCalls": 1,
+        },
+    ]
+    if qa.get("requiredTools") != expected_qa_tools:
+        raise CatalogValidationError(
+            "streamlined workflow: home-page must require only its deterministic "
+            "QA evidence floor"
+        )
+    acceptance = json.dumps(home_step.get("acceptance", []))
+    if "horizontal overflow" in f"{prompt} {acceptance}":
+        raise CatalogValidationError(
+            "streamlined workflow: home-page review claims unsupported DOM evidence"
+        )
+    require_fragments(
+        acceptance,
+        (
+            "clone-manifest.json",
+            "at least two distinct implementation files",
+            "fluid theme lint --json",
+            "Targeted code searches",
+            "multiple named section mounts",
+            "exact stable source copy",
+            "Fluid-backed resource/dynamic bindings",
+            "shared-shell reuse",
+            "no base-theme scaffold filler",
+            "inline binary media",
+            "hardcoded environment identity",
+            "monolithic page-sized section",
+            "layout-hiding workaround",
+            "local rendered DOM for / in all mode",
+            "preview console and local server logs",
+            "Screenshots are optional source-design context only",
+            "completed priority_media reconciliation",
+            "verified DAM delivery URLs",
+        ),
+        "streamlined workflow home-page review acceptance contract",
+    )
+
+    source_capture = next(
+        (
+            step
+            for step in workflow["steps"]
+            if isinstance(step, dict) and step.get("id") == "source-capture"
+        ),
+        None,
+    )
+    source_prompt = (
+        source_capture.get("prompt") if isinstance(source_capture, dict) else None
+    )
+    if not isinstance(source_prompt, str):
+        raise CatalogValidationError(
+            "streamlined workflow: source evidence contract is missing"
+        )
+    require_fragments(
+        source_prompt,
+        (
+            "fluid theme crawl <home url> --evidence .",
+            "--format markdown,html,screenshot",
+            "desktop AND at 390 wide",
+        ),
+        "streamlined workflow source evidence contract",
+    )
+
+
+def _streamlined_step(workflow: dict[str, Any], step_id: str) -> dict[str, Any]:
+    step = next(
+        (
+            step
+            for step in workflow["steps"]
+            if isinstance(step, dict) and step.get("id") == step_id
+        ),
+        None,
+    )
+    if not isinstance(step, dict):
+        raise CatalogValidationError(
+            f"streamlined workflow: {step_id} step is missing"
+        )
+    return step
+
+
+def _deterministic_page_qa_tools(
+    template_path: str | None,
+    *,
+    minimum_reads: int = 3,
+    minimum_searches: int = 2,
+    minimum_routes: int = 1,
+    mandatory_paths: tuple[str, ...] = (),
+) -> list[dict[str, Any]]:
+    tools: list[dict[str, Any]] = [
+        {
+            "tool": "run_cli",
+            "input": {
+                "command": "fluid",
+                "args": ["theme", "lint", "--json"],
+            },
+            "minSuccessfulCalls": 1,
+        },
+        {
+            "tool": "read_file",
+            "input": {"path": "clone-manifest.json"},
+        },
+    ]
+    if template_path is not None:
+        tools.append({"tool": "read_file", "input": {"path": template_path}})
+    tools.extend(
+        [
+            *[
+                {"tool": "read_file", "input": {"path": path}}
+                for path in mandatory_paths
+            ],
+            {
+                "tool": "read_file",
+                "minSuccessfulCalls": minimum_reads,
+                "distinctBy": ["path"],
+            },
+            {
+                "tool": "search_files",
+                "minSuccessfulCalls": minimum_searches,
+                "distinctBy": ["query"],
+            },
+            {
+                "tool": "read_preview_dom",
+                "input": {"mode": "all"},
+                "minSuccessfulCalls": minimum_routes,
+                "distinctBy": ["path"],
+            },
+            {
+                "tool": "read_preview_console",
+                "minSuccessfulCalls": 1,
+            },
+            {
+                "tool": "read_local_server_logs",
+                "minSuccessfulCalls": 1,
+            },
+        ]
+    )
+    return tools
+
+
+def _validate_direct_page_review(
+    workflow: dict[str, Any],
+    *,
+    step_id: str,
+    template_path: str | None,
+    implementation_fragments: tuple[str, ...],
+    acceptance_fragments: tuple[str, ...],
+) -> None:
+    step = _streamlined_step(workflow, step_id)
+    if "skill" in step:
+        raise CatalogValidationError(
+            f"streamlined workflow: {step_id} must use its inline code-review prompt"
+        )
+    prompt = step.get("prompt")
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise CatalogValidationError(
+            f"streamlined workflow: {step_id} prompt must be a non-empty string"
+        )
+    require_fragments(
+        prompt,
+        (
+            "clone-manifest.json",
+            "--format markdown,html",
+            "--no-main-content-only",
+            "fresh non-image structure and stable copy",
+            "Do not request screenshot capture or screenshot formats",
+            "Home's retained stylesheet, landmark styles",
+            "Route-specific CSS is unavailable",
+            "record it in unresolved",
+            "optional, non-authoritative design context only",
+            "Treat the shared shell as read-only",
+            "Do not overwrite shared or sibling-owned",
+            "fluid theme lint --json",
+            "rendered DOM",
+            "preview console",
+            "local server logs",
+            "Do not take or compare local screenshots",
+            *implementation_fragments,
+        ),
+        f"streamlined workflow {step_id} implementation contract",
+    )
+    qa = step.get("qa")
+    if (
+        step.get("dependsOn") != ["home-page"]
+        or step.get("maxReworkRounds") != 1
+        or not isinstance(qa, dict)
+        or qa.get("enabled") is not True
+        or qa.get("strictness") != "lenient"
+        or qa.get("onFail") != "continue"
+    ):
+        raise CatalogValidationError(
+            f"streamlined workflow: {step_id} must preserve its lenient "
+            "fail-open contract"
+        )
+    if qa.get("requiredTools") != _deterministic_page_qa_tools(template_path):
+        raise CatalogValidationError(
+            f"streamlined workflow: {step_id} must require only its "
+            "deterministic QA evidence floor"
+        )
+    acceptance = json.dumps(step.get("acceptance", []))
+    require_fragments(
+        acceptance,
+        (
+            "clone-manifest.json",
+            "at least two distinct implementation files",
+            "fluid theme lint --json",
+            "Targeted code searches",
+            "rendered DOM",
+            "preview console and local server logs",
+            "Screenshots are optional source-design context only",
+            *acceptance_fragments,
+        ),
+        f"streamlined workflow {step_id} review acceptance contract",
+    )
+    visual_tools = (
+        "screenshot_preview",
+        "compare_preview_to_source",
+        "view_project_image",
+        "interact_preview",
+    )
+    required_tools = json.dumps(qa.get("requiredTools", []))
+    if any(tool in required_tools for tool in visual_tools):
+        raise CatalogValidationError(
+            f"streamlined workflow: {step_id} QA must exclude visual and "
+            "interaction tools"
+        )
+
+
+def _validate_content_page_review(workflow: dict[str, Any]) -> None:
+    step = _streamlined_step(workflow, "content-pages")
+    prompt = step.get("prompt")
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise CatalogValidationError(
+            "streamlined workflow: content-pages prompt must be a non-empty string"
+        )
+    if "skill" in step or "run_skill(" in prompt:
+        raise CatalogValidationError(
+            "streamlined workflow: content-pages must not delegate to visual page skills"
+        )
+    require_fragments(
+        prompt,
+        (
+            "clone-manifest.json",
+            "--format markdown,html",
+            "--no-main-content-only",
+            "Do not request screenshot capture or screenshot formats",
+            "Home's retained stylesheet, landmark styles",
+            "Route-specific CSS is unavailable",
+            "optional, non-authoritative design context only",
+            "Treat the shared shell as read-only",
+            "run in parallel",
+            "only when it already exists and fits",
+            "Do not assume a sibling completed",
+            "do not overwrite shared or sibling-owned",
+            "cart_page/default/index.liquid",
+            "error_page/404/index.liquid",
+            "error_page/503/index.liquid",
+            "page/default/index.liquid",
+            "line items, quantities, per-line totals, order totals",
+            "localized error.status_code and error.* bindings",
+            "post_page/default and post/default only when",
+            "stored article body dynamic",
+            "import-content and catalog work run concurrently",
+            "report absent preview records in unresolved",
+            "fluid theme lint --json",
+            "at least two distinct built routes",
+            "when the environment can serve the themed error status",
+            "DOM review does not prove cart interaction",
+            "Do not take or compare local screenshots",
+        ),
+        "streamlined workflow content-pages implementation contract",
+    )
+    qa = step.get("qa")
+    expected_tools = _deterministic_page_qa_tools(
+        "cart_page/default/index.liquid",
+        minimum_reads=5,
+        minimum_searches=2,
+        minimum_routes=2,
+        mandatory_paths=(
+            "error_page/404/index.liquid",
+            "error_page/503/index.liquid",
+            "page/default/index.liquid",
+        ),
+    )
+    if (
+        step.get("dependsOn") != ["home-page"]
+        or step.get("maxReworkRounds") != 1
+        or not isinstance(qa, dict)
+        or qa.get("enabled") is not True
+        or qa.get("strictness") != "lenient"
+        or qa.get("onFail") != "continue"
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: content-pages must preserve its lenient "
+            "fail-open contract"
+        )
+    if qa.get("requiredTools") != expected_tools:
+        raise CatalogValidationError(
+            "streamlined workflow: content-pages must require only its "
+            "deterministic QA evidence floor"
+        )
+    acceptance = json.dumps(step.get("acceptance", []))
+    require_fragments(
+        acceptance,
+        (
+            "plus four distinct implementation files",
+            "post_page/default and post/default",
+            "only when the source route inventory contains a real blog",
+            "fluid theme lint --json",
+            "At least two targeted code searches",
+            "dynamic cart state and totals bindings",
+            "localized error.status_code/error.* bindings",
+            "dynamic generic page content",
+            "no hardcoded cart item/subtotal",
+            "duplicated shared-shell markup",
+            "page-local fork of an already-present sibling contract",
+            "at least two distinct routes",
+            "unavailable system-page render was listed in unresolved",
+            "Empty content or product records",
+            "listed in unresolved",
+            "preview console and local server logs",
+            "Screenshots are optional source-design context only",
+        ),
+        "streamlined workflow content-pages review acceptance contract",
+    )
+
+
+def _validate_content_import_body_contract(workflow: dict[str, Any]) -> None:
+    """`body_html` alone imports blank pages and calls them a success.
+
+    Shopify leaves it empty on every section-built page, so a TUSHY import
+    published 52 of 73 pages with no body and passed. The step has to fall back
+    to the rendered DOM, separate genuinely-empty source pages from failures,
+    and report content-bearing pages rather than record counts.
+    """
+    step = _streamlined_step(workflow, "import-content")
+    prompt = step.get("prompt")
+    if not isinstance(prompt, str):
+        raise CatalogValidationError(
+            "streamlined workflow: import-content must carry a prompt"
+        )
+    require_fragments(
+        prompt,
+        (
+            "if `body_html` is empty, fetch the page's rendered DOM",
+            "record those in `empty_at_source`",
+            "Never publish a page whose body resolved to nothing without listing it",
+            "`pages` is the count with a non-empty body",
+            "pages_empty",
+            "body_from_rendered_dom",
+        ),
+        "streamlined workflow import-content page-body contract",
+    )
+    qa = step.get("qa")
+    if (
+        not isinstance(qa, dict)
+        or qa.get("enabled") is not True
+        or qa.get("onFail") != "continue"
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: import-content must be QA-reviewed "
+            "fail-open so empty page bodies fail loudly"
+        )
+    require_fragments(
+        json.dumps(step.get("acceptance", [])),
+        (
+            "Every imported page has a non-empty body",
+            "re-read from the rendered DOM",
+            "count of content-bearing pages",
+        ),
+        "streamlined workflow import-content acceptance contract",
+    )
+
+
+def _validate_taxonomy_membership_contract(workflow: dict[str, Any]) -> None:
+    manifest_step = _streamlined_step(workflow, "catalog-manifest")
+    require_fragments(
+        str(manifest_step.get("prompt", "")),
+        (
+            "category_membership",
+            "complete collection_membership",
+            "Reconcile product membership against every exhausted category",
+            "genuinely empty source taxonomies",
+        ),
+        "streamlined workflow catalog taxonomy contract",
+    )
+    require_fragments(
+        json.dumps(manifest_step.get("acceptance", [])),
+        (
+            "immutable source taxonomy identities",
+            "non-empty listing with unresolved products fails",
+        ),
+        "streamlined workflow catalog taxonomy acceptance contract",
+    )
+
+    content_step = _streamlined_step(workflow, "import-content")
+    require_fragments(
+        str(content_step.get("prompt", "")),
+        (
+            "source-identity mappings for products, categories, and collections",
+            "PATCH each destination product once with its category_id",
+            "complete collection_ids",
+            "exact expected and actual destination product-id sets",
+            "either list being non-empty keeps this step out of a pass state",
+        ),
+        "streamlined workflow import-content taxonomy contract",
+    )
+    require_fragments(
+        json.dumps(content_step.get("acceptance", [])),
+        (
+            "membership_failures and unresolved are empty",
+            "re-read through its products endpoint",
+            "taxonomy counts alone are not accepted as membership proof",
+        ),
+        "streamlined workflow import-content taxonomy acceptance contract",
+    )
+
+
+def _validate_header_navigation_contract(workflow: dict[str, Any]) -> None:
+    """Creating a menu changes nothing until the header's link_list names it.
+
+    Menus used to ride along in import-content with no acceptance criterion and
+    no step that bound them to the header, so launches kept the starter theme's
+    menu.
+    """
+    source_step = _streamlined_step(workflow, "source-capture")
+    require_fragments(
+        str(source_step.get("prompt", "")),
+        ("navigation.header", "navigation.header.controls"),
+        "streamlined workflow source-capture navigation contract",
+    )
+
+    step = _streamlined_step(workflow, "header-navigation")
+    for dependency in ("publish-theme", "import-content"):
+        if not depends_transitively(
+            {s["id"]: s for s in workflow["steps"] if isinstance(s, dict)},
+            "header-navigation",
+            dependency,
+        ):
+            raise CatalogValidationError(
+                f"streamlined workflow: header-navigation must wait for {dependency}"
+            )
+    require_fragments(
+        str(step.get("prompt", "")),
+        (
+            "GET /api/menus",
+            "never substitute a title-derived slug",
+            "Set each one's value to the returned slug",
+            "navbar_locale_dropdown",
+            "whose default and current value are true",
+            "Read the rendered DOM of the live home route",
+        ),
+        "streamlined workflow header-navigation contract",
+    )
+    require_fragments(
+        json.dumps(step.get("acceptance", [])),
+        (
+            "set to the menu slug returned by the menus API",
+            "behind a checkbox setting that defaults to true",
+            "live home route's rendered header",
+        ),
+        "streamlined workflow header-navigation acceptance contract",
+    )
+
+    handoff = _streamlined_step(workflow, "handoff")
+    if "header-navigation" not in (handoff.get("dependsOn") or []):
+        raise CatalogValidationError(
+            "streamlined workflow: handoff must wait for header-navigation"
+        )
+
+
+def _validate_handoff_live_counts_contract(workflow: dict[str, Any]) -> None:
+    """A step's STEP_OUTPUT is a snapshot from before any later remediation.
+
+    Copying it made the handoff contradict the store it described — TUSHY's
+    summary reported 149 products against a live catalog of 181.
+    """
+    step = _streamlined_step(workflow, "handoff")
+    prompt = step.get("prompt")
+    if not isinstance(prompt, str):
+        raise CatalogValidationError(
+            "streamlined workflow: handoff must carry a prompt"
+        )
+    require_fragments(
+        prompt,
+        (
+            "Every headline count is read live, not copied",
+            "Paginate the products and pages APIs",
+            "publish the live one and note the step it corrects",
+            'counts_source: "live-api"',
+        ),
+        "streamlined workflow handoff live-count contract",
+    )
+    require_fragments(
+        json.dumps(step.get("acceptance", [])),
+        (
+            "read from the live API in this step",
+            "can_take_an_order reflects the live catalog",
+        ),
+        "streamlined workflow handoff acceptance contract",
+    )
+
+
+def _validate_storefront_code_review(workflow: dict[str, Any]) -> None:
+    step = _streamlined_step(workflow, "storefront-check")
+    prompt = step.get("prompt")
+    target = step.get("target")
+    # fallbackToManager must stay False. Every finding this step can produce is
+    # a theme defect, and Home cannot edit or publish a sibling Theme's files —
+    # falling back there burned the step's only rework round on discovering it
+    # had no write access, then terminated the step as BLOCKED.
+    if (
+        not isinstance(prompt, str)
+        or "Review the published theme implementation from code" not in prompt
+        or target
+        != {
+            "type": "kind",
+            "kind": "theme",
+            "fallbackToManager": False,
+        }
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: storefront-check must be a theme-targeted code review"
+            " that does not fall back to the manager project"
+        )
+    require_fragments(
+        prompt,
+        (
+            "read-only audit",
+            "at least ten distinct implementation files",
+            "at least six targeted searches",
+            "fluid theme lint --json",
+            "Treat the shared shell and every page file as read-only",
+            "retains required canonical data sections",
+            "without duplicating or forking them",
+            "Do not claim which parallel step edited a file",
+            "at least five distinct canonical routes",
+            "Home, Shop, one Product, one Collection, and Cart",
+            "preview console and local server logs",
+            "storefront-check and import-content are concurrent",
+            "unresolved evidence, not automatically a theme-code failure",
+            "do not prove viewport layout, horizontal overflow, image loading",
+            "totals recomputation, or parity with API values",
+            "Do not take or compare screenshots",
+            "Put unprovable behavior in unresolved",
+            "Blocking means",
+            "Cosmetic means",
+        ),
+        "streamlined workflow storefront-check implementation contract",
+    )
+    qa = step.get("qa")
+    # maxReworkRounds must stay 0. This step's own prompt forbids it from
+    # editing anything, so a rework round can only be spent discovering it
+    # cannot act — which is exactly how the TUSHY run ended, with the round
+    # burned and the step terminated BLOCKED instead of handing its findings
+    # to the Theme project that can fix them.
+    if (
+        step.get("dependsOn") != ["publish-theme", "import-products"]
+        or step.get("maxReworkRounds") != 0
+        or not isinstance(qa, dict)
+        or qa.get("enabled") is not True
+        or qa.get("strictness") != "lenient"
+        or qa.get("onFail") != "continue"
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: storefront-check must preserve its lenient "
+            "fail-open contract with no rework round"
+        )
+    if qa.get("requiredTools") != _deterministic_page_qa_tools(
+        None,
+        minimum_reads=10,
+        minimum_searches=6,
+        minimum_routes=5,
+    ):
+        raise CatalogValidationError(
+            "streamlined workflow: storefront-check must require only its "
+            "deterministic QA evidence floor"
+        )
+    acceptance = json.dumps(step.get("acceptance", []))
+    require_fragments(
+        acceptance,
+        (
+            "at least ten distinct implementation files",
+            "fluid theme lint --json",
+            "At least six targeted code searches",
+            "required canonical data sections remain present",
+            "without duplication or page-local forks",
+            "at least five distinct canonical routes",
+            "Home, Shop, Product, Collection, and Cart",
+            "Missing records from concurrent import-content work",
+            "listed in unresolved",
+            "preview console and local server logs",
+            "did not claim that code or DOM proved viewport layout",
+            "interaction behavior",
+            "API-value parity",
+            "blocking, cosmetic, and unresolved",
+        ),
+        "streamlined workflow storefront-check review acceptance contract",
+    )
+
+
+def _reject_unsupported_page_review_claims(workflow: dict[str, Any]) -> None:
+    unsupported_claims = (
+        "confirmed no horizontal overflow",
+        "every image loaded",
+        "interactions worked",
+        "totals recomputed",
+        "prices matched the API",
+        "shared-shell edit",
+        "sibling-file overwrite",
+    )
+    for step_id in (
+        "shop-page",
+        "product-page",
+        "collection-page",
+        "content-pages",
+        "storefront-check",
+    ):
+        acceptance = json.dumps(
+            _streamlined_step(workflow, step_id).get("acceptance", [])
+        )
+        if any(claim in acceptance for claim in unsupported_claims):
+            raise CatalogValidationError(
+                f"streamlined workflow: {step_id} makes an unsupported "
+                "deterministic evidence claim"
+            )
+
+
+def validate_streamlined_page_review_contract(workflow: Any) -> None:
+    _validate_streamlined_home_review_contract(workflow)
+    assert isinstance(workflow, dict)
+
+    _validate_direct_page_review(
+        workflow,
+        step_id="shop-page",
+        template_path="shop_page/default/index.liquid",
+        implementation_fragments=(
+            "actual Fluid products",
+            "canonical returned product routes",
+            "filters, search, sorting, pagination or load-more",
+            "when the source exposes them",
+            "product-card, grid, filter/sort, search, pagination",
+            "decorative controls that do nothing",
+        ),
+        acceptance_fragments=(
+            "Fluid-backed product cards",
+            "canonical product routes",
+            "dynamic prices and images",
+            "reusable list components",
+            "when the source exposes them",
+            "absent or unsupported controls are recorded",
+            "no hardcoded products, prices, images",
+            "decorative nonfunctional controls",
+            "canonical Shop route",
+        ),
+    )
+    _validate_direct_page_review(
+        workflow,
+        step_id="product-page",
+        template_path="product/default/index.liquid",
+        implementation_fragments=(
+            "product_hero or main_product first",
+            "never fork, replace, or imitate it with static Liquid",
+            "title, price, availability, options, valid variants, gallery",
+            "add-to-cart hooks",
+            "canonical URLs",
+        ),
+        acceptance_fragments=(
+            "product_hero or main_product first",
+            "product.* bindings",
+            "existing add-to-cart hooks",
+            "source-ordered supporting sections",
+            "no static replacement",
+            "canonical Product route",
+        ),
+    )
+    _validate_direct_page_review(
+        workflow,
+        step_id="collection-page",
+        template_path=None,
+        implementation_fragments=(
+            "classification-dependent template",
+            "Shop and Collection run in parallel",
+            "only when they already exist and fit",
+            "page-local canonical scaffold contracts",
+            "Do not assume Shop completed",
+            "c.image, c.url, and c.products",
+            "image fallback c.image then c.image_url then c.image_path",
+        ),
+        acceptance_fragments=(
+            "chosen classification-dependent template",
+            "honest collection index/detail semantics",
+            "c.image/c.url/c.products-compatible access",
+            "canonical collection and product links",
+            "no assumption that a parallel sibling completed",
+            "duplicated shared list markup",
+            "page-local fork of an already-present shared list contract",
+            "canonical Collection route",
+        ),
+    )
+    _validate_content_page_review(workflow)
+    _validate_storefront_code_review(workflow)
+    _validate_content_import_body_contract(workflow)
+    _validate_taxonomy_membership_contract(workflow)
+    _validate_header_navigation_contract(workflow)
+    _validate_handoff_live_counts_contract(workflow)
+    _reject_unsupported_page_review_claims(workflow)
+
+
+def validate_published_catalog(
+    *, streamlined_workflow: Any | None = None
+) -> tuple[int, int]:
+    manifest = load_json(MANIFEST_PATH)
+    skill_count, workflow_count = validate_manifest(manifest)
+    validate_bots(manifest)
+    validate_shared_skill_contracts()
+    validate_streamlined_product_import_contract()
+    validate_streamlined_page_review_contract(
+        load_json(STREAMLINED_WORKFLOW_PATH)
+        if streamlined_workflow is None
+        else streamlined_workflow
+    )
+    return skill_count, workflow_count
+
+
+def main() -> int:
+    try:
+        skill_count, workflow_count = validate_published_catalog()
+    except CatalogValidationError as error:
+        print(f"catalog validation failed: {error}", file=sys.stderr)
+        return 1
+
+    print(
+        f"catalog validation passed: {skill_count} skills, "
+        f"{workflow_count} workflows"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
