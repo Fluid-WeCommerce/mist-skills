@@ -36,10 +36,14 @@ mist-skills/
 ├── mist/
 │   ├── scaffold-droplet.md
 │   └── env-vars-audit.md
-├── countries/
+├── compliance/
 │   ├── open-a-country.md          ← flat skill (front-end steps flow)
 │   └── compliance-manager/        ← folder skill
 │       └── SKILL.md
+├── bots/                          ← We-Bots templates for Fluid (see Bot templates)
+│   └── moderator/
+│       ├── v1.json
+│       └── v1/{persona,instructions}.md
 ├── workflows/                     ← declarative multi-step chains (JSON, not skills)
 │   ├── open-country.workflow.json
 │   ├── finalize-otg-country.workflow.json
@@ -82,9 +86,9 @@ Summarize orders from the last 30 days that used the promo code SUMMER10.
 
 # Steps
 
-1. Hit `GET /api/v202604/orders?filter[promo_code]=SUMMER10&filter[created_at_gte]={{thirty_days_ago}}` against the active company.
-2. Compute total orders, total revenue, AOV, and top 5 customers by spend.
-3. Render a Markdown table.
+1. Hit `GET /api/v202604/orders?filter[start_date]={{thirty_days_ago}}&page[limit]=100` against the active company, following `meta.pagination.next_cursor` as `page[cursor]`.
+2. Keep the orders whose `discount_codes` (from `GET /api/v202506/orders/<id>`) include SUMMER10.
+3. Compute total orders, total revenue, AOV, and top 5 customers by spend, and render a Markdown table.
 ```
 
 ### Frontmatter fields
@@ -171,7 +175,7 @@ The desktop pulls `manifest.json` first, diffs it against its cached copy, and r
 
 ## Workflows
 
-A **skill** is a prompt the user reads and runs. A **workflow** is a declarative, multi-step chain the desktop's orchestrator runs across dedicated agent chats — each step gets QA-reviewed against acceptance criteria and reworked automatically on failure. Skills and workflows compose: an interactive skill (e.g. `countries/open-a-country`) collects the user's answers through the steps panel, then hands off to a workflow (`open-country`) that does the writes.
+A **skill** is a prompt the user reads and runs. A **workflow** is a declarative, multi-step chain the desktop's orchestrator runs across dedicated agent chats — each step gets QA-reviewed against acceptance criteria and reworked automatically on failure. Skills and workflows compose: an interactive skill (e.g. `compliance/open-a-country`) collects the user's answers through the steps panel, then hands off to a workflow (`open-country`) that does the writes.
 
 Workflows live in `workflows/` as **plain JSON** (`<slug>.workflow.json`) and are listed in `manifest.json` under a `workflows` array (separate from `skills`). The desktop syncs them into its cache exactly like skill bodies and loads them with this precedence, most-specific winning:
 
@@ -183,38 +187,144 @@ So a workflow shipped in the app can be **hot-fixed from this repo without an ap
 
 ### Workflow file shape
 
+Every field below is shown together for reference; in practice most steps
+set only `id`, `name`, one of `prompt`/`skill`, and `acceptance`.
+
 ```jsonc
 {
-  "slug": "open-country",                      // matches the manifest entry; overrides a built-in of the same slug
+  "revision": "2026-07-25",                    // bump on every edit — recovery refuses a run whose stored definition no longer matches
+  "slug": "open-country",                      // matches the manifest entry; a user file of the same slug overrides this one
   "name": "Open a Country",
   "description": "…",
+  "launcherSkill": "compliance/open-a-country", // optional vetted skill that gathers run context before run_workflow
+  "maxParallel": 5,                            // 1-10, default 5. How many dependency-satisfied steps may run at once
   "steps": [
     {
       "id": "create-country",
       "name": "Create the company country",
+
+      // Exactly ONE of prompt / skill:
       "prompt": "…",                           // inline instructions for this step's agent turn
-      // OR: "skill": "countries/compliance-manager"  ← delegate the step to a skill by slug
-      "target": { "type": "manager" },         // which project runs it (manager = the chat you're in)
-      "acceptance": ["…"],                      // criteria the QA turn verifies before the step passes
-      "dependsOn": [],                          // step ids that must pass first (enables parallelism)
-      "maxReworkRounds": 2,                     // bounded auto-rework on QA failure
-      "runIf": { "flag": "build_theme" }        // optional: only run when this run-context flag is truthy (see below)
+      // "skill": "compliance/compliance-manager",  ← or delegate to a skill by slug
+
+      "target": { "type": "manager" },         // where it runs. "manager" = the project the run was started from
+      // "target": { "type": "kind", "kind": "theme", "fallbackToManager": true }
+      //   kind ∈ theme | portal | mist | widget — first sibling project of that kind with a local checkout.
+      //   fallbackToManager:true degrades to the manager project instead of failing when none exists.
+
+      "model": "anthropic/claude-opus-5",      // optional gateway slug for this step. Omit to use the run's model
+
+      "dependsOn": [],                         // step ids that must be satisfied first. Steps with satisfied deps run in parallel
+      "acceptance": ["…"],                     // what QA verifies against real state. Required when qa.enabled
+
+      "qa": {
+        "enabled": true,                       // default true. false = the work turn IS the step; nothing verifies it
+        "strictness": "standard",              // strict | standard | lenient (default standard)
+        "onFail": "continue",                  // what happens after the rework budget is spent — see below
+        "model": "openai/gpt-5.6-sol",         // optional: reviewer model. Omit to use the step's, then the run's
+        "requiredTools": [                     // optional machine-enforced evidence floor
+          {
+            "tool": "view_project_image",
+            "minSuccessfulCalls": 6,
+            "distinctBy": ["path"]             // reopening one file six times still counts as one
+          },
+          {
+            "tool": "read_preview_dom",
+            "input": { "mode": "all" }         // input is a recursive partial match
+          }
+        ]
+      },
+      "maxReworkRounds": 2,                    // 0-5, default 2. Fix-and-recheck rounds before onFail applies
+
+      "runIf": { "flag": "build_theme" },      // optional: only run when this run-context flag is truthy (see below)
+      "recovery": { "mode": "manual" }         // optional: opt in to retrying THIS step after a failure. Absent = no recovery
     }
-  ]
+  ],
+
+  // Optional. Derive boolean flags from the caller's context before the first
+  // dispatch, so runIf can gate on them. Fill-only: an explicitly-passed key wins.
+  "deriveContext": [
+    { "set": "build_theme", "when": { "in": { "key": "run_scope", "values": ["full", "theme_only"] } } }
+    // predicates: { "equals": { key, value } } | { "in": { key, values } } | { "includes": { key, value } }
+  ],
+
+  // Optional. Names the step whose QA verdict IS the business outcome.
+  "finalGate": { "stepId": "launch-readiness-review", "allowNeedsReview": true }
 }
 ```
+
+#### QA — `qa` (optional, on by default)
+
+A QA step is a **second full model turn in a fresh chat**, with an independent
+reviewer that never sees the worker's transcript. It verifies `acceptance`
+against actual state using tools, and returns PASS/FAIL.
+
+- `enabled: false` — no reviewer. The step passes as soon as its agent says it's
+  done. Right for steps that fail loudly on their own (a scaffold either produced
+  files or threw); wrong for anything whose failure mode is "the agent believes it
+  worked". A step with `enabled: true` and no `acceptance` is **rejected** — a
+  reviewer with nothing to check against manufactures a PASS the run then trusts.
+- `strictness` — moves the bar for *unverifiable* criteria and cosmetic
+  shortfalls only. A genuine violation fails at every level.
+  - `strict` — anything unverifiable fails; ambiguity resolves against passing.
+  - `standard` — unverifiable fails, but criteria that explicitly allow a
+    pass-with-notes outcome are honored.
+  - `lenient` — fails what would actually break the store; cosmetic gaps pass
+    with a note.
+- `onFail` — what happens once `maxReworkRounds` is spent:
+  - `continue` (default, and the historical behaviour) — the step is marked
+    **needs-review**, its findings are carried into dependents' prompts, and the
+    run finishes `completed-with-issues`. The work landed; a human should check it.
+  - `stop` — treated as a failure: dependents are **skipped** and the run fails.
+    For steps where continuing on unverified work does damage rather than just
+    leaving a mess.
+- `requiredTools` — optional machine-enforced evidence. A prose PASS is
+  overridden to FAIL unless the fresh QA chat's persisted trace contains the
+  required number of successful calls.
+  - `input` recursively matches a subset of the call input. Arrays are also
+    subset-matched.
+  - `distinctBy` lists dotted input fields whose values must differ across
+    calls. Use it for multi-route and multi-artifact matrices, such as
+    `["path", "width"]`.
+  - This proves that evidence was gathered; `acceptance` still defines whether
+    the evidence is good enough.
+
+#### Parallelism — order, `dependsOn` and `maxParallel`
+
+The orchestrator dispatches **every** step whose dependencies are satisfied, up
+to `maxParallel` (itself capped by the desktop's hard ceiling). Two steps with
+the same `dependsOn` therefore start together. The desktop's builder writes this
+shape by giving a step the *same* dependencies as its predecessor rather than
+depending on it.
+
+Each concurrent step is a live, billed model turn, and providers rate-limit well
+before the app does — past a point a wider fan-out finishes **slower** once
+retries start. Raise `maxParallel` only for steps that are genuinely independent.
 
 #### Conditional steps — `runIf` (optional)
 
 A step may declare `"runIf": { "flag": "<contextKey>" }`. The step runs **only if that boolean flag is truthy in the run's start context** (the `context` object the fronting skill passes to `run_workflow`). If the flag is falsy or absent, the step is **condition-skipped**: marked `skipped`, but — unlike a step skipped because a dependency failed — it **satisfies its dependents**, so downstream steps still run. A run whose only non-passed steps are condition-skips still completes successfully.
 
-Use it to let **one** workflow cover scoped runs instead of maintaining separate workflow files. Example: `onboard-launch-company` sets `build_theme` / `import_products` / `push_business_data` flags from a `run_scope` picker, and tags the theme-track and product-track steps with `runIf` so a "data only" run skips the theme + product steps while still running data gathering, its QA, and the launch review.
+Use it to let **one** workflow cover scoped runs instead of maintaining separate workflow files. For example, a workflow can derive `build_theme` / `import_products` flags from a `run_scope` picker and tag its theme-track and product-track steps with `runIf`, so a "data only" run skips the theme and product steps while still running data gathering, its QA, and the closing review. No workflow in this repo currently uses `runIf` — the engine supports it and the shape above is the intended one.
 
 Guidance for implementers:
 - The fronting skill must put the boolean in the `run_workflow` `context` (e.g. derive `build_theme` from a `run_scope` answer). An absent flag reads as "don't run."
 - `runIf` gates a **whole step**. For finer-grained skips inside a step, branch in the step's `prompt` instead (a prompt step can self-skip and emit `STEP_OUTPUT { skipped: true }`).
 - Prefer `runIf` over per-scope workflow copies — it keeps one source of truth and the progress card shows the skip explicitly.
 - Requires desktop engine support (fluid-mono `mist-desktop` ≥ the runIf release). Older builds ignore the unknown key and simply run the step, so tagging is backward-safe — but don't rely on skipping until the engine ships it.
+
+#### Version gating — read before publishing
+
+Unknown keys are **dropped silently** by older desktop builds, so a workflow
+using a newer field still loads there — it just quietly loses that behaviour
+(`qa.onFail: "stop"` becomes "continue", a per-step `model` reverts to the run's,
+or `qa.requiredTools` is not enforced).
+
+`maxParallel` is the exception and the one that actually breaks: it is
+**range-validated**, and the ceiling has moved 3 → 5 → 10. A build on an older
+ceiling **rejects the whole file** — the loader logs a warning and skips it, so
+the workflow simply doesn't appear. Keep `maxParallel` within the oldest ceiling
+still in the field, or hold the workflow until the raise ships.
 
 Manifest entry (in the top-level `workflows` array):
 
@@ -235,21 +345,80 @@ Skills and workflow steps run with Claude's full tool set in Mist Desktop. **Too
 | Tool | What it does |
 | ---- | ------------ |
 | `fluid_api(path, method, body)` | Call the user's Fluid API with their token — the workhorse for reads and writes. |
-| `country_atlas(country_code, [agreement_local_id])` | Fluid's per-market pre-setup profile (modes, launch checklists, agreements, tax/legal settings, payment methods, address layout, languages). Pass `agreement_local_id` for one agreement's full legal text. |
-| `country_settings(country_code)` | The compliance rulebook projected from the atlas (disclosure pages, cookie/VAT/unit-price rules) — what `compliance-manager` reads. |
 | `steps` / `steps_answer` / `steps_mark_item` | Open an interactive click-through panel, record a typed-in answer, or check off a live "setting up…" item. |
 | `run_workflow(workflow_slug, [context])` / `workflow_status` | Kick off a workflow chain (passing collected answers as `context`) and check a run's progress. |
 | `run_skill(slug)` | Load another skill's body and follow it (skill composition). |
 | File I/O: `read_file`, `write_file`, `edit_file`, `list_dir` (+ `*_in` cross-project variants) | Read/write files scoped to the active project. |
-| `run_cli` | The `fluid` CLI (`fluid theme push`, `fluid mist push --watch`, …), allowlisted subcommands only. |
-| `web_fetch`, `crawl` | Fetch a URL as text, or crawl a page (markdown + screenshot). |
-| `dam_upload`, `compress_media`, `video_ripper`, `video_metadata` | Push media into the Fluid DAM, shrink it (bundled ffmpeg), rip/inspect a social video. |
+| `run_cli` | The bundled `fluid` CLI, run with the active company's token (`fluid theme push`, `fluid mist push --watch`, …), allowlisted subcommands only. It is also how a skill reaches capabilities that used to be dedicated tools — see the table below. |
+| `web_fetch` | Fetch a URL as text. |
+| `view_project_image` | Look at a project image, e.g. a crawl screenshot saved under `.mist-desktop/source-baselines/`. |
+| `compress_media`, `video_ripper`, `video_metadata` | Shrink media (bundled ffmpeg), rip/inspect a social video. |
 | `screenshot_preview`, `start_preview`, `read_recent_log_tail`, `retry_lifecycle` | Drive + inspect a running dev preview. |
 | `db_query`, `sql_answer_card`, `list_projects` | Query a connected Mist database and list projects. |
 | `product_card`, `resource_card`, `order_card` | Render a rich card for a product / storefront resource / order in the chat. |
 | `human_in_the_loop` | Gate a change on the user's approval. |
 
 Name the exact tool + endpoint you expect in a skill or workflow step, not "figure it out from the docs."
+
+### Fluid CLI commands (through `run_cli`)
+
+These capabilities have exactly one implementation, the Fluid CLI that ships inside Mist. Call them with `run_cli` (`{ command: "fluid", args: [...] }`); each prints JSON.
+
+| Need | Command |
+| ---- | ------- |
+| Crawl a public page (JS rendered, through Fluid) | `fluid theme crawl <url> [--format markdown,html,screenshot] [--viewport WxH] [--full-page] [--no-main-content-only] [--action '<json>']` |
+| Page-clone source evidence | `fluid theme crawl <url> --evidence . --viewport 1440x900 --full-page --no-main-content-only --format markdown,html,screenshot` — then `view_project_image` on `evidence.path`; `compare_preview_to_source` takes `evidence.path` + `evidence.page_evidence.path` |
+| Upload to the DAM | `fluid assets upload <project file>` or `fluid assets upload --url <url>` (`--name`, `--tags`, `--create-media`) |
+| Production logs of a Mist | `fluid mist logs --json [--limit N] [--deployment <id>]` |
+| Mist env vars | `fluid mist env list --json`, `fluid mist env set KEY=value`, `fluid mist env set KEY --generate [--bytes N] --json` |
+| Droplet lifecycle repair | `fluid mist droplet repair --dry-run --json`, then `--yes --json` |
+| Droplet reinstall (irreversible) | `fluid mist droplet reinstall --dry-run`, approval via `human_in_the_loop` (title `Reinstall Droplet installation <uuid>`, suggestion_id `droplet-reinstall:<uuid>:<suffix>`), then `--confirm` with run_cli's `approval_id` |
+| Fluid Connect setup | `fluid connect list \| show \| install \| credentials \| settings \| unmapped \| mappings \| map \| unmap …` |
+| Country Atlas / compliance | `fluid countries atlas <ISO> [--agreement <localId>]`, `fluid countries compliance <ISO>` |
+| Open a country (preview, then write) | `fluid countries plan <ISO> --mode <nfr\|otg\|usd> [--warehouse-id <id>] [--business-id <id>] [--entity-registered] [--settlement-currency <code>] [--set key=value]`, then `fluid countries open <ISO> --mode … --yes` (idempotent). Change named fields on an open country with `fluid countries update <ISO> [--set key=value]… [--warehouse-id] [--business-id] [--entity-registered] [--settlement-currency <code>] --yes`. Never `fluid_api` writes to `/api/settings/company_countries`: Mist refuses them |
+| Country status and agreements | `fluid countries list`, `fluid countries status <ISO>`, `fluid countries agreements <ISO> [--create \| --translate] [--only <localId>]… --yes` |
+| Convert prices into a country's currency | `fluid countries prices <ISO> [--from-country US]` previews with the ECB reference rate; add `--rate <reviewed rate> --write --yes` to save. Never PUT variant prices with `fluid_api` |
+| Languages and storefront translations | `fluid countries languages <ISO>`, `fluid translations enable <iso…> --yes` / `disable <iso> --yes` (Mist refuses `fluid_api` writes to `/api/settings/languages`), `fluid translations missing <iso>`, `fluid translations auto <iso> [--type …] [--limit n] --write --yes` |
+| Storefront Pages | `fluid pages create --title … --theme "<Theme>" --content-file page/<name>/index.liquid --yes` with run_cli `approval_id` from an approved `page-create:` human_in_the_loop card, `fluid pages template <page> --content-file … [--publish] --yes` |
+
+## Bot templates
+
+`bots/` holds We-Bots marketplace templates for Fluid. Mist Desktop ignores them. Fluid Rails pulls `main` every hour and publishes each new version that validates (`WeBots::TemplateAutoSync`); a root admin can still sync a pinned commit, publish or withdraw a version by hand.
+
+```
+bots/<key>/
+├── v<n>.json            ← the template definition (profile, model, keys, listing, …)
+└── v<n>/
+    ├── persona.md       ← the bot's starter persona, plain Markdown
+    └── instructions.md  ← how the bot works on Fluid, plain Markdown
+```
+
+In the JSON, `persona` and `instructions` are each either an inline string or a reference to a Markdown file in the version's directory:
+
+```json
+"persona": { "file": "persona.md" },
+"instructions": { "file": "instructions.md" }
+```
+
+A file name is lowercase letters, digits, `_` and `-` ending in `.md`; no directories and no `..`. Fluid inlines each file's text exactly as written before validating the template, so the template schema's limits apply to the Markdown (each at most 16,000 characters), and the stored version never reads this repo again.
+
+Each template has a `bots[]` entry in `manifest.json` that pins the JSON and every Markdown file it names:
+
+```json
+{
+  "key": "moderator",
+  "version": 1,
+  "path": "bots/moderator/v1.json",
+  "sha256": "<sha256 of v1.json>",
+  "files": {
+    "instructions.md": "<sha256 of v1/instructions.md>",
+    "persona.md": "<sha256 of v1/persona.md>"
+  },
+  "updated_at": "2026-10-25T00:00:00Z"
+}
+```
+
+`files` lists exactly the files the template names: Fluid refuses the entry if one is missing or extra, or if any digest differs. A published version never changes, so a change to the JSON or either Markdown file is a new version (`v<n+1>.json` and `v<n+1>/`). `scripts/validate_catalog.py` checks every `bots[]` entry's path, digests and file references.
 
 ## Contributing a skill
 
@@ -274,7 +443,7 @@ Name the exact tool + endpoint you expect in a skill or workflow step, not "figu
   - File I/O scoped to the active project.
   - The `fluid` CLI (`fluid theme push`, `fluid mist push --watch`, etc.).
   - A `fluid_api(path, method, body)` tool that hits the user's Fluid API with their token.
-  - `dam_upload` for pushing media into the Fluid DAM.
+  - `fluid assets upload` (through `run_cli`) for pushing media into the Fluid DAM.
   - `compress_media` (bundled ffmpeg) for shrinking videos / images before upload.
 
   Name the exact endpoint or command you expect the agent to run, not "look at the docs and figure it out."

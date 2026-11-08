@@ -54,8 +54,9 @@ Rules implemented (each has a stable ID):
            the setting is empty it renders `var(--clr-)`, invalid CSS that
            silently kills the surrounding rule block (padding, border-radius
            included). Use `{{ section.settings.X | default: 'transparent' }}`.
-    GS015  Section files must include {{ section.fluid_attributes }} on the
-           root element so the visual editor can identify the section.
+    GS015  Section files must not emit {{ section.fluid_attributes }}. It does
+           not exist and renders nothing: Fluid wraps every section with its own
+           editor attributes. Only blocks emit {{ block.fluid_attributes }}.
     GS016  {{ block.fluid_attributes }} must live on a <div> wrapper — never
            directly on <h1>-<h6>, <p>, <span>, or <a>.
     GS017  Use the canonical 767px / 991px breakpoints. 749px, 768px, 1023px
@@ -831,30 +832,23 @@ def rule_GS014_no_var_clr_wrapping(ctx: FileContext) -> list[Violation]:
 
 
 def rule_GS015_section_root_fluid_attributes(ctx: FileContext) -> list[Violation]:
-    """Section files must include {{ section.fluid_attributes }} somewhere on the root."""
+    """Section files must not emit {{ section.fluid_attributes }} (it renders nothing)."""
     if not ctx.is_section or not ctx.template_text:
         return []
-    # main_* sections are Fluid-controlled / theme-owned and don't always follow
-    # the standard section shell pattern (e.g. main_cart wraps Fluid's cart shell,
-    # main_page is a thin content host).
-    if ctx.path.parent.name.lower().startswith("main_"):
-        return []
-    if "section.fluid_attributes" in ctx.template_text:
-        return []
-    # Skip empty / placeholder section files
-    if not ctx.template_text.strip():
-        return []
-    return [Violation(
-        file=str(ctx.path),
-        line=1,
-        rule="GS015",
-        message=(
-            "Section file does not include {{ section.fluid_attributes }} anywhere. "
-            "Without it the visual editor cannot identify or manage this section. "
-            "Add it to the outermost <section> element: "
-            "`<section class=\"...\" {{ section.fluid_attributes }}>`."
-        ),
-    )]
+    out = []
+    for m in re.finditer(r"section\.fluid_attributes", ctx.template_text):
+        out.append(Violation(
+            file=str(ctx.path),
+            line=line_of_offset(ctx.template_text, m.start()),
+            rule="GS015",
+            message=(
+                "`{{ section.fluid_attributes }}` does not exist and renders nothing. "
+                "Fluid wraps every section with its own editor attributes, so remove it. "
+                "Only blocks emit `{{ block.fluid_attributes }}`."
+            ),
+            snippet=m.group(0),
+        ))
+    return out
 
 
 def rule_GS016_block_fluid_attributes_on_div(ctx: FileContext) -> list[Violation]:
