@@ -52,7 +52,7 @@ gate must not present it as near-pixel-perfect success.
    `file_sha256({paths:["<relative-path>"]})` and compare the returned raw-byte
    SHA-256. A hosted URL, `crawl:1440x900`, chat attachment
    ID, missing file, or digest mismatch is not a baseline. Recapture only
-   invalid cells with managed `crawl`, persist its returned evidence object,
+   invalid cells with `run_cli fluid theme crawl <url> --evidence . --viewport WxH --full-page`, persist its returned `evidence` object,
    and re-read the manifest before continuing.
 
 ## Phase A — code and data parity gate

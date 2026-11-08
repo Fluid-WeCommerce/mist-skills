@@ -41,10 +41,10 @@ fluid_api("/api/application_themes/{themeId}", "PATCH", {
 ### Find an existing theme
 
 ```
-fluid_api("/api/application_themes", "GET")
+fluid_api("/api/v202604/themes", "GET")
 ```
 
-Returns `{ "application_themes": [...] }`. Find the one you want and use its `id`.
+Returns `{ "themes": [...] }`. Find the one you want and use its `id`. `GET /api/v202604/themes/active` returns the live theme.
 
 ## Step 2: Upload Theme Resources
 
@@ -55,7 +55,7 @@ Each file in the theme becomes a resource. The `key` is the file path relative t
 ```
 fluid_api("/api/application_themes/{themeId}/resources", "PUT", {
   "key": "sections/editorial_hero/index.liquid",
-  "content": "<section class=\"editorial-hero\" {{ section.fluid_attributes }}>...</section>\n\n{% schema %}\n...\n{% endschema %}"
+  "content": "<section class=\"editorial-hero\">...</section>\n\n{% schema %}\n...\n{% endschema %}"
 })
 ```
 
@@ -73,7 +73,7 @@ The `key` maps directly to the theme directory structure:
 
 ### Binary files (.png, .jpg, .woff2, etc.)
 
-For a resource the theme references by URL, upload it with `dam_upload` and store the
+For a resource the theme references by URL, upload it with `run_cli fluid assets upload` and store the
 returned `asset.default_variant_url` in `settings_data.json`, a section preset, or the
 appropriate block setting. Do not send `{ "dam_asset": "<url>" }` to the theme resource
 endpoint: live API verification returns 422 for that fallback shape.

@@ -127,7 +127,7 @@ far more reliable than eyeballing a screenshot.
 
 Use all three for home, the primary shop/collection page, and a representative PDP. If a
 Firecrawl screenshot contains a region prompt, cookie dialog, newsletter modal, or blank
-overlay, dismiss and recapture with managed crawl/browser tooling; never
+overlay, dismiss and recapture with `fluid theme crawl --action …`/browser tooling; never
 describe the obscured
 image as the site's intended visual style.
 

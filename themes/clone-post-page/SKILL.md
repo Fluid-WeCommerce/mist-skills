@@ -37,7 +37,11 @@ body cannot prove body typography.
 
 ## Fluid template contract
 
-- Build `post/default` using the scaffold's `main_post` section.
+- Build `post/default` using the scaffold's `main_post` section. If the theme
+  has no `post/` folder, create `post/default/index.liquid`. Without it, post
+  URLs show the home page with HTTP 200 (`request.page_type` is `home_page`).
+  Never work around a missing template with a redirect, meta-refresh, or
+  `location.replace` in `layouts/theme.liquid`.
 - Keep title, author, publish/updated date, hero image, body, tags, and
   canonical URL dynamic.
 - Body content must render from the stored post body. Do not transcribe the
@@ -67,7 +71,9 @@ Capture and compare:
 
 ## Required interaction proof
 
-- confirm the post route returns 200 from a real Fluid post record
+- confirm the post route returns 200 from a real Fluid post record **and**
+  renders the `post` template, not the home page. A 200 alone doesn't prove it:
+  a theme with no `post` template also answers 200 with the home page
 - exercise share controls and any table-of-contents anchors
 - confirm one related-post card resolves to another live post route
 - confirm the back-to-blog link reaches the Fluid blog index

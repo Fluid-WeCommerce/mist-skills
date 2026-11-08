@@ -71,7 +71,8 @@ They are designed to work on a fresh computer:
 
 | Tool                 | Purpose                                                              |
 | -------------------- | -------------------------------------------------------------------- |
-| `crawl`              | Managed source HTML/content + clean exact-viewport screenshots       |
+| `run_cli fluid theme crawl` | Source HTML/content + clean exact-viewport screenshots (via Fluid) |
+| `view_project_image` | Look at a saved source screenshot                                    |
 | `start_preview`      | Bundled CLI, dependency setup, long-lived server, port allocation    |
 | `screenshot_preview` | Exact-viewport/full-page local screenshots + route/overflow evidence |
 | `interact_preview`   | Constrained local menu/accordion/tab state checks                    |
@@ -118,7 +119,7 @@ For **single page clone**, also collect:
 
 Verify the source site is reachable and the local toolchain is present. The Fluid company is already selected in Mist Desktop, so there is no token or store-URL check.
 
-- **Source site reachable** — fetch `SOURCE_SITE` with the managed `crawl` tool (or the active model's available web-fetch capability outside Mist); expect a successful response before continuing.
+- **Source site reachable** — fetch `SOURCE_SITE` with `run_cli fluid theme crawl <SOURCE_SITE>` (or the active model's available web-fetch capability outside Mist); expect a successful response before continuing.
 
 Verify the managed capability path from
 [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md#capability-contract).
@@ -181,7 +182,7 @@ See the [Fluid Theme Architecture](#fluid-theme-architecture) section below for 
 
 When cloning an entire site, discover all pages before building.
 
-### 4a: Use the crawl tool to scrape the homepage for navigation structure
+### 4a: Crawl the homepage for navigation structure (`run_cli fluid theme crawl <url> --no-main-content-only`)
 
 ### 4b: Open the site in the browser, inspect nav menus and footer links
 
@@ -225,12 +226,13 @@ linking/regression.
 
 ## Phase 1: Content Scraping
 
-Use the managed `crawl` tool to extract text and image URLs from the source page. Outside Mist, use the web-fetch capability available to the active model; do not assume a provider-specific tool name.
+Use `run_cli fluid theme crawl` to extract text and image URLs from the source page. Outside Mist, use the web-fetch capability available to the active model; do not assume a provider-specific tool name.
 
 ```
-Use the crawl tool to scrape <SOURCE_URL> and extract the page as markdown
-(content + image/video URLs + structure). Save the markdown to
-/tmp/scraped-<PAGE_SLUG>.md.
+run_cli fluid theme crawl <SOURCE_URL> --no-main-content-only --format markdown
+extracts the page as markdown (content + image/video URLs + structure). With
+--evidence . the complete Markdown is saved under .mist-desktop/source-baselines/;
+otherwise save the printed `content` to /tmp/scraped-<PAGE_SLUG>.md.
 ```
 
 Extract: all text content, all image URLs, all video URLs, page structure (identify sections), navigation structure, footer structure. Create a **section inventory**.
@@ -326,18 +328,18 @@ poster in the manifest; recording only `"media": "video"` is incomplete.
 the DAM. Never hotlink to source CDNs or silently replace a video with an image
 or flat color.**
 
-Use the **`dam_upload` tool** — never `curl`/POST to `upload.fluid.app`
-yourself. Pass either `url` for a public source URL or `path` for a sandbox
-file, never both. Remote uploads are fetched server-side through the upload
-service's `external_asset_url` field; do not download a normal-sized remote
-asset first. Pass `create_media: true` for video so it is also visible in the
-Fluid Media library. Use the returned `asset.default_variant_url` in the theme.
+Use **`run_cli fluid assets upload`** — never `curl`/POST to `upload.fluid.app`
+yourself. Pass either `--url <public source URL>` or a sandbox file path, never
+both. Remote uploads are fetched server-side through the upload service's
+`external_asset_url` field; do not download a normal-sized remote asset first.
+Pass `--create-media` for video so it is also visible in the Fluid Media
+library. Use the returned `asset.default_variant_url` in the theme.
 
 For every required source asset:
 
-1. Call `dam_upload` with its public `url`. Parallel calls may batch assets.
+1. Run `fluid assets upload` with its public `url` (`--url <url>`). Parallel calls may batch assets.
 2. If the service rejects the asset for size, call `compress_media` with the
-   same public `url`, then **immediately** call `dam_upload(path=<output_path>)`
+   same public `url`, then **immediately** run `fluid assets upload <output_path>`
    with the returned compressed path. Mist streams the remote source into a
    bounded temporary sandbox file and removes it after compression; the
    default compressed handoff expires after one hour so hidden cache files do
@@ -505,9 +507,6 @@ Every section needs RTE heading rules:
 <section
   class="section-name section-{{ section.id }}"
   data-section-id="{{ section.id }}"
-  {{
-  section.fluid_attributes
-  }}
 ></section>
 ```
 
@@ -733,8 +732,8 @@ Defaults in `config/settings_schema.json` don't auto-apply if the key is missing
 **8. Editor drafts aren't persisted — the live render reads saved state.**
 When the user uploads an image in the visual editor but the HTML output still shows `image: null`, they haven't clicked **Save** in the editor. The draft lives in the iframe's local state only. Build a debug-echo (`{{ block.settings.image | json }}` in an HTML comment) as the diagnostic tool when images "don't appear."
 
-**9. Template preset expansion only fires on FRESH template creation.**
-Editing a section's preset doesn't retroactively add blocks to existing templates. Workflow: `fluid_api("/api/application_theme_templates/{id}", "DELETE")` then `fluid_api("/api/application_themes/{theme}/resources", "PUT", {...})` on the template file → preset re-expands on the new template id. (Templates live in a different table than resources — deleting a resource doesn't drop the template.) Fluid auto-reissues a new numeric id each time; update preview links accordingly.
+**9. Presets fill empty section instances at render.**
+When a section instance on a template has no blocks, Fluid fills them from the section's first preset each time the page renders, so a preset edit shows on every template whose instance has no saved blocks — no template delete or re-push needed. Instances whose blocks were saved (for example from the Page Editor) keep their saved blocks; edit those in the editor. An empty section always shows its preset again, so add an explicit empty state in Liquid if it must render nothing.
 
 **10. Navbar overflow: hamburger beats "More" dropdown.**
 When nav items can't fit, the expert pattern (Apple, Shopify, Gucci, Aesop) is to collapse the whole menu into the mobile hamburger — not spill overflow into a "More ▾" popover. Provide both as an option, default to hamburger. Measuring for "More" requires forcing the trigger to temporarily `visibility: hidden` and measuring its `getBoundingClientRect()` width BEFORE deciding which items overflow — otherwise you'll miss the reserve space and clip a link.
@@ -772,7 +771,7 @@ Each section goes through an iterative cycle until it matches the source AND pas
    `read_preview_console` and `read_local_server_logs`.
 5. **DIFF** — Follow the semantic landmark matrix in
    [references/dev-preview-visual-diff.md](references/dev-preview-visual-diff.md):
-   managed `crawl` for source desktop/mobile evidence and
+   `run_cli fluid theme crawl --evidence .` for source desktop/mobile evidence and
    `screenshot_preview` for the same exact local viewports. Classify each
    finding as **auto-fix** (clear token/geometry/component mismatch) or
    **flag for user** (missing licensed asset/font or a real product decision).
@@ -830,7 +829,7 @@ Exit codes: `0` = clean, `1` = violations found, `2` = invocation error.
 | GS012 | A `visible_if` on a setting is paired with a matching `{% if %}` guard in the template.                                                                           |
 | GS013 | No whitespace-trimming dashes on `{% for block in section.blocks %}` or `{% case block.type %}`. (Dashes inside `{%- style -%}` are still safe.)                  |
 | GS014 | No `var(--clr-{{ section.settings.X }})` wrapping — empty settings render `var(--clr-)`, invalid CSS that kills the entire rule block.                            |
-| GS015 | Section files emit `{{ section.fluid_attributes }}` on the root element.                                                                                          |
+| GS015 | Section files don't emit `{{ section.fluid_attributes }}` — it renders nothing; Fluid wraps each section with its own editor attributes.                          |
 | GS016 | `{{ block.fluid_attributes }}` lives on a `<div>` wrapper — never directly on `<h1>`-`<h6>`, `<p>`, or `<span>`.                                                  |
 | GS017 | Canonical breakpoints only — `767px` (mobile) and `991px` (tablet). `749px`, `768px`, and `1023px` are forbidden.                                                 |
 | GS018 | `{% layout 'theme' %}` is on the first non-blank line of template files.                                                                                          |
@@ -927,7 +926,7 @@ Phase 4 ensures each section matches. Phase 6 ensures the **assembled page** mat
 
 With `start_preview` healthy, capture home/shop/PDP at desktop and mobile:
 
-- Source: `crawl` with global chrome, exact viewport, and full-page screenshot.
+- Source: `run_cli fluid theme crawl <url> --evidence . --viewport WxH --full-page --no-main-content-only`.
 - Built: `screenshot_preview` with the matching `path`, `width`, `height`, and
   `mode:"full"`.
 - Interactions: `interact_preview` followed by a fresh screenshot.
@@ -1001,7 +1000,7 @@ theme_id = resp["application_theme"]["id"]
 
 ### 7b: Upload every file
 
-Walk the working directory and PUT each file as a theme resource. Text files go through `fluid_api`; for each binary, call the **`dam_upload` tool** (never POST to `upload.fluid.app` yourself), then register the returned `asset.default_variant_url`:
+Walk the working directory and PUT each file as a theme resource. Text files go through `fluid_api`; for each binary, run **`run_cli fluid assets upload <path>`** (never POST to `upload.fluid.app` yourself), then register the returned `asset.default_variant_url`:
 
 ```python
 TEXT_EXTS = {'.liquid', '.css', '.js', '.json', '.html', '.txt', '.svg'}
@@ -1019,9 +1018,9 @@ for root, dirs, files in os.walk(WORK_DIR):
             fluid_api(f"/api/application_themes/{theme_id}/resources", "PUT",
                 {"key": key, "content": content})
         else:
-            # Binary: call the dam_upload tool with the file path; it returns
-            # the asset record. Register asset.default_variant_url as the resource.
-            dam_url = dam_upload(path=filepath, name=fname)["asset"]["default_variant_url"]
+            # Binary: run_cli fluid assets upload <path> --name <fname>; it prints
+            # the asset record as JSON. Register asset.default_variant_url as the resource.
+            dam_url = run_cli("fluid", ["assets", "upload", filepath, "--name", fname])["asset"]["default_variant_url"]
             if dam_url:
                 fluid_api(f"/api/application_themes/{theme_id}/resources", "PUT",
                     {"key": key, "dam_asset": dam_url})
@@ -1199,7 +1198,7 @@ A live, browsable reference of every schema control lives at `page/schema-refere
 - `richtext` for all visible copy (never `text`/`textarea`)
 - `range` for numeric inputs (never `number`)
 - `select + "options": "background_colors"` for theme-aware colors (never raw `color`)
-- Singular resource pickers return an OBJECT in Fluid (not an ID) — access via `.title`/`.url`/etc.
+- Only `product`, `variant`, `collection`, `category`, `enrollment_pack`, `media`, `link_list`, and `product_list` pickers resolve to Liquid objects — access via `.title`/`.url`/etc. A `post` picker and every other list type (`collection_list`, `posts_list`, …) give the saved ID, not an object
 - List resource pickers cap at 24 items
 
 When you update [references/schema-settings-reference.md](references/schema-settings-reference.md), also update the corresponding card in the live reference page so the two stay in sync.
@@ -1217,7 +1216,7 @@ When you update [references/schema-settings-reference.md](references/schema-sett
 <body>
   {% section 'main_navbar' %}
   <main>
-    {% content_for_layout %}
+    {{ content_for_layout }}
   </main>
   {% section 'main_footer' %}
 </body>
@@ -1235,8 +1234,8 @@ When you update [references/schema-settings-reference.md](references/schema-sett
 ### Fluid Liquid objects
 
 ```liquid
-{{ product.name }}
-{{ product.price | money }}
+{{ product.title }}
+{{ product.price }}
 {{ product.description }}
 {{ product.images }}
 {{ company.name }}

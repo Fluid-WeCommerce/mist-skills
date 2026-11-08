@@ -54,7 +54,7 @@ These are rendered by `layouts/theme.liquid` and appear on every page. Only modi
 
 | Type                          | Handling                                                                                                                    |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Self-hosted (`.mp4`, `.webm`) | Upload the public source directly with `dam_upload(url=..., create_media=true)`. If rejected for size, run `compress_media(url=...)` and retry with `dam_upload(path=<output_path>, create_media=true)`. Use `asset.default_variant_url`. |
+| Self-hosted (`.mp4`, `.webm`) | Upload the public source directly with `run_cli fluid assets upload --url <url> --create-media`. If rejected for size, run `compress_media(url=...)` and retry with `run_cli fluid assets upload <output_path> --create-media`. Use `asset.default_variant_url`. |
 | YouTube/Vimeo embeds          | Keep original embed URLs. Use a supported `url` setting or the canonical Fluid Media block.                                 |
 | Background videos             | Use `autoplay`, `loop`, `muted`, `playsinline` attributes. Include poster image fallback.                                   |
 
@@ -69,11 +69,11 @@ image, poster, gradient, or flat color is a launch-blocking fidelity defect.
 Use these instead of hardcoded values where applicable:
 
 ```liquid
-{{ product.name }}
-{{ product.price | money }}
+{{ product.title }}
+{{ product.price }}                     {%- comment -%} Already formatted for the visitor's currency; Fluid has no `money` filter {%- endcomment -%}
 {{ product.description }}
 {{ product.images }}
-{{ cart.total | money }}
+{{ cart.amount_total_in_currency }}     {%- comment -%} Formatted cart total (cart_page) {%- endcomment -%}
 {{ cart.items }}
 {{ company.name }}
 {{ company.logo_url }}
@@ -97,7 +97,7 @@ Use these instead of hardcoded values where applicable:
 
 - Page-specific
 - Each template stores section instances, order, and optional layout settings.
-- Visible content blocks come from each section's preset when Fluid expands the template.
+- Visible content blocks come from each section's preset: Fluid fills an instance that has no saved blocks from the section's first preset at render.
 - Same section type can have different expanded block data per template after editor saves.
 
 ---

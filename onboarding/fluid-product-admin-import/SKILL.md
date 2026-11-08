@@ -16,8 +16,8 @@ existing commerce site.
 Inside Mist, the active company and credentials are already selected:
 
 - use `fluid_api(path, method, body)` for Fluid API calls;
-- use `crawl` for public source pages;
-- use `dam_upload` for source image bytes;
+- use `run_cli fluid theme crawl <url>` for public source pages;
+- use `run_cli fluid assets upload` for source image bytes;
 - never ask for a Fluid token, store URL, Firecrawl key, or global CLI install.
 
 This is an execution contract. A row count is not proof of a complete import.
@@ -224,9 +224,15 @@ Before product creates:
 2. `GET /api/settings/company_countries`;
 3. require an entry for that exact market whose `currency` matches the source;
    a different country that uses the same currency is not equivalent;
-4. when an onboarding/import scope authorizes store setup, create a missing
-   exact market through documented `POST /api/settings/company_countries`
-   before any product probe; otherwise stop and request that prerequisite;
+4. when an onboarding/import scope authorizes store setup, open a missing
+   exact market with the Fluid CLI before any product probe: preview with
+   `run_cli` `fluid countries plan <ISO> --mode otg`, require its
+   `companyCountry.currency` to match the source currency, then run
+   `fluid countries open <ISO> --mode otg --yes` (`otg`: the business sells
+   from inside its own market). Never `POST /api/settings/company_countries`
+   with `fluid_api`; Mist refuses it. When `fluid countries atlas <ISO>` returns no atlas (the ISO isn't a Fluid country),
+   the currency differs, or the scope doesn't authorize store setup, stop and
+   request that prerequisite;
 5. use `company_countries[].country.id` as integer `country_id`, never the
    company-country row's own `id`;
 6. paginate `GET /api/v202604/company/products?page[limit]=100` to understand
@@ -243,8 +249,9 @@ as USD and is not a harmless probe.
 
 For every real product/gallery/variant image:
 
-1. ingest the source asset with `dam_upload` when it is already in the sandbox,
-   or use `fluid dam upload --url <SOURCE_URL>` for a remote URL;
+1. ingest the source asset with `run_cli fluid assets upload <path>` when it is
+   already in the sandbox, or `run_cli fluid assets upload --url <SOURCE_URL>`
+   for a remote URL;
 2. take `asset.default_variant_url` from the result;
 3. store source URL → DAM URL in `id-mapping.json`;
 4. use only the Fluid DAM URL in product payloads.
@@ -269,7 +276,7 @@ Create products with nested attributes:
   "product": {
     "title": "Exact Source Product Title",
     "description": "Exact source description",
-    "status": "active",
+    "status": "published",
     "public": true,
     "product_subscription_plans_attributes": [
       {
@@ -305,10 +312,11 @@ Endpoint: `POST /api/v202604/company/products`
 
 Contract:
 
-- Use the documented raw Product enum on writes: `status: "active"` plus
+- Use the documented Product lifecycle on writes: `status: "published"` plus
   `public: true` for a live product. The v202604 `ProductWrite` schema accepts
-  `active`, `draft`, or `archived`; `published` is a presentation label on
-  some read surfaces and is not a valid ProductWrite enum.
+  `draft`, `scheduled` (with a future `publish_at`), `published`, or
+  `archived`. The raw `status: "active"` is still accepted for back-compat but
+  is undocumented; do not send it.
 - `images_attributes` uses `image_url`, not `url`.
 - Exactly one variant has `is_master: true`.
 - Product `option_attrs` are option names.
@@ -363,10 +371,10 @@ Use GET-before-write and persist source identity → Fluid ID mappings.
 | Categories         | `POST /api/v202604/company/categories`                     | Create parents before children; resolve `parent_id` from the mapping. Products accept one `category_id`.                                                         |
 | Collections        | `POST /api/v202604/company/collections`                    | Preserve source identity. `product_ids` is a full replacement; omission leaves membership unchanged.                                                             |
 | Product membership | `PATCH /api/v202604/company/products/{id}`                 | Send the verified `category_id` and complete `collection_ids`; PATCH is partial and does not require resending `title`.                                          |
-| Static pages       | Mist `create_page`; underlying `/api/v202604/company/pages` | Use `create_page` so the page, theme template, preview route, and preview pane stay coordinated. Resolve the body before writing (below).                         |
+| Static pages       | `run_cli fluid pages create`; underlying `/api/v202604/company/pages` | Write the Liquid to `page/<template-name>/index.liquid`, then get the user's human_in_the_loop approval (title exactly `Create Page "<Title>" in Theme "<Theme>" with its brand style`, or `without` for a blank page; suggestion_id `page-create:<random>`) and run `fluid pages create --title "<Title>" --theme "<Theme>" --template-name <name> --content-file page/<template-name>/index.liquid [--blank] --yes` with run_cli's `approval_id` set to it, so the page and its theme template are created and linked together; then `start_preview` on the page. Resolve the body before writing (below). |
 | Blog posts         | `POST /api/v202604/company/posts`                          | Preserve documented source fields, lifecycle, the response's canonical URL, and DAM hero/SEO image.                                                              |
 | Playlists          | `POST /api/v202604/company/playlists`                      | The route says playlists but the documented request wrapper is intentionally `library`.                                                                         |
-| Menus              | `POST /api/menus`                                          | Menus are the explicit legacy exception; use destination canonical routes and preserve nesting/order.                                                            |
+| Menus              | `POST /api/menus`                                          | Menus are the explicit legacy exception; use destination canonical routes and preserve nesting/order. Follow [Rebuild the header menu](#rebuild-the-header-menu). |
 
 Theme pushes happen before page creates because page creation can auto-generate
 theme templates that a later push may try to remove.
@@ -398,6 +406,35 @@ attached.
 
 Never report taxonomy counts as membership proof. A run that created four
 categories and assigned zero products imported four empty navigation targets.
+
+### Rebuild the header menu
+
+Creating a menu changes nothing on the storefront. The header renders whichever
+menu its `link_list` setting names, so a menu import is finished only when the
+live header shows it. The payloads are in
+[Navigation menus](https://docs.fluid.app/themes/navigation-menus).
+
+1. Start from the recorded source navigation (`navigation.header` in
+   `clone-manifest.json`). Header controls such as the logo, search, account,
+   cart, and the country/language/currency selector are not menu items.
+2. Import menus after the records they link to. Resolve each internal source
+   URL to the canonical URL the API returned for the destination record, using
+   the persisted mappings first. Keep external links unchanged. Report an
+   internal link you cannot resolve; never point it at a guessed route or at
+   home.
+3. `GET /api/menus` and adopt the matching menu before creating one. Write
+   `linkable_type: "Link"` items with the source's titles, order, and nesting
+   (`sub_menu_items_attributes`), then read the menu back and compare.
+4. Use the `slug` the API returns. Never derive it from the title; older menus
+   can return a null slug.
+5. Set every header `link_list` setting (desktop and mobile, if separate) to
+   that slug in the navbar template's section settings, push, and check the
+   live header's rendered items against the menu.
+6. Keep the country and language selector in the header, beside the menu, on by
+   default behind a setting the merchant can turn off.
+
+Report `menu_id`, `menu_slug`, the bound header settings, and every unresolved
+item. A menu that exists but isn't bound to the header is not an import.
 
 ### Resolving a page body
 
@@ -453,9 +490,8 @@ The product import passes only when:
 - unresolved source and destination counts are zero;
 - coverage is exactly 100%;
 - destination products resolve as the documented live lifecycle
-  (`active: true` plus read `status: "active"` or the presentation label
-  `"published"`); writes always used ProductWrite `status: "active"` and never
-  sent `"published"`;
+  (`active: true` plus read `status: "published"`); writes used ProductWrite
+  `status: "published"`;
 - exact price and currency match;
 - source option axes and variant counts match;
 - every available source image is represented by a resolving Fluid DAM URL;

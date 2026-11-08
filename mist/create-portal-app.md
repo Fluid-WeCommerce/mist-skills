@@ -15,34 +15,37 @@ user explicitly asks to create a new portal app.
 1. Ask for the portal's display name if the user did not provide one. Preserve
    that display name exactly. Derive a lowercase kebab-case local slug and show
    both values.
-2. Check for an existing portal with the same display name by running:
+2. Check for an existing portal with the same display name:
+   `fluid_api("/api/company/fluid_os/definitions", "GET")`, matching names
+   case-insensitively.
 
-   `fluid portal scaffold --name "<display name>" --check`
-
-   If an exact match exists, stop and offer to open the existing portal. Do not
+   If a match exists, stop and offer to open the existing portal. Do not
    create a duplicate.
 3. Explain that the operation will create a remote Fluid OS definition and seed
    it with the same Home screen, desktop and mobile navigation, company-branded
    theme, and default profile that fluid-admin creates. It will not publish or
    activate a version.
-4. Ask for confirmation immediately before the write.
-5. Run:
+4. Ask for confirmation immediately before the write: propose it with
+   `human_in_the_loop` (source `agent`, title exactly the display name,
+   a fresh `suggestion_id` of `portal-create:<display name>:<short random
+   suffix>`), then end your turn.
+5. After the user approves, call Mist's `create_portal_app` tool with
+   `display_name`, `approval_id` set to that exact `suggestion_id`, and
+   `confirm_create: true`. Each approval is single-use, so a retry needs a new
+   proposal. Do not reproduce the template through individual `fluid_api`
+   calls; `create_portal_app` is the canonical, transactional implementation
+   (it rolls back a partly seeded definition).
+6. Parse the JSON result. On `status: "created"`, confirm that `created`
+   reports:
 
-   `fluid portal scaffold --name "<display name>" --json`
-
-   Use `run_cli` with `command` set to `fluid` and each argument passed
-   separately. Do not reproduce the template through individual `fluid_api`
-   calls; the CLI command is the canonical, transactional implementation.
-6. Parse the JSON result. Confirm that it reports:
-
-   - one definition
    - a Home screen
-   - web and mobile navigations
-   - an active company theme
-   - a default profile
+   - Main (web) and Mobile navigations
+   - the Company Theme
+   - the Default Profile
 
-   If the command reports a partial or rolled-back creation, surface the exact
-   error and do not retry automatically.
+   On `duplicate`, offer to open the existing portal. On `rolled_back` or
+   `rollback_failed`, surface the exact errors and do not retry
+   automatically.
 7. Tell the user the portal is ready and give its display name and definition
    ID. Explain that it will appear in Mist's portal list after refresh; opening
    it lets Mist clone the connected repository or use the local fallback
@@ -55,7 +58,8 @@ user explicitly asks to create a new portal app.
 - Never create GitHub repositories, install a GitHub App, or change company Git
   integration settings.
 - Never fall back to a hand-built sequence of API writes. If
-  `fluid portal scaffold` is unavailable, say that the installed Fluid CLI must
-  be updated.
-- Treat the display name as data. Pass it as a single CLI argument and never
-  interpolate it into a shell command.
+  `create_portal_app` is unavailable (for example, outside Mist), say that
+  creating a seeded portal needs Mist. `fluid portal create` only scaffolds a
+  local project and does not create the remote definition.
+- Treat the display name as data. Pass it unchanged as `display_name` and
+  never interpolate it into a shell command.

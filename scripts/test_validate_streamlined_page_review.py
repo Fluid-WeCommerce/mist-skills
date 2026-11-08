@@ -101,7 +101,7 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
             step for step in workflow["steps"] if step.get("id") == "home-page"
         )
         home_step["prompt"] = home_step["prompt"].replace(
-            "theme_media_reconcile", "a manual dam_upload loop"
+            "theme_media_reconcile", "a manual fluid assets upload loop"
         )
 
         with self.assertRaisesRegex(
@@ -240,7 +240,7 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
             step for step in workflow["steps"] if step.get("id") == "source-capture"
         )
         source_step["prompt"] = source_step["prompt"].replace(
-            "capturePageEvidence: true", ""
+            "--format markdown,html,screenshot", ""
         )
 
         with self.assertRaisesRegex(
@@ -251,7 +251,7 @@ class StreamlinedPageReviewContractTest(unittest.TestCase):
 
     def test_requires_non_image_route_evidence_and_parallel_safe_ownership(self) -> None:
         mutations = (
-            ("shop-page", 'formats ["markdown", "html"]'),
+            ("shop-page", "--format markdown,html"),
             ("shop-page", "when the source exposes them"),
             ("product-page", "Route-specific CSS is unavailable"),
             ("collection-page", "Do not assume Shop completed"),

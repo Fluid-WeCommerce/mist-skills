@@ -40,6 +40,10 @@ mist-skills/
 │   ├── open-a-country.md          ← flat skill (front-end steps flow)
 │   └── compliance-manager/        ← folder skill
 │       └── SKILL.md
+├── bots/                          ← We-Bots templates for Fluid (see Bot templates)
+│   └── moderator/
+│       ├── v1.json
+│       └── v1/{persona,instructions}.md
 ├── workflows/                     ← declarative multi-step chains (JSON, not skills)
 │   ├── open-country.workflow.json
 │   ├── finalize-otg-country.workflow.json
@@ -82,9 +86,9 @@ Summarize orders from the last 30 days that used the promo code SUMMER10.
 
 # Steps
 
-1. Hit `GET /api/v202604/orders?filter[promo_code]=SUMMER10&filter[created_at_gte]={{thirty_days_ago}}` against the active company.
-2. Compute total orders, total revenue, AOV, and top 5 customers by spend.
-3. Render a Markdown table.
+1. Hit `GET /api/v202604/orders?filter[start_date]={{thirty_days_ago}}&page[limit]=100` against the active company, following `meta.pagination.next_cursor` as `page[cursor]`.
+2. Keep the orders whose `discount_codes` (from `GET /api/v202506/orders/<id>`) include SUMMER10.
+3. Compute total orders, total revenue, AOV, and top 5 customers by spend, and render a Markdown table.
 ```
 
 ### Frontmatter fields
@@ -341,21 +345,80 @@ Skills and workflow steps run with Claude's full tool set in Mist Desktop. **Too
 | Tool | What it does |
 | ---- | ------------ |
 | `fluid_api(path, method, body)` | Call the user's Fluid API with their token — the workhorse for reads and writes. |
-| `country_atlas(country_code, [agreement_local_id])` | Fluid's per-market pre-setup profile (modes, launch checklists, agreements, tax/legal settings, payment methods, address layout, languages). Pass `agreement_local_id` for one agreement's full legal text. |
-| `country_settings(country_code)` | The compliance rulebook projected from the atlas (disclosure pages, cookie/VAT/unit-price rules) — what `compliance-manager` reads. |
 | `steps` / `steps_answer` / `steps_mark_item` | Open an interactive click-through panel, record a typed-in answer, or check off a live "setting up…" item. |
 | `run_workflow(workflow_slug, [context])` / `workflow_status` | Kick off a workflow chain (passing collected answers as `context`) and check a run's progress. |
 | `run_skill(slug)` | Load another skill's body and follow it (skill composition). |
 | File I/O: `read_file`, `write_file`, `edit_file`, `list_dir` (+ `*_in` cross-project variants) | Read/write files scoped to the active project. |
-| `run_cli` | The `fluid` CLI (`fluid theme push`, `fluid mist push --watch`, …), allowlisted subcommands only. |
-| `web_fetch`, `crawl` | Fetch a URL as text, or crawl a page (markdown + screenshot). |
-| `dam_upload`, `compress_media`, `video_ripper`, `video_metadata` | Push media into the Fluid DAM, shrink it (bundled ffmpeg), rip/inspect a social video. |
+| `run_cli` | The bundled `fluid` CLI, run with the active company's token (`fluid theme push`, `fluid mist push --watch`, …), allowlisted subcommands only. It is also how a skill reaches capabilities that used to be dedicated tools — see the table below. |
+| `web_fetch` | Fetch a URL as text. |
+| `view_project_image` | Look at a project image, e.g. a crawl screenshot saved under `.mist-desktop/source-baselines/`. |
+| `compress_media`, `video_ripper`, `video_metadata` | Shrink media (bundled ffmpeg), rip/inspect a social video. |
 | `screenshot_preview`, `start_preview`, `read_recent_log_tail`, `retry_lifecycle` | Drive + inspect a running dev preview. |
 | `db_query`, `sql_answer_card`, `list_projects` | Query a connected Mist database and list projects. |
 | `product_card`, `resource_card`, `order_card` | Render a rich card for a product / storefront resource / order in the chat. |
 | `human_in_the_loop` | Gate a change on the user's approval. |
 
 Name the exact tool + endpoint you expect in a skill or workflow step, not "figure it out from the docs."
+
+### Fluid CLI commands (through `run_cli`)
+
+These capabilities have exactly one implementation, the Fluid CLI that ships inside Mist. Call them with `run_cli` (`{ command: "fluid", args: [...] }`); each prints JSON.
+
+| Need | Command |
+| ---- | ------- |
+| Crawl a public page (JS rendered, through Fluid) | `fluid theme crawl <url> [--format markdown,html,screenshot] [--viewport WxH] [--full-page] [--no-main-content-only] [--action '<json>']` |
+| Page-clone source evidence | `fluid theme crawl <url> --evidence . --viewport 1440x900 --full-page --no-main-content-only --format markdown,html,screenshot` — then `view_project_image` on `evidence.path`; `compare_preview_to_source` takes `evidence.path` + `evidence.page_evidence.path` |
+| Upload to the DAM | `fluid assets upload <project file>` or `fluid assets upload --url <url>` (`--name`, `--tags`, `--create-media`) |
+| Production logs of a Mist | `fluid mist logs --json [--limit N] [--deployment <id>]` |
+| Mist env vars | `fluid mist env list --json`, `fluid mist env set KEY=value`, `fluid mist env set KEY --generate [--bytes N] --json` |
+| Droplet lifecycle repair | `fluid mist droplet repair --dry-run --json`, then `--yes --json` |
+| Droplet reinstall (irreversible) | `fluid mist droplet reinstall --dry-run`, approval via `human_in_the_loop` (title `Reinstall Droplet installation <uuid>`, suggestion_id `droplet-reinstall:<uuid>:<suffix>`), then `--confirm` with run_cli's `approval_id` |
+| Fluid Connect setup | `fluid connect list \| show \| install \| credentials \| settings \| unmapped \| mappings \| map \| unmap …` |
+| Country Atlas / compliance | `fluid countries atlas <ISO> [--agreement <localId>]`, `fluid countries compliance <ISO>` |
+| Open a country (preview, then write) | `fluid countries plan <ISO> --mode <nfr\|otg\|usd> [--warehouse-id <id>] [--business-id <id>] [--entity-registered] [--settlement-currency <code>] [--set key=value]`, then `fluid countries open <ISO> --mode … --yes` (idempotent). Change named fields on an open country with `fluid countries update <ISO> [--set key=value]… [--warehouse-id] [--business-id] [--entity-registered] [--settlement-currency <code>] --yes`. Never `fluid_api` writes to `/api/settings/company_countries`: Mist refuses them |
+| Country status and agreements | `fluid countries list`, `fluid countries status <ISO>`, `fluid countries agreements <ISO> [--create \| --translate] [--only <localId>]… --yes` |
+| Convert prices into a country's currency | `fluid countries prices <ISO> [--from-country US]` previews with the ECB reference rate; add `--rate <reviewed rate> --write --yes` to save. Never PUT variant prices with `fluid_api` |
+| Languages and storefront translations | `fluid countries languages <ISO>`, `fluid translations enable <iso…> --yes` / `disable <iso> --yes` (Mist refuses `fluid_api` writes to `/api/settings/languages`), `fluid translations missing <iso>`, `fluid translations auto <iso> [--type …] [--limit n] --write --yes` |
+| Storefront Pages | `fluid pages create --title … --theme "<Theme>" --content-file page/<name>/index.liquid --yes` with run_cli `approval_id` from an approved `page-create:` human_in_the_loop card, `fluid pages template <page> --content-file … [--publish] --yes` |
+
+## Bot templates
+
+`bots/` holds We-Bots marketplace templates for Fluid. Mist Desktop ignores them. Fluid Rails pulls `main` every hour and publishes each new version that validates (`WeBots::TemplateAutoSync`); a root admin can still sync a pinned commit, publish or withdraw a version by hand.
+
+```
+bots/<key>/
+├── v<n>.json            ← the template definition (profile, model, keys, listing, …)
+└── v<n>/
+    ├── persona.md       ← the bot's starter persona, plain Markdown
+    └── instructions.md  ← how the bot works on Fluid, plain Markdown
+```
+
+In the JSON, `persona` and `instructions` are each either an inline string or a reference to a Markdown file in the version's directory:
+
+```json
+"persona": { "file": "persona.md" },
+"instructions": { "file": "instructions.md" }
+```
+
+A file name is lowercase letters, digits, `_` and `-` ending in `.md`; no directories and no `..`. Fluid inlines each file's text exactly as written before validating the template, so the template schema's limits apply to the Markdown (each at most 16,000 characters), and the stored version never reads this repo again.
+
+Each template has a `bots[]` entry in `manifest.json` that pins the JSON and every Markdown file it names:
+
+```json
+{
+  "key": "moderator",
+  "version": 1,
+  "path": "bots/moderator/v1.json",
+  "sha256": "<sha256 of v1.json>",
+  "files": {
+    "instructions.md": "<sha256 of v1/instructions.md>",
+    "persona.md": "<sha256 of v1/persona.md>"
+  },
+  "updated_at": "2026-10-25T00:00:00Z"
+}
+```
+
+`files` lists exactly the files the template names: Fluid refuses the entry if one is missing or extra, or if any digest differs. A published version never changes, so a change to the JSON or either Markdown file is a new version (`v<n+1>.json` and `v<n+1>/`). `scripts/validate_catalog.py` checks every `bots[]` entry's path, digests and file references.
 
 ## Contributing a skill
 
@@ -380,7 +443,7 @@ Name the exact tool + endpoint you expect in a skill or workflow step, not "figu
   - File I/O scoped to the active project.
   - The `fluid` CLI (`fluid theme push`, `fluid mist push --watch`, etc.).
   - A `fluid_api(path, method, body)` tool that hits the user's Fluid API with their token.
-  - `dam_upload` for pushing media into the Fluid DAM.
+  - `fluid assets upload` (through `run_cli`) for pushing media into the Fluid DAM.
   - `compress_media` (bundled ffmpeg) for shrinking videos / images before upload.
 
   Name the exact endpoint or command you expect the agent to run, not "look at the docs and figure it out."

@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 import sys
 from collections.abc import Iterable
 from pathlib import Path
@@ -186,6 +188,103 @@ def validate_manifest(manifest: Any) -> tuple[int, int]:
     return len(skills), len(workflows)
 
 
+BOT_KEY_PATTERN = re.compile(r"[a-z][a-z0-9_]{1,62}")
+BOT_FILE_NAME_PATTERN = re.compile(r"[a-z0-9_-]+\.md")
+SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
+BOT_FILE_FIELDS = ("persona", "instructions")
+
+
+def sha256_of(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def bot_file_references(template: Any, label: str) -> set[str]:
+    """The Markdown files a bot template names in persona or instructions.
+
+    Each field is an inline string or exactly {"file": "<name>.md"}, a file in
+    the directory named for the version (bots/<key>/v<n>/), as Fluid Rails
+    (WeBots::TemplateMarkdownResolver) reads it.
+    """
+    if not isinstance(template, dict):
+        raise CatalogValidationError(f"{label}: template must be a JSON object")
+    named: set[str] = set()
+    for field in BOT_FILE_FIELDS:
+        reference = template.get(field)
+        if not isinstance(reference, dict):
+            continue
+        name = reference.get("file")
+        if (
+            set(reference) != {"file"}
+            or not isinstance(name, str)
+            or not BOT_FILE_NAME_PATTERN.fullmatch(name)
+        ):
+            raise CatalogValidationError(
+                f"{label}: {field} must be a string or {{\"file\": \"<name>.md\"}}"
+            )
+        named.add(name)
+    return named
+
+
+def validate_bot_entry(entry: Any, label: str) -> str:
+    if not isinstance(entry, dict):
+        raise CatalogValidationError(f"{label}: entry must be an object")
+    key = require_string(entry, "key", label)
+    version = entry.get("version")
+    if not BOT_KEY_PATTERN.fullmatch(key):
+        raise CatalogValidationError(f"{label}: key {key!r} is not a valid bot key")
+    if not isinstance(version, int) or isinstance(version, bool) or version < 1:
+        raise CatalogValidationError(f"{label}: version must be a positive integer")
+    path = require_string(entry, "path", label)
+    if path != f"bots/{key}/v{version}.json":
+        raise CatalogValidationError(f"{label}: path must be bots/{key}/v{version}.json")
+    require_string(entry, "updated_at", label)
+
+    template_path = validate_relative_file(path, label)
+    if entry.get("sha256") != sha256_of(template_path):
+        raise CatalogValidationError(f"{label}: sha256 does not match {path}")
+
+    pinned = entry.get("files", {})
+    if not isinstance(pinned, dict) or not all(
+        isinstance(name, str)
+        and BOT_FILE_NAME_PATTERN.fullmatch(name)
+        and isinstance(digest, str)
+        and SHA256_PATTERN.fullmatch(digest)
+        for name, digest in pinned.items()
+    ):
+        raise CatalogValidationError(
+            f"{label}: files must map <name>.md to a SHA-256 digest"
+        )
+    named = bot_file_references(load_json(template_path), label)
+    if named != set(pinned):
+        raise CatalogValidationError(
+            f"{label}: files must list exactly the files the template names "
+            f"(named {sorted(named)}, pinned {sorted(pinned)})"
+        )
+    directory = path.removesuffix(".json")
+    for name, digest in pinned.items():
+        if sha256_of(validate_relative_file(f"{directory}/{name}", label)) != digest:
+            raise CatalogValidationError(
+                f"{label}: files[{name!r}] does not match {directory}/{name}"
+            )
+    return f"{key}@{version}"
+
+
+def validate_bots(manifest: Any) -> int:
+    """Check manifest bots[]: each template's digest, and each Markdown file
+    its persona or instructions name is pinned in files with its digest."""
+    bots = manifest.get("bots", [])
+    if not isinstance(bots, list):
+        raise CatalogValidationError("manifest bots must be an array")
+    validate_unique(
+        (
+            (validate_bot_entry(entry, f"bots[{index}]"), f"bots[{index}]")
+            for index, entry in enumerate(bots)
+        ),
+        "bot key and version",
+    )
+    return len(bots)
+
+
 def require_fragments(text: str, fragments: tuple[str, ...], label: str) -> None:
     for fragment in fragments:
         if fragment not in text:
@@ -273,7 +372,7 @@ def validate_shared_skill_contracts() -> None:
             "/openapi/api-reference/storefront-v2026-04.yaml",
             "/api/v202604/company/products",
             "meta.pagination.next_cursor",
-            'status: "active"',
+            'status: "published"',
             "Do not send\n  `currency_code`",
             "external_asset_url",
             'product_subscription_plans_attributes:[{"_destroy":true}]',
@@ -305,7 +404,7 @@ def validate_shared_skill_contracts() -> None:
         (
             'document.querySelectorAll("img,video,video source")',
             "different desktop/mobile video sources",
-            "`dam_upload` with its public `url`",
+            "Run `fluid assets upload` with its public `url`",
             "`compress_media`",
             "`priority_media`",
             "video is a hard failure",
@@ -340,7 +439,7 @@ def validate_shared_skill_contracts() -> None:
         (
             "source_copy_sha256",
             "`stable`, `resource`, `dynamic`, or `external`",
-            'dam_upload({ url: "<exact-public-url>", create_media: true })',
+            "run_cli fluid assets upload --url <exact-public-url> --create-media",
             "compress_media",
             "`currentSrc`",
             "`read_preview_dom",
@@ -483,7 +582,7 @@ def validate_streamlined_product_import_contract() -> None:
             "streamlined workflow: work prompt must contain exactly one "
             "fluid_product_import invocation"
         )
-    for banned_tool in ("fluid_api", "dam_upload"):
+    for banned_tool in ("fluid_api", "assets upload"):
         if banned_tool in prompt:
             raise CatalogValidationError(
                 "streamlined workflow: import-products must not direct the "
@@ -692,8 +791,8 @@ def _validate_streamlined_home_review_contract(workflow: Any) -> None:
     require_fragments(
         source_prompt,
         (
-            'formats ["html", "rawHtml", "screenshot"]',
-            "capturePageEvidence: true",
+            "fluid theme crawl <home url> --evidence .",
+            "--format markdown,html,screenshot",
             "desktop AND at 390 wide",
         ),
         "streamlined workflow source evidence contract",
@@ -797,8 +896,8 @@ def _validate_direct_page_review(
         prompt,
         (
             "clone-manifest.json",
-            'formats ["markdown", "html"]',
-            "only_main_content:false",
+            "--format markdown,html",
+            "--no-main-content-only",
             "fresh non-image structure and stable copy",
             "Do not request screenshot capture or screenshot formats",
             "Home's retained stylesheet, landmark styles",
@@ -878,8 +977,8 @@ def _validate_content_page_review(workflow: dict[str, Any]) -> None:
         prompt,
         (
             "clone-manifest.json",
-            'formats ["markdown", "html"]',
-            "only_main_content:false",
+            "--format markdown,html",
+            "--no-main-content-only",
             "Do not request screenshot capture or screenshot formats",
             "Home's retained stylesheet, landmark styles",
             "Route-specific CSS is unavailable",
@@ -1051,6 +1150,59 @@ def _validate_taxonomy_membership_contract(workflow: dict[str, Any]) -> None:
         ),
         "streamlined workflow import-content taxonomy acceptance contract",
     )
+
+
+def _validate_header_navigation_contract(workflow: dict[str, Any]) -> None:
+    """Creating a menu changes nothing until the header's link_list names it.
+
+    Menus used to ride along in import-content with no acceptance criterion and
+    no step that bound them to the header, so launches kept the starter theme's
+    menu.
+    """
+    source_step = _streamlined_step(workflow, "source-capture")
+    require_fragments(
+        str(source_step.get("prompt", "")),
+        ("navigation.header", "navigation.header.controls"),
+        "streamlined workflow source-capture navigation contract",
+    )
+
+    step = _streamlined_step(workflow, "header-navigation")
+    for dependency in ("publish-theme", "import-content"):
+        if not depends_transitively(
+            {s["id"]: s for s in workflow["steps"] if isinstance(s, dict)},
+            "header-navigation",
+            dependency,
+        ):
+            raise CatalogValidationError(
+                f"streamlined workflow: header-navigation must wait for {dependency}"
+            )
+    require_fragments(
+        str(step.get("prompt", "")),
+        (
+            "GET /api/menus",
+            "never substitute a title-derived slug",
+            "Set each one's value to the returned slug",
+            "navbar_locale_dropdown",
+            "whose default and current value are true",
+            "Read the rendered DOM of the live home route",
+        ),
+        "streamlined workflow header-navigation contract",
+    )
+    require_fragments(
+        json.dumps(step.get("acceptance", [])),
+        (
+            "set to the menu slug returned by the menus API",
+            "behind a checkbox setting that defaults to true",
+            "live home route's rendered header",
+        ),
+        "streamlined workflow header-navigation acceptance contract",
+    )
+
+    handoff = _streamlined_step(workflow, "handoff")
+    if "header-navigation" not in (handoff.get("dependsOn") or []):
+        raise CatalogValidationError(
+            "streamlined workflow: handoff must wait for header-navigation"
+        )
 
 
 def _validate_handoff_live_counts_contract(workflow: dict[str, Any]) -> None:
@@ -1286,6 +1438,7 @@ def validate_streamlined_page_review_contract(workflow: Any) -> None:
     _validate_storefront_code_review(workflow)
     _validate_content_import_body_contract(workflow)
     _validate_taxonomy_membership_contract(workflow)
+    _validate_header_navigation_contract(workflow)
     _validate_handoff_live_counts_contract(workflow)
     _reject_unsupported_page_review_claims(workflow)
 
@@ -1293,7 +1446,9 @@ def validate_streamlined_page_review_contract(workflow: Any) -> None:
 def validate_published_catalog(
     *, streamlined_workflow: Any | None = None
 ) -> tuple[int, int]:
-    skill_count, workflow_count = validate_manifest(load_json(MANIFEST_PATH))
+    manifest = load_json(MANIFEST_PATH)
+    skill_count, workflow_count = validate_manifest(manifest)
+    validate_bots(manifest)
     validate_shared_skill_contracts()
     validate_streamlined_product_import_contract()
     validate_streamlined_page_review_contract(

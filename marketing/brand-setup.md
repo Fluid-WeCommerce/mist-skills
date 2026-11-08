@@ -133,7 +133,7 @@ content. In Visual Style, describe how the colors are *used*; don't just re-list
 
 Call the **`update_brand_voice`** tool with `mode: "replace"` and the full assembled document
 as `content`. The tool writes the local company brand.md and syncs `brand_md` to
-`/api/settings/brand_guidelines`. If the sync degrades (endpoint not yet deployed), it keeps
+`/api/settings/brand_guidelines`. If the sync fails, it keeps
 the local copy — mention that to the user rather than blocking.
 
 Then summarize what was captured, list any sections left as placeholders, and remind the user:

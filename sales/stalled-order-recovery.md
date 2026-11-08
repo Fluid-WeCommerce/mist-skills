@@ -10,7 +10,7 @@ Find every stalled order at {{company.name}} sitting in `draft`, `pending`, or `
 
 # Steps
 
-1. For each of `draft`, `pending`, `pending_review`, call `fluid_api("/api/v202506/orders?status=<status>&start_date={{thirty_days_ago}}&end_date={{today}}&limit=100", "GET")`, following `meta.pagination.next_cursor` until it's null. `limit` may not be strictly honored — keep paginating by cursor, not by counting rows.
+1. For each of `draft`, `pending`, `pending_review`, call `fluid_api("/api/v202506/orders?status=<status>&start_date={{thirty_days_ago}}&end_date={{today}}&page[limit]=100", "GET")`, passing `meta.pagination.next_cursor` back as `page[cursor]` until it's null. Keep paginating by cursor, not by counting rows.
 2. From each stalled order capture: `order_number`, `customer.full_name`, `customer.email`, `amount` (fall back to `amount_in_base` if `amount` is zero/blank), `created_at`, `status`, `source`, and `customer.orders_count` (tells you if this is a first-time or repeat buyer).
 3. Compute a win-probability tier per order:
    - **High** — created in the last 24 hours AND `customer.orders_count > 0` (a proven buyer, still warm).

@@ -45,22 +45,17 @@ the six-cell visual matrix.
 
 ## 3. Capture three independent evidence layers
 
-For each priority route, capture 1440×900 and 390×844 with:
+For each priority route, capture 1440×900 and 390×844 through `run_cli`:
 
-```json
-{
-  "formats": ["markdown", "html", "screenshot"],
-  "only_main_content": false,
-  "capture_page_evidence": true,
-  "screenshot_options": {
-    "full_page": true,
-    "quality": 90,
-    "viewport": { "width": 1440, "height": 900 }
-  }
-}
+```text
+run_cli fluid theme crawl <route url> --evidence . --viewport 1440x900 --full-page --quality 90 --no-main-content-only --format markdown,html,screenshot
 ```
 
-Repeat with the mobile viewport. Keep the exact crawl-returned local paths for:
+Repeat with `--viewport 390x844`. The JSON result's `evidence` object carries
+every path below (`evidence.path`, `evidence.page_evidence.path`,
+`evidence.documents.*.path`); open the screenshot with `view_project_image`.
+
+Keep the exact crawl-returned local paths for:
 
 - complete Markdown: copy and catalog facts;
 - complete rendered HTML: DOM structure, class names, and media references.
@@ -108,7 +103,9 @@ Write `clone-manifest.json` with:
 - verbatim `hero_copy` with Markdown, HTML, and screenshot evidence;
 - `visual_routes.home`, `.shop`, and `.pdp`, each with source URL, future built
   path, ordered landmark mappings, and complete desktop/mobile evidence cells;
-- `priority_media.items`.
+- `priority_media.items`;
+- `navigation.header`, the source's top menu and header controls (see
+  [Capture the header navigation](#capture-the-header-navigation)).
 
 Do not hand-transcribe the evidence-derived arrays. After all six crawl bundles
 are complete, call Mist's local-only deterministic builder exactly once:
@@ -319,7 +316,7 @@ data URI, runtime blob, or custom media element that exposed no URL—uses
 `source_value_sha256`, and `source_unavailable_reason` receipts. Do not invent
 an HTTP URL, drop the element, or edit files under
 `.mist-desktop/source-baselines/`; those Mist-managed bundles are read-only and
-must be replaced with a fresh `crawl` capture when wrong. Video items also
+must be replaced with a fresh `fluid theme crawl --evidence .` capture when wrong. Video items also
 record `autoplay`, `loop`, `muted`, `playsinline`, `controls`, type, and poster.
 Preserve distinct desktop/mobile elements when their selected source differs.
 Do not collapse an entire rail into one item or discard responsive candidates;
@@ -371,6 +368,48 @@ Every `source_url` and `source_candidates[]` value must be one bare absolute
 HTTP(S) URL. Split `srcset` strings into individual URLs and remove width/density
 descriptors such as `800w` or `2x`; never store an entire comma-separated
 `srcset` string as one candidate.
+
+### Capture the header navigation
+
+The header menu is rebuilt later as a Fluid menu, so record it as data, not
+only as screenshots. Read it from the rendered Home DOM at both viewports:
+
+- Expand what hover or click hides. Dropdown and mega-menu children are usually
+  in the DOM but not visible; the mobile drawer can carry items the desktop bar
+  omits.
+- Record each item as `{ "title", "source_url", "order", "children": [...] }`,
+  with the title copied verbatim and the URL absolute. Keep nesting as nesting.
+- Put header controls in `navigation.header.controls`, not in the items: logo,
+  search, account, cart, and any country, language, or currency selector, each
+  with its kind and source position.
+- Note desktop-only and mobile-only items with `viewports`.
+
+```json
+{
+  "navigation": {
+    "header": {
+      "items": [
+        {
+          "title": "Shop",
+          "source_url": "https://source.example/collections/all",
+          "order": 0,
+          "viewports": ["desktop", "mobile"],
+          "children": [
+            { "title": "Best Sellers", "source_url": "https://source.example/collections/best-sellers", "order": 0, "children": [] }
+          ]
+        }
+      ],
+      "controls": [
+        { "kind": "locale_selector", "position": "right" },
+        { "kind": "cart", "position": "right" }
+      ]
+    }
+  }
+}
+```
+
+An empty `items` array needs a reason in `unresolved`; almost every storefront
+has a top menu.
 
 ## 5. Protect local evidence
 
@@ -438,6 +477,7 @@ validator: pass
 hero_copy:
 brand_tokens:
 secondary_routes:
+header_navigation: <top-level items>/<nested items>/<controls>
 unresolved:
 ```
 

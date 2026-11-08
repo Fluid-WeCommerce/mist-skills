@@ -17,7 +17,7 @@
       "category": "finance",
       "icon": "receipt",
       "path": "finance/promo-code-summary.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "finance/monthly-close",
@@ -26,7 +26,7 @@
       "category": "finance",
       "icon": "file-text",
       "path": "finance/monthly-close.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "finance/top-customers",
@@ -35,7 +35,7 @@
       "category": "finance",
       "icon": "trophy",
       "path": "finance/top-customers.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/scrape-into-theme",
@@ -44,7 +44,7 @@
       "category": "themes",
       "icon": "globe",
       "path": "themes/scrape-into-theme.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/accessibility-audit",
@@ -53,7 +53,7 @@
       "category": "themes",
       "icon": "accessibility",
       "path": "themes/accessibility-audit.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/image-optimization",
@@ -62,7 +62,7 @@
       "category": "themes",
       "icon": "image",
       "path": "themes/image-optimization.md",
-      "updated_at": "2026-07-09T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/theme-review",
@@ -71,7 +71,7 @@
       "category": "themes",
       "icon": "clipboard-check",
       "path": "themes/theme-review.md",
-      "updated_at": "2026-07-25T18:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/languages",
@@ -80,16 +80,16 @@
       "category": "themes",
       "icon": "languages",
       "path": "themes/languages.md",
-      "updated_at": "2026-06-24T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "mist/scaffold-droplet",
       "name": "Scaffold a new Droplet for a Mist",
-      "description": "Set up the Droplet UI scaffolding (page, route, schema) for a fresh Mist app.",
+      "description": "Set up the Droplet UI scaffolding (embed page, route, droplet config) for a fresh Mist app.",
       "category": "mist",
       "icon": "hammer",
       "path": "mist/scaffold-droplet.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "mist/create-portal-app",
@@ -98,7 +98,7 @@
       "category": "mist",
       "icon": "panels-top-left",
       "path": "mist/create-portal-app.md",
-      "updated_at": "2026-07-30T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "mist/portal-widget-vs-mist-app",
@@ -107,7 +107,7 @@
       "category": "mist",
       "icon": "git-fork",
       "path": "mist/portal-widget-vs-mist-app.md",
-      "updated_at": "2026-08-07T22:09:03Z"
+      "updated_at": "2026-10-23T18:00:00Z"
     },
     {
       "slug": "mist/env-vars-audit",
@@ -116,7 +116,7 @@
       "category": "mist",
       "icon": "shield-check",
       "path": "mist/env-vars-audit.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "mist/debug-failed-deploy",
@@ -125,7 +125,7 @@
       "category": "mist",
       "icon": "bug",
       "path": "mist/debug-failed-deploy.md",
-      "updated_at": "2026-06-20T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/theme-clone",
@@ -134,7 +134,7 @@
       "category": "themes",
       "icon": "copy",
       "path": "themes/theme-clone/SKILL.md",
-      "updated_at": "2026-07-26T06:05:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/theme-clone/references/batch-upload-script.md",
         "themes/theme-clone/references/css-js-patterns.md",
@@ -157,7 +157,7 @@
       "category": "themes",
       "icon": "scan-search",
       "path": "themes/theme-source-inventory/SKILL.md",
-      "updated_at": "2026-07-26T22:53:55Z",
+      "updated_at": "2026-10-03T07:02:39Z",
       "references": [
         "themes/references/pixel-fidelity-core.md"
       ]
@@ -165,7 +165,7 @@
     {
       "slug": "themes/theme-section-report",
       "name": "Theme Section Report",
-      "description": "Report the section-usage health of a company's active theme — inline (unsectioned) template code, broken section references, and unused sections. Read-only, never blocks.",
+      "description": "Report the section-usage health of a company's active theme \u2014 inline (unsectioned) template code, broken section references, and unused sections. Read-only, never blocks.",
       "category": "themes",
       "icon": "clipboard-list",
       "path": "themes/theme-section-report/SKILL.md",
@@ -181,13 +181,25 @@
       "updated_at": "2026-08-28T00:00:00Z"
     },
     {
+      "slug": "themes/fluid-block-spec",
+      "name": "Fluid Block Spec",
+      "description": "Build or review Fluid theme sections and blocks against the Block & Section Specification v3 \u2014 canonical block types, setting IDs, control order, shared control groups, rendering rules and the pre-ship checklist.",
+      "category": "themes",
+      "icon": "blocks",
+      "path": "themes/fluid-block-spec/SKILL.md",
+      "updated_at": "2026-10-10T18:00:00Z",
+      "references": [
+        "themes/fluid-block-spec/references/fluid-block-spec-v3.md"
+      ]
+    },
+    {
       "slug": "themes/theme-refine",
       "name": "Theme Refine",
       "description": "Refine a Fluid theme to the gold standard: pixel-perfect visual QA after a clone, or migrate a legacy theme to the canonical architecture.",
       "category": "themes",
       "icon": "sparkles",
       "path": "themes/theme-refine/SKILL.md",
-      "updated_at": "2026-07-25T18:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/theme-refine/references/dev-preview-visual-diff.md",
         "themes/references/blocks-vs-sections.md",
@@ -209,7 +221,7 @@
       "category": "themes",
       "icon": "scan-eye",
       "path": "themes/clone-page-to-liquid/SKILL.md",
-      "updated_at": "2026-07-28T13:58:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -225,7 +237,7 @@
       "category": "themes",
       "icon": "house",
       "path": "themes/clone-home-page/SKILL.md",
-      "updated_at": "2026-07-27T04:48:39Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -242,7 +254,7 @@
       "category": "themes",
       "icon": "shopping-bag",
       "path": "themes/clone-shop-page/SKILL.md",
-      "updated_at": "2026-07-27T04:48:39Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -259,7 +271,7 @@
       "category": "themes",
       "icon": "package",
       "path": "themes/clone-product-page/SKILL.md",
-      "updated_at": "2026-07-27T04:48:39Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -274,7 +286,7 @@
       "category": "themes",
       "icon": "folders",
       "path": "themes/clone-category-page/SKILL.md",
-      "updated_at": "2026-07-27T04:48:39Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -289,7 +301,7 @@
       "category": "themes",
       "icon": "layout-grid",
       "path": "themes/clone-collection-page/SKILL.md",
-      "updated_at": "2026-07-27T04:48:39Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -304,7 +316,7 @@
       "category": "onboarding",
       "icon": "id-card",
       "path": "onboarding/onboarding-prefill/SKILL.md",
-      "updated_at": "2026-07-25T18:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "onboarding/onboarding-prefill/references/api-endpoints.md",
         "onboarding/onboarding-prefill/references/brand-md.md",
@@ -319,12 +331,12 @@
       "category": "onboarding",
       "icon": "package-plus",
       "path": "onboarding/fluid-product-admin-import/SKILL.md",
-      "updated_at": "2026-08-02T01:20:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "marketing/brand-manager",
       "name": "Brand Manager",
-      "description": "Use when someone wants to know who their brand is really for and whether their marketing speaks to those people — defining core customers, auditing brand voice, positioning, message hierarchy and journey against them, then delivering a substantial report, approve-one-at-a-time improvements, and writing what it learned back to brand.md. Not for catalog data QA.",
+      "description": "Use when someone wants to know who their brand is really for and whether their marketing speaks to those people \u2014 defining core customers, auditing brand voice, positioning, message hierarchy and journey against them, then delivering a substantial report, approve-one-at-a-time improvements, and writing what it learned back to brand.md. Not for catalog data QA.",
       "category": "marketing",
       "icon": "compass",
       "path": "marketing/brand-manager/SKILL.md",
@@ -337,7 +349,7 @@
       "category": "marketing",
       "icon": "video",
       "path": "marketing/ugc-discovery.md",
-      "updated_at": "2026-07-24T00:00:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "marketing/brand-social-import",
@@ -346,7 +358,7 @@
       "category": "marketing",
       "icon": "video",
       "path": "marketing/brand-social-import.md",
-      "updated_at": "2026-07-06T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "marketing/brand-setup",
@@ -355,7 +367,16 @@
       "category": "marketing",
       "icon": "palette",
       "path": "marketing/brand-setup.md",
-      "updated_at": "2026-07-13T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
+    },
+    {
+      "slug": "marketing/ads-creative",
+      "name": "Ads Creative",
+      "description": "Use when the user wants ads for their store on Facebook, Instagram or Google (including YouTube). Writes ad copy per placement from the store's products and brand voice, picks product images for each aspect ratio (generating any that are missing), checks every line against Meta and Google health, income and testimonial rules, asks for approval on each asset, then saves an ad pack and, after approval, launches it as paused campaigns in the merchant's own Meta and Google Ads accounts.",
+      "category": "marketing",
+      "icon": "share-2",
+      "path": "marketing/ads-creative.md",
+      "updated_at": "2026-10-22T12:05:46Z"
     },
     {
       "slug": "themes/suggested-changes",
@@ -364,7 +385,7 @@
       "category": "themes",
       "icon": "sparkles",
       "path": "themes/suggested-changes.md",
-      "updated_at": "2026-07-04T03:42:11Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "compliance/open-a-country",
@@ -373,7 +394,7 @@
       "category": "compliance",
       "icon": "globe",
       "path": "compliance/open-a-country.md",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-03T04:20:41Z"
     },
     {
       "slug": "compliance/compliance-manager",
@@ -382,7 +403,7 @@
       "category": "compliance",
       "icon": "scale",
       "path": "compliance/compliance-manager/SKILL.md",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-03T04:20:41Z"
     },
     {
       "slug": "themes/iterative-theme-refine",
@@ -391,7 +412,7 @@
       "category": "themes",
       "icon": "refresh-cw",
       "path": "themes/iterative-theme-refine/SKILL.md",
-      "updated_at": "2026-07-26T17:34:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
     },
     {
       "slug": "mist/smart-dashboard",
@@ -403,13 +424,29 @@
       "updated_at": "2026-07-23T00:00:00Z"
     },
     {
+      "slug": "mist/exigo-droplet",
+      "name": "Exigo SDK + egress proxy",
+      "description": "Connect a Mist droplet to an Exigo tenant's SQL reporting database and/or REST API with @fluid-app/exigo-connection-sdk, routed through Fluid's egress proxy so the tenant's IP allowlist works from Vercel.",
+      "category": "mist",
+      "icon": "database",
+      "path": "mist/exigo-droplet/SKILL.md",
+      "updated_at": "2026-10-14T12:00:00Z",
+      "references": [
+        "mist/exigo-droplet/references/setup-and-proxy.md",
+        "mist/exigo-droplet/references/credentials-and-admin.md",
+        "mist/exigo-droplet/references/sql-patterns.md",
+        "mist/exigo-droplet/references/rest-patterns.md",
+        "mist/exigo-droplet/references/test-connection-and-tests.md"
+      ]
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
       "category": "sales",
       "icon": "filter",
       "path": "sales/checkout-funnel-diagnosis.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "sales/stalled-order-recovery",
@@ -418,7 +455,7 @@
       "category": "sales",
       "icon": "shopping-cart",
       "path": "sales/stalled-order-recovery.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "sales/aov-lever-audit",
@@ -427,7 +464,7 @@
       "category": "sales",
       "icon": "trending-up",
       "path": "sales/aov-lever-audit.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "sales/rep-momentum-scoreboard",
@@ -436,7 +473,7 @@
       "category": "sales",
       "icon": "users",
       "path": "sales/rep-momentum-scoreboard.md",
-      "updated_at": "2026-07-23T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "sales/non-renewed-subscriptions-summary",
@@ -445,7 +482,7 @@
       "category": "sales",
       "icon": "credit-card",
       "path": "sales/non-renewed-subscriptions-summary.md",
-      "updated_at": "2026-07-31T15:01:18Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "themes/clone-blog-page",
@@ -454,7 +491,7 @@
       "category": "themes",
       "icon": "newspaper",
       "path": "themes/clone-blog-page/SKILL.md",
-      "updated_at": "2026-07-29T19:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -469,7 +506,7 @@
       "category": "themes",
       "icon": "file-text",
       "path": "themes/clone-post-page/SKILL.md",
-      "updated_at": "2026-07-29T19:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -484,7 +521,7 @@
       "category": "themes",
       "icon": "shopping-cart",
       "path": "themes/clone-cart-page/SKILL.md",
-      "updated_at": "2026-07-29T19:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -499,7 +536,7 @@
       "category": "themes",
       "icon": "triangle-alert",
       "path": "themes/clone-system-pages/SKILL.md",
-      "updated_at": "2026-07-29T19:00:00Z",
+      "updated_at": "2026-10-10T18:00:00Z",
       "references": [
         "themes/page-clone/references/pixel-perfect-page.md",
         "themes/theme-clone/references/fluid-rules.md",
@@ -514,7 +551,7 @@
       "category": "themes",
       "icon": "link",
       "path": "themes/affiliate-url-standardization.md",
-      "updated_at": "2026-08-27T20:39:48Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "onboarding/brand-from-source",
@@ -523,7 +560,7 @@
       "category": "onboarding",
       "icon": "palette",
       "path": "onboarding/brand-from-source/SKILL.md",
-      "updated_at": "2026-07-30T09:00:00Z",
+      "updated_at": "2026-10-02T06:09:26Z",
       "references": [
         "onboarding/onboarding-prefill/references/api-endpoints.md"
       ]
@@ -540,7 +577,7 @@
     {
       "slug": "onboarding/catalog-hygiene-audit",
       "name": "Catalog Hygiene Audit",
-      "description": "Sweep a product catalog for data-integrity defects — duplicate SKUs, defective live slugs, inconsistent family naming, reused images, unpriced purchasable products — rank them by customer-visible impact, and apply only the fixes the user approves one at a time.",
+      "description": "Sweep a product catalog for data-integrity defects \u2014 duplicate SKUs, defective live slugs, inconsistent family naming, reused images, unpriced purchasable products \u2014 rank them by customer-visible impact, and apply only the fixes the user approves one at a time.",
       "category": "onboarding",
       "icon": "list-checks",
       "path": "onboarding/catalog-hygiene-audit.md",
@@ -655,32 +692,221 @@
     {
       "slug": "open-country",
       "path": "workflows/open-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "finalize-otg-country",
       "path": "workflows/finalize-otg-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "finalize-nfr-country",
       "path": "workflows/finalize-nfr-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "finalize-usd-country",
       "path": "workflows/finalize-usd-country.workflow.json",
-      "updated_at": "2026-07-04T00:00:00Z"
+      "updated_at": "2026-10-10T18:00:00Z"
     },
     {
       "slug": "streamlined-onboard-launch",
       "path": "workflows/streamlined-onboard-launch.workflow.json",
-      "updated_at": "2026-08-02T01:20:00Z"
+      "updated_at": "2026-10-03T07:02:39Z"
     },
     {
       "slug": "speed-import",
       "path": "workflows/speed-import.workflow.json",
-      "updated_at": "2026-07-30T18:00:00Z"
+      "updated_at": "2026-10-02T06:09:26Z"
+    }
+  ],
+  "bots": [
+    {
+      "key": "revenue_head",
+      "version": 1,
+      "path": "bots/revenue_head/v1.json",
+      "sha256": "849c73564e47d1131d85923baaebf04d51bd52301e5dcd506762a092b5bd2f2b",
+      "files": {
+        "instructions.md": "cff85500f2e267173b458bdb25e253b20186b58fb2564283c816035b52a996d9",
+        "persona.md": "a73b92f638f97db6bf4aedfb173b3816cc1a0b5c325381db40316528e238fa7e"
+      },
+      "updated_at": "2026-10-25T00:00:00Z"
+    },
+    {
+      "key": "moderator",
+      "version": 1,
+      "path": "bots/moderator/v1.json",
+      "sha256": "fd3c5bf6bbf1cd24dda8897b10fa853e6f1cef4586f29a1d53d9780d67ad4ef6",
+      "files": {
+        "instructions.md": "c45e94e82c64a2aba15805a727fcc7e4c9fb708fb106b9dcba4abcb726322528",
+        "persona.md": "f130535d671bcc9a8933ad4ae51c8fc336fee341afdf44697657826cb0a1dea6"
+      },
+      "updated_at": "2026-10-25T00:00:00Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 1,
+      "path": "bots/qa_specialist/v1.json",
+      "sha256": "7989900ed81dcf31934a0b1712d3ac2819c2b4f100ec037f684ac57c9c55b977",
+      "files": {
+        "instructions.md": "ca2ca1562973df9a2009922c18d6350c0ecd76df463a49205726b62eec651e38",
+        "persona.md": "61bdfa7863fe2139cb6f0774dd549bd5cd91d798a8dc2138acab6e40162a70fb"
+      },
+      "updated_at": "2026-10-26T00:00:00Z"
+    },
+    {
+      "key": "chief_of_staff",
+      "version": 1,
+      "path": "bots/chief_of_staff/v1.json",
+      "sha256": "c351207725748aeb9fba8579a88e196a470f97ebdba128f12bbf8536d9a70369",
+      "files": {
+        "instructions.md": "b7e20f6351be5c001c85859dee4eceb1c4bb45ceed0ccd8b5f98a78bb9be9b8a",
+        "persona.md": "dad8121e285b69a1c16b5829a2e9f39a360429962479a78a96cc9b06145a89c0"
+      },
+      "updated_at": "2026-10-26T00:00:00Z"
+    },
+    {
+      "key": "developer",
+      "version": 1,
+      "path": "bots/developer/v1.json",
+      "sha256": "053d96afd800fe779036cccedd47000ff65813c22193e42c45a503fe18cdb8ff",
+      "files": {
+        "instructions.md": "e1e34e57efbf7437579f12949002ba04b5a6ccd699f58a9a9a116505f931ef21",
+        "persona.md": "ff38eef9a4b043429e4f0b55515135560489e8f8ddfc34cf23e7178c316c8e0d"
+      },
+      "updated_at": "2026-10-26T00:00:00Z"
+    },
+    {
+      "key": "developer",
+      "version": 2,
+      "path": "bots/developer/v2.json",
+      "sha256": "011ab224344da2162c805b0fd2e8dc76951a6510b3603b26a146502e0f0099df",
+      "files": {
+        "instructions.md": "9dbd7b9e480696069fb3c6a028248c66a382ce9ffa9ca1ef7d46c1adb4bfd4ec",
+        "persona.md": "ff38eef9a4b043429e4f0b55515135560489e8f8ddfc34cf23e7178c316c8e0d"
+      },
+      "updated_at": "2026-10-26T00:00:00Z"
+    },
+    {
+      "key": "chief_of_staff",
+      "version": 2,
+      "path": "bots/chief_of_staff/v2.json",
+      "sha256": "b27751ade850f4acefa28cd3e9f9b369e3d0ab88e9145bf3b490a2613e14e945",
+      "files": {
+        "instructions.md": "6de177ed127312cf4b737b04e4cb8429ba93cec5db6d9e6d796dcf0a73e214a9",
+        "persona.md": "dad8121e285b69a1c16b5829a2e9f39a360429962479a78a96cc9b06145a89c0"
+      },
+      "updated_at": "2026-10-26T00:00:00Z"
+    },
+    {
+      "key": "developer",
+      "version": 3,
+      "path": "bots/developer/v3.json",
+      "sha256": "011ab224344da2162c805b0fd2e8dc76951a6510b3603b26a146502e0f0099df",
+      "files": {
+        "instructions.md": "d01d2db1ea82a3da0fe65c55aa915dbbeae62fc4e17bcf356fad47b6a3677cf1",
+        "persona.md": "ff38eef9a4b043429e4f0b55515135560489e8f8ddfc34cf23e7178c316c8e0d"
+      },
+      "updated_at": "2026-10-26T13:30:00Z"
+    },
+    {
+      "key": "chief_of_staff",
+      "version": 3,
+      "path": "bots/chief_of_staff/v3.json",
+      "sha256": "b27751ade850f4acefa28cd3e9f9b369e3d0ab88e9145bf3b490a2613e14e945",
+      "files": {
+        "instructions.md": "11bfd35d6db12c1befb0f04e6017ae3eddb1d4ec3190255088607c092467c96a",
+        "persona.md": "dad8121e285b69a1c16b5829a2e9f39a360429962479a78a96cc9b06145a89c0"
+      },
+      "updated_at": "2026-10-26T13:30:00Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 2,
+      "path": "bots/revenue_head/v2.json",
+      "sha256": "849c73564e47d1131d85923baaebf04d51bd52301e5dcd506762a092b5bd2f2b",
+      "files": {
+        "instructions.md": "3c388516f1daa4e95750dac2fa061d81b76442e9d95298be19dca796829ca1d1",
+        "persona.md": "a73b92f638f97db6bf4aedfb173b3816cc1a0b5c325381db40316528e238fa7e"
+      },
+      "updated_at": "2026-10-26T13:30:00Z"
+    },
+    {
+      "key": "moderator",
+      "version": 2,
+      "path": "bots/moderator/v2.json",
+      "sha256": "fd3c5bf6bbf1cd24dda8897b10fa853e6f1cef4586f29a1d53d9780d67ad4ef6",
+      "files": {
+        "instructions.md": "7eb7c9b1c33b2a7f4d33dc95808bda14bde062f409aa2a8206971d232673d40d",
+        "persona.md": "f130535d671bcc9a8933ad4ae51c8fc336fee341afdf44697657826cb0a1dea6"
+      },
+      "updated_at": "2026-10-26T13:30:00Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 2,
+      "path": "bots/qa_specialist/v2.json",
+      "sha256": "7989900ed81dcf31934a0b1712d3ac2819c2b4f100ec037f684ac57c9c55b977",
+      "files": {
+        "instructions.md": "12a8f8bf2f705761b03e1cbd4e9e097bfeb4b5b00dc26fd05c98e941002e672b",
+        "persona.md": "61bdfa7863fe2139cb6f0774dd549bd5cd91d798a8dc2138acab6e40162a70fb"
+      },
+      "updated_at": "2026-10-26T13:30:00Z"
+    },
+    {
+      "key": "chief_of_staff",
+      "version": 4,
+      "path": "bots/chief_of_staff/v4.json",
+      "sha256": "e307d16f3a13bc86272b57bb37fc599f29c94d85ed8396e44b2db4002d05eeef",
+      "files": {
+        "instructions.md": "8b99f31cc551e305ce266bd0a265ee78439a87c17c755857e96e862ed7016b51",
+        "persona.md": "b60ca616939e86084434247c5e048bd33dc7128a9c3c556a83a34d05147d51fc"
+      },
+      "updated_at": "2026-11-02T09:20:51Z"
+    },
+    {
+      "key": "developer",
+      "version": 4,
+      "path": "bots/developer/v4.json",
+      "sha256": "356b552e1c1d07612518c0db3f22495cff47c075bdc3f835114c3e528c3ef1d6",
+      "files": {
+        "instructions.md": "03ed640be1c7e09b476ec8da6b3306e8c4be7fcdcf17a3c5a90737332246d4d4",
+        "persona.md": "2a6f96763478f4c2ed208221c5985db4141f86842910e8142afa452ca6364987"
+      },
+      "updated_at": "2026-11-02T09:20:51Z"
+    },
+    {
+      "key": "moderator",
+      "version": 3,
+      "path": "bots/moderator/v3.json",
+      "sha256": "a90ca0382c77f4cab4de391bcba590533d0eddbe8770cf366f8716ac6f69eff0",
+      "files": {
+        "instructions.md": "38bab4a8c507bdab171ecf6e61cd7b0c14d59d00efc756ba1cc5096735f6f474",
+        "persona.md": "89ed30e67486940b561860033ce8b903f37a6b460b3edd73ee490b477e6f0ebf"
+      },
+      "updated_at": "2026-11-02T09:20:51Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 3,
+      "path": "bots/qa_specialist/v3.json",
+      "sha256": "b9efd5eeb3b13cf09d4e27802cf70409e1dfa985fa427fb3b513007fcbee2753",
+      "files": {
+        "instructions.md": "1126348052181093e9e5891cef2d8793708273a8a69351be3e4701285f924589",
+        "persona.md": "223474686abc13d4f1af4bc67bb4c7d536e9448eab0e79b428e1d816e95fae60"
+      },
+      "updated_at": "2026-11-02T09:20:51Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 3,
+      "path": "bots/revenue_head/v3.json",
+      "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
+      "files": {
+        "instructions.md": "10f5314585c2a186c08d83d2f2769b691354e84171d7950c8a5235bb16bf5900",
+        "persona.md": "1abcd78afb6a5372cd177e3b104efebd06cf1039eaadc012b005cdc1f3370790"
+      },
+      "updated_at": "2026-11-02T09:20:51Z"
     }
   ]
 }

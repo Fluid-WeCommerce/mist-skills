@@ -11,7 +11,8 @@ The non-negotiable contract is:
 - Text blocks use `richtext`; content images use the canonical `image` block shape.
 - Every color and font choice resolves through the theme option groups.
 - Breakpoints are `max-width: 991px` and `max-width: 767px`.
-- The root emits `section.fluid_attributes`; block wrappers emit `block.fluid_attributes`.
+- Block wrappers emit `block.fluid_attributes`. The section root needs no editor attributes: Fluid wraps each section, and `section.fluid_attributes` renders nothing.
+- Images read alt text from the editor-managed `<id>_alt` companion (`block.settings.image_alt` for an `image` picker). Don't declare a separate alt-text setting.
 - Template schemas carry section types, order, and optional section settings only. They
   never carry block instances.
 
@@ -120,7 +121,6 @@ The non-negotiable contract is:
 <section
   class="source-feature section-{{ section.id }}"
   data-section-id="{{ section.id }}"
-  {{ section.fluid_attributes }}
 >
   <div class="source-feature__container">
     <div class="source-feature__content">
@@ -136,7 +136,7 @@ The non-negotiable contract is:
               {% if block.settings.image %}
                 <img
                   src="{{ block.settings.image | img_url: 'w-1600,f-auto,q-80' }}"
-                  alt="{{ block.settings.alt_text | escape }}"
+                  alt="{{ block.settings.image_alt | escape }}"
                   loading="lazy"
                   width="1600"
                   height="1200"
@@ -272,8 +272,7 @@ The non-negotiable contract is:
       "name": "Image",
       "limit": 1,
       "settings": [
-        { "type": "image_picker", "id": "image", "label": "Image" },
-        { "type": "text", "id": "alt_text", "label": "Alt Text" }
+        { "type": "image_picker", "id": "image", "label": "Image" }
       ]
     }
   ],

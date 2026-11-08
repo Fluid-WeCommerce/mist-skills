@@ -42,8 +42,10 @@ as source evidence without forcing the source and Fluid pathnames to match.
 
 ## 2. Capture an evidence dossier
 
-For every declared viewport, call `crawl` once with rendered HTML, Markdown,
-full-page screenshot, and page evidence. Retain the exact Mist-generated files
+For every declared viewport, crawl once with rendered HTML, Markdown,
+full-page screenshot, and page evidence:
+`run_cli fluid theme crawl <url> --evidence . --viewport WxH --full-page --no-main-content-only --format markdown,html,screenshot`.
+Open the saved screenshot (`evidence.path`) with `view_project_image`. Retain the exact Mist-generated files
 and receipts.
 
 Read `documents.stylesheet` — the page's own CSS, retained beside the HTML —

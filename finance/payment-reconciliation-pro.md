@@ -98,7 +98,7 @@ If Rails runner is unavailable, use the Fluid API. Requires a valid `fluid-token
 TOKEN=$(fluid-token)
 # Paginate all transactions in window using cursor pagination
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://api.fluid.app/api/v202506/company_transactions?page[limit]=100&filter[type]=<test|live>&sorted_by=created_at_desc"
+  "https://api.fluid.app/api/v202506/company_transactions?page[limit]=100&type=<test|live>&sorted_by=created_at_desc"
 ```
 
 Continue paginating with `page[cursor]=<next_cursor>` until `next_cursor` is null or `created_at` falls before the window start. Filter results to the window client-side.
