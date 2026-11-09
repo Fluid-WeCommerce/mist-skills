@@ -582,6 +582,15 @@
       "icon": "list-checks",
       "path": "onboarding/catalog-hygiene-audit.md",
       "updated_at": "2026-07-31T22:30:00Z"
+    },
+    {
+      "slug": "finance/fraud-review-queue",
+      "name": "Fraud review queue",
+      "description": "Work the orders held for fraud review — weigh each one's screening result, customer history and payment attempts, recommend approve or cancel, and apply only the decisions you approve.",
+      "category": "finance",
+      "icon": "shield-alert",
+      "path": "finance/fraud-review-queue.md",
+      "updated_at": "2026-11-09T13:00:00Z"
     }
   ],
   "workflows": [
