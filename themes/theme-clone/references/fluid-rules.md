@@ -2,11 +2,11 @@
 
 ## DO NOT Replace
 
-| Section | Why |
-|---------|-----|
-| `sections/main_product` | Wired to Fluid's product object (name, price, images, variants, add-to-cart). Clone styling AROUND it. |
-| Cart functionality | Fluid-controlled. Don't touch `cart_page` templates. |
-| Checkout | Fluid-controlled. Don't clone. |
+| Section                                                                                                                  | Why                                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scaffold's product-data section (`sections/product_hero` in current starters, `sections/main_product` in older starters) | Wired to Fluid's product object (name, price, images, variants, add-to-cart). Inspect the scaffold and build around its canonical implementation. |
+| Cart functionality                                                                                                       | Fluid-controlled. Don't touch `cart_page` templates.                                                                                              |
+| Checkout                                                                                                                 | Fluid-controlled. Don't clone.                                                                                                                    |
 
 ---
 
@@ -28,8 +28,8 @@ your-theme/
 ├── sections/
 │   ├── main_navbar/index.liquid  ← Global nav (in theme.liquid)
 │   ├── main_footer/index.liquid  ← Global footer (in theme.liquid)
-│   ├── main_product/index.liquid ← DO NOT REPLACE
-│   └── exact-*/index.liquid      ← Cloned sections
+│   ├── product_hero/index.liquid ← Canonical product data; name varies by starter
+│   └── <descriptive_name>/index.liquid ← Custom section only when the library has no fit
 ├── config/
 │   ├── settings_schema.json      ← Theme setting definitions
 │   └── settings_data.json        ← Current theme setting values
@@ -42,6 +42,7 @@ your-theme/
 ## Navigation & Footer
 
 The global nav and footer live in:
+
 - `sections/main_navbar/index.liquid`
 - `sections/main_footer/index.liquid`
 
@@ -51,11 +52,15 @@ These are rendered by `layouts/theme.liquid` and appear on every page. Only modi
 
 ## Video Handling
 
-| Type | Handling |
-|------|----------|
-| Self-hosted (`.mp4`, `.webm`) | Upload with the `dam_upload` tool (pass `create_media=true` for Media library visibility). Use `asset.default_variant_url`. |
-| YouTube/Vimeo embeds | Keep original embed URLs. Add a `video_url` text setting. |
-| Background videos | Use `autoplay`, `loop`, `muted`, `playsinline` attributes. Include poster image fallback. |
+| Type                          | Handling                                                                                                                    |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Self-hosted (`.mp4`, `.webm`) | Upload the public source directly with `run_cli fluid assets upload --url <url> --create-media`. If rejected for size, run `compress_media(url=...)` and retry with `run_cli fluid assets upload <output_path> --create-media`. Use `asset.default_variant_url`. |
+| YouTube/Vimeo embeds          | Keep original embed URLs. Use a supported `url` setting or the canonical Fluid Media block.                                 |
+| Background videos             | Use `autoplay`, `loop`, `muted`, `playsinline` attributes. Include poster image fallback.                                   |
+
+Rendered HTML can expose different desktop and mobile `<source>` URLs. Record
+and upload both when present. Replacing a required source video with a still
+image, poster, gradient, or flat color is a launch-blocking fidelity defect.
 
 ---
 
@@ -64,11 +69,11 @@ These are rendered by `layouts/theme.liquid` and appear on every page. Only modi
 Use these instead of hardcoded values where applicable:
 
 ```liquid
-{{ product.name }}
-{{ product.price | money }}
+{{ product.title }}
+{{ product.price }}                     {%- comment -%} Already formatted for the visitor's currency; Fluid has no `money` filter {%- endcomment -%}
 {{ product.description }}
 {{ product.images }}
-{{ cart.total | money }}
+{{ cart.amount_total_in_currency }}     {%- comment -%} Formatted cart total (cart_page) {%- endcomment -%}
 {{ cart.items }}
 {{ company.name }}
 {{ company.logo_url }}
@@ -83,25 +88,30 @@ Use these instead of hardcoded values where applicable:
 ## Global Sections vs Template Sections
 
 ### Global Sections (in `theme.liquid`)
+
 - Appear on EVERY page
 - Defined once, shared data
 - Examples: `main_navbar`, `main_footer`
 
 ### Template Sections (in templates)
+
 - Page-specific
-- Each template stores its own section settings
-- Same section type can have different data per template
+- Each template stores section instances, order, and optional layout settings.
+- Visible content blocks come from each section's preset: Fluid fills an instance that has no saved blocks from the section's first preset at render.
+- Same section type can have different expanded block data per template after editor saves.
 
 ---
 
 ## Defensive Liquid Patterns
 
 Always provide fallbacks:
+
 ```liquid
 {{ company.name | default: 'Company' }}
 ```
 
 Guard optional structures:
+
 ```liquid
 {% if product and product.images %}
   <img src="{{ product.images[0].src }}" alt="{{ product.title | default: 'Product' }}">
@@ -109,6 +119,7 @@ Guard optional structures:
 ```
 
 Use `section.blocks.size` to check if blocks exist:
+
 ```liquid
 {% if section.blocks.size > 0 %}
   {% for block in section.blocks %}

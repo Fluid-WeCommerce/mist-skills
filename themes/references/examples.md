@@ -47,16 +47,15 @@
 ```
 ## Theme review — featured_products.liquid
 
-**8 findings** — 3 blocker, 4 should, 1 nit
+**7 findings** — 2 blocker, 4 should, 1 nit
 
 Reproduce locally with `fluid theme lint --json`.
 
 | Severity | Line | Finding |
 |---|---|---|
 | blocker | 9  | Invalid type `text_area` — use `textarea`. Validator rejects. |
-| blocker | 16 | Missing `{{ section.fluid_attributes }}` on the section root — editor cannot select or click-to-edit this section. Replace `<section>` with `<section {{ section.fluid_attributes }}>`. |
-| blocker | 18 | `{% for product in products %}` — `products` is undefined in this scope. It is not a global drop, and the schema declares no `products` setting. Loop silently iterates `nil`. Collapse to the `product_list` fix below (`section.settings.products`) or remove. |
-| should  | 10 | Type `image` is valid but `image_picker` is clearer for new code |
+| blocker | 18 | `{% for product in products %}` — `products` is Fluid's global product collection, not the products picked in this section, so the loop renders the store's catalog above the picked cards. Remove it; render the picked products through the `product_list` fix below (`section.settings.products`). |
+| should  | 10 | Type `image` works in sections only (blocks reject it) — use `image_picker` |
 | should  | 5-8 | Four `product` settings, same role — collapse to one `product_list` with `limit: 4` |
 | should  | 19 | `asset_url` resolved inside loop — hoist above |
 | should  | 16-21 | Missing whitespace control on `{% for %}` / `{% endfor %}` |
