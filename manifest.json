@@ -803,6 +803,28 @@
         "persona.md": "1abcd78afb6a5372cd177e3b104efebd06cf1039eaadc012b005cdc1f3370790"
       },
       "updated_at": "2026-11-02T09:20:51Z"
+    },
+    {
+      "key": "finance_controller",
+      "version": 1,
+      "path": "bots/finance_controller/v1.json",
+      "sha256": "0421a65e4a92ae659dfcb198f8669cc80af966d57d521a0fb41f6023c34a1b83",
+      "files": {
+        "instructions.md": "d5d94e6de0a3e275a402878242d5a6962d6c9372e417607b955d20afad1c4873",
+        "persona.md": "32fed908ca32c04dd008804c1fe17757f65038faf7ac4a88cf3fe78d2e9b31a4"
+      },
+      "updated_at": "2026-11-09T12:45:00Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 4,
+      "path": "bots/revenue_head/v4.json",
+      "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
+      "files": {
+        "instructions.md": "5f41d50e690f0287fb64f7a759dfcf9974437864a5d523e136f9260e059edd21",
+        "persona.md": "1abcd78afb6a5372cd177e3b104efebd06cf1039eaadc012b005cdc1f3370790"
+      },
+      "updated_at": "2026-11-09T12:45:00Z"
     }
   ]
 }
