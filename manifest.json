@@ -622,7 +622,7 @@
     {
       "slug": "finance/fraud-review-queue",
       "name": "Fraud review queue",
-      "description": "Work the orders held for fraud review — weigh each one's screening result, customer history and payment attempts, recommend approve or cancel, and apply only the decisions you approve.",
+      "description": "Work the orders held for fraud review \u2014 weigh each one's screening result, customer history and payment attempts, recommend approve or cancel, and apply only the decisions you approve.",
       "category": "finance",
       "icon": "shield-alert",
       "path": "finance/fraud-review-queue.md",
@@ -663,6 +663,15 @@
       "icon": "user-x",
       "path": "customer/subscriber-churn-signals.md",
       "updated_at": "2026-07-23T09:00:00Z"
+    },
+    {
+      "slug": "compliance/genealogy-change-queue",
+      "name": "Genealogy change queue",
+      "description": "Work the genealogy queue — new members waiting in a holding tank and pending sponsor or placement move requests — check each against your sponsor-change policy, recommend place, approve or reject, and apply only what you approve.",
+      "category": "compliance",
+      "icon": "git-fork",
+      "path": "compliance/genealogy-change-queue.md",
+      "updated_at": "2026-11-10T13:00:00Z"
     }
   ],
   "workflows": [
@@ -906,6 +915,28 @@
         "persona.md": "0d558aebd09b997bba03d838cf1aa9d459be37391ece842c5764486da5a3b0a6"
       },
       "updated_at": "2026-11-09T10:52:51Z"
+    },
+    {
+      "key": "moderator",
+      "version": 4,
+      "path": "bots/moderator/v4.json",
+      "sha256": "a90ca0382c77f4cab4de391bcba590533d0eddbe8770cf366f8716ac6f69eff0",
+      "files": {
+        "instructions.md": "38bab4a8c507bdab171ecf6e61cd7b0c14d59d00efc756ba1cc5096735f6f474",
+        "persona.md": "c3269b9cfa93b088ff40a02a333d0c743068e3f16443394c1dbb307f5fff610e"
+      },
+      "updated_at": "2026-11-10T10:00:00Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 4,
+      "path": "bots/revenue_head/v4.json",
+      "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
+      "files": {
+        "instructions.md": "a8f0d9fd6877e3b9aa6bc2d85e73ebf380282caa58c15b9d51b9708a22e35b49",
+        "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
+      },
+      "updated_at": "2026-11-10T10:00:00Z"
     }
   ]
 }
