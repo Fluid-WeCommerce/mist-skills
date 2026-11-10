@@ -622,11 +622,20 @@
     {
       "slug": "finance/fraud-review-queue",
       "name": "Fraud review queue",
-      "description": "Work the orders held for fraud review — weigh each one's screening result, customer history and payment attempts, recommend approve or cancel, and apply only the decisions you approve.",
+      "description": "Work the orders held for fraud review \u2014 weigh each one's screening result, customer history and payment attempts, recommend approve or cancel, and apply only the decisions you approve.",
       "category": "finance",
       "icon": "shield-alert",
       "path": "finance/fraud-review-queue.md",
       "updated_at": "2026-11-09T13:00:00Z"
+    },
+    {
+      "slug": "compliance/genealogy-change-queue",
+      "name": "Genealogy change queue",
+      "description": "Work the genealogy queue — new members waiting in a holding tank and pending sponsor or placement move requests — check each against your sponsor-change policy, recommend place, approve or reject, and apply only what you approve.",
+      "category": "compliance",
+      "icon": "git-fork",
+      "path": "compliance/genealogy-change-queue.md",
+      "updated_at": "2026-11-10T13:00:00Z"
     }
   ],
   "workflows": [
@@ -872,15 +881,15 @@
       "updated_at": "2026-11-09T10:52:51Z"
     },
     {
-      "key": "finance_controller",
-      "version": 1,
-      "path": "bots/finance_controller/v1.json",
-      "sha256": "0421a65e4a92ae659dfcb198f8669cc80af966d57d521a0fb41f6023c34a1b83",
+      "key": "moderator",
+      "version": 4,
+      "path": "bots/moderator/v4.json",
+      "sha256": "a90ca0382c77f4cab4de391bcba590533d0eddbe8770cf366f8716ac6f69eff0",
       "files": {
-        "instructions.md": "d5d94e6de0a3e275a402878242d5a6962d6c9372e417607b955d20afad1c4873",
-        "persona.md": "32fed908ca32c04dd008804c1fe17757f65038faf7ac4a88cf3fe78d2e9b31a4"
+        "instructions.md": "38bab4a8c507bdab171ecf6e61cd7b0c14d59d00efc756ba1cc5096735f6f474",
+        "persona.md": "c3269b9cfa93b088ff40a02a333d0c743068e3f16443394c1dbb307f5fff610e"
       },
-      "updated_at": "2026-11-09T12:45:00Z"
+      "updated_at": "2026-11-10T10:00:00Z"
     },
     {
       "key": "revenue_head",
@@ -888,8 +897,30 @@
       "path": "bots/revenue_head/v4.json",
       "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
       "files": {
-        "instructions.md": "5f41d50e690f0287fb64f7a759dfcf9974437864a5d523e136f9260e059edd21",
-        "persona.md": "1abcd78afb6a5372cd177e3b104efebd06cf1039eaadc012b005cdc1f3370790"
+        "instructions.md": "a8f0d9fd6877e3b9aa6bc2d85e73ebf380282caa58c15b9d51b9708a22e35b49",
+        "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
+      },
+      "updated_at": "2026-11-10T10:00:00Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 5,
+      "path": "bots/revenue_head/v5.json",
+      "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
+      "files": {
+        "instructions.md": "d6f69c180e0d090de7bfe1bb1c1c889f25d8c7317e0905eb9aed922ca85e2bc3",
+        "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
+      },
+      "updated_at": "2026-11-10T21:30:00Z"
+    },
+    {
+      "key": "finance_controller",
+      "version": 1,
+      "path": "bots/finance_controller/v1.json",
+      "sha256": "0421a65e4a92ae659dfcb198f8669cc80af966d57d521a0fb41f6023c34a1b83",
+      "files": {
+        "instructions.md": "d5d94e6de0a3e275a402878242d5a6962d6c9372e417607b955d20afad1c4873",
+        "persona.md": "32fed908ca32c04dd008804c1fe17757f65038faf7ac4a88cf3fe78d2e9b31a4"
       },
       "updated_at": "2026-11-09T12:45:00Z"
     }
