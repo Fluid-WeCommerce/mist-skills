@@ -440,6 +440,42 @@
       ]
     },
     {
+      "slug": "member-sites/new-member-site",
+      "name": "New member site",
+      "description": "Create a static member site on @fluid-app/sites for the active company, install it, and start it locally with fluid sites dev.",
+      "category": "member-sites",
+      "icon": "globe",
+      "path": "member-sites/new-member-site.md",
+      "updated_at": "2026-11-10T00:00:00Z"
+    },
+    {
+      "slug": "member-sites/add-database-table",
+      "name": "Add a database table to a member site",
+      "description": "Add a table to a static member site's db/schema.json with the narrowest rules, read and write it with fluid.db, and check it locally with fluid sites dev.",
+      "category": "member-sites",
+      "icon": "database",
+      "path": "member-sites/add-database-table.md",
+      "updated_at": "2026-11-10T00:00:00Z"
+    },
+    {
+      "slug": "member-sites/add-shop-section",
+      "name": "Add a shop to a member site",
+      "description": "Add products by real variant id to a static member site, with add to cart, open cart and checkout through fluid.cart and credited storefront links from fluid.storefront.url.",
+      "category": "member-sites",
+      "icon": "shopping-cart",
+      "path": "member-sites/add-shop-section.md",
+      "updated_at": "2026-11-10T00:00:00Z"
+    },
+    {
+      "slug": "member-sites/publish-and-check",
+      "name": "Publish and check a member site",
+      "description": "Build, lint and publish a static member site with fluid sites publish, confirm destructive database changes only with the owner's yes, then open the live page and report its link.",
+      "category": "member-sites",
+      "icon": "rocket",
+      "path": "member-sites/publish-and-check.md",
+      "updated_at": "2026-11-10T00:00:00Z"
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
@@ -582,6 +618,15 @@
       "icon": "list-checks",
       "path": "onboarding/catalog-hygiene-audit.md",
       "updated_at": "2026-07-31T22:30:00Z"
+    },
+    {
+      "slug": "finance/fraud-review-queue",
+      "name": "Fraud review queue",
+      "description": "Work the orders held for fraud review — weigh each one's screening result, customer history and payment attempts, recommend approve or cancel, and apply only the decisions you approve.",
+      "category": "finance",
+      "icon": "shield-alert",
+      "path": "finance/fraud-review-queue.md",
+      "updated_at": "2026-11-09T13:00:00Z"
     },
     {
       "slug": "leadership/field-leader-scoreboard",
@@ -839,6 +884,28 @@
         "persona.md": "1abcd78afb6a5372cd177e3b104efebd06cf1039eaadc012b005cdc1f3370790"
       },
       "updated_at": "2026-11-02T09:20:51Z"
+    },
+    {
+      "key": "chief_of_staff",
+      "version": 5,
+      "path": "bots/chief_of_staff/v5.json",
+      "sha256": "e307d16f3a13bc86272b57bb37fc599f29c94d85ed8396e44b2db4002d05eeef",
+      "files": {
+        "instructions.md": "8b99f31cc551e305ce266bd0a265ee78439a87c17c755857e96e862ed7016b51",
+        "persona.md": "8bdaaacd61b1e97208732ba7f3e8a50cd1026a993de5775cea5a74f6d30195a8"
+      },
+      "updated_at": "2026-11-09T10:52:51Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 4,
+      "path": "bots/qa_specialist/v4.json",
+      "sha256": "b9efd5eeb3b13cf09d4e27802cf70409e1dfa985fa427fb3b513007fcbee2753",
+      "files": {
+        "instructions.md": "1126348052181093e9e5891cef2d8793708273a8a69351be3e4701285f924589",
+        "persona.md": "0d558aebd09b997bba03d838cf1aa9d459be37391ece842c5764486da5a3b0a6"
+      },
+      "updated_at": "2026-11-09T10:52:51Z"
     }
   ]
 }
