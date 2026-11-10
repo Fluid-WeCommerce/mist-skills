@@ -440,6 +440,42 @@
       ]
     },
     {
+      "slug": "member-sites/new-member-site",
+      "name": "New member site",
+      "description": "Create a static member site on @fluid-app/sites for the active company, install it, and start it locally with fluid sites dev.",
+      "category": "member-sites",
+      "icon": "globe",
+      "path": "member-sites/new-member-site.md",
+      "updated_at": "2026-11-10T00:00:00Z"
+    },
+    {
+      "slug": "member-sites/add-database-table",
+      "name": "Add a database table to a member site",
+      "description": "Add a table to a static member site's db/schema.json with the narrowest rules, read and write it with fluid.db, and check it locally with fluid sites dev.",
+      "category": "member-sites",
+      "icon": "database",
+      "path": "member-sites/add-database-table.md",
+      "updated_at": "2026-11-10T00:00:00Z"
+    },
+    {
+      "slug": "member-sites/add-shop-section",
+      "name": "Add a shop to a member site",
+      "description": "Add products by real variant id to a static member site, with add to cart, open cart and checkout through fluid.cart and credited storefront links from fluid.storefront.url.",
+      "category": "member-sites",
+      "icon": "shopping-cart",
+      "path": "member-sites/add-shop-section.md",
+      "updated_at": "2026-11-10T00:00:00Z"
+    },
+    {
+      "slug": "member-sites/publish-and-check",
+      "name": "Publish and check a member site",
+      "description": "Build, lint and publish a static member site with fluid sites publish, confirm destructive database changes only with the owner's yes, then open the live page and report its link.",
+      "category": "member-sites",
+      "icon": "rocket",
+      "path": "member-sites/publish-and-check.md",
+      "updated_at": "2026-11-10T00:00:00Z"
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
