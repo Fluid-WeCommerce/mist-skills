@@ -36,6 +36,9 @@ mist-skills/
 ├── mist/
 │   ├── scaffold-droplet.md
 │   └── env-vars-audit.md
+├── member-sites/                  ← static member sites on @fluid-app/sites (fluid sites …)
+│   ├── new-member-site.md
+│   └── publish-and-check.md
 ├── compliance/
 │   ├── open-a-country.md          ← flat skill (front-end steps flow)
 │   └── compliance-manager/        ← folder skill
