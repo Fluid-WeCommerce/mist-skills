@@ -26,7 +26,8 @@ Build what the user asked for as a Fluid **Site** for {{company.name}}, or say p
 
 4. **Build what was asked, and only that.**
    - Pages: a component, its path in `src/App.tsx`, a `<Link>` to it (never a bare `<a>` between the site's pages), and its route in `config/meta.json` (`"routes": ["/about"]`, `"routeMeta": { "/about": { "title": "About", "description": "…" } }`).
-   - Products: the **Add a shop** skill (real variant ids only, `fluid.cart`, credited links from `fluid.storefront.url`).
+   - Products: the **Add a shop** skill. Names, images and prices come from the storefront's public catalog at runtime (`/api/v202604/products/<slug>` on `me.storefrontUrl`), never copied into the code; add to cart with `fluid.cart`, link with `fluid.storefront.url`.
+   - Greetings and anything about the visitor come from `fluid.auth.me()` (or `/me` through `fluid.api`) with a signed-out fallback. Never type a name, photo or persona into the page, even the user's own: every visitor gets the same build.
    - Something visitors write: the **Add a database table** skill.
    - The signed-in member's own data: the Member API (below).
    - SEO: `config/meta.json` holds `default` (title under 200 characters, description under 500, image), `url`, `twitter`, `routes` and `routeMeta` (with `noindex` for a page to keep out of search). Add `fluidSite()` from `@fluid-app/sites/vite` to `vite.config.ts` (`plugins: [react(), fluidSite()]`) so the build writes head tags, one page per route, `llms.txt` and, with `url`, `sitemap.xml`.
@@ -75,6 +76,8 @@ Name only paths the Member API has: `/me`, `/profile`, `/orders`, `/orders/{id}`
 
 # Where it opens
 
+Once published, give the user the live address `https://<storefront domain>/home/sites/<handle>` (the handle is in `.member-site.json`). Until then it runs only in Mist's local preview (Run).
+
 - `https://<store>/home/sites/<handle>` (canonical) and `https://<store>/sites/<handle>`, inside the storefront's cart, sign-in and account menu.
 - A member's share link, `https://<store>/<username>/sites/<handle>`, credits them for what the visitor buys.
 - The Site itself runs at `https://<label>.sites.fluid.app`; a public company Site of a company with standalone hosting also opens there directly.
@@ -83,6 +86,6 @@ Name only paths the Member API has: `/me`, `/profile`, `/orders`, `/orders/{id}`
 # Guardrails
 
 - Never put a token, API key or secret in the Site. Everything in `dist/` is public.
-- Never call a Fluid API with the page's own `fetch`; use `fluid.api`, `fluid.db` and `fluid.cart`.
+- Never call a Fluid API with the page's own `fetch`; use `fluid.api`, `fluid.db` and `fluid.cart`. The one exception is the storefront's public product catalog.
 - Never use `fluid member-site …` in a Site, and never write Liquid for it.
 - Publish, change visibility, roll back or convert only when the user asks, each with its own approval card.

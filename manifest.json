@@ -469,7 +469,7 @@
     {
       "slug": "member-sites/add-shop-section",
       "name": "Add a shop to a Site",
-      "description": "Add products by real variant id to a Site, with add to cart, open cart and checkout through fluid.cart and credited storefront links from fluid.storefront.url.",
+      "description": "Add products to a Site, read live from the storefront catalog, with add to cart, open cart and checkout through fluid.cart and credited storefront links from fluid.storefront.url.",
       "category": "member-sites",
       "icon": "shopping-cart",
       "path": "member-sites/add-shop-section.md",
