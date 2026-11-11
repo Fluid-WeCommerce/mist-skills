@@ -658,6 +658,15 @@
       "icon": "git-fork",
       "path": "compliance/genealogy-change-queue.md",
       "updated_at": "2026-11-10T13:00:00Z"
+    },
+    {
+      "slug": "compliance/admin-access-review",
+      "name": "Admin access review",
+      "description": "Run a periodic access review of everyone who can sign in to Fluid's admin \u2014 who has which role, which roles grant the riskiest permissions, which installed apps hold broad scopes \u2014 get each person confirmed by the user, remove or narrow only what they approve, and save a dated review record for auditors.",
+      "category": "compliance",
+      "icon": "shield-check",
+      "path": "compliance/admin-access-review.md",
+      "updated_at": "2026-11-11T12:45:00Z"
     }
   ],
   "workflows": [
