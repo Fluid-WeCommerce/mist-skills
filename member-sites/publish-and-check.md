@@ -19,7 +19,7 @@ Make the Site in this folder live: build it, check it with `fluid sites lint`, p
    - **In Mist, the Publish button** in the site's preview is the normal path. It runs `npm run build` and `fluid sites publish --json`, and when the schema has unconfirmed destructive migrations it lists their steps and asks the owner to confirm each one.
    - **From chat**, `run_cli` `fluid sites publish --json`. It writes to Fluid, so call it once without `approval_id` to get the card title, propose it with `human_in_the_loop`, end your turn, and after Approve run the same command with that `approval_id`. Do not add `--as`: the folder's binding names the site and its owner.
 
-   It first commits the folder and pushes it to the site's own source repository (`site-<id>` on Fluid's GitHub; `.env*`, `.npmrc`, `.member-site.json`, `node_modules` and `dist/` are never committed), then uploads the build.
+   It first commits the folder and pushes it to the site's own source repository (`site-<id>` on Fluid's GitHub), then uploads the build. It leaves out only `.env`, `.env.<name>`, `.envrc`, `.npmrc`, `.member-site.json`, `node_modules` and `dist/`: a file such as `.env-secret` would be committed, so never keep a secret in the folder. When Fluid cannot set the repository up, it says so and publishes without the source (`--no-source` skips it on purpose), so git usually, not always, holds every publish.
 
    Read the one JSON line it prints, and do not assume:
    - `{"ok":true,"site":…,"bundle":…,"manifestSha256":…}`: published. It uploads only the files the site does not store yet, and the new build serves only once the last step succeeds.

@@ -23,10 +23,16 @@ Let a Site sell or recommend the company's products: a list of real variants wit
    export interface ProductCard {
      slug: string;
      title: string;
-     images: { image_url: string }[];
-     pricing: { display_price: string } | null;
+     active: boolean;
+     status: "draft" | "scheduled" | "published" | "archived";
+     images: { thumb?: { url: string }; medium?: { url: string }; large?: { url: string } } | null;
+     pricing: { display_price: string | null } | null;
      default_variant: { id: number } | null;
    }
+
+   // Only a live product with a price in this country is shown.
+   const sellable = (p: ProductCard) =>
+     p.active && p.status === "published" && p.pricing?.display_price != null && p.default_variant != null;
 
    // GET /api/v202604/products/<slug> on the storefront: public, no token.
    export async function loadProducts(country?: string): Promise<ProductCard[]> {
@@ -38,12 +44,12 @@ Let a Site sell or recommend the company's products: a list of real variants wit
        return res.ok ? ((await res.json()) as { product: ProductCard }).product : null;
      };
      const found = await Promise.all(featured.map(read));
-     return found.filter((p): p is ProductCard => p !== null);
+     return found.filter((p): p is ProductCard => p !== null && sellable(p));
    }
    ```
 
-   - `pricing` is the retail price for `country` (ISO-2; the company's default country when left out). Show `pricing.display_price`; a null `pricing` is unavailable, never free. The cart applies the visitor's own (member) price when they add it.
-   - A product that is not live or not sold in that country answers 404 and is left out. For a whole collection or category, read `/api/v202604/collections/<slug>/products` or `/api/v202604/categories/<slug>/products` (`{ products, meta }`).
+   - `pricing` is the retail price for `country` (ISO-2; the company's default country when left out). Show `pricing.display_price`; a null `pricing` or `display_price` means it is not sold there, never free. The cart applies the visitor's own (member) price when they add it.
+   - The by-slug read can return a draft, scheduled or archived product, so `sellable` keeps only an active, published one with a price and a variant. `images` may be null; use `images?.medium?.url`. For a whole collection or category, read `/api/v202604/collections/<slug>/products` or `/api/v202604/categories/<slug>/products` (`{ products, meta }`).
    - This public catalog is the one thing a Site reads with its own `fetch`. Everything about the member goes through `fluid.api`.
 
 5. Write the shop page:
@@ -79,9 +85,9 @@ Let a Site sell or recommend the company's products: a list of real variants wit
          <ul className="products">
            {(products ?? []).map((product) => (
              <li key={product.slug}>
-               {product.images[0] && <img src={product.images[0].image_url} alt="" />}
+               {product.images?.medium && <img src={product.images.medium.url} alt="" />}
                <h2>{product.title}</h2>
-               <p>{product.pricing ? product.pricing.display_price : "Unavailable"}</p>
+               <p>{product.pricing?.display_price}</p>
                <button
                  type="button"
                  disabled={!product.default_variant || !product.pricing}
