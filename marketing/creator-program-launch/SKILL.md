@@ -28,13 +28,13 @@ Today is {{today}}.
 
 Run these in parallel and keep the results for later steps.
 
-1. `fluid_api` GET `/api/v2025-06/member-types` - is there already a non-system type whose `permissions.rep_eligible` is true (a creator or ambassador type)? Note the system types and their pricing tiers.
-2. `fluid_api` GET `/api/v2025-06/fairshare/settings` - the four credit rules: `attribution_config`, `order_volume_config`, `enrollment_volume_config`, `orphan_sponsor_config`.
-3. `fluid_api` GET `/api/droplet_installations` and GET `/api/droplets` - is an affiliate-app sync or a commission app already installed? If one is, say so and ask whether this program replaces it or sits beside it before going further.
+1. `fluid_api` GET `/api/v2025-06/member-types` - each row in `member_types` carries `rep_eligible`, `system_defined` and `pricing_tier`. Is there already a type with `rep_eligible: true` and `system_defined: false` (a creator or ambassador type)? A store normally starts with three system types: `customer`, `preferred` and `rep`.
+2. `fluid_api` GET `/api/v2025-06/fairshare/settings` - the four credit rules, under `fairshare_settings`: `attribution_config`, `order_volume_config`, `enrollment_volume_config`, `orphan_sponsor_config`.
+3. `fluid_api` GET `/api/droplet_installations` (read `droplet_name` on each row) and GET `/api/droplets` - is an affiliate-app sync or a commission app already installed? If one is, say so and ask whether this program replaces it or sits beside it before going further.
 4. `list_projects` - is there already a Mist app for commissions in this workspace?
-5. `fluid_api` GET `/api/company/v2026-10/genealogy/trees` - read `authority`. `unconfigured` means nobody is seated in a tree, so a second level cannot read its "who brought whom" from genealogy.
+5. `fluid_api` GET `/api/company/v2026-10/genealogy/trees` - read `authority` on each tree (a store normally has an `enrollment` tree and a `placement` tree). `unconfigured` means nobody is seated, so a second level cannot read its "who brought whom" from genealogy.
 6. `fluid_api` GET `/api/v202604/company/enrollment-packs?page[limit]=15` - any sign-up packs.
-7. `fluid_api` GET `/api/v202604/orders?filter[start_date]={{thirty_days_ago}}&page[limit]=100`, following `meta.pagination.next_cursor` as `page[cursor]` - order count and average order for the last 30 days, worked out separately for each currency. Check the dates on what comes back; if the date filter was ignored, filter on the order date yourself.
+7. `fluid_api` GET `/api/v202604/orders?filter[start_date]={{thirty_days_ago}}&page[limit]=100`, following `meta.pagination.next_cursor` as `page[cursor]` - order count (`meta.pagination.total_count`) and average order for the last 30 days, worked out separately for each `currency_code` from each order's `amount`. Check `sale_date` on what comes back; if the date filter was ignored, filter on it yourself.
 8. `run_cli` `fluid countries list` - the countries and currencies the store sells in.
 
 Then give the user a four-line read: what is already in place, what is missing, the store's average order, and the countries in play. Do not open the panel until that is on screen.
@@ -90,7 +90,7 @@ Do this on a test gateway. If the only active payment account is real, stop and 
 
 1. Create or pick a test creator. With two levels, also a second test creator who brought in the first, recorded wherever the plan's `level2_source` reads it from.
 2. Place one order through the test creator's MySite link (`https://{{company.subdomain}}.fluid.app/my/<username>`). Open it first: that route returns a 404 for a username that does not exist, so a typo cannot pass as a credited visit.
-3. Credit lands after the order, not with it. Poll GET `/api/v202506/orders/:id/journey` for up to five minutes until `attribution_state` and `volume_state` settle. **Pass:** `volume_rep` is the test creator.
+3. Credit lands after the order, not with it. Poll GET `/api/v202506/orders/:id/journey` for up to five minutes and read `order_journey`. **Pass:** `volume_rep` is the test creator. If `attribution_state` and `volume_state` both read `not_applicable`, the visit was never credited: stop and check the link before testing anything else.
 4. **Pass:** the ledger holds a level-one line for that order whose amount equals base times `level1_rate`, status `pending`, with the right `available_on`.
 5. With two levels, **pass:** a level-two line for the inviting creator at `level2_rate`.
 6. Refund the order. **Pass:** reversal lines bring the order's net commission to zero.

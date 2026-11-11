@@ -26,7 +26,7 @@ Rates are stored as a percent with up to two decimals. Every change to these set
 
 ## Who earns
 
-- **Level one** is the order's `volume_rep` from GET `/api/v202506/orders/:id/journey`. `attribution_rep` is who the shopper came through; `volume_rep` is who earns. They can differ, and `volume_rep` can be empty. An order with no `volume_rep` writes no lines.
+- **Level one** is `order_journey.volume_rep` from GET `/api/v202506/orders/:id/journey`. `attribution_rep` is who the shopper came through; `volume_rep` is who earns. They can differ, and `volume_rep` can be empty. An order with no `volume_rep` writes no lines; an order nobody was credited for reads `not_applicable` in `attribution_state` and `volume_state`.
 - **Level two** is whoever brought the level-one creator in.
   - `level2_source: genealogy` is allowed only when GET `/api/company/v2026-10/genealogy/trees` reports `authority` as `authoritative` or `replica`. Read the creator's `enroller` (who signed them up) from the genealogy node routes. If the company's tree also uses a different `sponsor`, ask the admin once which of the two the plan pays and save the answer.
   - `level2_source: app` keeps an `invited_by` column in this app, set once when a creator joins and changed only by an admin, with the change logged. Reject a creator inviting themselves, and reject an inviter who joined after the creator they claim to have invited, so no loop can form.
@@ -35,12 +35,13 @@ Rates are stored as a percent with up to two decimals. Every change to these set
 
 ## The base and the arithmetic
 
-The base is the product subtotal after discounts, before tax and shipping, in the order's currency. Read one real order with GET `/api/v202506/orders/:id` and confirm which fields carry the subtotal, discounts, tax, shipping and refunds before writing the calculation. Do not guess field names.
+The base is the product subtotal after discounts, before tax and shipping, in the order's currency (`currency_code`). Read one real order with GET `/api/v202506/orders/:id` before writing the calculation. The `order` there carries `subtotal`, `discount`, `tax` and `shipping`, a `current_*` version of each, a `refunds` list, and `items` with `total_after_discounts`. Work out on this store which of those still match after an edit and a refund, and build on those. Do not guess.
 
 - Amount = base x rate, rounded half-up to the currency's smallest unit, per line. A statement is the sum of its rounded lines.
 - Every line stores the rate it was written at. Reversals and adjustments reuse the rate on the original sale line, never the plan's current rate.
 - Keep each currency separate everywhere: lines, balances, minimums, statements. Never add two currencies together.
-- Use the date the order was placed. For orders imported from another system, check which field holds the original sale date before trusting the created date.
+- Use the order's `sale_date`, not `created_at`. On an order imported from another system the two can be months apart.
+- For `earn_on`, tell a renewal from a first order with the order's `order_class` and each item's `source_subscription`. Confirm on a real renewal before relying on it.
 
 ## Tables
 
@@ -59,7 +60,7 @@ Scope every read and write to the installation's company. Never fall back to a c
 
 ## Events
 
-1. List the webhook events this company can subscribe to with GET `/api/webhooks/schemas` and pick the ones for an order being placed or paid, edited, refunded and cancelled. Read each schema before handling it.
+1. List the webhook events this company can subscribe to with GET `/api/webhooks/schemas` (under `schemas`) and pick the ones for an order being placed or paid, edited, refunded and cancelled. The list includes `order_created`, `order_completed`, `order_edited`, `order_refunded` and `order_cancelled`. Read each schema before handling it.
 2. **Order placed.** Credit lands after the order. Wait, then read the journey. When `volume_state` has settled, write the level-one line and, if on, the level-two line, both `pending` with `available_on` = order date + `hold_days`.
 3. **Refund or cancel.** Write `reversal` lines for the same earners, in proportion to the product amount refunded, at the stored rate. A full refund nets the order to zero.
 4. **Order edited.** Recompute at the stored rate and write the difference as an `adjustment`.
