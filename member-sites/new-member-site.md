@@ -1,30 +1,30 @@
 ---
-name: New member site
-description: Create a static member site on @fluid-app/sites for the active company, install it, and start it locally with fluid sites dev.
+name: New Site
+description: Create a Site on @fluid-app/sites for the active company, install it, and start it locally with fluid sites dev.
 icon: globe
 ---
 
 # Goal
 
-Create a static member site for {{company.name}}: a Vite and React app on `@fluid-app/sites`, bound to a new company-owned site, with its packages installed and running locally under `fluid sites dev`. Nothing goes live in this skill: a new site is a private draft until it is published.
+Create a Site for {{company.name}}: a Vite and React app on `@fluid-app/sites`, bound to a new company-owned site, with its packages installed and running locally under `fluid sites dev`. Nothing goes live in this skill: a new site is a private draft until it is published.
 
-This skill is for static member sites only. Never use `fluid member-site pull`, `push` or `dev` here: those are for the older Liquid member sites, and `pull` would write Liquid files into the folder.
+This skill is for Sites only. Never use `fluid member-site pull`, `push` or `dev` here: those are for the old Liquid sites, and `pull` would write Liquid files into the folder.
 
 # Steps
 
 1. Look at the active folder and decide which case it is. `read_file("package.json")` and check whether `dependencies` or `devDependencies` names `@fluid-app/sites`, then check for `.member-site.json`.
-   - **A static member site with `.member-site.json`.** It is already bound to a site. Read `handle` and `site_id` from `.member-site.json`, tell the user, and go to step 5. Do not create another site.
-   - **A static member site with no `.member-site.json`.** The template is here but no site exists yet. Go to step 2, then bind it in step 4.
-   - **Anything else** (no `package.json`, a theme, a Mist app, a Liquid member site). Do not change this folder. Go to step 2, then create the site as a new project in step 3.
+   - **A Site with `.member-site.json`.** It is already bound to a site. Read `handle` and `site_id` from `.member-site.json`, tell the user, and go to step 5. Do not create another site.
+   - **A Site with no `.member-site.json`.** The template is here but no site exists yet. Go to step 2, then bind it in step 4.
+   - **Anything else** (no `package.json`, a theme, a Mist app, an old Liquid site). Do not change this folder. Go to step 2, then create the site as a new project in step 3.
 2. Ask the user for the site's name, such as "Diamond Leaders". Derive the handle from it: lowercase letters, digits and single hyphens, at most 40 characters (`Diamond Leaders` becomes `diamond-leaders`). Show both and get a yes. A name with no letters or digits cannot make a handle: ask for another.
-3. **New project** (the "anything else" case). The normal path is the **+ New member site** button in Mist's Member sites sidebar section: ask the user to click it and enter the name. To do it from chat instead, call `create_project` with `kind: "member_site"` and the name; it refuses the first call and returns the exact `human_in_the_loop` proposal to make. Propose it, end your turn, and after Approve call it again with that `approval_id`, `confirm_create: true` and the same arguments. Mist unpacks the blank template, runs `fluid sites create <handle> <folder> --company --name <name>`, and adds the project to the sidebar, without installing its packages.
+3. **New project** (the "anything else" case). The normal path is the **New Site** button in Mist's Sites sidebar section: ask the user to click it and enter the name. To do it from chat instead, call `create_project` with `kind: "member_site"` and the name; it refuses the first call and returns the exact `human_in_the_loop` proposal to make. Propose it, end your turn, and after Approve call it again with that `approval_id`, `confirm_create: true` and the same arguments. Mist unpacks the blank template, runs `fluid sites create <handle> <folder> --company --name <name>`, and adds the project to the sidebar, without installing its packages.
 
    Open the new project's `package.json`. If it does not depend on `@fluid-app/sites`, the company is not on the sites gateway and Mist made a Liquid site: say so and stop. Otherwise tell the user to open the new site and run this skill again there, which picks up at step 5. Stop here: do not edit the new project's files from this chat.
 4. **Bind this folder** (the static, unbound case). First check the handle is free: `run_cli` `fluid sites list`, and stop if a site already has it. Then run `fluid sites create <handle> --company --name "<Name>" .` through `run_cli`. It writes to Fluid, so call it once without `approval_id` to get the card title, propose it with `human_in_the_loop`, end your turn, and after Approve run the same command with that `approval_id`. It prints `Created company site <handle> (<id>) as a draft.` and `Bound <folder> to <handle>.`, and writes `.member-site.json`; it leaves the template's files alone. A company site needs an admin login, which Mist's company sign-in is.
    - Run again in a folder already bound to this site, it creates nothing. It refuses a folder bound to a different site: never work around that.
    - If it failed after printing `Created company site …`, the site exists. Do not create it again; check `fluid sites list`.
 5. Install the packages if `node_modules/` is missing: call `install_project_dependencies` with `action: "install"`. It needs its own approval: call once without `approval_id`, propose the card it names, end your turn, and repeat with the `approval_id` after Approve. Never run `npm install` through `run_cli` and never edit `package.json` to get around the approval.
-6. Start the site: call `start_preview`. For a static member site Mist runs `fluid sites dev`, which starts the site's dev script at `http://127.0.0.1:<port>` and answers `fluid.db` from `.fluid/dev.sqlite` in the folder. (Outside Mist, the same thing is `fluid sites dev` in the folder; the default port is 9500.)
+6. Start the site: call `start_preview`. For a Site Mist runs `fluid sites dev`, which starts the site's dev script at `http://127.0.0.1:<port>` and answers `fluid.db` from `.fluid/dev.sqlite` in the folder. (Outside Mist, the same thing is `fluid sites dev` in the folder; the default port is 9500.)
 7. Confirm it works:
    - `read_recent_log_tail`: find `Serving <folder> at http://127.0.0.1:<port>` and no errors.
    - `screenshot_preview` at `/`: the home page renders, not a blank page or an error. `read_preview_console` shows no errors.
