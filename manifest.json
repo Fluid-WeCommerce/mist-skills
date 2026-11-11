@@ -440,9 +440,18 @@
       ]
     },
     {
+      "slug": "member-sites/build-a-site",
+      "name": "Build a Site",
+      "description": "Decide Site vs App vs theme, then build a Fluid Site end to end \u2014 create it, run it locally, add pages, the shop, a table or the signed-in member's data through the Member API, publish it with its source saved to git, and check the live link.",
+      "category": "member-sites",
+      "icon": "globe",
+      "path": "member-sites/build-a-site.md",
+      "updated_at": "2026-11-10T00:00:00Z"
+    },
+    {
       "slug": "member-sites/new-member-site",
-      "name": "New member site",
-      "description": "Create a static member site on @fluid-app/sites for the active company, install it, and start it locally with fluid sites dev.",
+      "name": "New Site",
+      "description": "Create a Site on @fluid-app/sites for the active company, install it, and start it locally with fluid sites dev.",
       "category": "member-sites",
       "icon": "globe",
       "path": "member-sites/new-member-site.md",
@@ -450,8 +459,8 @@
     },
     {
       "slug": "member-sites/add-database-table",
-      "name": "Add a database table to a member site",
-      "description": "Add a table to a static member site's db/schema.json with the narrowest rules, read and write it with fluid.db, and check it locally with fluid sites dev.",
+      "name": "Add a database table to a Site",
+      "description": "Add a table to a Site's db/schema.json with the narrowest rules, read and write it with fluid.db, and check it locally with fluid sites dev.",
       "category": "member-sites",
       "icon": "database",
       "path": "member-sites/add-database-table.md",
@@ -459,8 +468,8 @@
     },
     {
       "slug": "member-sites/add-shop-section",
-      "name": "Add a shop to a member site",
-      "description": "Add products by real variant id to a static member site, with add to cart, open cart and checkout through fluid.cart and credited storefront links from fluid.storefront.url.",
+      "name": "Add a shop to a Site",
+      "description": "Add products to a Site, read live from the storefront catalog, with add to cart, open cart and checkout through fluid.cart and credited storefront links from fluid.storefront.url.",
       "category": "member-sites",
       "icon": "shopping-cart",
       "path": "member-sites/add-shop-section.md",
@@ -468,8 +477,8 @@
     },
     {
       "slug": "member-sites/publish-and-check",
-      "name": "Publish and check a member site",
-      "description": "Build, lint and publish a static member site with fluid sites publish, confirm destructive database changes only with the owner's yes, then open the live page and report its link.",
+      "name": "Publish and check a Site",
+      "description": "Build, lint and publish a Site with fluid sites publish, confirm destructive database changes only with the owner's yes, then open the live page and report its link.",
       "category": "member-sites",
       "icon": "rocket",
       "path": "member-sites/publish-and-check.md",
@@ -631,7 +640,7 @@
     {
       "slug": "compliance/genealogy-change-queue",
       "name": "Genealogy change queue",
-      "description": "Work the genealogy queue — new members waiting in a holding tank and pending sponsor or placement move requests — check each against your sponsor-change policy, recommend place, approve or reject, and apply only what you approve.",
+      "description": "Work the genealogy queue \u2014 new members waiting in a holding tank and pending sponsor or placement move requests \u2014 check each against your sponsor-change policy, recommend place, approve or reject, and apply only what you approve.",
       "category": "compliance",
       "icon": "git-fork",
       "path": "compliance/genealogy-change-queue.md",
