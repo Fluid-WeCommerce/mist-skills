@@ -379,6 +379,19 @@
       "updated_at": "2026-10-22T12:05:46Z"
     },
     {
+      "slug": "marketing/creator-program-launch",
+      "name": "Creator Program Launch",
+      "description": "Set up a creator program on Fluid for a consumer brand with no affiliate app - the plan, creator sign-up, credited links, a one- or two-level commission ledger built as a Mist app, one proven test order and a launch kit.",
+      "category": "marketing",
+      "icon": "megaphone",
+      "path": "marketing/creator-program-launch/SKILL.md",
+      "updated_at": "2026-11-11T00:00:00Z",
+      "references": [
+        "marketing/creator-program-launch/references/methodology.md",
+        "marketing/creator-program-launch/references/commission-ledger-spec.md"
+      ]
+    },
+    {
       "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
