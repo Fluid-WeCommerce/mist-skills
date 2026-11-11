@@ -1,16 +1,16 @@
 ---
-name: Add a shop to a member site
-description: Add products by real variant id to a static member site, with add to cart, open cart and checkout through fluid.cart and credited storefront links from fluid.storefront.url.
+name: Add a shop to a Site
+description: Add products by real variant id to a Site, with add to cart, open cart and checkout through fluid.cart and credited storefront links from fluid.storefront.url.
 icon: shopping-cart
 ---
 
 # Goal
 
-Let a static member site sell or recommend the company's products: a list of real variants with **Add to cart**, **Open cart** and **Checkout** buttons that use the storefront's own cart, and links to the storefront that keep the credit of whoever shared the site.
+Let a Site sell or recommend the company's products: a list of real variants with **Add to cart**, **Open cart** and **Checkout** buttons that use the storefront's own cart, and links to the storefront that keep the credit of whoever shared the site.
 
 # Steps
 
-1. Confirm the active folder is a static member site: `read_file("package.json")` and check that `dependencies` or `devDependencies` names `@fluid-app/sites`. If not, stop and say: "This folder isn't a static member site (its package.json doesn't depend on @fluid-app/sites), so I didn't change anything." A Liquid member site or a theme uses other patterns; never use `fluid member-site` commands here.
+1. Confirm the active folder is a Site: `read_file("package.json")` and check that `dependencies` or `devDependencies` names `@fluid-app/sites`. If not, stop and say: "This folder isn't a Site (its package.json doesn't depend on @fluid-app/sites), so I didn't change anything." An old Liquid site or a theme uses other patterns; never use `fluid member-site` commands here.
 2. Read `src/` first. A site that started from the full demo already has `src/products.ts` and `src/pages/Shop.tsx`: extend those rather than adding a second shop.
 3. Get the products. Ask the user which products to show and in what order, with a short line for each if they want one. Find each variant id:
    - `fluid_api("/api/v202604/company/products?page[limit]=100", "GET")` lists the catalog; each product's `default_variant` carries its master variant's `id`.
