@@ -910,6 +910,28 @@
         "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
       },
       "updated_at": "2026-11-10T10:00:00Z"
+    },
+    {
+      "key": "supply_chain_lead",
+      "version": 1,
+      "path": "bots/supply_chain_lead/v1.json",
+      "sha256": "bbe035e7fc20fceee41aaa2e59901cd72c0770af957414b3e97ed837c3c77557",
+      "files": {
+        "instructions.md": "044e916fb510a7973ecf64a29ac04944baacd5d020a12f6ffcdfe4b4b75f19f3",
+        "persona.md": "e10bf9529f1145b4132c51418d3714ed206c8b41d9abd53f2e7cf98f02e4e690"
+      },
+      "updated_at": "2026-11-10T13:30:00Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 5,
+      "path": "bots/qa_specialist/v5.json",
+      "sha256": "b9efd5eeb3b13cf09d4e27802cf70409e1dfa985fa427fb3b513007fcbee2753",
+      "files": {
+        "instructions.md": "59e62798706efbcd614ce8bbefedc6f7757abb72fca001966215810809fbe1da",
+        "persona.md": "0d558aebd09b997bba03d838cf1aa9d459be37391ece842c5764486da5a3b0a6"
+      },
+      "updated_at": "2026-11-10T13:30:00Z"
     }
   ]
 }
