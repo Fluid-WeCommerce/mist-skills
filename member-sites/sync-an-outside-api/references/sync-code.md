@@ -33,6 +33,7 @@ Generic code for the pattern in the skill. It syncs Linear issues into an `issue
         "scope": { "type": "text", "required": true },
         "state": { "type": "text", "required": true, "default": "ok" },
         "last_attempt_at": { "type": "timestamp" },
+        "lease_until": { "type": "timestamp" },
         "last_manual_at": { "type": "timestamp" },
         "last_good_at": { "type": "timestamp" },
         "items": { "type": "integer" },
@@ -70,7 +71,7 @@ type Row = Record<string, unknown>;
 
 /** How long Sync now waits after the last Sync now. The schedule never waits for it. */
 export const MIN_GAP_MS = 60_000;
-/** A call lasts at most 30 s, so a run still "running" after this was stopped and never finished. */
+/** A call lasts at most 30 s, so a run still holding its lease after this was stopped and never finished. */
 export const LEASE_MS = 60_000;
 
 /** A database answer's data, or throw its error. */
@@ -93,20 +94,39 @@ export interface SyncPosition {
   passMax: string | null;
 }
 
+/** Before the first run: a full pass from the top. */
+export const START: SyncPosition = { cursor: null, watermark: null, passMax: null };
+
+/**
+ * The position after one page. A pass pages with the cursor under a fixed
+ * watermark; when its last page is read, the newest update it saw becomes
+ * the watermark. So after the first full pass a run reads only what changed.
+ *
+ * nextCursor - The API's cursor for the next page, or null after the last page.
+ * newest     - The newest update time on this page, or null for an empty page.
+ */
+export function advance(at: SyncPosition, nextCursor: string | null, newest: string | null): SyncPosition {
+  // ISO times from one API compare as strings.
+  const passMax = at.passMax && (!newest || at.passMax > newest) ? at.passMax : newest;
+  return nextCursor
+    ? { cursor: nextCursor, watermark: at.watermark, passMax }
+    : { cursor: null, watermark: passMax ?? at.watermark, passMax: null };
+}
+
 export type Claim = ({ ok: true } & SyncPosition) | { ok: false; retryAt: string };
 
 /**
- * Claim a run of `source`. Refused while another run holds it (state
- * "running" within LEASE_MS), and a person's run (manual) within MIN_GAP_MS
- * of the last person's run. The schedule passes manual: false and never
- * writes last_manual_at, so a tick can't take the Sync now slot.
+ * Claim a run of `source`. Refused while another run holds the lease, and a
+ * person's run (manual) within MIN_GAP_MS of the last person's run. The
+ * schedule passes manual: false and never writes last_manual_at, so a tick
+ * can't take the Sync now slot.
  */
 export async function beginSync(ctx: FluidContext, source: string, manual: boolean): Promise<Claim> {
   const db = ctx.fluid.db;
   const run = must(
     await db
       .from("sync_runs")
-      .select("id,state,last_attempt_at,last_manual_at,cursor,watermark,pass_max")
+      .select("id,state,lease_until,last_attempt_at,last_manual_at,cursor,watermark,pass_max")
       .eq("source", source)
       .eq("scope", "global")
       .maybeSingle(),
@@ -115,34 +135,35 @@ export async function beginSync(ctx: FluidContext, source: string, manual: boole
   const now = Date.now();
   const lastManual = time(run?.last_manual_at);
   if (manual && now - lastManual < MIN_GAP_MS) return { ok: false, retryAt: iso(lastManual + MIN_GAP_MS) };
-  const lastAttempt = time(run?.last_attempt_at);
-  if (run?.state === "running" && now - lastAttempt < LEASE_MS) return { ok: false, retryAt: iso(lastAttempt + LEASE_MS) };
+  const leaseUntil = time(run?.lease_until);
+  if (run?.state === "running" && now < leaseUntil) return { ok: false, retryAt: iso(leaseUntil) };
+  const busy = { ok: false, retryAt: iso(now + LEASE_MS) } as const;
 
-  const patch: Row = { state: "running", last_attempt_at: iso(now), error: null };
+  const patch: Row = { state: "running", last_attempt_at: iso(now), lease_until: iso(now + LEASE_MS), error: null };
   if (manual) patch.last_manual_at = patch.last_attempt_at;
-  if (!run) {
+  if (run) {
+    // Compare and set: the update matches only if no other run claimed the row since the read above.
+    const claim = db.from("sync_runs").update(patch).eq("id", String(run.id));
+    const attempt = text(run.last_attempt_at);
+    const claimed = must(await (attempt ? claim.eq("last_attempt_at", attempt) : claim.is("last_attempt_at", null)).select("id"));
+    if (claimed.length === 0) return busy;
+  } else {
     const inserted = await db.from("sync_runs").insert({ source, scope: "global", ...patch });
     // Two first runs raced on the unique (source, scope): the loser backs off.
-    if (inserted.error?.code === "unique_violation") return { ok: false, retryAt: iso(now + LEASE_MS) };
+    if (inserted.error?.code === "unique_violation") return busy;
     must(inserted);
-    return { ok: true, cursor: null, watermark: null, passMax: null };
   }
-  // Compare and set: the update matches only if no other run claimed the row since the read above.
-  const claim = db.from("sync_runs").update(patch).eq("id", String(run.id));
-  const attempt = text(run.last_attempt_at);
-  const claimed = must(await (attempt ? claim.eq("last_attempt_at", attempt) : claim.is("last_attempt_at", null)).select("id"));
-  if (claimed.length === 0) return { ok: false, retryAt: iso(now + LEASE_MS) };
-  return { ok: true, cursor: text(run.cursor), watermark: text(run.watermark), passMax: text(run.pass_max) };
+  return { ok: true, cursor: text(run?.cursor), watermark: text(run?.watermark), passMax: text(run?.pass_max) };
 }
 
 export type Finish = ({ ok: true; items: number } & SyncPosition) | { ok: false; error: string };
 
 /**
- * Record how a run ended. Only a good run moves last_good_at, so a failure
- * keeps "last good data at …". A failure also drops the page cursor: a cursor
- * the API no longer accepts would otherwise fail every later run. The next
- * run starts the pass again from the watermark, which is safe because
- * reconcile is idempotent.
+ * Record how a run ended and release the lease. Only a good run moves
+ * last_good_at, so a failure keeps "last good data at …". A failure also
+ * drops the page cursor: a cursor the API no longer accepts would otherwise
+ * fail every later run. The next run starts the pass again from the
+ * watermark, which is safe because reconcile is idempotent.
  */
 export async function finishSync(ctx: FluidContext, source: string, finish: Finish): Promise<void> {
   const patch: Row = finish.ok
@@ -156,7 +177,7 @@ export async function finishSync(ctx: FluidContext, source: string, finish: Fini
         error: null,
       }
     : { state: "failed", error: finish.error.slice(0, 500), cursor: null, pass_max: null };
-  must(await ctx.fluid.db.from("sync_runs").update(patch).eq("source", source).eq("scope", "global"));
+  must(await ctx.fluid.db.from("sync_runs").update({ ...patch, lease_until: null }).eq("source", source).eq("scope", "global"));
 }
 
 /** Equal as stored: a json column comes back as a new object, so compare its JSON. */
@@ -167,10 +188,10 @@ function same(a: unknown, b: unknown): boolean {
 /**
  * fluid.db has no upsert. Make `table`'s rows from `source` match `rows`
  * (each with a source_id), and delete the `removed` source ids: one select,
- * one insert for the new rows, one update per distinct change and one
- * delete. Only `compare` columns are written, so a column people set (a
- * note, a pin, a visibility) survives every sync. Returns how many rows
- * changed. Requests: at most 3 + rows.length.
+ * then in parallel one insert for the new rows, one update per distinct
+ * change and one delete. Only `compare` columns are written, so a column
+ * people set (a note, a pin, a visibility) survives every sync. Returns how
+ * many rows changed. Requests: at most 3 + rows.length.
  */
 export async function reconcile(
   ctx: FluidContext,
@@ -212,9 +233,12 @@ export async function reconcile(
     group.ids.push(String(current.id));
     groups.set(key, group);
   }
-  if (fresh.length > 0) must(await db.from(table).insert(fresh));
-  for (const { patch, ids } of groups.values()) must(await db.from(table).update(patch).in("id", ids));
-  if (removed.length > 0) must(await db.from(table).delete().eq("source", source).in("source_id", removed));
+  // The writes touch different rows, so they run together.
+  await Promise.all([
+    fresh.length > 0 && db.from(table).insert(fresh).then(must),
+    ...[...groups.values()].map(({ patch, ids }) => db.from(table).update(patch).in("id", ids).then(must)),
+    removed.length > 0 && db.from(table).delete().eq("source", source).in("source_id", removed).then(must),
+  ]);
   return fresh.length + removed.length + [...groups.values()].reduce((n, g) => n + g.ids.length, 0);
 }
 ```
@@ -224,8 +248,9 @@ export async function reconcile(
 ```ts
 /// <reference path="../fluid-env.d.ts" />
 // functions/lib/linear.ts: Linear issues, incrementally, one page per call.
+// Only the query and its answer live here; lib/sync.ts owns the paging rules.
 import { MOCK_ISSUES } from "./fixtures/linear-issues";
-import type { SyncPosition } from "./sync";
+import { advance, START, type SyncPosition } from "./sync";
 
 export interface LinearIssue {
   id: string;
@@ -245,21 +270,13 @@ export interface LinearIssue {
  */
 export const PAGE_SIZE = 25;
 
-/**
- * One page of the issues updated after the watermark, and where the next run
- * goes on. A pass pages with the cursor under a fixed watermark; when it
- * ends, the newest update it saw becomes the watermark. So after the first
- * full pass each run reads only what changed, and Sync now picks up an edit
- * made a moment ago.
- */
+/** One page of the issues updated after the watermark, and where the next run goes on. */
 export async function issuePage(
   ctx: FluidContext,
   at: SyncPosition,
 ): Promise<{ issues: LinearIssue[]; next: SyncPosition }> {
   // Mock unless LINEAR_SOURCE says live: the page and the sync work with no token.
-  if (ctx.secrets.LINEAR_SOURCE !== "live") {
-    return { issues: MOCK_ISSUES.data.issues.nodes, next: { cursor: null, watermark: null, passMax: null } };
-  }
+  if (ctx.secrets.LINEAR_SOURCE !== "live") return { issues: MOCK_ISSUES.data.issues.nodes, next: START };
   const key = ctx.secrets.LINEAR_API_KEY;
   if (!key) throw new Error("LINEAR_SOURCE is live but LINEAR_API_KEY isn't set");
   const response = await fetch("https://api.linear.app/graphql", {
@@ -288,12 +305,8 @@ export async function issuePage(
     throw new Error(`Linear: ${answer?.errors?.map((e) => e.message).join("; ") ?? `HTTP ${response.status}`}`);
   }
   const { pageInfo, nodes } = answer.data.issues;
-  // ISO times from one API compare as strings.
-  const passMax = nodes.reduce<string | null>((max, n) => (max && max > n.updatedAt ? max : n.updatedAt), at.passMax);
-  const next = pageInfo.hasNextPage
-    ? { cursor: pageInfo.endCursor, watermark: at.watermark, passMax }
-    : { cursor: null, watermark: passMax ?? at.watermark, passMax: null };
-  return { issues: nodes, next };
+  const newest = nodes.reduce<string | null>((max, n) => (max && max > n.updatedAt ? max : n.updatedAt), null);
+  return { issues: nodes, next: advance(at, pageInfo.hasNextPage ? pageInfo.endCursor : null, newest) };
 }
 ```
 
@@ -345,11 +358,12 @@ export async function syncIssues(ctx: FluidContext, opts: { manual: boolean }): 
   const claim = await beginSync(ctx, "linear", opts.manual);
   if (!claim.ok) return Response.json({ error: "too_soon", retry_at: claim.retryAt }, { status: 429 });
   try {
-    // Once the source is live, a pass starts by deleting rows a mock run left ("mock-" ids).
-    if (ctx.secrets.LINEAR_SOURCE === "live" && claim.cursor === null) {
-      must(await ctx.fluid.db.from("issues").delete().eq("source", "linear").like("source_id", "mock-%"));
-    }
-    const page = await issuePage(ctx, claim);
+    // The first live pass (no watermark yet) also deletes the rows a mock run left ("mock-" ids).
+    const firstLivePass = ctx.secrets.LINEAR_SOURCE === "live" && claim.watermark === null && claim.cursor === null;
+    const [page] = await Promise.all([
+      issuePage(ctx, claim),
+      firstLivePass && ctx.fluid.db.from("issues").delete().eq("source", "linear").like("source_id", "mock-%").then(must),
+    ]);
     const rows = page.issues
       .filter((issue) => !issue.archivedAt)
       .map((issue) => ({
@@ -466,14 +480,13 @@ export async function latestReleases(ctx: FluidContext): Promise<Release[]> {
 // src/sync.ts: the page side. fluid.db reads the rows; Sync now calls the function.
 import { fluid } from "@fluid-app/sites";
 
+/** The schedule's interval, for the stale rule. */
 const SCHEDULE_MS = 15 * 60_000;
-/** Matches LEASE_MS in functions/lib/sync.ts. */
-const LEASE_MS = 60_000;
 
 export interface SyncRun {
   state: "ok" | "running" | "failed";
   last_good_at: string | null;
-  last_attempt_at: string | null;
+  lease_until: string | null;
   cursor: string | null;
   error: string | null;
 }
@@ -482,7 +495,7 @@ export interface SyncRun {
 export async function readSyncRun(source: string): Promise<SyncRun | null> {
   const { data, error } = await fluid.db
     .from("sync_runs")
-    .select("state,last_good_at,last_attempt_at,cursor,error")
+    .select("state,last_good_at,lease_until,cursor,error")
     .eq("source", source)
     .eq("scope", "global")
     .limit(1);
@@ -494,13 +507,13 @@ export type SyncLabel = "never" | "running" | "failed" | "stopped" | "stale" | "
 
 /**
  * What the pill says. "stopped": a run the platform ended (the 30 s limit)
- * never writes its end, so "running" past the lease means it didn't finish.
+ * never writes its end, so "running" past its lease means it didn't finish.
  * "catching_up": a pass is part way through its pages.
  */
 export function syncLabel(run: SyncRun | null, now = Date.now()): SyncLabel {
   if (!run) return "never";
   if (run.state === "running") {
-    return run.last_attempt_at && now - Date.parse(run.last_attempt_at) < LEASE_MS ? "running" : "stopped";
+    return run.lease_until && now < Date.parse(run.lease_until) ? "running" : "stopped";
   }
   if (run.state === "failed") return "failed";
   if (!run.last_good_at) return "never";
@@ -536,9 +549,9 @@ curl -X POST http://127.0.0.1:<port>/_fluid/fn/_dev/fire/work-tick
 | Step | Requests |
 | --- | --- |
 | `beginSync`: select, then a compare-and-set update or the first insert | 2 |
-| Delete leftover mock rows (live mode, first page of a pass) | 1 |
+| Delete leftover mock rows (first live pass only, beside the fetch) | 1 |
 | One API page | 1 |
-| `reconcile`: select, insert, one update per distinct change, delete archived | up to 3 + `PAGE_SIZE` |
+| `reconcile`: select, then insert, one update per distinct change and the archived delete together | up to 3 + `PAGE_SIZE` |
 | `finishSync` | 1 |
 | **Total with `PAGE_SIZE` 25** | **at most 33 of 50** |
 

@@ -17,7 +17,7 @@ Show data from another tool on a Site: Linear issues, GitHub releases, CRM deals
    - How fresh they need to be. A schedule runs at most every 5 minutes; 15 is plenty for most dashboards.
    - Whether they have a **read-only** token. Until they do, build in mock mode; nothing waits on the token.
 3. **Tables** (the `member-sites/add-database-table` skill has the column types and limits).
-   - If there is no `db/schema.json` yet, ask the user before you add one. Adding it creates the site's database on the next publish. Its usage (rows read, rows written, storage) is billed to the company's credits by day, with no free allowance, and the schedule writes on every tick. Go on only after they agree.
+   - If there is no `db/schema.json` yet, ask the user first, exactly as `member-sites/add-database-table` step 3 says (a new database is billed to the company's credits). Add that the schedule writes on every tick.
 
    Add:
    - The data table: the record's own columns plus `source`, `source_id` and `synced_at`, with `"unique": [["source", "source_id"]]`.
@@ -35,29 +35,15 @@ Show data from another tool on a Site: Linear issues, GitHub releases, CRM deals
    - Route inside it: `fluid.fn.fetch("work/sync")` reaches `/api/work/sync`.
    - Put shared code in `functions/lib/` (plain modules, not functions).
    - The function writes as the site, so **no table rule protects these rows**. Check the caller before any write: a page viewer from the site's company, plus your own staff check if the data is staff-only.
-6. **The sync** (the full code is in the reference). Both Sync now and the schedule call the same `syncIssues(ctx, { manual })`, which runs:
-   - **`beginSync`** claims the run in `sync_runs` with a compare-and-set update, so only one run syncs at a time.
-     - It refuses with `429 {retry_at}` while another run holds the row: state `running` for under 60 s, the lease.
-     - It also refuses a person's second run within 60 seconds.
-     - The schedule passes `manual: false` and never writes `last_manual_at`: **the schedule must not take the Sync now slot**.
-     - A run the platform stopped (the 30 s limit) never writes its end. Its lease runs out, and the page shows it as stopped.
-   - **One page from the API**, mock or live.
-   - **`reconcile`** stands in for upsert, which `fluid.db` doesn't have.
-     - It makes one select by `source_id`, one insert for new rows, one update per distinct change and one delete for records the API reports archived or deleted.
-     - It writes only the columns the API owns, and compares `json` columns by value.
-   - **`finishSync`** records how the run ended.
-     - On success: `ok`, with `last_good_at`, `items` and the paging position.
-     - On failure: `failed`, with the error. It also drops the page cursor, so a cursor the API stopped accepting can't fail every later run.
-     - Rows already written stay, and the next run reconciles again. The page keeps every row it had, so it shows the last good data.
-   - **Mock rows.** Their ids start with `mock-`. Once the source is live, each pass deletes them, so a site that ran in mock mode doesn't keep sample rows.
+6. **The sync.** Copy the reference's `functions/lib/sync.ts` as is, and write the source's own two files (`lib/linear.ts`, `lib/work-sync.ts`). Both Sync now and the schedule call the same `syncIssues(ctx, { manual })`. The rules that matter when you adapt it:
+   - The schedule passes `manual: false`, so it never takes the Sync now slot. Only a person's run is held to the 60 s gap.
+   - `beginSync` claims the run with a compare-and-set and a lease, so two runs never sync at once. A run the platform stops (30 s) never writes its end; the lease runs out and the page shows "stopped".
+   - `reconcile` stands in for the upsert `fluid.db` lacks. Pass only the columns the API owns, so columns people set survive. Pass the ids the API reports archived or deleted as `removed`.
+   - A failed run keeps every row and drops its page cursor; the next run starts the pass again.
+   - Mock rows carry `mock-` ids, and the first live pass deletes them.
 7. **Stay inside the limits.** Each call gets 30 s of wall time, 1 s of CPU and 50 outgoing requests; the whole site gets 600 calls a minute.
-   - Count every `fetch`, and to be safe every `ctx.fluid.db` call.
-   - Sync one page per call: 25 rows cost at most 33 requests. Never loop pages until done in one call.
-   - **Sync incrementally**, by the API's "updated after" filter.
-     - A pass pages through records updated after the stored `watermark`, keeping the API's cursor in `sync_runs.cursor` between runs.
-     - When the pass ends, the newest update it saw becomes the new watermark.
-     - So only the first fill takes many runs; after that each run reads only what changed, and Sync now picks up an edit made a moment ago.
-     - A source with no "updated after" filter re-reads a fixed window (the newest N) on each run instead.
+   - Count every `fetch`, and to be safe every `ctx.fluid.db` call. One page of 25 rows costs at most 33 (the budget table is in the reference). Never loop pages until done in one call.
+   - Sync incrementally with the API's "updated after" filter: `advance()` keeps the cursor and the watermark in `sync_runs`, so only the first fill takes many runs. A source without that filter re-reads a fixed window (the newest N) each run.
    - Compute dates inside the handler, never at module scope: a Worker's clock reads 0 at module load. That includes seed data (store markers like "3 days ago" and resolve them when the seed runs).
 8. **The schedule.**
    - Create it with `run_cli` `fluid sites functions new work-tick --access key --schedule "*/15 * * * *"`. Cron is in UTC, at most every 5 minutes.
@@ -73,12 +59,10 @@ Show data from another tool on a Site: Linear issues, GitHub releases, CRM deals
    - **Stopped** when the state has been `running` for longer than the lease.
 
    **Sync now** POSTs to `work/sync`. On 429 (a run is going, or someone synced a moment ago) it says "try again at <retry_at>". After any answer it re-reads the rows.
-10. **Check it locally.**
-    - `start_preview` (Mist runs `fluid sites dev`).
-    - Press Sync now: the rows appear from the fixtures, and `db_query` `side: "local"` `SELECT * FROM sync_runs` shows `state = ok`.
-    - Press it again at once: you should get a 429.
-    - Note `last_manual_at`, fire the schedule with `curl -X POST http://127.0.0.1:<port>/_fluid/fn/_dev/fire/work-tick`, and read `sync_runs` again. The tick's run must leave `last_manual_at` unchanged. A Sync now pressed 60 s after the first press must succeed. A press inside those 60 s is refused by design, not by the tick.
-    - Set a wrong token with `LINEAR_SOURCE=live` in `.fluid/secrets.env`: the run fails, the page shows Failed, and the old rows stay.
+10. **Check it locally**, with `start_preview` and `db_query` `side: "local"` as in `member-sites/add-database-table` step 9:
+    - Sync now fills the rows from the fixtures, and `sync_runs` shows `state = ok`. A second press at once gets 429.
+    - Fire the schedule (`curl -X POST http://127.0.0.1:<port>/_fluid/fn/_dev/fire/work-tick`): `last_manual_at` must not change. A press 60 s after the first must succeed.
+    - A wrong token with `LINEAR_SOURCE=live` in `.fluid/secrets.env`: the run fails, the page shows Failed, and the rows stay.
 11. `npm run build` and `fluid sites lint` through `run_cli`; fix every error. `functions/` and `config/functions.json` must agree.
 12. Report:
     - the tables and rules;
@@ -87,18 +71,15 @@ Show data from another tool on a Site: Linear issues, GitHub releases, CRM deals
     - which secrets are still missing for live mode;
     - that publishing is the `member-sites/publish-and-check` skill.
 
-    After publishing, read `fluid sites logs --since 1h`. Each line has the function, caller and status, but no `console.log` output, so the response status is your only signal; return a real one.
+    After publishing, read `fluid sites logs --since 1h`: one line per call with its status, and no `console.log` output, so return a real status and the error in the body.
 
 # Production gotchas
 
 - **Webhooks into a private site.** If an outside service pushes to a `key` function instead of the site pulling, note that production answered **503** to API keys on a **private** site until the gateway deployed on 2026-11-12. A 503 there now has another cause.
 - **Schedules.** They are the newest part of Sites, so confirm in `fluid sites logs` that ticks arrive before you promise "updates every 15 minutes".
-- **Live logs.** They carry no `console.log` output. Return the error in the JSON body and a non-2xx status.
-- **Racing first runs.** Two first runs can race on inserting the `sync_runs` row; the loser gets `unique_violation` and backs off. After that, the compare-and-set claim keeps runs apart.
 
 # Guardrails
 
 - Read-only tokens. A sync that also writes back to the outside tool needs an allowlist of records it may change, checked in the function.
-- No secret in the page, `dist/`, a response body or a commit. Only functions read `ctx.secrets`.
 - Never make synced rows guest-readable unless the user asked.
-- Don't publish in this skill.
+- No secret in the page, `dist/` or a response, and no publishing in this skill.
