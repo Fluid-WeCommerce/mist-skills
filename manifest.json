@@ -392,6 +392,15 @@
       ]
     },
     {
+      "slug": "marketing/brand-agent-brief",
+      "name": "Brand Agent Brief",
+      "description": "Build the business profile, answer pack and guardrails an AI brand agent needs (ChatGPT business profile and Business Agent, an on-site shopper assistant) from this store's real catalog, shipping and brand voice, and flag what is missing before anything is published.",
+      "category": "marketing",
+      "icon": "bot",
+      "path": "marketing/brand-agent-brief.md",
+      "updated_at": "2026-11-11T12:00:00Z"
+    },
+    {
       "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
@@ -658,6 +667,15 @@
       "icon": "git-fork",
       "path": "compliance/genealogy-change-queue.md",
       "updated_at": "2026-11-10T13:00:00Z"
+    },
+    {
+      "slug": "compliance/admin-access-review",
+      "name": "Admin access review",
+      "description": "Run a periodic access review of everyone who can sign in to Fluid's admin \u2014 who has which role, which roles grant the riskiest permissions, which installed apps hold broad scopes \u2014 get each person confirmed by the user, remove or narrow only what they approve, and save a dated review record for auditors.",
+      "category": "compliance",
+      "icon": "shield-check",
+      "path": "compliance/admin-access-review.md",
+      "updated_at": "2026-11-11T12:45:00Z"
     }
   ],
   "workflows": [
@@ -934,6 +952,17 @@
         "persona.md": "e10bf9529f1145b4132c51418d3714ed206c8b41d9abd53f2e7cf98f02e4e690"
       },
       "updated_at": "2026-11-10T13:30:00Z"
+    },
+    {
+      "key": "supply_chain_lead",
+      "version": 2,
+      "path": "bots/supply_chain_lead/v2.json",
+      "sha256": "bbe035e7fc20fceee41aaa2e59901cd72c0770af957414b3e97ed837c3c77557",
+      "files": {
+        "instructions.md": "a0c9ce35ed5ce883422043658f488b455f18406d2c776daa19198d87052217a5",
+        "persona.md": "8622681b88a7a14d0d0f2f1316753b062024e97de7b2a59aa2367a5f3c14575f"
+      },
+      "updated_at": "2026-11-11T12:00:00Z"
     },
     {
       "key": "field_success_lead",
