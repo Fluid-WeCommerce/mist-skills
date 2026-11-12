@@ -115,7 +115,10 @@ export function advance(at: SyncPosition, nextCursor: string | null, newest: str
     : { cursor: null, watermark: passMax ?? at.watermark, passMax: null };
 }
 
-export type Claim = ({ ok: true } & SyncPosition) | { ok: false; retryAt: string };
+/** A claimed run: its number (finishSync writes only while it still holds it) and where paging stands. */
+export type Claim =
+  | ({ ok: true; runNo: number } & SyncPosition)
+  | { ok: false; reason: "running" | "too_soon"; retryAt: string };
 
 /**
  * Claim a run of `source`. Refused while another run holds the lease, and a
@@ -136,10 +139,12 @@ export async function beginSync(ctx: FluidContext, source: string, manual: boole
   // Date.now() here, inside the call: at module scope a Worker's clock reads 0.
   const now = Date.now();
   const lastManual = time(run?.last_manual_at);
-  if (manual && now - lastManual < MIN_GAP_MS) return { ok: false, retryAt: iso(lastManual + MIN_GAP_MS) };
+  if (manual && now - lastManual < MIN_GAP_MS) {
+    return { ok: false, reason: "too_soon", retryAt: iso(lastManual + MIN_GAP_MS) };
+  }
   const leaseUntil = time(run?.lease_until);
-  if (run?.state === "running" && now < leaseUntil) return { ok: false, retryAt: iso(leaseUntil) };
-  const busy = { ok: false, retryAt: iso(now + LEASE_MS) } as const;
+  if (run?.state === "running" && now < leaseUntil) return { ok: false, reason: "running", retryAt: iso(leaseUntil) };
+  const busy = { ok: false, reason: "running", retryAt: iso(now + LEASE_MS) } as const;
 
   // run_no counts claims. The update below matches only while it still holds the number read above.
   const runNo = Number(run?.run_no ?? 0);
@@ -163,7 +168,13 @@ export async function beginSync(ctx: FluidContext, source: string, manual: boole
     if (inserted.error?.code === "unique_violation") return busy;
     must(inserted);
   }
-  return { ok: true, cursor: text(run?.cursor), watermark: text(run?.watermark), passMax: text(run?.pass_max) };
+  return {
+    ok: true,
+    runNo: runNo + 1,
+    cursor: text(run?.cursor),
+    watermark: text(run?.watermark),
+    passMax: text(run?.pass_max),
+  };
 }
 
 export type Finish = ({ ok: true; items: number } & SyncPosition) | { ok: false; error: string };
@@ -174,9 +185,11 @@ export type Finish = ({ ok: true; items: number } & SyncPosition) | { ok: false;
  * drops the page cursor: a cursor the API no longer accepts would otherwise
  * fail every later run. The next run starts the pass again from the
  * watermark, which is safe because reconcile is idempotent. The cost: a
- * transient error during a long first fill starts that fill over.
+ * transient error during a long first fill starts that fill over. It writes
+ * only while the row still holds this run's number, so a run that outlived
+ * its lease can't overwrite the run that took over.
  */
-export async function finishSync(ctx: FluidContext, source: string, finish: Finish): Promise<void> {
+export async function finishSync(ctx: FluidContext, source: string, runNo: number, finish: Finish): Promise<void> {
   const patch: Row = finish.ok
     ? {
         state: "ok",
@@ -188,10 +201,22 @@ export async function finishSync(ctx: FluidContext, source: string, finish: Fini
         error: null,
       }
     : { state: "failed", error: finish.error.slice(0, 500), cursor: null, pass_max: null };
-  must(await ctx.fluid.db.from("sync_runs").update({ ...patch, lease_until: null }).eq("source", source).eq("scope", "global"));
+  must(
+    await ctx.fluid.db
+      .from("sync_runs")
+      .update({ ...patch, lease_until: null })
+      .eq("source", source)
+      .eq("scope", "global")
+      .eq("run_no", runNo),
+  );
 }
 
-/** Equal as stored: a json column comes back as a new object, so compare its JSON. */
+/**
+ * Equal as stored: a json column comes back as a new object, so compare its
+ * JSON. Put only columns in `compare` whose value comes back exactly as the
+ * API sent it (text, integers). Normalise a timestamp or a json value with
+ * keys in no fixed order before reconcile, or every run rewrites every row.
+ */
 function same(a: unknown, b: unknown): boolean {
   return a === b || (typeof a === "object" && a !== null && JSON.stringify(a) === JSON.stringify(b));
 }
@@ -245,12 +270,13 @@ export async function reconcile(
     groups.set(key, group);
   }
   // The writes touch different rows, so they run together.
-  await Promise.all([
+  const [, , deleted] = await Promise.all([
     fresh.length > 0 && db.from(table).insert(fresh).then(must),
-    ...[...groups.values()].map(({ patch, ids }) => db.from(table).update(patch).in("id", ids).then(must)),
-    removed.length > 0 && db.from(table).delete().eq("source", source).in("source_id", removed).then(must),
+    Promise.all([...groups.values()].map(({ patch, ids }) => db.from(table).update(patch).in("id", ids).then(must))),
+    // Count what was really deleted: an archived id may never have been stored.
+    removed.length > 0 ? db.from(table).delete().eq("source", source).in("source_id", removed).select("id").then(must) : [],
   ]);
-  return fresh.length + removed.length + [...groups.values()].reduce((n, g) => n + g.ids.length, 0);
+  return fresh.length + deleted.length + [...groups.values()].reduce((n, g) => n + g.ids.length, 0);
 }
 ```
 
@@ -286,8 +312,12 @@ export async function issuePage(
   ctx: FluidContext,
   at: SyncPosition,
 ): Promise<{ issues: LinearIssue[]; next: SyncPosition }> {
-  // Mock unless LINEAR_SOURCE says live: the page and the sync work with no token.
-  if (ctx.secrets.LINEAR_SOURCE !== "live") return { issues: MOCK_ISSUES.data.issues.nodes, next: START };
+  // LINEAR_SOURCE is "live" or "mock" (unset means mock, so the page works with no token).
+  // Anything else fails the run, so a typo never swaps real data for samples.
+  const mode = ctx.secrets.LINEAR_SOURCE ?? "mock";
+  if (mode !== "live" && mode !== "mock") throw new Error(`LINEAR_SOURCE must be "live" or "mock", not "${mode}"`);
+  // A mock run resets the position, so the next live run is a first pass that clears the samples.
+  if (mode === "mock") return { issues: MOCK_ISSUES.data.issues.nodes, next: START };
   const key = ctx.secrets.LINEAR_API_KEY;
   if (!key) throw new Error("LINEAR_SOURCE is live but LINEAR_API_KEY isn't set");
   const response = await fetch("https://api.linear.app/graphql", {
@@ -295,8 +325,8 @@ export async function issuePage(
     // A Linear personal API key goes in as is, with no "Bearer".
     headers: { authorization: key, "content-type": "application/json" },
     body: JSON.stringify({
-      query: `query($first: Int!, $after: String, $filter: IssueFilter) {
-        issues(first: $first, after: $after, filter: $filter, orderBy: updatedAt, includeArchived: true) {
+      query: `query($first: Int!, $after: String, $filter: IssueFilter, $archived: Boolean) {
+        issues(first: $first, after: $after, filter: $filter, orderBy: updatedAt, includeArchived: $archived) {
           pageInfo { hasNextPage endCursor }
           nodes { id identifier title url updatedAt archivedAt state { name } assignee { name } }
         }
@@ -305,6 +335,8 @@ export async function issuePage(
         first: PAGE_SIZE,
         after: at.cursor,
         filter: at.watermark ? { updatedAt: { gt: at.watermark } } : null,
+        // Archived issues matter only once rows exist: the first pass skips them.
+        archived: at.watermark !== null,
       },
     }),
   });
@@ -366,8 +398,15 @@ import { issuePage } from "./linear";
 import { beginSync, finishSync, must, reconcile } from "./sync";
 
 export async function syncIssues(ctx: FluidContext, opts: { manual: boolean }): Promise<Response> {
-  const claim = await beginSync(ctx, "linear", opts.manual);
-  if (!claim.ok) return Response.json({ error: "too_soon", retry_at: claim.retryAt }, { status: 429 });
+  let claim;
+  try {
+    claim = await beginSync(ctx, "linear", opts.manual);
+  } catch (error) {
+    // The claim itself failed (the database answered an error): nothing to finish.
+    return Response.json({ error: "sync_failed", message: error instanceof Error ? error.message : String(error) }, { status: 502 });
+  }
+  // "running": another run holds the lease. "too_soon": someone pressed Sync now under a minute ago.
+  if (!claim.ok) return Response.json({ error: claim.reason, retry_at: claim.retryAt }, { status: 429 });
   try {
     const page = await issuePage(ctx, claim);
     // The first live pass (no watermark yet) deletes the rows a mock run left ("mock-" ids),
@@ -387,12 +426,12 @@ export async function syncIssues(ctx: FluidContext, opts: { manual: boolean }): 
       }));
     const archived = page.issues.filter((issue) => issue.archivedAt).map((issue) => issue.id);
     const changed = await reconcile(ctx, "issues", "linear", rows, ["title", "status", "assignee_name", "url"], archived);
-    await finishSync(ctx, "linear", { ok: true, items: changed, ...page.next });
+    await finishSync(ctx, "linear", claim.runNo, { ok: true, items: changed, ...page.next });
     return Response.json({ changed, more: page.next.cursor !== null });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     // Rows written before the error stay; the next run reconciles them again. The page keeps every row it had.
-    await finishSync(ctx, "linear", { ok: false, error: message }).catch(() => undefined);
+    await finishSync(ctx, "linear", claim.runNo, { ok: false, error: message }).catch(() => undefined);
     return Response.json({ error: "sync_failed", message }, { status: 502 });
   }
 }
@@ -448,9 +487,10 @@ export default (async (_request, ctx) => {
 ## A second source: GitHub releases (REST)
 
 The same shape fits a REST API.
-- One request a run returns the 20 newest releases. That is a window, not a pass, so it needs no cursor or watermark.
+- One request a run returns the 20 newest releases. That is a window, not a pass, so it needs no cursor or watermark. Pass the position through unchanged.
 - Map each release to a row with `source_id: String(release.id)`, then call `reconcile(ctx, "releases", "github", rows, ["name", "url"])`.
 - Give it a second `sync_runs` row, with `source: "github"`.
+- Mock rows need the same cleanup as Linear's. Map a mock release to ``source_id: `mock-${release.id}` ``, and on the first live run delete `like("source_id", "mock-%")` once the fetch has worked.
 - A slow source can run less often than the tick: skip it while its `last_good_at` is under an hour old.
 
 ```ts
@@ -509,9 +549,9 @@ export async function readSyncRun(source: string): Promise<SyncRun | null> {
     .select("state,last_good_at,lease_until,cursor,error")
     .eq("source", source)
     .eq("scope", "global")
-    .limit(1);
+    .maybeSingle();
   if (error) throw new Error(error.message);
-  return (data?.[0] as SyncRun | undefined) ?? null;
+  return (data as SyncRun | null) ?? null;
 }
 
 export type SyncLabel = "never" | "running" | "failed" | "stopped" | "stale" | "catching_up" | "ok";
@@ -532,12 +572,14 @@ export function syncLabel(run: SyncRun | null, now = Date.now()): SyncLabel {
   return run.cursor ? "catching_up" : "ok";
 }
 
-/** Sync now. Re-read the rows after any answer; a 429 means a run is going or someone synced a moment ago. */
+/** Sync now. Re-read the rows after any answer. A 429 says why: a run is going, or someone synced a moment ago. */
 export async function syncNow(): Promise<string | null> {
   const response = await fluid.fn.fetch("work/sync", { method: "POST" });
-  const body = (await response.json().catch(() => ({}))) as { retry_at?: string; message?: string };
-  if (response.status === 429 && body.retry_at) {
-    return `Synced a moment ago. Try again at ${new Date(body.retry_at).toLocaleTimeString()}.`;
+  const body = (await response.json().catch(() => ({}))) as { error?: string; retry_at?: string; message?: string };
+  if (response.status === 429) {
+    if (body.error === "running") return "A sync is running now. The list updates when it finishes.";
+    const at = body.retry_at ? ` Try again at ${new Date(body.retry_at).toLocaleTimeString()}.` : "";
+    return `Synced a moment ago.${at}`;
   }
   if (!response.ok) return body.message ?? "The sync didn't work. The page still shows the last good data.";
   return null;
@@ -567,3 +609,8 @@ curl -X POST http://127.0.0.1:<port>/_fluid/fn/_dev/fire/work-tick
 | **Total with `PAGE_SIZE` 25** | **at most 33 of 50** |
 
 If a source needs more requests per row (a detail request for each record), shrink `PAGE_SIZE` until the worst case stays under 50.
+
+**A big first fill.** At one page of 25 per tick, a workspace with 5,000 issues takes about 200 runs to fill: 17 hours on a 5-minute schedule, 50 hours on a 15-minute one. Changes made during the fill wait for it to end. To shorten it:
+- narrow the query to what the site shows (a team, a project or a label);
+- run the schedule every 5 minutes until the cursor comes back null, then slow it down;
+- or press Sync now while the pill says "Catching up".
