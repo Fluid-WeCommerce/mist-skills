@@ -379,6 +379,28 @@
       "updated_at": "2026-10-22T12:05:46Z"
     },
     {
+      "slug": "marketing/creator-program-launch",
+      "name": "Creator Program Launch",
+      "description": "Set up a creator program on Fluid for a consumer brand with no affiliate app - the plan, creator sign-up, credited links, a one- or two-level commission ledger built as a Mist app, one proven test order and a launch kit.",
+      "category": "marketing",
+      "icon": "megaphone",
+      "path": "marketing/creator-program-launch/SKILL.md",
+      "updated_at": "2026-11-11T00:00:00Z",
+      "references": [
+        "marketing/creator-program-launch/references/methodology.md",
+        "marketing/creator-program-launch/references/commission-ledger-spec.md"
+      ]
+    },
+    {
+      "slug": "marketing/brand-agent-brief",
+      "name": "Brand Agent Brief",
+      "description": "Build the business profile, answer pack and guardrails an AI brand agent needs (ChatGPT business profile and Business Agent, an on-site shopper assistant) from this store's real catalog, shipping and brand voice, and flag what is missing before anything is published.",
+      "category": "marketing",
+      "icon": "bot",
+      "path": "marketing/brand-agent-brief.md",
+      "updated_at": "2026-11-11T12:00:00Z"
+    },
+    {
       "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
@@ -440,9 +462,18 @@
       ]
     },
     {
+      "slug": "member-sites/build-a-site",
+      "name": "Build a Site",
+      "description": "Decide Site vs App vs theme, then build a Fluid Site end to end \u2014 create it, run it locally, add pages, the shop, a table or the signed-in member's data through the Member API, publish it with its source saved to git, and check the live link.",
+      "category": "member-sites",
+      "icon": "globe",
+      "path": "member-sites/build-a-site.md",
+      "updated_at": "2026-11-10T00:00:00Z"
+    },
+    {
       "slug": "member-sites/new-member-site",
-      "name": "New member site",
-      "description": "Create a static member site on @fluid-app/sites for the active company, install it, and start it locally with fluid sites dev.",
+      "name": "New Site",
+      "description": "Create a Site on @fluid-app/sites for the active company, install it, and start it locally with fluid sites dev.",
       "category": "member-sites",
       "icon": "globe",
       "path": "member-sites/new-member-site.md",
@@ -450,8 +481,8 @@
     },
     {
       "slug": "member-sites/add-database-table",
-      "name": "Add a database table to a member site",
-      "description": "Add a table to a static member site's db/schema.json with the narrowest rules, read and write it with fluid.db, and check it locally with fluid sites dev.",
+      "name": "Add a database table to a Site",
+      "description": "Add a table to a Site's db/schema.json with the narrowest rules, read and write it with fluid.db, and check it locally with fluid sites dev.",
       "category": "member-sites",
       "icon": "database",
       "path": "member-sites/add-database-table.md",
@@ -459,8 +490,8 @@
     },
     {
       "slug": "member-sites/add-shop-section",
-      "name": "Add a shop to a member site",
-      "description": "Add products by real variant id to a static member site, with add to cart, open cart and checkout through fluid.cart and credited storefront links from fluid.storefront.url.",
+      "name": "Add a shop to a Site",
+      "description": "Add products to a Site, read live from the storefront catalog, with add to cart, open cart and checkout through fluid.cart and credited storefront links from fluid.storefront.url.",
       "category": "member-sites",
       "icon": "shopping-cart",
       "path": "member-sites/add-shop-section.md",
@@ -468,8 +499,8 @@
     },
     {
       "slug": "member-sites/publish-and-check",
-      "name": "Publish and check a member site",
-      "description": "Build, lint and publish a static member site with fluid sites publish, confirm destructive database changes only with the owner's yes, then open the live page and report its link.",
+      "name": "Publish and check a Site",
+      "description": "Build, lint and publish a Site with fluid sites publish, confirm destructive database changes only with the owner's yes, then open the live page and report its link.",
       "category": "member-sites",
       "icon": "rocket",
       "path": "member-sites/publish-and-check.md",
@@ -640,11 +671,20 @@
     {
       "slug": "compliance/genealogy-change-queue",
       "name": "Genealogy change queue",
-      "description": "Work the genealogy queue — new members waiting in a holding tank and pending sponsor or placement move requests — check each against your sponsor-change policy, recommend place, approve or reject, and apply only what you approve.",
+      "description": "Work the genealogy queue \u2014 new members waiting in a holding tank and pending sponsor or placement move requests \u2014 check each against your sponsor-change policy, recommend place, approve or reject, and apply only what you approve.",
       "category": "compliance",
       "icon": "git-fork",
       "path": "compliance/genealogy-change-queue.md",
       "updated_at": "2026-11-10T13:00:00Z"
+    },
+    {
+      "slug": "compliance/admin-access-review",
+      "name": "Admin access review",
+      "description": "Run a periodic access review of everyone who can sign in to Fluid's admin \u2014 who has which role, which roles grant the riskiest permissions, which installed apps hold broad scopes \u2014 get each person confirmed by the user, remove or narrow only what they approve, and save a dated review record for auditors.",
+      "category": "compliance",
+      "icon": "shield-check",
+      "path": "compliance/admin-access-review.md",
+      "updated_at": "2026-11-11T12:45:00Z"
     }
   ],
   "workflows": [
@@ -910,6 +950,50 @@
         "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
       },
       "updated_at": "2026-11-10T10:00:00Z"
+    },
+    {
+      "key": "supply_chain_lead",
+      "version": 1,
+      "path": "bots/supply_chain_lead/v1.json",
+      "sha256": "bbe035e7fc20fceee41aaa2e59901cd72c0770af957414b3e97ed837c3c77557",
+      "files": {
+        "instructions.md": "044e916fb510a7973ecf64a29ac04944baacd5d020a12f6ffcdfe4b4b75f19f3",
+        "persona.md": "e10bf9529f1145b4132c51418d3714ed206c8b41d9abd53f2e7cf98f02e4e690"
+      },
+      "updated_at": "2026-11-10T13:30:00Z"
+    },
+    {
+      "key": "supply_chain_lead",
+      "version": 2,
+      "path": "bots/supply_chain_lead/v2.json",
+      "sha256": "bbe035e7fc20fceee41aaa2e59901cd72c0770af957414b3e97ed837c3c77557",
+      "files": {
+        "instructions.md": "a0c9ce35ed5ce883422043658f488b455f18406d2c776daa19198d87052217a5",
+        "persona.md": "8622681b88a7a14d0d0f2f1316753b062024e97de7b2a59aa2367a5f3c14575f"
+      },
+      "updated_at": "2026-11-11T12:00:00Z"
+    },
+    {
+      "key": "field_success_lead",
+      "version": 1,
+      "path": "bots/field_success_lead/v1.json",
+      "sha256": "56b5b74f86dcd4490c84697a58a3cb23be99d582f3198eca4284a09dc810d24d",
+      "files": {
+        "instructions.md": "bde161041455058d998bb759e9bd4af744f9a238c0970402c4935df08e242347",
+        "persona.md": "eee864c40b6a72f3c13e0b385809af18e3fcf401693d3e1299af58a2f652fe79"
+      },
+      "updated_at": "2026-11-11T12:30:00Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 5,
+      "path": "bots/qa_specialist/v5.json",
+      "sha256": "b9efd5eeb3b13cf09d4e27802cf70409e1dfa985fa427fb3b513007fcbee2753",
+      "files": {
+        "instructions.md": "59e62798706efbcd614ce8bbefedc6f7757abb72fca001966215810809fbe1da",
+        "persona.md": "0d558aebd09b997bba03d838cf1aa9d459be37391ece842c5764486da5a3b0a6"
+      },
+      "updated_at": "2026-11-10T13:30:00Z"
     }
   ]
 }

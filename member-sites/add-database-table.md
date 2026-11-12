@@ -1,16 +1,16 @@
 ---
-name: Add a database table to a member site
-description: Add a table to a static member site's db/schema.json with the narrowest rules, read and write it with fluid.db, and check it locally with fluid sites dev.
+name: Add a database table to a Site
+description: Add a table to a Site's db/schema.json with the narrowest rules, read and write it with fluid.db, and check it locally with fluid sites dev.
 icon: database
 ---
 
 # Goal
 
-Give a static member site a table for something visitors write (a guestbook, RSVPs, a sign-up list), declared in `db/schema.json`, read and written from the page with `fluid.db`, and checked against the local database before anything is published.
+Give a Site a table for something visitors write (a guestbook, RSVPs, a sign-up list), declared in `db/schema.json`, read and written from the page with `fluid.db`, and checked against the local database before anything is published.
 
 # Steps
 
-1. Confirm the active folder is a static member site: `read_file("package.json")` and check that `dependencies` or `devDependencies` names `@fluid-app/sites`. If not, stop and say: "This folder isn't a static member site (its package.json doesn't depend on @fluid-app/sites), so I didn't change anything." A Liquid member site has no `db/schema.json`; never use `fluid member-site` commands here.
+1. Confirm the active folder is a Site: `read_file("package.json")` and check that `dependencies` or `devDependencies` names `@fluid-app/sites`. If not, stop and say: "This folder isn't a Site (its package.json doesn't depend on @fluid-app/sites), so I didn't change anything." An old Liquid site has no `db/schema.json`; never use `fluid member-site` commands here.
 2. Read what is there: `db/schema.json` if it exists, and `src/` for code that already uses `fluid.db`. Extend an existing table or page rather than adding a second copy.
 3. If there is no `db/schema.json` yet, tell the user before you add one: adding it creates the site's database on the next publish, and its usage (rows read, rows written and storage held) is billed to the company's credits, metered by day per site, with no free allowance. Go on only after they agree.
 4. Ask the user:
