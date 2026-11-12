@@ -26,7 +26,7 @@ Show data from another tool on a Site: Linear issues, GitHub releases, CRM deals
    Rules for both: `read: signed_in` (or narrower), and `insert`, `update`, `delete` all `nobody`. Only the function writes, as the site; the browser only reads. A column people edit (a note, a pin) needs its own write path, and the sync must never overwrite it.
 4. **Secrets and the mock switch.**
    - The token: `run_cli` `fluid sites env set LINEAR_API_KEY <value> --secret`, with the value the user gave you as the argument. Never ask them to paste it in a terminal, and never write it into code, `dist/` or a response.
-   - The switch: a plain env var `LINEAR_SOURCE` set to `live`. Anything else means mock.
+   - The switch: a plain env var `LINEAR_SOURCE`, `live` or `mock` (unset means mock). Any other value fails the run, so a typo never swaps real data for samples.
    - Mock data lives in `functions/lib/fixtures/` **in the API's own response shape**, so mock and live run the same mapping code.
    - Locally, both go in `.fluid/secrets.env` as `NAME=value` lines (never committed).
    - Names match `^(?!FLUID_)[A-Z][A-Z0-9_]{0,63}$`; a site holds at most 64.
