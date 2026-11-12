@@ -392,6 +392,15 @@
       ]
     },
     {
+      "slug": "marketing/brand-agent-brief",
+      "name": "Brand Agent Brief",
+      "description": "Build the business profile, answer pack and guardrails an AI brand agent needs (ChatGPT business profile and Business Agent, an on-site shopper assistant) from this store's real catalog, shipping and brand voice, and flag what is missing before anything is published.",
+      "category": "marketing",
+      "icon": "bot",
+      "path": "marketing/brand-agent-brief.md",
+      "updated_at": "2026-11-11T12:00:00Z"
+    },
+    {
       "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
