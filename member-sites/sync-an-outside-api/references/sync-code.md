@@ -3,6 +3,7 @@
 Generic code for the pattern in the skill. It syncs Linear issues into an `issues` table through one area function (`work`) and a schedule (`work-tick`).
 - The functions use the global types `fluid sites functions new` writes into `functions/fluid-env.d.ts` (`FluidContext`, `FluidFunction`, `FluidResult`), and typecheck against them with `strict` on.
 - The page code typechecks against `@fluid-app/sites`.
+- The Linear query was checked against Linear's published GraphQL schema (`packages/sdk/src/schema.graphql`). The claim, lease and watermark logic is typechecked, not yet run on a live site.
 - Rename `work`, `issues` and `linear` to fit the site.
 
 ## db/schema.json (the two tables)
@@ -31,6 +32,7 @@ Generic code for the pattern in the skill. It syncs Linear issues into an `issue
       "columns": {
         "source": { "type": "text", "required": true },
         "scope": { "type": "text", "required": true },
+        "run_no": { "type": "integer", "required": true, "default": 0 },
         "state": { "type": "text", "required": true, "default": "ok" },
         "last_attempt_at": { "type": "timestamp" },
         "lease_until": { "type": "timestamp" },
@@ -126,7 +128,7 @@ export async function beginSync(ctx: FluidContext, source: string, manual: boole
   const run = must(
     await db
       .from("sync_runs")
-      .select("id,state,lease_until,last_attempt_at,last_manual_at,cursor,watermark,pass_max")
+      .select("id,run_no,state,lease_until,last_manual_at,cursor,watermark,pass_max")
       .eq("source", source)
       .eq("scope", "global")
       .maybeSingle(),
@@ -139,13 +141,21 @@ export async function beginSync(ctx: FluidContext, source: string, manual: boole
   if (run?.state === "running" && now < leaseUntil) return { ok: false, retryAt: iso(leaseUntil) };
   const busy = { ok: false, retryAt: iso(now + LEASE_MS) } as const;
 
-  const patch: Row = { state: "running", last_attempt_at: iso(now), lease_until: iso(now + LEASE_MS), error: null };
+  // run_no counts claims. The update below matches only while it still holds the number read above.
+  const runNo = Number(run?.run_no ?? 0);
+  const patch: Row = {
+    run_no: runNo + 1,
+    state: "running",
+    last_attempt_at: iso(now),
+    lease_until: iso(now + LEASE_MS),
+    error: null,
+  };
   if (manual) patch.last_manual_at = patch.last_attempt_at;
   if (run) {
-    // Compare and set: the update matches only if no other run claimed the row since the read above.
-    const claim = db.from("sync_runs").update(patch).eq("id", String(run.id));
-    const attempt = text(run.last_attempt_at);
-    const claimed = must(await (attempt ? claim.eq("last_attempt_at", attempt) : claim.is("last_attempt_at", null)).select("id"));
+    // Compare and set on an integer, so another run that claimed the row since the read makes this match nothing.
+    const claimed = must(
+      await db.from("sync_runs").update(patch).eq("id", String(run.id)).eq("run_no", runNo).select("id"),
+    );
     if (claimed.length === 0) return busy;
   } else {
     const inserted = await db.from("sync_runs").insert({ source, scope: "global", ...patch });
@@ -163,7 +173,8 @@ export type Finish = ({ ok: true; items: number } & SyncPosition) | { ok: false;
  * last_good_at, so a failure keeps "last good data at …". A failure also
  * drops the page cursor: a cursor the API no longer accepts would otherwise
  * fail every later run. The next run starts the pass again from the
- * watermark, which is safe because reconcile is idempotent.
+ * watermark, which is safe because reconcile is idempotent. The cost: a
+ * transient error during a long first fill starts that fill over.
  */
 export async function finishSync(ctx: FluidContext, source: string, finish: Finish): Promise<void> {
   const patch: Row = finish.ok
@@ -358,12 +369,12 @@ export async function syncIssues(ctx: FluidContext, opts: { manual: boolean }): 
   const claim = await beginSync(ctx, "linear", opts.manual);
   if (!claim.ok) return Response.json({ error: "too_soon", retry_at: claim.retryAt }, { status: 429 });
   try {
-    // The first live pass (no watermark yet) also deletes the rows a mock run left ("mock-" ids).
-    const firstLivePass = ctx.secrets.LINEAR_SOURCE === "live" && claim.watermark === null && claim.cursor === null;
-    const [page] = await Promise.all([
-      issuePage(ctx, claim),
-      firstLivePass && ctx.fluid.db.from("issues").delete().eq("source", "linear").like("source_id", "mock-%").then(must),
-    ]);
+    const page = await issuePage(ctx, claim);
+    // The first live pass (no watermark yet) deletes the rows a mock run left ("mock-" ids),
+    // after the fetch worked, so a wrong token never empties the page.
+    if (ctx.secrets.LINEAR_SOURCE === "live" && claim.watermark === null && claim.cursor === null) {
+      must(await ctx.fluid.db.from("issues").delete().eq("source", "linear").like("source_id", "mock-%"));
+    }
     const rows = page.issues
       .filter((issue) => !issue.archivedAt)
       .map((issue) => ({
@@ -549,7 +560,7 @@ curl -X POST http://127.0.0.1:<port>/_fluid/fn/_dev/fire/work-tick
 | Step | Requests |
 | --- | --- |
 | `beginSync`: select, then a compare-and-set update or the first insert | 2 |
-| Delete leftover mock rows (first live pass only, beside the fetch) | 1 |
+| Delete leftover mock rows (first live pass only, after the fetch) | 1 |
 | One API page | 1 |
 | `reconcile`: select, then insert, one update per distinct change and the archived delete together | up to 3 + `PAGE_SIZE` |
 | `finishSync` | 1 |

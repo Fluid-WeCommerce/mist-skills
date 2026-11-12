@@ -6,7 +6,7 @@ icon: refresh-cw
 
 # Goal
 
-Show data from another tool on a Site: Linear issues, GitHub releases, CRM deals, tickets. A server function calls the API with a secret token and writes rows into `fluid.db`. The page reads those rows, shows "last synced 2 min ago", and has a **Sync now** button. A schedule keeps the data fresh. The code in the reference is the pattern a production internal Site runs, made generic.
+Show data from another tool on a Site: Linear issues, GitHub releases, CRM deals, tickets. A server function calls the API with a secret token and writes rows into `fluid.db`. The page reads those rows, shows "last synced 2 min ago", and has a **Sync now** button. A schedule keeps the data fresh. The reference code is based on the sync a production internal Site runs, made generic, plus run claiming and incremental paging. Those two additions are typechecked but not yet proven on a live site, so the local checks in step 10 matter.
 
 # Steps
 
@@ -75,7 +75,7 @@ Show data from another tool on a Site: Linear issues, GitHub releases, CRM deals
 
 # Production gotchas
 
-- **Webhooks into a private site.** If an outside service pushes to a `key` function instead of the site pulling, note that production answered **503** to API keys on a **private** site until the gateway deployed on 2026-11-12. A 503 there now has another cause.
+- **Webhooks into a private site.** If an outside service pushes to a `key` function instead of the site pulling, and its API key gets **503** on a **private** site: production gateways before 2026-11-12 answered that way. Check the gateway's version before you suspect the key.
 - **Schedules.** They are the newest part of Sites, so confirm in `fluid sites logs` that ticks arrive before you promise "updates every 15 minutes".
 
 # Guardrails
