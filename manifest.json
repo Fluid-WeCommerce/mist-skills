@@ -965,6 +965,17 @@
       "updated_at": "2026-11-11T12:00:00Z"
     },
     {
+      "key": "field_success_lead",
+      "version": 1,
+      "path": "bots/field_success_lead/v1.json",
+      "sha256": "56b5b74f86dcd4490c84697a58a3cb23be99d582f3198eca4284a09dc810d24d",
+      "files": {
+        "instructions.md": "bde161041455058d998bb759e9bd4af744f9a238c0970402c4935df08e242347",
+        "persona.md": "eee864c40b6a72f3c13e0b385809af18e3fcf401693d3e1299af58a2f652fe79"
+      },
+      "updated_at": "2026-11-11T12:30:00Z"
+    },
+    {
       "key": "qa_specialist",
       "version": 5,
       "path": "bots/qa_specialist/v5.json",
