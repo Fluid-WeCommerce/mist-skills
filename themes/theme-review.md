@@ -713,6 +713,7 @@ When reviewing any theme file, run through this in order. Anything unchecked is 
 - [ ] JSON-valued attributes (`bundled-items`, `bundle-selections`) are valid JSON with numeric IDs and quantities
 - [ ] Attributes live on `<button>` or `<a>` (not `<div>` without semantics)
 - [ ] The theme doesn't load the FairShare SDK itself — no `<script id="fluid-cdn-script">` in theme files; Fluid loads it from a storefront Global Embed
+- [ ] No theme script calls `FairShareSDK.createCart()` to read data (it replaces the shopper's cart); a custom `addCartItems` button opens the SDK drawer at click with `FairShareSDK.cart.control.open()`
 
 **Security & a11y**
 
