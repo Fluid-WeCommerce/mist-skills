@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Social Selling Coach",
+    "description": "Makes your field's sharing pay off: finds which products, pages, videos and playlists reps share that actually turn into visits and orders, builds a weekly share-ready pack, spreads what your top sharers do to everyone else, and keeps every post clear of risky claims."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "marketing",
+    "pitch": "Your head of social selling: shows reps what to share, when and how, based on what actually sells.",
+    "character": {
+      "body": "capsule",
+      "color": "#DB2777",
+      "eyes": "happy",
+      "accessory": "megaphone"
+    },
+    "highlights": [
+      "Ranks your shareable content by the visits and orders it brings, not just how often it's shared",
+      "Builds a weekly share-ready pack of products, videos and pages for the field",
+      "Finds content nobody shares and content that gets shared but never sells",
+      "Learns what your top sharers do differently and turns it into simple coaching",
+      "Watches what reps post on Today and spots stories worth sharing more widely",
+      "Sends every caption and post past your compliance review before it goes out"
+    ],
+    "example_prompts": [
+      "What should our reps share this week?",
+      "Which products get shared a lot but rarely sell from a share?",
+      "What do our top sharers do that everyone else doesn't?",
+      "Which videos and pages has nobody shared in a month?",
+      "Build a share-ready playlist for the spring launch",
+      "Write three captions reps can use for our best seller"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every Monday at 8am: weekly share pack",
+        "kind": "schedule",
+        "cron": "0 8 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Thursday at 9am: mid-week sharing check",
+        "kind": "schedule",
+        "cron": "0 9 * * 4",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 1st at 9am: monthly content review",
+        "kind": "schedule",
+        "cron": "0 9 1 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When someone posts on Today",
+        "kind": "event",
+        "topic": "today_posts.created"
+      }
+    ],
+    "name_suggestions": [
+      "Social Selling Coach",
+      "Share Coach",
+      "Content Coach"
+    ]
+  }
+}

@@ -985,6 +985,28 @@
         "persona.md": "0d558aebd09b997bba03d838cf1aa9d459be37391ece842c5764486da5a3b0a6"
       },
       "updated_at": "2026-11-10T13:30:00Z"
+    },
+    {
+      "key": "social_selling_coach",
+      "version": 1,
+      "path": "bots/social_selling_coach/v1.json",
+      "sha256": "60ac571f5f43da3730eb1f7147a09d6f76e615d5cc23d164a89f5f1d51afa15e",
+      "files": {
+        "instructions.md": "b6b656d6eb4965b83e056d839dbbb401bad33608d31dc0de33c444150db5c47d",
+        "persona.md": "b8ae2b2b3c03e26594a95e1cf6a8b6ba76273c51045378911bb9e3f87c298879"
+      },
+      "updated_at": "2026-11-13T12:30:00Z"
+    },
+    {
+      "key": "field_success_lead",
+      "version": 2,
+      "path": "bots/field_success_lead/v2.json",
+      "sha256": "56b5b74f86dcd4490c84697a58a3cb23be99d582f3198eca4284a09dc810d24d",
+      "files": {
+        "instructions.md": "bde161041455058d998bb759e9bd4af744f9a238c0970402c4935df08e242347",
+        "persona.md": "cdcbf3177d37f831489152e9b756da1aa655acc45c92483e777757aee55a9e1b"
+      },
+      "updated_at": "2026-11-13T12:30:00Z"
     }
   ]
 }

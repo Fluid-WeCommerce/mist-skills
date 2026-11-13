@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Field Success Lead",
+    "description": "Keeps the reps you bring in: watches every new rep's first 90 days, helps them to a first sale early, gets sponsors involved, catches active reps going quiet, and shows which sponsors, kits and training actually keep people."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "team",
+    "pitch": "Your head of field success: gets new reps to a first win fast and reaches quiet reps before they quit.",
+    "character": {
+      "body": "round",
+      "color": "#0D9488",
+      "eyes": "happy",
+      "accessory": "heart"
+    },
+    "highlights": [
+      "Tracks every new rep's days to a first sale, cohort by cohort",
+      "Flags new reps who haven't started by day 7, while there's time to help",
+      "Tells sponsors which of their new people need a hand",
+      "Finds reps whose sponsor has left, and suggests who should adopt them",
+      "Catches active reps going quiet and works out why",
+      "Shows which sponsors, kits and training keep reps past 90 days"
+    ],
+    "example_prompts": [
+      "How many of last month's new reps have made a first sale?",
+      "Which new reps haven't started yet, and who is their sponsor?",
+      "Which reps went quiet this week, and what changed for them?",
+      "Which sponsors keep their new people longest?",
+      "Which reps have a sponsor who is no longer active?",
+      "Which training should every new rep see first?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every weekday at 8am: new-rep check",
+        "kind": "schedule",
+        "cron": "0 8 * * 1-5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 9am: weekly field review",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 1st at 9am: monthly retention review",
+        "kind": "schedule",
+        "cron": "0 9 1 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When someone enrolls",
+        "kind": "event",
+        "topic": "enrollment.completed"
+      },
+      {
+        "label": "When a member is deactivated",
+        "kind": "event",
+        "topic": "member.deactivated"
+      },
+      {
+        "label": "When a member's rank changes",
+        "kind": "event",
+        "topic": "member_ranks.changed"
+      }
+    ],
+    "name_suggestions": [
+      "Field Success Lead",
+      "Rep Success Coach",
+      "Field Mentor"
+    ]
+  }
+}
