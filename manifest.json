@@ -676,6 +676,15 @@
       "icon": "shield-check",
       "path": "compliance/admin-access-review.md",
       "updated_at": "2026-11-11T12:45:00Z"
+    },
+    {
+      "slug": "compliance/late-shipment-notices",
+      "name": "Late shipment notices",
+      "description": "Find paid orders that haven't shipped and are nearing or past the ship-by date you promised (or the 30-day default), draft the delay notice with a new date and the option to cancel, send only what the user approves, and save a dated record of every notice for the FTC's Mail Order Rule.",
+      "category": "compliance",
+      "icon": "truck",
+      "path": "compliance/late-shipment-notices.md",
+      "updated_at": "2026-11-13T12:45:00Z"
     }
   ],
   "workflows": [
