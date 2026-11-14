@@ -688,6 +688,15 @@
       "icon": "shield-check",
       "path": "compliance/admin-access-review.md",
       "updated_at": "2026-11-11T12:45:00Z"
+    },
+    {
+      "slug": "marketing/agent-checkout-dry-run",
+      "name": "Agent Checkout Dry Run",
+      "description": "Walk a store's public cart path the way a shopping agent would, in each country it sells in, and report where an agent gets stuck before payment (unavailable items, missing prices, enrollment-only or subscription-only products, countries that fail), without placing an order.",
+      "category": "marketing",
+      "icon": "shopping-cart",
+      "path": "marketing/agent-checkout-dry-run.md",
+      "updated_at": "2026-11-13T13:00:00Z"
     }
   ],
   "workflows": [
