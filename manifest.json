@@ -401,6 +401,15 @@
       "updated_at": "2026-11-11T12:00:00Z"
     },
     {
+      "slug": "marketing/storefront-search-speed-scan",
+      "name": "Storefront Search & Speed Scan",
+      "description": "Scan the products and categories shoppers will land on this sale season for hidden search and AI-discovery problems (pages blocked from search, missing or inherited titles and descriptions, default share images, slow or low-scoring pages) and rank the fixes by traffic at stake.",
+      "category": "marketing",
+      "icon": "search-check",
+      "path": "marketing/storefront-search-speed-scan.md",
+      "updated_at": "2026-11-12T12:00:00Z"
+    },
+    {
       "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
