@@ -997,6 +997,39 @@
         "persona.md": "0d558aebd09b997bba03d838cf1aa9d459be37391ece842c5764486da5a3b0a6"
       },
       "updated_at": "2026-11-10T13:30:00Z"
+    },
+    {
+      "key": "international_expansion_lead",
+      "version": 1,
+      "path": "bots/international_expansion_lead/v1.json",
+      "sha256": "7f2fd41ccb2b6a24d2fe36f79876a56fd6b9abd2abf1cffbb25b443d0900ba7c",
+      "files": {
+        "instructions.md": "85afcc8c8ec6269f1780eedcce22172aeb84de34d1d05fbdd38b80da0d25b999",
+        "persona.md": "c81df474d0e7075136c290a8e5ae3c4b0d418551e93691f07aef226b85db03e6"
+      },
+      "updated_at": "2026-11-12T12:30:00Z"
+    },
+    {
+      "key": "moderator",
+      "version": 5,
+      "path": "bots/moderator/v5.json",
+      "sha256": "a90ca0382c77f4cab4de391bcba590533d0eddbe8770cf366f8716ac6f69eff0",
+      "files": {
+        "instructions.md": "38bab4a8c507bdab171ecf6e61cd7b0c14d59d00efc756ba1cc5096735f6f474",
+        "persona.md": "509de0760defca3d6e329dc608ff7c94a122d9504292d9a48fd3afc667077c69"
+      },
+      "updated_at": "2026-11-12T12:30:00Z"
+    },
+    {
+      "key": "supply_chain_lead",
+      "version": 3,
+      "path": "bots/supply_chain_lead/v3.json",
+      "sha256": "bbe035e7fc20fceee41aaa2e59901cd72c0770af957414b3e97ed837c3c77557",
+      "files": {
+        "instructions.md": "a0c9ce35ed5ce883422043658f488b455f18406d2c776daa19198d87052217a5",
+        "persona.md": "14b5fb9bd5da49af9239c56c2faa6b25d975048af4ba2435b85d8551d8798806"
+      },
+      "updated_at": "2026-11-12T12:30:00Z"
     }
   ]
 }
