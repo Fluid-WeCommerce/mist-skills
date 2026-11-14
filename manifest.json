@@ -1004,7 +1004,7 @@
       "path": "bots/comp_plan_strategist/v1.json",
       "sha256": "b1b3ecb978221320b6ce2cd528fad25718e96f007365fb4daeb8a0ff28466d51",
       "files": {
-        "instructions.md": "c2efe8ac2a4a7fe08d3098db6b692c3c99dbd483e9ff06eaf68605e9c3237553",
+        "instructions.md": "351f99b4c6cfd693982002cba3abbffb60d8a563bb069d0777f00a84eb46006e",
         "persona.md": "dbbd59e66dd01328d872e9350f5a5f742ad9f5001e57e570cfe1b9849ba9f64a"
       },
       "updated_at": "2026-11-14T12:00:00Z"
