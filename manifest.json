@@ -564,6 +564,15 @@
       "updated_at": "2026-10-10T18:00:00Z"
     },
     {
+      "slug": "sales/subscription-decline-recovery",
+      "name": "Subscription decline recovery",
+      "description": "Win back past-due subscriptions without double-messaging customers, retrying cards that must not be retried, or charging anyone without a person.",
+      "category": "sales",
+      "icon": "credit-card",
+      "path": "sales/subscription-decline-recovery.md",
+      "updated_at": "2026-11-05T14:09:06Z"
+    },
+    {
       "slug": "themes/clone-blog-page",
       "name": "Clone Blog Page",
       "description": "Recreate a source blog/journal index as the Fluid post_page route with real posts, author and date metadata, category filtering, and pagination. Finds blogs on subdomains, subpaths, or external platforms.",
