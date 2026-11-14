@@ -672,6 +672,42 @@
       "updated_at": "2026-11-09T13:00:00Z"
     },
     {
+      "slug": "engineering/checkout-funnel-error-audit",
+      "name": "Storefront & checkout-funnel error audit",
+      "description": "Correlate Lighthouse performance regressions and payment error-rate spikes with lost conversions, and rank the fix with the biggest payoff.",
+      "category": "engineering",
+      "icon": "activity",
+      "path": "engineering/checkout-funnel-error-audit.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "engineering/webhook-event-coverage-audit",
+      "name": "Webhook & API health audit",
+      "description": "Check registered webhooks against every resource/event Fluid can fire, flag missing coverage on critical events and configuration risk.",
+      "category": "engineering",
+      "icon": "radio-tower",
+      "path": "engineering/webhook-event-coverage-audit.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "engineering/droplet-integration-health",
+      "name": "Droplet & integration deploy health",
+      "description": "Audit every installed Droplet for stale/broken state and over-broad requested scopes, and flag the riskiest integration first.",
+      "category": "engineering",
+      "icon": "puzzle",
+      "path": "engineering/droplet-integration-health.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
+      "slug": "engineering/dead-link-404-sweep",
+      "name": "Dead link & 404 sweep",
+      "description": "Crawl the live sitemap and fetch every URL to find broken links before customers do, ranked by how prominent the page is.",
+      "category": "engineering",
+      "icon": "link-2",
+      "path": "engineering/dead-link-404-sweep.md",
+      "updated_at": "2026-07-23T00:00:00Z"
+    },
+    {
       "slug": "compliance/genealogy-change-queue",
       "name": "Genealogy change queue",
       "description": "Work the genealogy queue \u2014 new members waiting in a holding tank and pending sponsor or placement move requests \u2014 check each against your sponsor-change policy, recommend place, approve or reject, and apply only what you approve.",
