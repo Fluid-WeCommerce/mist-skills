@@ -516,6 +516,18 @@
       "updated_at": "2026-11-10T00:00:00Z"
     },
     {
+      "slug": "member-sites/sync-an-outside-api",
+      "name": "Sync an outside API into a Site",
+      "description": "Pull data from an outside API (Linear, GitHub or any HTTPS API) into a Site's database with a secret token, a Sync now button and a schedule, inside the function limits.",
+      "category": "member-sites",
+      "icon": "refresh-cw",
+      "path": "member-sites/sync-an-outside-api/SKILL.md",
+      "updated_at": "2026-11-12T19:35:53Z",
+      "references": [
+        "member-sites/sync-an-outside-api/references/sync-code.md"
+      ]
+    },
+    {
       "slug": "sales/checkout-funnel-diagnosis",
       "name": "Checkout funnel diagnosis",
       "description": "Diagnose where the cart-to-completed-order funnel is leaking using order-status buckets and payment approval trends, with a fix recommendation.",
