@@ -672,6 +672,42 @@
       "updated_at": "2026-11-09T13:00:00Z"
     },
     {
+      "slug": "logistics/stuck-fulfillment-queue",
+      "name": "Stuck-fulfillment & aging-order queue",
+      "description": "Find every order stalled past a normal ship SLA, broken down by stage, so the oldest and biggest orders get unstuck first.",
+      "category": "logistics",
+      "icon": "package-search",
+      "path": "logistics/stuck-fulfillment-queue.md",
+      "updated_at": "2026-07-23T09:00:00Z"
+    },
+    {
+      "slug": "logistics/stockout-risk-vs-velocity",
+      "name": "Stockout risk vs. sales velocity",
+      "description": "Compare current inventory against trailing sales velocity to flag every SKU on track to sell out, with a reorder recommendation and revenue at risk.",
+      "category": "logistics",
+      "icon": "package-x",
+      "path": "logistics/stockout-risk-vs-velocity.md",
+      "updated_at": "2026-07-23T09:00:00Z"
+    },
+    {
+      "slug": "logistics/shipping-cost-vs-collected",
+      "name": "Shipping cost vs. collected",
+      "description": "Compare what customers were charged for shipping against actual carrier cost, by carrier and region, to find where you're losing money on delivery.",
+      "category": "logistics",
+      "icon": "truck",
+      "path": "logistics/shipping-cost-vs-collected.md",
+      "updated_at": "2026-07-23T09:00:00Z"
+    },
+    {
+      "slug": "logistics/slow-mover-clearance-list",
+      "name": "Slow-mover clearance list",
+      "description": "Find inventory tying up capital with near-zero sell-through and build a ranked clearance list by dollars freed.",
+      "category": "logistics",
+      "icon": "archive",
+      "path": "logistics/slow-mover-clearance-list.md",
+      "updated_at": "2026-07-23T09:00:00Z"
+    },
+    {
       "slug": "compliance/genealogy-change-queue",
       "name": "Genealogy change queue",
       "description": "Work the genealogy queue \u2014 new members waiting in a holding tank and pending sponsor or placement move requests \u2014 check each against your sponsor-change policy, recommend place, approve or reject, and apply only what you approve.",
