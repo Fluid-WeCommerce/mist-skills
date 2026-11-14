@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Finance Controller",
+    "description": "Keeps your numbers true: checks every day that sales, payments, refunds and tax line up, watches payment approval, fees and the fraud review queue, forecasts subscription revenue, and has a clean close package ready early each month."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "finance",
+    "pitch": "Your controller: makes sure the money matches, catches leaks early, and has month-end ready before you ask.",
+    "character": {
+      "body": "blob",
+      "color": "#B45309",
+      "eyes": "dots",
+      "accessory": "bowtie"
+    },
+    "highlights": [
+      "Checks every day that sales, payments and refunds agree",
+      "Tracks refund rate, payment approval and processing fees by account and country",
+      "Forecasts the next 30 days of subscription renewals and the revenue at risk",
+      "Works the fraud review queue with a recommendation for every held order",
+      "Watches tax collected and filings that need attention",
+      "Builds the month-end close package, with every number traced to its source"
+    ],
+    "example_prompts": [
+      "Do yesterday's orders match the payments we captured?",
+      "What did refunds cost us this month, and what's driving them?",
+      "Which orders are waiting on a fraud review, and what do you recommend?",
+      "How much subscription revenue renews in the next 30 days, and how much is at risk?",
+      "What are we paying in processing fees, by payment account?",
+      "Is the October close package ready?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every weekday at 7am: money check",
+        "kind": "schedule",
+        "cron": "0 7 * * 1-5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 9am: weekly finance review",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "2nd of the month at 8am: close package",
+        "kind": "schedule",
+        "cron": "0 8 2 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When an order is refunded",
+        "kind": "event",
+        "topic": "order.refunded"
+      },
+      {
+        "label": "When a subscription payment is declined",
+        "kind": "event",
+        "topic": "subscription.declined"
+      }
+    ],
+    "name_suggestions": [
+      "Finance Controller",
+      "Ledger",
+      "Controller"
+    ]
+  }
+}
