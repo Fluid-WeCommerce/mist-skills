@@ -997,6 +997,28 @@
         "persona.md": "0d558aebd09b997bba03d838cf1aa9d459be37391ece842c5764486da5a3b0a6"
       },
       "updated_at": "2026-11-10T13:30:00Z"
+    },
+    {
+      "key": "customer_experience_lead",
+      "version": 1,
+      "path": "bots/customer_experience_lead/v1.json",
+      "sha256": "889e434f65013b66d7da030dafdfe41ec8553fd4cc6c1015b140140ca9d77862",
+      "files": {
+        "instructions.md": "5cd09219c7c77dde0bd7d904015b2ae38c9f7a0d9447211716c92dc63bc4a5ac",
+        "persona.md": "26f5b68a7234de84c4dc200dedd40ab00e9843b4d45fd3f4dc0666c4771d0481"
+      },
+      "updated_at": "2026-11-15T12:00:00Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 6,
+      "path": "bots/qa_specialist/v6.json",
+      "sha256": "b9efd5eeb3b13cf09d4e27802cf70409e1dfa985fa427fb3b513007fcbee2753",
+      "files": {
+        "instructions.md": "59e62798706efbcd614ce8bbefedc6f7757abb72fca001966215810809fbe1da",
+        "persona.md": "effea5e3b56c38d093e9176a691d6eb0d17f9e28d65886b461a3873a239f1b4a"
+      },
+      "updated_at": "2026-11-15T12:00:00Z"
     }
   ]
 }
