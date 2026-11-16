@@ -997,6 +997,28 @@
         "persona.md": "0d558aebd09b997bba03d838cf1aa9d459be37391ece842c5764486da5a3b0a6"
       },
       "updated_at": "2026-11-10T13:30:00Z"
+    },
+    {
+      "key": "agentic_commerce_lead",
+      "version": 1,
+      "path": "bots/agentic_commerce_lead/v1.json",
+      "sha256": "752d2363a00b6f98ad2a6ea87d7c4a13b660872c34ebdcfe1095d8c251111e81",
+      "files": {
+        "instructions.md": "6d6443b36356b6f80fa48d8d6d3f0c70600d7032e467b8c35a226b133237eba2",
+        "persona.md": "ed09557f4cd9bb2d4f29c6f6cc5c73ee9ef479216a2466d778cd271e36cd6827"
+      },
+      "updated_at": "2026-11-16T12:30:00Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 5,
+      "path": "bots/revenue_head/v5.json",
+      "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
+      "files": {
+        "instructions.md": "d9d7dc9a44e7155fa78d744144df4f4dc4223809d592559db2a54cd974000d08",
+        "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
+      },
+      "updated_at": "2026-11-16T12:30:00Z"
     }
   ]
 }
