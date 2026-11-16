@@ -688,6 +688,15 @@
       "icon": "shield-check",
       "path": "compliance/admin-access-review.md",
       "updated_at": "2026-11-11T12:45:00Z"
+    },
+    {
+      "slug": "sales/agent-orders-report",
+      "name": "Agent orders report",
+      "description": "Show how many orders AI shopping agents placed in the last 30 days, which agents they were, how sure Fluid is, and how those orders compare with the rest on order value and cancellations.",
+      "category": "sales",
+      "icon": "bot",
+      "path": "sales/agent-orders-report.md",
+      "updated_at": "2026-11-16T13:00:00Z"
     }
   ],
   "workflows": [
