@@ -997,6 +997,17 @@
         "persona.md": "0d558aebd09b997bba03d838cf1aa9d459be37391ece842c5764486da5a3b0a6"
       },
       "updated_at": "2026-11-10T13:30:00Z"
+    },
+    {
+      "key": "loyalty_lead",
+      "version": 1,
+      "path": "bots/loyalty_lead/v1.json",
+      "sha256": "54339e3883f2e36c395969bcfcfa15d89685fab929c5a1d32a34f20301663622",
+      "files": {
+        "instructions.md": "1e313c96938ed8ae386ce85e4c293f975ee8bb6d3fcd7393f4655f10319798b7",
+        "persona.md": "f43df8510dcbff1913e767f037a92431ffb21685fdd19db8403df1e6c5987a2f"
+      },
+      "updated_at": "2026-11-17T12:30:00Z"
     }
   ]
 }
