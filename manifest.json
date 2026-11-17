@@ -672,6 +672,15 @@
       "updated_at": "2026-11-09T13:00:00Z"
     },
     {
+      "slug": "finance/points-liability-report",
+      "name": "Reward points liability report",
+      "description": "Close the month on reward points — what customers earned, spent and got back on refunds, what the unspent balance is worth in each currency, and which markets or refunds need fixing before the books close.",
+      "category": "finance",
+      "icon": "coins",
+      "path": "finance/points-liability-report.md",
+      "updated_at": "2026-11-17T13:00:00Z"
+    },
+    {
       "slug": "compliance/genealogy-change-queue",
       "name": "Genealogy change queue",
       "description": "Work the genealogy queue \u2014 new members waiting in a holding tank and pending sponsor or placement move requests \u2014 check each against your sponsor-change policy, recommend place, approve or reject, and apply only what you approve.",
