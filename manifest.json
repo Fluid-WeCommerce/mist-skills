@@ -401,6 +401,15 @@
       "updated_at": "2026-11-11T12:00:00Z"
     },
     {
+      "slug": "marketing/tiktok-shop-listing-prep",
+      "name": "TikTok Shop Listing Prep",
+      "description": "Rank this store's live products by how ready they are to publish on TikTok Shop, draft each listing's title and selling points from the product's own data, and list what is missing (images, price, sizing, certifications, compliance flags) before anything is published.",
+      "category": "marketing",
+      "icon": "shopping-bag",
+      "path": "marketing/tiktok-shop-listing-prep.md",
+      "updated_at": "2026-11-18T12:00:00Z"
+    },
+    {
       "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
