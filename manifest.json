@@ -688,6 +688,15 @@
       "icon": "shield-check",
       "path": "compliance/admin-access-review.md",
       "updated_at": "2026-11-11T12:45:00Z"
+    },
+    {
+      "slug": "marketing/message-delivery-health",
+      "name": "Message delivery health",
+      "description": "Find out why the company's emails, texts and push messages aren't reaching people \u2014 split setup problems from bad addresses and opt-outs, show who is unreachable, and fix only what you approve.",
+      "category": "marketing",
+      "icon": "mail-warning",
+      "path": "marketing/message-delivery-health.md",
+      "updated_at": "2026-11-18T13:00:00Z"
     }
   ],
   "workflows": [
