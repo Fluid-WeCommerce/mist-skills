@@ -546,6 +546,15 @@
       "updated_at": "2026-10-10T18:00:00Z"
     },
     {
+      "slug": "sales/sales-by-product-field",
+      "name": "Sales by product field",
+      "description": "Break the last 90 days of sales down by any custom product field (material, supplier, collection line) kept as a variant metafield, with units, revenue and share per value.",
+      "category": "sales",
+      "icon": "bar-chart-3",
+      "path": "sales/sales-by-product-field.md",
+      "updated_at": "2026-11-19T12:00:00Z"
+    },
+    {
       "slug": "sales/rep-momentum-scoreboard",
       "name": "Rep signup momentum scoreboard",
       "description": "Track rep/enrollment signup momentum by week and market, and surface the newest reps already active enough to be worth a personal spotlight.",
