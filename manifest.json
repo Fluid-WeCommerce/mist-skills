@@ -352,6 +352,15 @@
       "updated_at": "2026-10-02T06:09:26Z"
     },
     {
+      "slug": "marketing/visual-shopping-readiness",
+      "name": "Visual shopping readiness",
+      "description": "Audit the live catalog for what AI shopping agents and virtual try-on need (a primary image, several images per product, size and color options, a real description) and list the products to fix first.",
+      "category": "marketing",
+      "icon": "scan-search",
+      "path": "marketing/visual-shopping-readiness.md",
+      "updated_at": "2026-11-20T10:30:00Z"
+    },
+    {
       "slug": "marketing/brand-social-import",
       "name": "Brand Social Content Import",
       "description": "Import a company's OWN YouTube + TikTok videos into Fluid: find the official accounts, register them in social-media settings, and pull their videos into the DAM + Media. Not UGC \u2014 this is the brand's own content.",
