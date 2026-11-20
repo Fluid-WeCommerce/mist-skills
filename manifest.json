@@ -997,6 +997,28 @@
         "persona.md": "0d558aebd09b997bba03d838cf1aa9d459be37391ece842c5764486da5a3b0a6"
       },
       "updated_at": "2026-11-10T13:30:00Z"
+    },
+    {
+      "key": "product_lifecycle_lead",
+      "version": 1,
+      "path": "bots/product_lifecycle_lead/v1.json",
+      "sha256": "4d4c5d47f3bc952cd838d247f523d6e6126cfdacb8b5b22fa69b2ba2bc3196ef",
+      "files": {
+        "instructions.md": "1743fb4bfad38885d46cb5c08e550dc494de0ee31d176442012bb87afa70fb2d",
+        "persona.md": "4a70a467590af7b2e54f06eccb00bfde0e4be37d386282930200dc343dd8c7a1"
+      },
+      "updated_at": "2026-11-20T12:00:00Z"
+    },
+    {
+      "key": "supply_chain_lead",
+      "version": 3,
+      "path": "bots/supply_chain_lead/v3.json",
+      "sha256": "bbe035e7fc20fceee41aaa2e59901cd72c0770af957414b3e97ed837c3c77557",
+      "files": {
+        "instructions.md": "a0c9ce35ed5ce883422043658f488b455f18406d2c776daa19198d87052217a5",
+        "persona.md": "de952938727ad2c9c8857de3e65a34035d06d901de11dba7743ad247656a3b15"
+      },
+      "updated_at": "2026-11-20T12:00:00Z"
     }
   ]
 }
