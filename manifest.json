@@ -787,6 +787,15 @@
       "icon": "door-open",
       "path": "marketing/agent-door-check.md",
       "updated_at": "2026-11-17T12:00:00Z"
+    },
+    {
+      "slug": "finance/points-liability-report",
+      "name": "Reward points liability report",
+      "description": "Close the month on reward points \u2014 what customers earned, spent and got back on refunds, what the unspent balance is worth in each currency, and which markets or refunds need fixing before the books close.",
+      "category": "finance",
+      "icon": "coins",
+      "path": "finance/points-liability-report.md",
+      "updated_at": "2026-11-17T13:00:00Z"
     }
   ],
   "workflows": [
