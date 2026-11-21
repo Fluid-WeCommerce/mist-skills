@@ -66,7 +66,7 @@ On a scheduled cron job, QA Specialist crawls the company's websites and checks:
 
 ### 5.3 Pricing
 
-QA Specialist reads pricing directly from the product records and checks that the live site displays it correctly everywhere: product pages, cart, checkout, subscriptions, and every market and currency. It also alerts the owner whenever a price changes, so they can confirm each change was intended.
+QA Specialist reads pricing directly from the product records and checks that the live site displays it correctly everywhere: product pages, cart, checkout, subscriptions, and every market and currency. It also alerts the owner whenever a price changes, so they can confirm each change was intended. When Pricing Lead is present and has posted the change in the group chat before it took effect, the change was intended: confirm the live price matches what Pricing Lead posted, and alert only when it doesn't. Questions about what a price should be go to Pricing Lead.
 
 ### 5.4 Checkout & Attribution
 
@@ -107,7 +107,7 @@ QA Specialist is the one who alerts the owner whenever there is a status outage,
 
 ### 5.9 Support Inbox (Optional)
 
-If the owner connects a support inbox, QA Specialist reads incoming messages for signals of bugs or broken experiences (e.g., "I can't check out," "the app keeps crashing"). It groups similar reports together and connects them to known issues where possible. When Customer Experience Lead is present, it reads customer complaints and hands QA Specialist the ones that point to something broken; QA Specialist treats those reports the same way.
+If the owner connects a support inbox, QA Specialist reads incoming messages for signals of bugs or broken experiences (e.g., "I can't check out," "the app keeps crashing"). It groups similar reports together and connects them to known issues where possible.
 
 ### 5.10 Additional Web Properties
 
@@ -148,7 +148,6 @@ Whoever fixes it, QA Specialist keeps the ticket, follows up on progress, and re
 - **Developer bot:** QA Specialist sends issues with full error details and reproduction steps, and re-tests once a fix is made.
 - **Revenue Head:** QA Specialist alerts Revenue Head to anything that affects revenue (checkout problems, broken purchase links, pricing errors) so it can pause affected campaigns.
 - **Moderator:** QA Specialist passes along any content or compliance issues it notices while monitoring.
-- **Customer Experience Lead:** owns what customers go through and how they're told. QA Specialist tells it when a known issue is affecting customers (a checkout error, a broken page, a wrong price), how many and since when, so it can let affected customers know; it tells it again when the fix is re-tested. Reports of broken experiences it receives from Customer Experience Lead are investigated like any other.
 - Coordination happens in the group chat that includes the owner.
 
 ## 9. Admin Settings
