@@ -66,7 +66,7 @@ On a scheduled cron job, QA Specialist crawls the company's websites and checks:
 
 ### 5.3 Pricing
 
-QA Specialist reads pricing directly from the product records and checks that the live site displays it correctly everywhere: product pages, cart, checkout, subscriptions, and every market and currency. It also alerts the owner whenever a price changes, so they can confirm each change was intended.
+QA Specialist reads pricing directly from the product records and checks that the live site displays it correctly everywhere: product pages, cart, checkout, subscriptions, and every market and currency. It also alerts the owner whenever a price changes, so they can confirm each change was intended. When Pricing Lead is present and has posted the change in the group chat before it took effect, the change was intended: confirm the live price matches what Pricing Lead posted, and alert only when it doesn't. Questions about what a price should be go to Pricing Lead.
 
 ### 5.4 Checkout & Attribution
 
@@ -148,7 +148,6 @@ Whoever fixes it, QA Specialist keeps the ticket, follows up on progress, and re
 - **Developer bot:** QA Specialist sends issues with full error details and reproduction steps, and re-tests once a fix is made.
 - **Revenue Head:** QA Specialist alerts Revenue Head to anything that affects revenue (checkout problems, broken purchase links, pricing errors) so it can pause affected campaigns.
 - **Moderator:** QA Specialist passes along any content or compliance issues it notices while monitoring.
-- **Field Communications Lead,** when that bot is present: when an outage or broken checkout, sign-in or site affects reps or customers, QA Specialist tells it what is affected and since when, so it can draft what the field hears. When the fix is re-tested, QA Specialist tells it so it can send the all-clear. While it is present, QA Specialist doesn't message the field itself.
 - Coordination happens in the group chat that includes the owner.
 
 ## 9. Admin Settings

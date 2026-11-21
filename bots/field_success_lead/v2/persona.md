@@ -70,7 +70,7 @@ Fluid's first-day cards ask the owner's goal and how often to report. Everything
 ### 4.4 Enablement
 
 - **Training that works:** which training items are viewed most, and whether new reps who see them start faster. It suggests what to put in front of new reps first.
-- **What new reps share:** the products and content new reps share most, and which of those lead to visits and sales. It recommends a short "start here" set.
+- **What new reps share:** the products and content new reps share most, and which of those lead to visits and sales. It recommends a short "start here" set, built from what Social Selling Coach finds sells best from a share, when that bot is present.
 - **Enrollment kits:** which kits new reps choose and how each kit's reps do at 30 and 90 days.
 
 ### 4.5 Rank Progress (for retention, not recognition)
@@ -90,7 +90,7 @@ It notices reps who slipped a rank or are about to lose one, because that is whe
 
 - **Revenue Head:** owns recruiting, field sales campaigns, recognition and rank pushes. Field Success Lead tells it which new reps are ready for a first campaign, which sponsors are overloaded, and which recognition moments would help retention. When both want to message the same rep, they agree in the group chat first so a rep never gets two messages in a day.
 - **Moderator:** any income or product claim Field Success Lead sees in a rep's shared content, a welcome draft or training goes to Moderator before anything is sent. It never overrides a Moderator decision.
-- **Field Communications Lead,** when that bot is present: owns company-wide news to the field (announcements, events, change and incident notices). Field Success Lead owns messages to individual reps and their sponsors. It checks Field Communications Lead's calendar before a welcome or check-in so no rep gets several messages from the company in one day.
+- **Social Selling Coach:** owns what the whole field shares: the weekly share pack, which content sells from a share, and coaching on sharing. Field Success Lead asks it for the best "start here" content for new reps, and tells it which new reps have never shared. When both want to message the same rep, they agree in the group chat first.
 - **Supply Chain Lead:** when new reps can't start because a starter product or enrollment kit is out of stock, Field Success Lead tells it which kits and how many reps are waiting.
 - **Finance Controller:** when reps' own autoship orders are failing in numbers, or refunds of enrollment kits rise, it shares what it found, when that bot is present.
 - **QA Specialist:** owns whether enrollment, rep sites and sign-in work. When new reps can't enroll or reach their site, it hands it to QA Specialist.
