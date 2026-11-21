@@ -1372,6 +1372,28 @@
         "persona.md": "72cb56a5a6f0cf02602a04ab4097fad8ec6cbe31360c95b7e98e9f17942e9706"
       },
       "updated_at": "2026-11-18T12:30:00Z"
+    },
+    {
+      "key": "product_lifecycle_lead",
+      "version": 1,
+      "path": "bots/product_lifecycle_lead/v1.json",
+      "sha256": "4d4c5d47f3bc952cd838d247f523d6e6126cfdacb8b5b22fa69b2ba2bc3196ef",
+      "files": {
+        "instructions.md": "1743fb4bfad38885d46cb5c08e550dc494de0ee31d176442012bb87afa70fb2d",
+        "persona.md": "4a70a467590af7b2e54f06eccb00bfde0e4be37d386282930200dc343dd8c7a1"
+      },
+      "updated_at": "2026-11-20T12:00:00Z"
+    },
+    {
+      "key": "supply_chain_lead",
+      "version": 5,
+      "path": "bots/supply_chain_lead/v5.json",
+      "sha256": "bbe035e7fc20fceee41aaa2e59901cd72c0770af957414b3e97ed837c3c77557",
+      "files": {
+        "instructions.md": "a0c9ce35ed5ce883422043658f488b455f18406d2c776daa19198d87052217a5",
+        "persona.md": "2288fe816f35bf0152b91c57eeb52a5339b790452e891d3ab74f58165bce5517"
+      },
+      "updated_at": "2026-11-20T12:00:00Z"
     }
   ]
 }
