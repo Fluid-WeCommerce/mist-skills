@@ -697,6 +697,15 @@
       "icon": "shield-check",
       "path": "compliance/admin-access-review.md",
       "updated_at": "2026-11-11T12:45:00Z"
+    },
+    {
+      "slug": "sales/retire-a-product",
+      "name": "Retire a product",
+      "description": "Discontinue a product without stranding anyone \u2014 find every autoship, enrollment kit, bundle, plan and collection that holds it, move autoship customers to a replacement, swap it out of kits, and archive it last, applying only what you approve.",
+      "category": "sales",
+      "icon": "archive",
+      "path": "sales/retire-a-product.md",
+      "updated_at": "2026-11-20T12:00:00Z"
     }
   ],
   "workflows": [
