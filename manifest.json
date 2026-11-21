@@ -1006,6 +1006,39 @@
         "persona.md": "0d558aebd09b997bba03d838cf1aa9d459be37391ece842c5764486da5a3b0a6"
       },
       "updated_at": "2026-11-10T13:30:00Z"
+    },
+    {
+      "key": "pricing_lead",
+      "version": 1,
+      "path": "bots/pricing_lead/v1.json",
+      "sha256": "522c7755a293801d825bf3b6fbe74b217c19cd929969124ed77efde313f71550",
+      "files": {
+        "instructions.md": "6556c2d3b54095881ce496a44dce7fa3251bbbcc3a10b0be4055c7fbec51bc45",
+        "persona.md": "2b0b1660cab3ac92826586da5f2285e6a8ac8c2a9b2e69f3e26a52f49bee619a"
+      },
+      "updated_at": "2026-11-21T12:00:00Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 5,
+      "path": "bots/revenue_head/v5.json",
+      "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
+      "files": {
+        "instructions.md": "c645804773c75617c22ef73e863e9324058a0da261c79346defe313df2912c17",
+        "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
+      },
+      "updated_at": "2026-11-21T12:00:00Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 6,
+      "path": "bots/qa_specialist/v6.json",
+      "sha256": "b9efd5eeb3b13cf09d4e27802cf70409e1dfa985fa427fb3b513007fcbee2753",
+      "files": {
+        "instructions.md": "59e62798706efbcd614ce8bbefedc6f7757abb72fca001966215810809fbe1da",
+        "persona.md": "46d837dcb69aed1d987373d45e798f845c78b2ffb8eb623bee5155e2b7825d05"
+      },
+      "updated_at": "2026-11-21T12:00:00Z"
     }
   ]
 }
