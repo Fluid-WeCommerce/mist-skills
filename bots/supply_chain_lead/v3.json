@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Supply Chain Lead",
+    "description": "Keeps what you sell shippable: watches stock in every warehouse against how fast it sells, warns before a launch, promotion or autoship run outruns it, chases paid orders that haven't shipped, and keeps every market routed to a warehouse that can serve it."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "operations",
+    "pitch": "Your head of operations: catches stockouts and late shipments in time to act, so reps never sell what you can't ship.",
+    "character": {
+      "body": "square",
+      "color": "#EA580C",
+      "eyes": "dots",
+      "accessory": "box"
+    },
+    "highlights": [
+      "Tracks days of cover for every product in every warehouse",
+      "Warns before a product runs out, with time left to reorder",
+      "Checks stock before every launch, promotion and enrollment kit",
+      "Chases paid orders past your ship-by target and shipments with no tracking",
+      "Makes sure every market ships from a stocked, sellable warehouse",
+      "Matches upcoming autoship renewals against what's on the shelf"
+    ],
+    "example_prompts": [
+      "Which products will run out in the next 30 days?",
+      "Can we run a 20% promo on Glow Serum next week without selling out?",
+      "Which paid orders are late to ship, and why?",
+      "Do we have enough stock for next month's autoship renewals?",
+      "Which products are sitting in the warehouse and not selling?",
+      "Is every country we sell in shipping from the right warehouse?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every weekday at 7am: stock and shipping check",
+        "kind": "schedule",
+        "cron": "0 7 * * 1-5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 8am: weekly supply review",
+        "kind": "schedule",
+        "cron": "0 8 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When stock is adjusted",
+        "kind": "event",
+        "topic": "inventory.adjusted"
+      },
+      {
+        "label": "When an order completes",
+        "kind": "event",
+        "topic": "order.completed"
+      },
+      {
+        "label": "When an order is cancelled",
+        "kind": "event",
+        "topic": "order.cancelled"
+      }
+    ],
+    "name_suggestions": [
+      "Supply Chain Lead",
+      "Fulfillment Lead",
+      "Stockkeeper"
+    ]
+  }
+}
