@@ -1112,6 +1112,17 @@
         "persona.md": "14b5fb9bd5da49af9239c56c2faa6b25d975048af4ba2435b85d8551d8798806"
       },
       "updated_at": "2026-11-12T12:30:00Z"
+    },
+    {
+      "key": "finance_controller",
+      "version": 2,
+      "path": "bots/finance_controller/v2.json",
+      "sha256": "e64bbacd37022290420207ad14913c035528f2709a029b3a40aa60338dd3795c",
+      "files": {
+        "instructions.md": "4222b48ab914b67ac9a977eb007ac3045d8b3a1c7ad621a3e4c402798ac6fc2c",
+        "persona.md": "78004b3b7de97401888a543491da2c5d1c9e577d3467f89b215ea858d00d6a3c"
+      },
+      "updated_at": "2026-11-21T19:45:00Z"
     }
   ]
 }
