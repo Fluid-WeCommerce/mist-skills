@@ -778,6 +778,15 @@
       "icon": "bot",
       "path": "marketing/chatgpt-readiness-fixes.md",
       "updated_at": "2026-11-16T13:00:00Z"
+    },
+    {
+      "slug": "marketing/agent-door-check",
+      "name": "Agent Door Check",
+      "description": "Check the front door a shopper's personal AI agent (Meta's Muse, for one) reads first on every domain this store answers on, the Poppy file and the UCP profile it points to, and report what an agent would find, what is broken, and what is missing.",
+      "category": "marketing",
+      "icon": "door-open",
+      "path": "marketing/agent-door-check.md",
+      "updated_at": "2026-11-17T12:00:00Z"
     }
   ],
   "workflows": [
