@@ -38,6 +38,15 @@
       "updated_at": "2026-10-10T18:00:00Z"
     },
     {
+      "slug": "finance/commission-clawback-list",
+      "name": "Commission clawback list",
+      "description": "Before the commission run, list every order whose volume was taken back after it counted (refunds, cancellations, voids and order edits) by the rep it was credited to, and write a file the back office can import.",
+      "category": "finance",
+      "icon": "undo-2",
+      "path": "finance/commission-clawback-list.md",
+      "updated_at": "2026-11-14T12:00:00Z"
+    },
+    {
       "slug": "themes/scrape-into-theme",
       "name": "Scrape a URL into the active theme",
       "description": "Fetch a page, extract its layout and copy, scaffold a matching Fluid theme section.",
