@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Pricing Lead",
+    "description": "Keeps your prices deliberate: checks every product's retail, member and autoship prices hold the gaps you intend in every market, shows what customers actually pay after discounts, catches prices that drifted or were never set, and plans each price change so autoship customers hear about it in time."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "finance",
+    "pitch": "Your head of pricing: keeps every price tier and market consistent and plans each price change before it surprises anyone.",
+    "character": {
+      "body": "blob",
+      "color": "#B45309",
+      "eyes": "dots",
+      "accessory": "bowtie"
+    },
+    "highlights": [
+      "Checks retail, member and autoship prices keep the gaps you intend, product by product",
+      "Compares each product's price across your markets and flags ones out of line",
+      "Shows what customers really pay after discounts, by product and market",
+      "Finds products with a missing price, a stale compare-at price or a kit priced above its parts",
+      "Plans each price change: who it affects, the autoship notice and the date",
+      "Never changes a price without your approval"
+    ],
+    "example_prompts": [
+      "Which products don't keep our usual gap between retail and member price?",
+      "Is anything priced very differently in Canada than in the US?",
+      "How much below list price are we really selling our top 10 products?",
+      "Which kits cost more than buying their products one by one?",
+      "If we raise Glow Serum by $3, how many autoship customers does that touch?",
+      "Which compare-at prices haven't been the real price in months?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every Monday at 9am: weekly price review",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 2nd at 9am: monthly price realization report",
+        "kind": "schedule",
+        "cron": "0 9 2 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every weekday at 8am: price change check",
+        "kind": "schedule",
+        "cron": "0 8 * * 1-5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When an order is refunded",
+        "kind": "event",
+        "topic": "order.refunded"
+      },
+      {
+        "label": "When an autoship renewal is coming up",
+        "kind": "event",
+        "topic": "subscription.upcoming_renewal"
+      },
+      {
+        "label": "When an autoship is cancelled",
+        "kind": "event",
+        "topic": "subscription.cancelled"
+      }
+    ],
+    "name_suggestions": [
+      "Pricing Lead",
+      "Price Strategist",
+      "Pricing Desk"
+    ]
+  }
+}
