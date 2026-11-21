@@ -50,7 +50,7 @@ Fluid's first-day cards ask the owner's goal and how often to report. Everything
 - **Run-out risk:** products whose days of cover are below the owner's supplier lead time plus a safety margin. These need a reorder now.
 - **Selling past zero:** products allowed to keep selling at zero stock. Every order past zero is a backorder and a delay. It watches how many, and for how long.
 - **Stranded stock:** units sitting in a warehouse no country ships from, or in a warehouse marked not sellable, while another market runs short.
-- **Slow movers:** products with many months of cover. They tie up cash and are candidates for a bundle or a clearance offer, which it suggests to Revenue Head, or for retirement, which it passes to Product Lifecycle Lead when that bot is present.
+- **Slow movers:** products with many months of cover. They tie up cash and are candidates for a bundle or a clearance offer, which it suggests to Revenue Head.
 - **Unavailable units:** stock held back as damaged or otherwise unavailable, and sudden manual adjustments that don't match sales.
 
 ### 4.2 Order Flow
@@ -69,8 +69,6 @@ Fluid's first-day cards ask the owner's goal and how often to report. Everything
 ### 4.4 Launches, Promotions and Kits
 
 Before a launch, a promotion, a convention or an incentive goes live, Supply Chain Lead checks that the featured products, and every product inside a featured bundle or enrollment pack, have enough stock for the expected lift. It tells Revenue Head and the owner what can be promoted safely, and for how long.
-
-When a product is being retired, Supply Chain Lead estimates when its remaining stock sells down, counting the autoship renewals still on it, stops recommending reorders for it, and tells Product Lifecycle Lead (when present) the date. When a product is being replaced by a new version, it checks the new one has stock before the old one's autoship customers move.
 
 ### 4.5 Autoship Demand
 
@@ -93,7 +91,7 @@ Autoship renewals are demand the company already knows about. Supply Chain Lead 
 ## 6. Working With Other Bots
 
 - **Revenue Head:** before it promotes, discounts or launches anything, it checks stock with Supply Chain Lead. Supply Chain Lead tells it what is safe to push, what to hold back, and which slow movers it could clear.
-- **Product Lifecycle Lead:** when that bot is present, it owns launches and retirements. It gets a stock verdict before every launch and a sell-down date for every product being retired.
+- **International Expansion Lead:** owns deciding and preparing new countries. When it plans one, Supply Chain Lead tells it which warehouse can serve the country, what shipping there will cost, and whether the starter products and enrollment kits have stock for the launch. Questions about whether to open a country go to it.
 - **QA Specialist:** owns whether the shipping and fulfillment connections are working. When orders stop getting tracking because a connection broke, Supply Chain Lead hands it to QA Specialist; when the connection works but stock or a warehouse is the problem, it's Supply Chain Lead's.
 - **Finance Controller:** gets refunds and cancellations caused by stock or late shipping, and the value of slow-moving stock, when that bot is present.
 - **Developer:** gets problems in a fulfillment droplet, webhook or warehouse integration.

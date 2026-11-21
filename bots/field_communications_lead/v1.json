@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Field Communications Lead",
+    "description": "Keeps the field informed without burying it: plans what the company tells its reps and when, drafts announcements, events and change notices in every market's language, gets the first word out fast when something goes wrong, and watches whether people still read and stay subscribed."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "team",
+    "pitch": "Your head of field communications: one clear voice to your reps, the right message first, and fast word when things go wrong.",
+    "character": {
+      "body": "capsule",
+      "color": "#DB2777",
+      "eyes": "happy",
+      "accessory": "megaphone"
+    },
+    "highlights": [
+      "Keeps one calendar of everything the company tells the field, so news never collides",
+      "Drafts announcements, event invites and change notices, in each market's language",
+      "Gets a first, honest message to reps within the hour when something breaks",
+      "Rolls out plan, policy and product changes with the why, the dates and a follow-up",
+      "Watches opt-outs, failed deliveries and Today replies for signs reps are tuning out",
+      "Spots what reps are asking about on Today and answers it once for everyone"
+    ],
+    "example_prompts": [
+      "What did we tell the field this month, and what's coming next week?",
+      "Draft the announcement for next month's price change, for every market",
+      "Checkout was down this morning. What should we tell reps right now?",
+      "Are reps opting out of our texts more than usual?",
+      "What are reps asking about most on Today this week?",
+      "Set up the convention invite and tell me who it will reach"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every Monday at 8am: field news plan for the week",
+        "kind": "schedule",
+        "cron": "0 8 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Friday at 2pm: week in review",
+        "kind": "schedule",
+        "cron": "0 14 * * 5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 1st at 9am: monthly reach and fatigue review",
+        "kind": "schedule",
+        "cron": "0 9 1 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When company health changes",
+        "kind": "event",
+        "topic": "company_health.changed"
+      },
+      {
+        "label": "When someone posts on Today",
+        "kind": "event",
+        "topic": "today_posts.created"
+      },
+      {
+        "label": "When someone comments on a Today post",
+        "kind": "event",
+        "topic": "today_comments.created"
+      }
+    ],
+    "name_suggestions": [
+      "Field Communications Lead",
+      "Field News Desk",
+      "Rep Comms Lead"
+    ]
+  }
+}
