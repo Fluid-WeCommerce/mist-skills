@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Customer Experience Lead",
+    "description": "Keeps your customers happy and coming back: finds out why people ask for refunds and cancel their autoship, catches order problems before customers write in, helps you answer any customer quickly with their whole story in hand, and fixes the causes, not just the complaints."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "support",
+    "pitch": "Your head of customer care: learns why customers refund and cancel, and fixes the cause before it costs you more.",
+    "character": {
+      "body": "blob",
+      "color": "#DB2777",
+      "eyes": "happy",
+      "accessory": "star"
+    },
+    "highlights": [
+      "Tracks refunds and their reasons by product, country and rep",
+      "Reads every autoship cancellation reason and finds the fix behind the pattern",
+      "Spots customers stuck with a failed payment, a cancelled order or a parcel with no tracking",
+      "Pulls a customer's whole story in seconds and drafts a reply for you",
+      "Finds customers whose rep has left, so nobody is left without help",
+      "Keeps cancelling easy and honest, with at most one save offer"
+    ],
+    "example_prompts": [
+      "Why are customers asking for refunds this month?",
+      "What are the top reasons people cancelled their autoship?",
+      "Which product gets the most complaints, and what do they say?",
+      "Show me everything about this customer before I call them back.",
+      "Which customers' reps are no longer active?",
+      "How does our customer score compare with last quarter?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every weekday at 8am: customer care check",
+        "kind": "schedule",
+        "cron": "0 8 * * 1-5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 9am: weekly customer review",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When an order is refunded",
+        "kind": "event",
+        "topic": "order.refunded"
+      },
+      {
+        "label": "When a subscription is cancelled",
+        "kind": "event",
+        "topic": "subscription.cancelled"
+      },
+      {
+        "label": "When an order is cancelled",
+        "kind": "event",
+        "topic": "order.cancelled"
+      },
+      {
+        "label": "When an order payment fails",
+        "kind": "event",
+        "topic": "orders.payment_failed"
+      }
+    ],
+    "name_suggestions": [
+      "Customer Experience Lead",
+      "Care Lead",
+      "Concierge"
+    ]
+  }
+}
