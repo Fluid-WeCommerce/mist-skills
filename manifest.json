@@ -1317,6 +1317,61 @@
         "persona.md": "f43df8510dcbff1913e767f037a92431ffb21685fdd19db8403df1e6c5987a2f"
       },
       "updated_at": "2026-11-17T12:30:00Z"
+    },
+    {
+      "key": "field_communications_lead",
+      "version": 1,
+      "path": "bots/field_communications_lead/v1.json",
+      "sha256": "505347a0b0446a0cd5b9cb86e40e3c69e191720ffd6710a5d3d82ad4631ae03e",
+      "files": {
+        "instructions.md": "47cb6988668bb11ec7eddfac5bbb5b4b5c5e56d5049173faf4f8b981fc70e3d4",
+        "persona.md": "705d84caa40579d1dd993ac32a822879d889f7e73df0b3b94f2202e167d55901"
+      },
+      "updated_at": "2026-11-18T12:30:00Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 8,
+      "path": "bots/revenue_head/v8.json",
+      "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
+      "files": {
+        "instructions.md": "80ddf3bf2a98c09ed4d0ab5ebffc9a1b8c95e8e76a1c663b40e8d0c37e58c3d3",
+        "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
+      },
+      "updated_at": "2026-11-18T12:30:00Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 8,
+      "path": "bots/qa_specialist/v8.json",
+      "sha256": "b9efd5eeb3b13cf09d4e27802cf70409e1dfa985fa427fb3b513007fcbee2753",
+      "files": {
+        "instructions.md": "59e62798706efbcd614ce8bbefedc6f7757abb72fca001966215810809fbe1da",
+        "persona.md": "4f21bcddc3deb5edf0f9b3b0f05f621993183d926e557bb81ac96e5ec3a97ace"
+      },
+      "updated_at": "2026-11-18T12:30:00Z"
+    },
+    {
+      "key": "supply_chain_lead",
+      "version": 4,
+      "path": "bots/supply_chain_lead/v4.json",
+      "sha256": "bbe035e7fc20fceee41aaa2e59901cd72c0770af957414b3e97ed837c3c77557",
+      "files": {
+        "instructions.md": "a0c9ce35ed5ce883422043658f488b455f18406d2c776daa19198d87052217a5",
+        "persona.md": "44d0f4a9b9e9eb9070565148e0fe86a0567fa692cad6b52c21a402d9a0941425"
+      },
+      "updated_at": "2026-11-18T12:30:00Z"
+    },
+    {
+      "key": "field_success_lead",
+      "version": 3,
+      "path": "bots/field_success_lead/v3.json",
+      "sha256": "56b5b74f86dcd4490c84697a58a3cb23be99d582f3198eca4284a09dc810d24d",
+      "files": {
+        "instructions.md": "7f9bbd41353941f4b58000fba4f48ed56e2c86f9bbfc2ef0d6d8bd7424831a31",
+        "persona.md": "72cb56a5a6f0cf02602a04ab4097fad8ec6cbe31360c95b7e98e9f17942e9706"
+      },
+      "updated_at": "2026-11-18T12:30:00Z"
     }
   ]
 }
