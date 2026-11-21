@@ -38,6 +38,15 @@
       "updated_at": "2026-10-10T18:00:00Z"
     },
     {
+      "slug": "finance/commission-clawback-list",
+      "name": "Commission clawback list",
+      "description": "Before the commission run, list every order whose volume was taken back after it counted (refunds, cancellations, voids and order edits) by the rep it was credited to, and write a file the back office can import.",
+      "category": "finance",
+      "icon": "undo-2",
+      "path": "finance/commission-clawback-list.md",
+      "updated_at": "2026-11-14T12:00:00Z"
+    },
+    {
       "slug": "themes/scrape-into-theme",
       "name": "Scrape a URL into the active theme",
       "description": "Fetch a page, extract its layout and copy, scaffold a matching Fluid theme section.",
@@ -410,6 +419,15 @@
       "updated_at": "2026-11-11T12:00:00Z"
     },
     {
+      "slug": "marketing/storefront-search-speed-scan",
+      "name": "Storefront Search & Speed Scan",
+      "description": "Scan the products and categories shoppers will land on this sale season for hidden search and AI-discovery problems (pages blocked from search, missing or inherited titles and descriptions, default share images, slow or low-scoring pages) and rank the fixes by traffic at stake.",
+      "category": "marketing",
+      "icon": "search-check",
+      "path": "marketing/storefront-search-speed-scan.md",
+      "updated_at": "2026-11-12T12:00:00Z"
+    },
+    {
       "slug": "themes/suggested-changes",
       "name": "Suggested Changes",
       "description": "Review Lighthouse performance and compliance findings for this store, then approve or dismiss each recommended fix \u2014 approvals are applied and their impact is tracked.",
@@ -555,6 +573,15 @@
       "updated_at": "2026-10-10T18:00:00Z"
     },
     {
+      "slug": "sales/sales-by-product-field",
+      "name": "Sales by product field",
+      "description": "Break the last 90 days of sales down by any custom product field (material, supplier, collection line) kept as a variant metafield, with units, revenue and share per value.",
+      "category": "sales",
+      "icon": "bar-chart-3",
+      "path": "sales/sales-by-product-field.md",
+      "updated_at": "2026-11-19T12:00:00Z"
+    },
+    {
       "slug": "sales/rep-momentum-scoreboard",
       "name": "Rep signup momentum scoreboard",
       "description": "Track rep/enrollment signup momentum by week and market, and surface the newest reps already active enough to be worth a personal spotlight.",
@@ -681,6 +708,15 @@
       "updated_at": "2026-11-09T13:00:00Z"
     },
     {
+      "slug": "finance/sales-tax-filing-check",
+      "name": "Sales tax filing check",
+      "description": "Before a sales tax return is filed, check that every taxed sale, refund and cancellation from last month reached your tax provider, and get a fix list for anything stuck, missing or sent to a test account.",
+      "category": "finance",
+      "icon": "landmark",
+      "path": "finance/sales-tax-filing-check.md",
+      "updated_at": "2026-11-12T13:00:00Z"
+    },
+    {
       "slug": "compliance/genealogy-change-queue",
       "name": "Genealogy change queue",
       "description": "Work the genealogy queue \u2014 new members waiting in a holding tank and pending sponsor or placement move requests \u2014 check each against your sponsor-change policy, recommend place, approve or reject, and apply only what you approve.",
@@ -706,6 +742,87 @@
       "icon": "archive",
       "path": "sales/retire-a-product.md",
       "updated_at": "2026-11-20T12:00:00Z"
+    },
+    {
+      "slug": "marketing/agent-checkout-dry-run",
+      "name": "Agent Checkout Dry Run",
+      "description": "Walk a store's public cart path the way a shopping agent would, in each country it sells in, and report where an agent gets stuck before payment (unavailable items, missing prices, enrollment-only or subscription-only products, countries that fail), without placing an order.",
+      "category": "marketing",
+      "icon": "shopping-cart",
+      "path": "marketing/agent-checkout-dry-run.md",
+      "updated_at": "2026-11-13T13:00:00Z"
+    },
+    {
+      "slug": "compliance/late-shipment-notices",
+      "name": "Late shipment notices",
+      "description": "Find paid orders that haven't shipped and are nearing or past the ship-by date you promised (or the 30-day default), draft the delay notice with a new date and the option to cancel, send only what the user approves, and save a dated record of every notice for the FTC's Mail Order Rule.",
+      "category": "compliance",
+      "icon": "truck",
+      "path": "compliance/late-shipment-notices.md",
+      "updated_at": "2026-11-13T12:45:00Z"
+    },
+    {
+      "slug": "sales/orphaned-customer-handoff",
+      "name": "Orphaned customer handoff",
+      "description": "Find customers still credited to reps who have left or gone inactive, rank them by what they spend and their active autoships, pick an active rep to look after each group under your policy, and reassign only what you approve.",
+      "category": "sales",
+      "icon": "user-round-check",
+      "path": "sales/orphaned-customer-handoff.md",
+      "updated_at": "2026-11-15T12:00:00Z"
+    },
+    {
+      "slug": "sales/agent-orders-report",
+      "name": "Agent orders report",
+      "description": "Show how many orders AI shopping agents placed in the last 30 days, which agents they were, how sure Fluid is, and how those orders compare with the rest on order value and cancellations.",
+      "category": "sales",
+      "icon": "bot",
+      "path": "sales/agent-orders-report.md",
+      "updated_at": "2026-11-16T13:00:00Z"
+    },
+    {
+      "slug": "marketing/chatgpt-readiness-fixes",
+      "name": "ChatGPT readiness fixes",
+      "description": "Get the store ready to claim in ChatGPT \u2014 read Fluid's readiness report, turn every gap into a fix list ranked by the sales it blocks, check barcodes, link the missing policies, and apply only the fixes you approve.",
+      "category": "marketing",
+      "icon": "bot",
+      "path": "marketing/chatgpt-readiness-fixes.md",
+      "updated_at": "2026-11-16T13:00:00Z"
+    },
+    {
+      "slug": "marketing/agent-door-check",
+      "name": "Agent Door Check",
+      "description": "Check the front door a shopper's personal AI agent (Meta's Muse, for one) reads first on every domain this store answers on, the Poppy file and the UCP profile it points to, and report what an agent would find, what is broken, and what is missing.",
+      "category": "marketing",
+      "icon": "door-open",
+      "path": "marketing/agent-door-check.md",
+      "updated_at": "2026-11-17T12:00:00Z"
+    },
+    {
+      "slug": "finance/points-liability-report",
+      "name": "Reward points liability report",
+      "description": "Close the month on reward points \u2014 what customers earned, spent and got back on refunds, what the unspent balance is worth in each currency, and which markets or refunds need fixing before the books close.",
+      "category": "finance",
+      "icon": "coins",
+      "path": "finance/points-liability-report.md",
+      "updated_at": "2026-11-17T13:00:00Z"
+    },
+    {
+      "slug": "marketing/tiktok-shop-listing-prep",
+      "name": "TikTok Shop Listing Prep",
+      "description": "Rank this store's live products by how ready they are to publish on TikTok Shop, draft each listing's title and selling points from the product's own data, and list what is missing (images, price, sizing, certifications, compliance flags) before anything is published.",
+      "category": "marketing",
+      "icon": "shopping-bag",
+      "path": "marketing/tiktok-shop-listing-prep.md",
+      "updated_at": "2026-11-18T12:00:00Z"
+    },
+    {
+      "slug": "marketing/message-delivery-health",
+      "name": "Message delivery health",
+      "description": "Find out why the company's emails, texts and push messages aren't reaching people \u2014 split setup problems from bad addresses and opt-outs, show who is unreachable, and fix only what you approve.",
+      "category": "marketing",
+      "icon": "mail-warning",
+      "path": "marketing/message-delivery-health.md",
+      "updated_at": "2026-11-18T13:00:00Z"
     },
     {
       "slug": "sales/price-grid-audit",
@@ -1057,6 +1174,149 @@
         "persona.md": "46d837dcb69aed1d987373d45e798f845c78b2ffb8eb623bee5155e2b7825d05"
       },
       "updated_at": "2026-11-21T12:00:00Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 6,
+      "path": "bots/revenue_head/v6.json",
+      "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
+      "files": {
+        "instructions.md": "829a8a6bb8a83f328014a4b1c99d752847f9d049767bbcb58278643faeada129",
+        "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
+      },
+      "updated_at": "2026-11-10T21:30:00Z"
+    },
+    {
+      "key": "finance_controller",
+      "version": 1,
+      "path": "bots/finance_controller/v1.json",
+      "sha256": "0421a65e4a92ae659dfcb198f8669cc80af966d57d521a0fb41f6023c34a1b83",
+      "files": {
+        "instructions.md": "d5d94e6de0a3e275a402878242d5a6962d6c9372e417607b955d20afad1c4873",
+        "persona.md": "32fed908ca32c04dd008804c1fe17757f65038faf7ac4a88cf3fe78d2e9b31a4"
+      },
+      "updated_at": "2026-11-09T12:45:00Z"
+    },
+    {
+      "key": "international_expansion_lead",
+      "version": 1,
+      "path": "bots/international_expansion_lead/v1.json",
+      "sha256": "7f2fd41ccb2b6a24d2fe36f79876a56fd6b9abd2abf1cffbb25b443d0900ba7c",
+      "files": {
+        "instructions.md": "85afcc8c8ec6269f1780eedcce22172aeb84de34d1d05fbdd38b80da0d25b999",
+        "persona.md": "c81df474d0e7075136c290a8e5ae3c4b0d418551e93691f07aef226b85db03e6"
+      },
+      "updated_at": "2026-11-12T12:30:00Z"
+    },
+    {
+      "key": "moderator",
+      "version": 5,
+      "path": "bots/moderator/v5.json",
+      "sha256": "a90ca0382c77f4cab4de391bcba590533d0eddbe8770cf366f8716ac6f69eff0",
+      "files": {
+        "instructions.md": "38bab4a8c507bdab171ecf6e61cd7b0c14d59d00efc756ba1cc5096735f6f474",
+        "persona.md": "509de0760defca3d6e329dc608ff7c94a122d9504292d9a48fd3afc667077c69"
+      },
+      "updated_at": "2026-11-12T12:30:00Z"
+    },
+    {
+      "key": "supply_chain_lead",
+      "version": 3,
+      "path": "bots/supply_chain_lead/v3.json",
+      "sha256": "bbe035e7fc20fceee41aaa2e59901cd72c0770af957414b3e97ed837c3c77557",
+      "files": {
+        "instructions.md": "a0c9ce35ed5ce883422043658f488b455f18406d2c776daa19198d87052217a5",
+        "persona.md": "14b5fb9bd5da49af9239c56c2faa6b25d975048af4ba2435b85d8551d8798806"
+      },
+      "updated_at": "2026-11-12T12:30:00Z"
+    },
+    {
+      "key": "social_selling_coach",
+      "version": 1,
+      "path": "bots/social_selling_coach/v1.json",
+      "sha256": "60ac571f5f43da3730eb1f7147a09d6f76e615d5cc23d164a89f5f1d51afa15e",
+      "files": {
+        "instructions.md": "b6b656d6eb4965b83e056d839dbbb401bad33608d31dc0de33c444150db5c47d",
+        "persona.md": "b8ae2b2b3c03e26594a95e1cf6a8b6ba76273c51045378911bb9e3f87c298879"
+      },
+      "updated_at": "2026-11-13T12:30:00Z"
+    },
+    {
+      "key": "field_success_lead",
+      "version": 2,
+      "path": "bots/field_success_lead/v2.json",
+      "sha256": "56b5b74f86dcd4490c84697a58a3cb23be99d582f3198eca4284a09dc810d24d",
+      "files": {
+        "instructions.md": "bde161041455058d998bb759e9bd4af744f9a238c0970402c4935df08e242347",
+        "persona.md": "cdcbf3177d37f831489152e9b756da1aa655acc45c92483e777757aee55a9e1b"
+      },
+      "updated_at": "2026-11-13T12:30:00Z"
+    },
+    {
+      "key": "comp_plan_strategist",
+      "version": 1,
+      "path": "bots/comp_plan_strategist/v1.json",
+      "sha256": "b1b3ecb978221320b6ce2cd528fad25718e96f007365fb4daeb8a0ff28466d51",
+      "files": {
+        "instructions.md": "351f99b4c6cfd693982002cba3abbffb60d8a563bb069d0777f00a84eb46006e",
+        "persona.md": "dbbd59e66dd01328d872e9350f5a5f742ad9f5001e57e570cfe1b9849ba9f64a"
+      },
+      "updated_at": "2026-11-14T12:00:00Z"
+    },
+    {
+      "key": "customer_experience_lead",
+      "version": 1,
+      "path": "bots/customer_experience_lead/v1.json",
+      "sha256": "889e434f65013b66d7da030dafdfe41ec8553fd4cc6c1015b140140ca9d77862",
+      "files": {
+        "instructions.md": "5cd09219c7c77dde0bd7d904015b2ae38c9f7a0d9447211716c92dc63bc4a5ac",
+        "persona.md": "26f5b68a7234de84c4dc200dedd40ab00e9843b4d45fd3f4dc0666c4771d0481"
+      },
+      "updated_at": "2026-11-15T12:00:00Z"
+    },
+    {
+      "key": "qa_specialist",
+      "version": 7,
+      "path": "bots/qa_specialist/v7.json",
+      "sha256": "b9efd5eeb3b13cf09d4e27802cf70409e1dfa985fa427fb3b513007fcbee2753",
+      "files": {
+        "instructions.md": "59e62798706efbcd614ce8bbefedc6f7757abb72fca001966215810809fbe1da",
+        "persona.md": "a24ee2dd79eea3315c0e246cdd13cd57fa9b9d4c705945e2b4e7ad67ffe419ec"
+      },
+      "updated_at": "2026-11-15T12:00:00Z"
+    },
+    {
+      "key": "agentic_commerce_lead",
+      "version": 1,
+      "path": "bots/agentic_commerce_lead/v1.json",
+      "sha256": "752d2363a00b6f98ad2a6ea87d7c4a13b660872c34ebdcfe1095d8c251111e81",
+      "files": {
+        "instructions.md": "6d6443b36356b6f80fa48d8d6d3f0c70600d7032e467b8c35a226b133237eba2",
+        "persona.md": "ed09557f4cd9bb2d4f29c6f6cc5c73ee9ef479216a2466d778cd271e36cd6827"
+      },
+      "updated_at": "2026-11-16T12:30:00Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 7,
+      "path": "bots/revenue_head/v7.json",
+      "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
+      "files": {
+        "instructions.md": "4ff8aa33ef1a8a581bf77121480f02472e57c01899da702936ff95aa815163f4",
+        "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
+      },
+      "updated_at": "2026-11-16T12:30:00Z"
+    },
+    {
+      "key": "loyalty_lead",
+      "version": 1,
+      "path": "bots/loyalty_lead/v1.json",
+      "sha256": "54339e3883f2e36c395969bcfcfa15d89685fab929c5a1d32a34f20301663622",
+      "files": {
+        "instructions.md": "1e313c96938ed8ae386ce85e4c293f975ee8bb6d3fcd7393f4655f10319798b7",
+        "persona.md": "f43df8510dcbff1913e767f037a92431ffb21685fdd19db8403df1e6c5987a2f"
+      },
+      "updated_at": "2026-11-17T12:30:00Z"
     }
   ]
 }
