@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Agentic Commerce Lead",
+    "description": "Grows the sales AI shopping agents make for you: tracks which agents buy, how much and how reliably, keeps your catalog, prices and policies ready for ChatGPT and other agents, checks that what agents read about you is true, and makes sure agent orders don't leave your field out."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "sales",
+    "pitch": "Your head of AI shopping: gets your store found and bought by ChatGPT and other agents, and proves what they sell.",
+    "character": {
+      "body": "blob",
+      "color": "#4F46E5",
+      "eyes": "wide",
+      "accessory": "antenna"
+    },
+    "highlights": [
+      "Reports sales placed by AI agents, separating confirmed agents from guesses",
+      "Shows which agents buy from you, how much, and how often those orders go wrong",
+      "Keeps your store ready for ChatGPT: products in the feed, barcodes, policies, domain",
+      "Checks every storefront tells agents the same prices, stock and policies shoppers see",
+      "Sends claims agents could repeat to Moderator before they spread",
+      "Flags agent orders that credit no rep, so you decide how your field shares in them"
+    ],
+    "example_prompts": [
+      "How much did AI agents sell for us this month, and which ones?",
+      "Is our store ready to claim in ChatGPT, and what's left to fix?",
+      "Which products can't agents buy, and why?",
+      "Are agent orders cancelled or refunded more than normal ones?",
+      "How many agent orders didn't credit a rep?",
+      "What should we fix first to sell more through agents?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every Monday at 8am: weekly agent sales review",
+        "kind": "schedule",
+        "cron": "0 8 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every weekday at 9am: agent readiness check",
+        "kind": "schedule",
+        "cron": "0 9 * * 1-5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 1st at 9am: monthly agent channel review",
+        "kind": "schedule",
+        "cron": "0 9 1 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When an order completes",
+        "kind": "event",
+        "topic": "order.completed"
+      },
+      {
+        "label": "When an order is refunded",
+        "kind": "event",
+        "topic": "order.refunded"
+      },
+      {
+        "label": "When company health changes",
+        "kind": "event",
+        "topic": "company_health.changed"
+      }
+    ],
+    "name_suggestions": [
+      "Agentic Commerce Lead",
+      "Agent Channel Lead",
+      "AI Shopping Lead"
+    ]
+  }
+}
