@@ -823,6 +823,15 @@
       "icon": "mail-warning",
       "path": "marketing/message-delivery-health.md",
       "updated_at": "2026-11-18T13:00:00Z"
+    },
+    {
+      "slug": "sales/price-grid-audit",
+      "name": "Price grid audit",
+      "description": "Audit every active product's prices across price types, markets and autoship \u2014 missing prices, member prices too close to retail, autoship above one-time, markets out of line, kits above their parts and bad compare-at prices \u2014 then fix only what you approve.",
+      "category": "sales",
+      "icon": "scale",
+      "path": "sales/price-grid-audit.md",
+      "updated_at": "2026-11-21T12:00:00Z"
     }
   ],
   "workflows": [
