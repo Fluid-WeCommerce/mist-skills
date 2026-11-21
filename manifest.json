@@ -769,6 +769,15 @@
       "icon": "bot",
       "path": "sales/agent-orders-report.md",
       "updated_at": "2026-11-16T13:00:00Z"
+    },
+    {
+      "slug": "marketing/chatgpt-readiness-fixes",
+      "name": "ChatGPT readiness fixes",
+      "description": "Get the store ready to claim in ChatGPT \u2014 read Fluid's readiness report, turn every gap into a fix list ranked by the sales it blocks, check barcodes, link the missing policies, and apply only the fixes you approve.",
+      "category": "marketing",
+      "icon": "bot",
+      "path": "marketing/chatgpt-readiness-fixes.md",
+      "updated_at": "2026-11-16T13:00:00Z"
     }
   ],
   "workflows": [
