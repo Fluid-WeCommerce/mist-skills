@@ -751,6 +751,15 @@
       "icon": "truck",
       "path": "compliance/late-shipment-notices.md",
       "updated_at": "2026-11-13T12:45:00Z"
+    },
+    {
+      "slug": "sales/orphaned-customer-handoff",
+      "name": "Orphaned customer handoff",
+      "description": "Find customers still credited to reps who have left or gone inactive, rank them by what they spend and their active autoships, pick an active rep to look after each group under your policy, and reassign only what you approve.",
+      "category": "sales",
+      "icon": "user-round-check",
+      "path": "sales/orphaned-customer-handoff.md",
+      "updated_at": "2026-11-15T12:00:00Z"
     }
   ],
   "workflows": [
