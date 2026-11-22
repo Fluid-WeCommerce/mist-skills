@@ -1394,6 +1394,17 @@
         "persona.md": "2288fe816f35bf0152b91c57eeb52a5339b790452e891d3ab74f58165bce5517"
       },
       "updated_at": "2026-11-20T12:00:00Z"
+    },
+    {
+      "key": "field_communications_lead",
+      "version": 2,
+      "path": "bots/field_communications_lead/v2.json",
+      "sha256": "505347a0b0446a0cd5b9cb86e40e3c69e191720ffd6710a5d3d82ad4631ae03e",
+      "files": {
+        "instructions.md": "47cb6988668bb11ec7eddfac5bbb5b4b5c5e56d5049173faf4f8b981fc70e3d4",
+        "persona.md": "0116a6f0592d90c345ce68cd6db4ee871b7fc069867467101c5df10fd2ce336f"
+      },
+      "updated_at": "2026-11-22T12:00:00Z"
     }
   ]
 }
