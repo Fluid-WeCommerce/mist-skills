@@ -832,6 +832,15 @@
       "icon": "scale",
       "path": "sales/price-grid-audit.md",
       "updated_at": "2026-11-21T12:00:00Z"
+    },
+    {
+      "slug": "operations/autoship-stock-runway",
+      "name": "Autoship stock runway",
+      "description": "Forecast how many days of stock each product has left in each warehouse from recent one-time sales plus the autoship renewals already scheduled, flag what runs out before a reorder can arrive, and hand over a dated reorder list.",
+      "category": "operations",
+      "icon": "package-search",
+      "path": "operations/autoship-stock-runway.md",
+      "updated_at": "2026-11-22T12:00:00Z"
     }
   ],
   "workflows": [
@@ -1394,6 +1403,28 @@
         "persona.md": "2288fe816f35bf0152b91c57eeb52a5339b790452e891d3ab74f58165bce5517"
       },
       "updated_at": "2026-11-20T12:00:00Z"
+    },
+    {
+      "key": "field_communications_lead",
+      "version": 2,
+      "path": "bots/field_communications_lead/v2.json",
+      "sha256": "505347a0b0446a0cd5b9cb86e40e3c69e191720ffd6710a5d3d82ad4631ae03e",
+      "files": {
+        "instructions.md": "47cb6988668bb11ec7eddfac5bbb5b4b5c5e56d5049173faf4f8b981fc70e3d4",
+        "persona.md": "0116a6f0592d90c345ce68cd6db4ee871b7fc069867467101c5df10fd2ce336f"
+      },
+      "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "key": "international_expansion_lead",
+      "version": 2,
+      "path": "bots/international_expansion_lead/v2.json",
+      "sha256": "4593a592c2242e64e09dda0fbd25d7da3303733c0bd029aaa075472fd1893275",
+      "files": {
+        "instructions.md": "85afcc8c8ec6269f1780eedcce22172aeb84de34d1d05fbdd38b80da0d25b999",
+        "persona.md": "fff8e29da276afd93200f312230cec73f6ade578bff587aba2281e03f57663fd"
+      },
+      "updated_at": "2026-11-22T12:00:00Z"
     },
     {
       "key": "incentives_recognition_lead",
