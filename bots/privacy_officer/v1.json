@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Privacy Officer",
+    "description": "Looks after the personal data you hold on customers, reps and prospects: answers requests to see, fix or delete someone's data before the legal deadline, makes sure \"stop\" means stop on every channel, keeps a current map of where personal data goes and who can see it, and checks your privacy policy matches what you actually do."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "operations",
+    "pitch": "Your privacy officer: data requests answered on time, opt-outs honored everywhere, and no surprises in where your data goes.",
+    "character": {
+      "body": "round",
+      "color": "#0F766E",
+      "eyes": "wide",
+      "accessory": "glasses"
+    },
+    "highlights": [
+      "Runs every request to see, correct or delete someone's data, with the legal deadline in view",
+      "Confirms it's really the person before anything is shared or removed",
+      "Switches marketing off on every channel someone asked to stop, and catches sends that slipped through",
+      "Keeps a map of every webhook, app and tool that receives customer and member data",
+      "Checks your privacy policy against where your data actually goes, country by country",
+      "Prepares the facts within the hour when data may have gone somewhere it shouldn't"
+    ],
+    "example_prompts": [
+      "A customer asked us to delete her data. What can we remove, and what do we have to keep?",
+      "Is anyone still getting our texts after replying STOP?",
+      "Where does our customer data go outside Fluid?",
+      "Does our privacy policy match what we actually share?",
+      "Who on the team can export our customer list?",
+      "What privacy rules apply before we open in Germany?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every morning at 7am: consent and opt-out check",
+        "kind": "schedule",
+        "cron": "0 7 * * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 9am: privacy report",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 1st at 10am: monthly privacy review",
+        "kind": "schedule",
+        "cron": "0 10 1 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "First of each quarter: access review",
+        "kind": "schedule",
+        "cron": "0 9 1 1,4,7,10 *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When a member is deactivated",
+        "kind": "event",
+        "topic": "member.deactivated"
+      },
+      {
+        "label": "When a message is posted in a channel I watch",
+        "kind": "event",
+        "topic": "channel_messages.posted"
+      }
+    ],
+    "name_suggestions": [
+      "Privacy Officer",
+      "Data Guardian",
+      "Privacy Lead"
+    ]
+  }
+}
