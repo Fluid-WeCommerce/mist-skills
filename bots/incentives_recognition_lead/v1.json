@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Incentives & Recognition Lead",
+    "description": "Runs your contests, incentive trips and recognition: designs each promotion around the behavior you want more of, keeps fair, current standings for everyone chasing it, celebrates every rank advance and win while it's fresh, and shows whether each incentive paid for itself."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "team",
+    "pitch": "Your head of incentives and recognition: contests that pay for themselves, fair standings, and every win celebrated on time.",
+    "character": {
+      "body": "round",
+      "color": "#CA8A04",
+      "eyes": "happy",
+      "accessory": "crown"
+    },
+    "highlights": [
+      "Designs contests and incentive trips around one behavior, with rules, dates and a budget",
+      "Keeps current, fair standings so every rep knows where they stand and what's left",
+      "Celebrates rank advances, first sales and contest wins within a day",
+      "Catches reps one step from qualifying while there is still time to finish",
+      "Shows what each incentive cost and the extra sales it actually brought",
+      "Keeps one incentive calendar so promotions never pile up on the same month"
+    ],
+    "example_prompts": [
+      "Design a 60-day contest to get more new customers on autoship.",
+      "Who is closest to qualifying for the incentive trip?",
+      "Who advanced in rank this week, and how should we celebrate them?",
+      "Did last quarter's fast-start bonus bring in extra sales or just reward what would have happened anyway?",
+      "Draft the rules and the announcement for our spring sales challenge.",
+      "What incentives are running or planned for the next 90 days?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every weekday at 8am: standings and recognition check",
+        "kind": "schedule",
+        "cron": "0 8 * * 1-5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 9am: weekly incentive review",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 2nd at 10am: monthly recognition and results",
+        "kind": "schedule",
+        "cron": "0 10 2 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When a rep's rank changes",
+        "kind": "event",
+        "topic": "member_ranks.changed"
+      },
+      {
+        "label": "When an enrollment is completed",
+        "kind": "event",
+        "topic": "enrollment.completed"
+      },
+      {
+        "label": "When an order is refunded",
+        "kind": "event",
+        "topic": "order.refunded"
+      }
+    ],
+    "name_suggestions": [
+      "Incentives Lead",
+      "Head of Recognition",
+      "Contest Captain"
+    ]
+  }
+}
