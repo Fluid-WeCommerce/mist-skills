@@ -1425,6 +1425,61 @@
         "persona.md": "fff8e29da276afd93200f312230cec73f6ade578bff587aba2281e03f57663fd"
       },
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "key": "privacy_officer",
+      "version": 1,
+      "path": "bots/privacy_officer/v1.json",
+      "sha256": "8370ca6e36f47b3715f2fced11c8f72ae41bfefab92c134ba68e19811c4f9673",
+      "files": {
+        "instructions.md": "77f264253d72c35197121a70dfad4a6a4754f9ee5e4dc56acfb1f76a7a6c3c02",
+        "persona.md": "ebc067634b00a5c741afaf51e000a7cf06dc9faa1a2c62317cb5fab1e9415fe0"
+      },
+      "updated_at": "2026-11-23T12:30:00Z"
+    },
+    {
+      "key": "moderator",
+      "version": 6,
+      "path": "bots/moderator/v6.json",
+      "sha256": "a90ca0382c77f4cab4de391bcba590533d0eddbe8770cf366f8716ac6f69eff0",
+      "files": {
+        "instructions.md": "38bab4a8c507bdab171ecf6e61cd7b0c14d59d00efc756ba1cc5096735f6f474",
+        "persona.md": "f3e0273ff8e35489f9f75b1b4c0927b40c13e011bfff15b03d333563f5adce1d"
+      },
+      "updated_at": "2026-11-23T12:30:00Z"
+    },
+    {
+      "key": "customer_experience_lead",
+      "version": 2,
+      "path": "bots/customer_experience_lead/v2.json",
+      "sha256": "889e434f65013b66d7da030dafdfe41ec8553fd4cc6c1015b140140ca9d77862",
+      "files": {
+        "instructions.md": "5cd09219c7c77dde0bd7d904015b2ae38c9f7a0d9447211716c92dc63bc4a5ac",
+        "persona.md": "605faa52d5ff4971315770a82e6372fc91e815cf48d006c6bc9b04cc82e35109"
+      },
+      "updated_at": "2026-11-23T12:30:00Z"
+    },
+    {
+      "key": "field_communications_lead",
+      "version": 3,
+      "path": "bots/field_communications_lead/v3.json",
+      "sha256": "505347a0b0446a0cd5b9cb86e40e3c69e191720ffd6710a5d3d82ad4631ae03e",
+      "files": {
+        "instructions.md": "47cb6988668bb11ec7eddfac5bbb5b4b5c5e56d5049173faf4f8b981fc70e3d4",
+        "persona.md": "e7397c63ccde63c10b0d27e420b54482cc25e4e553ec8add6a0431d581cc4d83"
+      },
+      "updated_at": "2026-11-23T12:30:00Z"
+    },
+    {
+      "key": "international_expansion_lead",
+      "version": 3,
+      "path": "bots/international_expansion_lead/v3.json",
+      "sha256": "4593a592c2242e64e09dda0fbd25d7da3303733c0bd029aaa075472fd1893275",
+      "files": {
+        "instructions.md": "85afcc8c8ec6269f1780eedcce22172aeb84de34d1d05fbdd38b80da0d25b999",
+        "persona.md": "158c56b547efe4b46ad0252024f5202ff550e7193d0d10374989587718f6b62e"
+      },
+      "updated_at": "2026-11-23T12:30:00Z"
     }
   ]
 }
