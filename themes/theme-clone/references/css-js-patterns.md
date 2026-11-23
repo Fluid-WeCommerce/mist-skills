@@ -229,6 +229,15 @@ Never rename or remove the scaffold's cart and locale hooks:
 Compose the canonical block/component markup that owns these hooks. Do not recreate it
 from a screenshot.
 
+## Cart calls in theme JS
+
+Every storefront creates carts in the background: a new cart is empty and `pending` for up to about 2 s.
+
+- `addCartItems`, `addEnrollmentPack` and `setEnrollment` resolve with the filled cart, or `undefined` when the add or the fill failed.
+- A script that calls `addCartItems` itself and wants the SDK drawer calls `FairShareSDK.cart.control.open()` at the click, before awaiting the add. Declarative `data-fluid-add-to-cart` buttons open it at click already.
+- Never call `FairShareSDK.createCart()` to read data such as the country. It always creates a new empty cart and replaces the shopper's cart. Use `getCountryCode()`, `getLanguage()` or `getLocalCart()`.
+- A custom drawer draws `getPendingCartItems()` on top of the cart and redraws on `onCartChange()`: [Custom cart drawers](https://docs.fluid.app/themes/custom-cart-drawer).
+
 ## Performance and accessibility gate
 
 - Reserve image dimensions to prevent layout shift.

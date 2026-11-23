@@ -2061,7 +2061,7 @@ Source alternatives at section level: `collection` or `product_list` pickers, wi
 }
 ```
 
-Enroll markup: `<button data-fluid-add-enrollment-pack="{{ pack.id }}">`. Dynamic bundle packs also need `data-fluid-bundle-selections`. In JS, `FairShareSDK.addEnrollmentPack(packId)` takes the **pack** ID and rethrows on error. Section groups mirror product_card: `show_price`, `show_included_products`, Card Button, CG-CARD with featured colors.
+Enroll markup: `<button data-fluid-add-enrollment-pack="{{ pack.id }}">`. Dynamic bundle packs also need `data-fluid-bundle-selections`. In JS, `FairShareSDK.addEnrollmentPack(packId)` takes the **pack** ID and rethrows on error. On success it resolves with the filled cart (it waits for the background fill); it resolves `undefined` when the fill fails. Section groups mirror product_card: `show_price`, `show_included_products`, Card Button, CG-CARD with featured colors.
 
 ### 13.3 `collection_tile`
 
@@ -2091,13 +2091,19 @@ Each one is the **full `button` schema (§8.1)**, with `link` removed where the 
 | Type | Extra settings (after Content) | Markup / behavior |
 |---|---|---|
 | `add_to_cart` | `product` or `variant` picker · `quantity` (range 1–10, default 1) · `purchase_type` radio (One-Time / Subscribe) · `loading_text` · `sold_out_text` · `open_cart_after_add` | `<button data-fluid-add-to-cart="{{variant.id}}" data-fluid-quantity data-fluid-subscribe data-fluid-subscription-plan-id data-fluid-loading-text data-fluid-open-cart-after-add>`. Disabled when unavailable |
-| `buy_now` | same as add_to_cart | JS: `await FairShareSDK.addCartItems(variantId, {quantity})`. **Check the result:** it resolves `undefined` on failure. Then `FairShareSDK.checkout()`. Wrap in `FairShareSDK.withButtonLoading(btn, fn)` |
+| `buy_now` | same as add_to_cart | JS: `const cart = await FairShareSDK.addCartItems(variantId, {quantity})`. It resolves with the filled cart; **check the result:** `undefined` means the add or the cart fill failed, so stop. Then `FairShareSDK.checkout()`, which waits for the fill. Wrap in `FairShareSDK.withButtonLoading(btn, fn)` |
 | `enroll_button` | `enrollment_pack` picker · `loading_text` · `fallback_link` | `data-fluid-add-enrollment-pack="{{pack.id}}"` (+ `data-fluid-bundle-selections` for dynamic packs) |
 | `cart_button` | `icon` radio (Bag / Cart / Basket) · `icon_size` · a "Cart Count" group (`show_count`, `count_background_color`, `count_text_color`) | `<button data-fluid-cart="open" aria-haspopup="dialog">` + the cart count element. Remove Text Style/Width |
 | `account_button` | `display` radio (Icon / Label / Both) · `label` · `icon_size` | Use the documented member account tag/links (see member storefront docs) |
 | `rep_link` | `link_target` radio (Rep's Site / Custom URL) | `data-fluid-affiliate-href="my_site_url"` + CG-AFFILIATE-VISIBILITY defaulted to "Shopping With a Rep" |
 
 Theme-specific actions (e.g. Yoli's market-based `link_type` URL resolver, video-modal "film" buttons) stay in the section that needs them. Don't add them to the canonical button.
+
+Cart JS in a button (every storefront creates carts in the background, so a new cart is empty and `pending` for up to about 2 s):
+
+- A button that calls `addCartItems` itself and wants the SDK cart drawer must call `FairShareSDK.cart.control.open()` at the click, before it awaits the add. Declarative `data-fluid-add-to-cart` buttons open the drawer at click already.
+- Never call `FairShareSDK.createCart()` to read data such as the country. It always creates a new empty cart and replaces the shopper's cart token. Use `getCountryCode()`, `getLanguage()` or `getLocalCart()`.
+- A custom cart drawer renders `getPendingCartItems()` on top of the cart and redraws on `onCartChange()`: see [Custom cart drawers](https://docs.fluid.app/themes/custom-cart-drawer).
 
 ---
 
