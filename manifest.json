@@ -832,6 +832,15 @@
       "icon": "scale",
       "path": "sales/price-grid-audit.md",
       "updated_at": "2026-11-21T12:00:00Z"
+    },
+    {
+      "slug": "operations/autoship-stock-runway",
+      "name": "Autoship stock runway",
+      "description": "Forecast how many days of stock each product has left in each warehouse from recent one-time sales plus the autoship renewals already scheduled, flag what runs out before a reorder can arrive, and hand over a dated reorder list.",
+      "category": "operations",
+      "icon": "package-search",
+      "path": "operations/autoship-stock-runway.md",
+      "updated_at": "2026-11-22T12:00:00Z"
     }
   ],
   "workflows": [
