@@ -1425,6 +1425,17 @@
         "persona.md": "fff8e29da276afd93200f312230cec73f6ade578bff587aba2281e03f57663fd"
       },
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "key": "developer",
+      "version": 5,
+      "path": "bots/developer/v5.json",
+      "sha256": "356b552e1c1d07612518c0db3f22495cff47c075bdc3f835114c3e528c3ef1d6",
+      "files": {
+        "instructions.md": "be5db23cc84362aa810a4b180ca1ee4e153f2678a4ad181f8c1fa16cd594e820",
+        "persona.md": "3ae456d769cda3bcc3c9197ed6986591f0434744ff590027cf1224e296be0a9d"
+      },
+      "updated_at": "2026-11-23T12:00:00Z"
     }
   ]
 }
