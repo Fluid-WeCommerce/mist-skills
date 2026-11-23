@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Finance Controller",
+    "description": "Your controller and finance partner: revenue, cost of goods and gross margin by product, country and currency, commission payout from your back office, subscription revenue and churn, payments, fees and refunds, and a month-end close package that's ready before you ask."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "finance",
+    "pitch": "Your controller: knows your margin, commissions, churn and cash by country, and has month-end ready before you ask.",
+    "character": {
+      "body": "blob",
+      "color": "#B45309",
+      "eyes": "dots",
+      "accessory": "bowtie"
+    },
+    "highlights": [
+      "Revenue, cost of goods and gross margin by product, country and currency",
+      "Commission payout against sales and volume, read from your Exigo back office",
+      "Subscription revenue, renewals and churn, and what's driving cancellations",
+      "Sales by currency in your home currency, and what exchange rates did to them",
+      "Checks daily that orders, payments, refunds and tax line up, and watches fees",
+      "Month-end close package with every number traced to its source"
+    ],
+    "example_prompts": [
+      "What was our gross margin last month, by product and by country?",
+      "What did we pay in commissions in October, as a share of sales?",
+      "Which country made us the most money after refunds, fees and commissions?",
+      "How much did exchange rates move our Canadian and Australian sales?",
+      "What's our subscription churn this month, and why are people cancelling?",
+      "Is the October close package ready?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every weekday at 7am: money check",
+        "kind": "schedule",
+        "cron": "0 7 * * 1-5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 9am: weekly finance review",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "2nd of the month at 8am: close package",
+        "kind": "schedule",
+        "cron": "0 8 2 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When an order is refunded",
+        "kind": "event",
+        "topic": "order.refunded"
+      },
+      {
+        "label": "When a subscription is cancelled",
+        "kind": "event",
+        "topic": "subscription.cancelled"
+      },
+      {
+        "label": "When a subscription payment is declined",
+        "kind": "event",
+        "topic": "subscription.declined"
+      }
+    ],
+    "name_suggestions": [
+      "Finance Controller",
+      "Ledger",
+      "Controller"
+    ]
+  }
+}
