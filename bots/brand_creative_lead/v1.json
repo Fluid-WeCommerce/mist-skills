@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Brand & Creative Lead",
+    "description": "Keeps the brand consistent everywhere a customer meets it: writes and maintains the brand guide, keeps the library reps share from complete and current in every market and language, gets launch creative ready on time, and retires pieces that show old products or offers."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "marketing",
+    "pitch": "Your creative director: one brand guide, a library reps actually use, and launch creative ready before the date.",
+    "character": {
+      "body": "round",
+      "color": "#C026D3",
+      "eyes": "happy",
+      "accessory": "glasses"
+    },
+    "highlights": [
+      "Drafts a short brand guide from your own best material and keeps it current",
+      "Counts images, videos and share pieces for every product, market and language",
+      "Finds pieces that still show retired products, old packaging or ended offers",
+      "Shows which pieces reps share and which nobody touches",
+      "Gets each launch's images, video and copy ready and reviewed before the date",
+      "Checks the storefront and rep sites against your logo, colors and fonts"
+    ],
+    "example_prompts": [
+      "Write a first draft of our brand guide.",
+      "Which products are missing a lifestyle photo?",
+      "What do we have in Spanish compared with English?",
+      "Which pieces in the library are out of date?",
+      "Is the creative for next month's launch ready in every market?",
+      "Write a brief for a holiday gift-set video."
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every Monday at 9am: weekly creative check",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 2nd at 10am: monthly library review",
+        "kind": "schedule",
+        "cron": "0 10 2 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 1st of each quarter at 11am: brand review",
+        "kind": "schedule",
+        "cron": "0 11 1 1,4,7,10 *",
+        "timezone": "America/Denver"
+      }
+    ],
+    "name_suggestions": [
+      "Brand & Creative Lead",
+      "Creative Director",
+      "Brand Steward"
+    ]
+  }
+}

@@ -1425,6 +1425,28 @@
         "persona.md": "fff8e29da276afd93200f312230cec73f6ade578bff587aba2281e03f57663fd"
       },
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "key": "brand_creative_lead",
+      "version": 1,
+      "path": "bots/brand_creative_lead/v1.json",
+      "sha256": "a30f56a11b060900ebf672f533ef700465196c56b01d4025e8032c26dbc682d5",
+      "files": {
+        "instructions.md": "94dc42435fb5f0af9f45a92eb7139ccbc2cf6c79e34d0ea4eb0914762a3151bc",
+        "persona.md": "e475f6d88901dfbd0086a7112424ec82ffb7a6003bfb41a3122f50f545e97cf5"
+      },
+      "updated_at": "2026-11-24T00:00:00Z"
+    },
+    {
+      "key": "product_lifecycle_lead",
+      "version": 2,
+      "path": "bots/product_lifecycle_lead/v2.json",
+      "sha256": "4d4c5d47f3bc952cd838d247f523d6e6126cfdacb8b5b22fa69b2ba2bc3196ef",
+      "files": {
+        "instructions.md": "1743fb4bfad38885d46cb5c08e550dc494de0ee31d176442012bb87afa70fb2d",
+        "persona.md": "1dd30c2e557c758375f610a0ad7d6b67d1bdc8fcd887cd53c4045557005f6189"
+      },
+      "updated_at": "2026-11-24T00:00:00Z"
     }
   ]
 }
