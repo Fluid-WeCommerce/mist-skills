@@ -841,6 +841,15 @@
       "icon": "package-search",
       "path": "operations/autoship-stock-runway.md",
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "slug": "marketing/share-library-freshness",
+      "name": "Share library freshness",
+      "description": "Sweep the videos, images, documents and playlists reps share for pieces that are out of date — retired products, past dates, ended offers, missing languages, nobody sharing them — and retire, expire or fix only what you approve.",
+      "category": "marketing",
+      "icon": "archive-restore",
+      "path": "marketing/share-library-freshness.md",
+      "updated_at": "2026-11-24T12:00:00Z"
     }
   ],
   "workflows": [
