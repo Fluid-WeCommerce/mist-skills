@@ -1447,6 +1447,39 @@
         "persona.md": "d617f5086ac4e27001e52ea9f07b3837e096b9eaee5be8201fd4e2dd93b164d3"
       },
       "updated_at": "2026-11-23T12:00:00Z"
+    },
+    {
+      "key": "chief_of_staff",
+      "version": 6,
+      "path": "bots/chief_of_staff/v6.json",
+      "sha256": "e307d16f3a13bc86272b57bb37fc599f29c94d85ed8396e44b2db4002d05eeef",
+      "files": {
+        "instructions.md": "be810f5311ef24aa40d4cb8fe482c89790c66d7da6ea0815511549ad26b32232",
+        "persona.md": "443a5f703cf732c68d0361d52453b4877a6d351ad0444d3fb19f7fa29bfd10c5"
+      },
+      "updated_at": "2026-11-24T12:00:00Z"
+    },
+    {
+      "key": "moderator",
+      "version": 6,
+      "path": "bots/moderator/v6.json",
+      "sha256": "a90ca0382c77f4cab4de391bcba590533d0eddbe8770cf366f8716ac6f69eff0",
+      "files": {
+        "instructions.md": "cf97d10adf402808a6dffc8953f39afc16282468ca384a706ae83fc74fddfee8",
+        "persona.md": "509de0760defca3d6e329dc608ff7c94a122d9504292d9a48fd3afc667077c69"
+      },
+      "updated_at": "2026-11-24T12:00:00Z"
+    },
+    {
+      "key": "revenue_head",
+      "version": 9,
+      "path": "bots/revenue_head/v9.json",
+      "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
+      "files": {
+        "instructions.md": "0d669029cbe2731ad9bdea9a28568cbb4f4462217c4db39b86fcbe29dc613af6",
+        "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
+      },
+      "updated_at": "2026-11-24T12:00:00Z"
     }
   ]
 }
