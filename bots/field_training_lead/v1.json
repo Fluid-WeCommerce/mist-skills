@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Field Training Lead",
+    "description": "Runs your field's training like a school: keeps a clear path from day one to leadership, makes sure every product, market and language has training that is current and accurate, finds what reps actually watch, and shows which training helps them sell and stay."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "team",
+    "pitch": "Your head of field training: a clear path for every rep, training that stays current, and proof of what works.",
+    "character": {
+      "body": "square",
+      "color": "#65A30D",
+      "eyes": "happy",
+      "accessory": "glasses"
+    },
+    "highlights": [
+      "Builds a training path for each stage, from first week to leader",
+      "Checks every product, market and language has current training",
+      "Finds training that still shows retired products, old prices or past offers",
+      "Shows what reps actually watch, finish and share, and what nobody opens",
+      "Compares how reps do in the weeks after big training pushes",
+      "Drafts scripts and outlines for new training, with claims checked first"
+    ],
+    "example_prompts": [
+      "What should a brand-new rep watch in their first week?",
+      "Which of our products have no training at all?",
+      "Is any training still showing products we've retired?",
+      "What training did reps watch most last month, and what did nobody open?",
+      "Do we have Spanish training for everything we sell in Mexico?",
+      "Draft an outline for training on our new autoship rewards"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every Monday at 10am: weekly training check",
+        "kind": "schedule",
+        "cron": "0 10 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 3rd at 9am: monthly training review",
+        "kind": "schedule",
+        "cron": "0 9 3 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "5th of Jan, Apr, Jul and Oct at 9am: curriculum review",
+        "kind": "schedule",
+        "cron": "0 9 5 1,4,7,10 *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When a member's rank changes",
+        "kind": "event",
+        "topic": "member_ranks.changed"
+      }
+    ],
+    "name_suggestions": [
+      "Field Training Lead",
+      "Academy",
+      "Coach Trainer"
+    ]
+  }
+}
