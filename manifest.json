@@ -1425,6 +1425,17 @@
         "persona.md": "fff8e29da276afd93200f312230cec73f6ade578bff587aba2281e03f57663fd"
       },
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "key": "field_training_lead",
+      "version": 1,
+      "path": "bots/field_training_lead/v1.json",
+      "sha256": "7858e513ee007b10061e9646708ba42d98fb20cc58e1fb8080a00c0c51469406",
+      "files": {
+        "instructions.md": "1f9a41c1688d32393d1ab9b7cb2c38efeecade5e5aa0623c99095a3b32529ba5",
+        "persona.md": "afba5e72e22a630834cbfac498ec36cfa5f12587299c79a241db3219f661445a"
+      },
+      "updated_at": "2026-11-25T12:00:00Z"
     }
   ]
 }
