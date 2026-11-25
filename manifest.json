@@ -762,6 +762,15 @@
       "updated_at": "2026-11-13T12:45:00Z"
     },
     {
+      "slug": "compliance/inventory-loading-check",
+      "name": "Inventory loading check",
+      "description": "Find reps whose own purchases look like stocking up to qualify rather than buying to use or resell (volume that is mostly self-bought, quantities no one person uses, month-end spikes before a rank change, stacked kits, refunds after qualifying), rank them by risk with the evidence, and save a dated review record without changing anything in Fluid.",
+      "category": "compliance",
+      "icon": "package-search",
+      "path": "compliance/inventory-loading-check.md",
+      "updated_at": "2026-11-25T12:00:00Z"
+    },
+    {
       "slug": "sales/orphaned-customer-handoff",
       "name": "Orphaned customer handoff",
       "description": "Find customers still credited to reps who have left or gone inactive, rank them by what they spend and their active autoships, pick an active rep to look after each group under your policy, and reassign only what you approve.",
