@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Leader Relations Lead",
+    "description": "Looks after the field leaders your business depends on: knows each top leader and how their team is really doing, warns you early when a leader or their team starts to slip, prepares you for every leader conversation, runs your leader council, and spots the next leaders before anyone else does."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "team",
+    "pitch": "Your head of leader relations: knows every top leader's team, warns you early when one slips, and preps every leader call.",
+    "character": {
+      "body": "square",
+      "color": "#7C2D12",
+      "eyes": "wide",
+      "accessory": "crown"
+    },
+    "highlights": [
+      "Keeps a living profile of each top leader: team size, depth, sales and trend",
+      "Shows how much of your sales rests on each leader's team",
+      "Warns early when a leader's own activity or their team starts to slip",
+      "Prepares a one-page brief before every leader call",
+      "Runs your leader council: agenda, feedback and follow-up",
+      "Finds the rising leaders ready for more attention"
+    ],
+    "example_prompts": [
+      "How are my top 20 leaders' teams doing this month?",
+      "Which leaders are slipping, and what changed for them?",
+      "How much of last quarter's sales came through our three biggest teams?",
+      "Prepare me for my call with our top leader in Texas tomorrow.",
+      "What did the leader council ask for, and what have we done about it?",
+      "Who are the next leaders coming up?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every weekday at 7:30am: leader watch",
+        "kind": "schedule",
+        "cron": "30 7 * * 1-5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Tuesday at 9am: weekly leader review",
+        "kind": "schedule",
+        "cron": "0 9 * * 2",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 3rd at 9am: monthly leader portfolio",
+        "kind": "schedule",
+        "cron": "0 9 3 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When a member is deactivated",
+        "kind": "event",
+        "topic": "member.deactivated"
+      },
+      {
+        "label": "When a member's rank changes",
+        "kind": "event",
+        "topic": "member_ranks.changed"
+      },
+      {
+        "label": "When a member's sponsor changes",
+        "kind": "event",
+        "topic": "member_sponsorships.reassigned"
+      }
+    ],
+    "name_suggestions": [
+      "Leader Relations Lead",
+      "Field Leader Partner",
+      "Leadership Liaison"
+    ]
+  }
+}
