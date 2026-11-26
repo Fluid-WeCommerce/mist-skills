@@ -1433,7 +1433,7 @@
       "sha256": "356b552e1c1d07612518c0db3f22495cff47c075bdc3f835114c3e528c3ef1d6",
       "files": {
         "instructions.md": "be5db23cc84362aa810a4b180ca1ee4e153f2678a4ad181f8c1fa16cd594e820",
-        "persona.md": "3ae456d769cda3bcc3c9197ed6986591f0434744ff590027cf1224e296be0a9d"
+        "persona.md": "c64178301cef273f382c61da7eedf6afd13673573ddf7a742114d3d9cbc2a5d6"
       },
       "updated_at": "2026-11-23T12:00:00Z"
     },
@@ -1444,7 +1444,7 @@
       "sha256": "b9efd5eeb3b13cf09d4e27802cf70409e1dfa985fa427fb3b513007fcbee2753",
       "files": {
         "instructions.md": "59e62798706efbcd614ce8bbefedc6f7757abb72fca001966215810809fbe1da",
-        "persona.md": "d617f5086ac4e27001e52ea9f07b3837e096b9eaee5be8201fd4e2dd93b164d3"
+        "persona.md": "3ee2d48cd3bf5921e08c7a021e9a3c27c97da1a7b1aeb06b79b382f5e376c7c7"
       },
       "updated_at": "2026-11-23T12:00:00Z"
     },
@@ -1455,7 +1455,7 @@
       "sha256": "e307d16f3a13bc86272b57bb37fc599f29c94d85ed8396e44b2db4002d05eeef",
       "files": {
         "instructions.md": "be810f5311ef24aa40d4cb8fe482c89790c66d7da6ea0815511549ad26b32232",
-        "persona.md": "443a5f703cf732c68d0361d52453b4877a6d351ad0444d3fb19f7fa29bfd10c5"
+        "persona.md": "5ed8b40acb5f5206bfa8ab3e29ba7ef25c8a9836b1ab7e7224ff166d3adb2ed6"
       },
       "updated_at": "2026-11-24T12:00:00Z"
     },
@@ -1466,7 +1466,7 @@
       "sha256": "a90ca0382c77f4cab4de391bcba590533d0eddbe8770cf366f8716ac6f69eff0",
       "files": {
         "instructions.md": "cf97d10adf402808a6dffc8953f39afc16282468ca384a706ae83fc74fddfee8",
-        "persona.md": "509de0760defca3d6e329dc608ff7c94a122d9504292d9a48fd3afc667077c69"
+        "persona.md": "917f494b0f099a9ba7c34ba222e600b139627a43b67c494ee149dce42457cb71"
       },
       "updated_at": "2026-11-24T12:00:00Z"
     },
@@ -1477,7 +1477,7 @@
       "sha256": "c06c54495393563328f9f7e0602c53d2b071e87655464103bc6fd0b7da5df45f",
       "files": {
         "instructions.md": "0d669029cbe2731ad9bdea9a28568cbb4f4462217c4db39b86fcbe29dc613af6",
-        "persona.md": "813c3c66638bbe3ca01deabadbca73612ea97f01c1ca75ac857796bff67e62d2"
+        "persona.md": "7ea9f5ec49882e7e50a98cedd97dbd7e15482247d931413ecfae87c047a14362"
       },
       "updated_at": "2026-11-24T12:00:00Z"
     },
@@ -1488,7 +1488,7 @@
       "sha256": "752d2363a00b6f98ad2a6ea87d7c4a13b660872c34ebdcfe1095d8c251111e81",
       "files": {
         "instructions.md": "6d6443b36356b6f80fa48d8d6d3f0c70600d7032e467b8c35a226b133237eba2",
-        "persona.md": "d6de6b98fc03d9eb3a3b6a16fd9e42cd1355b2f7ea117762b12177f53efbd444"
+        "persona.md": "2dd2a0b21c57504fcc0ff2b852c9a60eea6db8c7e384813a46f29cc6bafe9730"
       },
       "updated_at": "2026-11-25T12:00:00Z"
     },
@@ -1499,7 +1499,7 @@
       "sha256": "889e434f65013b66d7da030dafdfe41ec8553fd4cc6c1015b140140ca9d77862",
       "files": {
         "instructions.md": "5cd09219c7c77dde0bd7d904015b2ae38c9f7a0d9447211716c92dc63bc4a5ac",
-        "persona.md": "66879f4dbfebe8f45628189e60d96fe0e623ed77d220f1aa4c6d07902868281e"
+        "persona.md": "e6cdf1815f0555e0f4e22a574ed1d6cd9f2a496268f3f8ebe0b5b68d1869fd81"
       },
       "updated_at": "2026-11-25T12:00:00Z"
     },
@@ -1510,7 +1510,7 @@
       "sha256": "56b5b74f86dcd4490c84697a58a3cb23be99d582f3198eca4284a09dc810d24d",
       "files": {
         "instructions.md": "7f9bbd41353941f4b58000fba4f48ed56e2c86f9bbfc2ef0d6d8bd7424831a31",
-        "persona.md": "07ae51cbce5f10ba8bbe6264fb81381838fb34c29560aeba4ee2bdbae29a2a02"
+        "persona.md": "01cc64e05c6d354ac92d4733bd714b8fa957128a5dd12b5c759fee50b99f240e"
       },
       "updated_at": "2026-11-25T12:00:00Z"
     },
@@ -1521,7 +1521,7 @@
       "sha256": "0421a65e4a92ae659dfcb198f8669cc80af966d57d521a0fb41f6023c34a1b83",
       "files": {
         "instructions.md": "d5d94e6de0a3e275a402878242d5a6962d6c9372e417607b955d20afad1c4873",
-        "persona.md": "7d45305781f4f4785117d4e2c7065c922e51460a4046336ec079a7779cdf024a"
+        "persona.md": "d434856d1c5bf56f839f548a63f3f22d1d886420f4efde3a8bbe82b7f1e0777c"
       },
       "updated_at": "2026-11-25T12:00:00Z"
     },
@@ -1543,7 +1543,7 @@
       "sha256": "522c7755a293801d825bf3b6fbe74b217c19cd929969124ed77efde313f71550",
       "files": {
         "instructions.md": "6556c2d3b54095881ce496a44dce7fa3251bbbcc3a10b0be4055c7fbec51bc45",
-        "persona.md": "757c2d69275e305a1341fe935bfed864a9d0edf863d0a1d5cabcfec308f1043c"
+        "persona.md": "14559d09a8f851527ebbab0165f049f0dd690c598b2e6bea47b2ae0e6d78d7b2"
       },
       "updated_at": "2026-11-25T12:00:00Z"
     },
@@ -1554,7 +1554,7 @@
       "sha256": "4d4c5d47f3bc952cd838d247f523d6e6126cfdacb8b5b22fa69b2ba2bc3196ef",
       "files": {
         "instructions.md": "1743fb4bfad38885d46cb5c08e550dc494de0ee31d176442012bb87afa70fb2d",
-        "persona.md": "4a04a9413a86522a03ed75375aa081aabebd046199d414ebddace52ffc247347"
+        "persona.md": "71bb7f85f8e0897fbdae16376133a8426025b4eda19d4ee49e7a77d9c0049992"
       },
       "updated_at": "2026-11-25T12:00:00Z"
     }
