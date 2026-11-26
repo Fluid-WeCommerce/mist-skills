@@ -1425,6 +1425,28 @@
         "persona.md": "fff8e29da276afd93200f312230cec73f6ade578bff587aba2281e03f57663fd"
       },
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "key": "leader_relations_lead",
+      "version": 1,
+      "path": "bots/leader_relations_lead/v1.json",
+      "sha256": "5e1cd5e0fd68c0e5461f3b5ec60a6c2042717cfcff3a2fc14acb0028f06e5d7a",
+      "files": {
+        "instructions.md": "d1eebffa48cb7960876a11fe18c87e2ce5d53ca0fccb30e9ac05a3a0b33d1f90",
+        "persona.md": "203233110dc154ff4729c33ab55a962aa5e769446d135f164f454c1a8b705ccb"
+      },
+      "updated_at": "2026-11-26T12:00:00Z"
+    },
+    {
+      "key": "comp_plan_strategist",
+      "version": 2,
+      "path": "bots/comp_plan_strategist/v2.json",
+      "sha256": "b1b3ecb978221320b6ce2cd528fad25718e96f007365fb4daeb8a0ff28466d51",
+      "files": {
+        "instructions.md": "351f99b4c6cfd693982002cba3abbffb60d8a563bb069d0777f00a84eb46006e",
+        "persona.md": "536f471a8273c8ecbd9d63a93639c9e9e286df804673ba3bf61e6c60962619bf"
+      },
+      "updated_at": "2026-11-26T12:00:00Z"
     }
   ]
 }
