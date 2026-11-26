@@ -841,6 +841,15 @@
       "icon": "package-search",
       "path": "operations/autoship-stock-runway.md",
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "slug": "operations/autoship-billing-days",
+      "name": "Autoship billing days",
+      "description": "Map which days of the month autoship renewals bill on, find the days that hurt (month-end dates that slip past the commission close, overloaded peaks, days that decline more), then design, preview and save blackout rules that move them, with your approval.",
+      "category": "operations",
+      "icon": "calendar-clock",
+      "path": "operations/autoship-billing-days.md",
+      "updated_at": "2026-11-26T12:00:00Z"
     }
   ],
   "workflows": [
