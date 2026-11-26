@@ -282,6 +282,17 @@ def validate_bots(manifest: Any) -> int:
         ),
         "bot key and version",
     )
+    listed = {entry["path"] for entry in bots}
+    unlisted = sorted(
+        path.relative_to(ROOT).as_posix()
+        for path in ROOT.glob("bots/*/v*.json")
+        if path.relative_to(ROOT).as_posix() not in listed
+    )
+    if unlisted:
+        raise CatalogValidationError(
+            "manifest bots[] must list every template version, so the sync "
+            f"publishes it; missing {', '.join(unlisted)}"
+        )
     return len(bots)
 
 

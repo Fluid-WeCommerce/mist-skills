@@ -21,6 +21,14 @@ class BotTemplateFilesTest(unittest.TestCase):
             validate_catalog.validate_bots(manifest), len(manifest["bots"])
         )
 
+    def test_rejects_a_template_version_the_manifest_does_not_list(self) -> None:
+        manifest = self.manifest()
+        manifest["bots"].pop()
+        with self.assertRaisesRegex(
+            validate_catalog.CatalogValidationError, "every template version"
+        ):
+            validate_catalog.validate_bots(manifest)
+
     def test_rejects_a_markdown_file_digest_that_does_not_match(self) -> None:
         manifest = self.manifest()
         manifest["bots"][0]["files"]["persona.md"] = "0" * 64
