@@ -1425,6 +1425,39 @@
         "persona.md": "fff8e29da276afd93200f312230cec73f6ade578bff587aba2281e03f57663fd"
       },
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "key": "field_compliance_officer",
+      "version": 1,
+      "path": "bots/field_compliance_officer/v1.json",
+      "sha256": "4724aa52acf8e2f548ae05815144a7c691e0f4ebccf54bdade4f6d2083a2403a",
+      "files": {
+        "instructions.md": "03aaa0b3513673ebd528f2b7cacf3cc15840912708b5dfee778c43aa9507b1fe",
+        "persona.md": "ec8843ccbc5dfd3578bc6514451345ea7f0aaa1ee62344abc78564f59bc72331"
+      },
+      "updated_at": "2026-11-27T12:00:00Z"
+    },
+    {
+      "key": "moderator",
+      "version": 6,
+      "path": "bots/moderator/v6.json",
+      "sha256": "a90ca0382c77f4cab4de391bcba590533d0eddbe8770cf366f8716ac6f69eff0",
+      "files": {
+        "instructions.md": "38bab4a8c507bdab171ecf6e61cd7b0c14d59d00efc756ba1cc5096735f6f474",
+        "persona.md": "9d5946e758e3fe531752efdb5f11038718095bade8c120837e759dd24490b192"
+      },
+      "updated_at": "2026-11-27T12:00:00Z"
+    },
+    {
+      "key": "comp_plan_strategist",
+      "version": 2,
+      "path": "bots/comp_plan_strategist/v2.json",
+      "sha256": "b1b3ecb978221320b6ce2cd528fad25718e96f007365fb4daeb8a0ff28466d51",
+      "files": {
+        "instructions.md": "351f99b4c6cfd693982002cba3abbffb60d8a563bb069d0777f00a84eb46006e",
+        "persona.md": "56a56e445bf31ad166921549cc69184aeaac36cb2e5df8539575ee55dc94d557"
+      },
+      "updated_at": "2026-11-27T12:00:00Z"
     }
   ]
 }
