@@ -841,6 +841,15 @@
       "icon": "package-search",
       "path": "operations/autoship-stock-runway.md",
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "slug": "finance/promo-code-leak-check",
+      "name": "Promo code leak check",
+      "description": "Find promo codes that are costing more than you meant \u2014 open-ended or deep codes, codes that still pay full volume, codes whose use suddenly jumped, and codes listed on public coupon sites \u2014 estimate what each cost in the last 30 days, and tighten or retire only the ones you approve.",
+      "category": "finance",
+      "icon": "ticket-x",
+      "path": "finance/promo-code-leak-check.md",
+      "updated_at": "2026-11-27T12:00:00Z"
     }
   ],
   "workflows": [
