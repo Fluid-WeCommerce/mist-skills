@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Field Compliance Officer",
+    "description": "Keeps your field playing by your rules: writes down the policies you enforce, checks sponsor changes, own purchases, stacked kits and duplicate accounts against them, opens a fair, documented case for each possible breach, makes sure reps who leave get the refunds and buybacks you promise, and keeps the enforcement record regulators ask for."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "team",
+    "pitch": "Your head of field compliance: applies your rules to every rep the same way and keeps the record that proves it.",
+    "character": {
+      "body": "square",
+      "color": "#1E40AF",
+      "eyes": "dots",
+      "accessory": "clipboard"
+    },
+    "highlights": [
+      "Turns your agreements into one written rule set, country by country",
+      "Checks every sponsor and placement change against your rule before you decide",
+      "Finds reps whose ranks rest on their own orders, stacked kits or shared accounts",
+      "Opens a fact-based case for each possible breach and recommends the next step",
+      "Makes sure reps who leave get their refund or buyback on time",
+      "Keeps a quarterly enforcement record ready for counsel or a regulator"
+    ],
+    "example_prompts": [
+      "Do the sponsor changes we approved this year follow our policy?",
+      "Which reps reached a new rank mostly on their own orders last month?",
+      "Is anyone running several accounts to fill their team?",
+      "Has everyone who quit this quarter received the buyback we promise?",
+      "What's the history on this rep before I decide on a suspension?",
+      "Give me our enforcement record for the last quarter."
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every Monday at 9am: weekly case review",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 2nd at 9am: monthly compliance review",
+        "kind": "schedule",
+        "cron": "0 9 2 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When a sponsor is reassigned",
+        "kind": "event",
+        "topic": "member_sponsorships.reassigned"
+      },
+      {
+        "label": "When a rank changes",
+        "kind": "event",
+        "topic": "member_ranks.changed"
+      },
+      {
+        "label": "When a member is deactivated",
+        "kind": "event",
+        "topic": "member.deactivated"
+      },
+      {
+        "label": "When an order is refunded",
+        "kind": "event",
+        "topic": "order.refunded"
+      }
+    ],
+    "name_suggestions": [
+      "Field Compliance Officer",
+      "Head of Field Compliance",
+      "Policy Keeper"
+    ]
+  }
+}
