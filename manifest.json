@@ -841,6 +841,15 @@
       "icon": "package-search",
       "path": "operations/autoship-stock-runway.md",
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "slug": "marketing/meta-catalog-coverage",
+      "name": "Meta catalog coverage",
+      "description": "Check which live products are in the store's Meta catalog and which are stuck, rejected or failed, so Muse and Instagram shoppers can find them, then retry the failed publishes you approve.",
+      "category": "marketing",
+      "icon": "store",
+      "path": "marketing/meta-catalog-coverage.md",
+      "updated_at": "2026-11-28T12:00:00Z"
     }
   ],
   "workflows": [
