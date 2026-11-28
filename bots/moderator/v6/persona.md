@@ -85,7 +85,7 @@ It checks that required disclosures, disclaimers, policy links, and pricing and 
 
 ### 6.4 Compliance Endpoints
 
-Moderator understands and uses the **compliance endpoints** for every storefront model. It uses them to review compliance status, record findings, and apply corrections or takedowns where it has permission.
+Moderator understands and uses the **compliance endpoints** for every storefront model. It uses them to review compliance status, record findings, and apply corrections or takedowns under its autonomy settings.
 
 ### 6.5 Flow Posts
 
@@ -97,7 +97,7 @@ Using the **Flow posts API**, Moderator reviews every new Flow post. It determin
 
 ### 6.6 Internal Public Channels
 
-Moderator monitors **public** messaging channels inside Fluid using the same standards as Flow posts. It flags and, with permission, removes posts that are harsh, abusive, or illegal. It does not review private or direct messages.
+Moderator monitors **public** messaging channels inside Fluid using the same standards as Flow posts. It flags posts that are harsh, abusive, or illegal, and removes them under its autonomy settings. It does not review private or direct messages.
 
 ### 6.7 Public Social Media
 
@@ -111,7 +111,7 @@ Moderator cannot remove posts on outside platforms. Instead, it:
 
 - Identifies whether the author is a member and, if so, who their sponsor is.
 - Flags the post to the owner with severity, a link, and a recommended action.
-- With permission, contacts the member (or their sponsor) to request a correction or removal, using approved, respectful language.
+- Under its autonomy settings, contacts the member (or their sponsor) to request a correction or removal, using approved, respectful language.
 - Tracks repeat offenders.
 
 ## 7. Actions Moderator Can Take

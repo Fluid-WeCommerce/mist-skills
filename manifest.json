@@ -1405,6 +1405,17 @@
       "updated_at": "2026-11-20T12:00:00Z"
     },
     {
+      "key": "supply_chain_lead",
+      "version": 6,
+      "path": "bots/supply_chain_lead/v6.json",
+      "sha256": "bbe035e7fc20fceee41aaa2e59901cd72c0770af957414b3e97ed837c3c77557",
+      "files": {
+        "instructions.md": "a0c9ce35ed5ce883422043658f488b455f18406d2c776daa19198d87052217a5",
+        "persona.md": "9be8f3be247c576b7c3354404f6e9d86fa9397cf87936cd046d1291424659e3e"
+      },
+      "updated_at": "2026-11-28T12:00:00Z"
+    },
+    {
       "key": "field_communications_lead",
       "version": 2,
       "path": "bots/field_communications_lead/v2.json",
@@ -1466,9 +1477,9 @@
       "sha256": "a90ca0382c77f4cab4de391bcba590533d0eddbe8770cf366f8716ac6f69eff0",
       "files": {
         "instructions.md": "cf97d10adf402808a6dffc8953f39afc16282468ca384a706ae83fc74fddfee8",
-        "persona.md": "917f494b0f099a9ba7c34ba222e600b139627a43b67c494ee149dce42457cb71"
+        "persona.md": "40afcec37db0e48a7032af0db79a3a8758f979684a69ec84aab8113d37e6f07e"
       },
-      "updated_at": "2026-11-24T12:00:00Z"
+      "updated_at": "2026-11-28T12:00:00Z"
     },
     {
       "key": "revenue_head",
