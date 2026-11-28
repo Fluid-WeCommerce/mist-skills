@@ -1425,6 +1425,17 @@
         "persona.md": "fff8e29da276afd93200f312230cec73f6ade578bff587aba2281e03f57663fd"
       },
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "key": "recruiting_lead",
+      "version": 1,
+      "path": "bots/recruiting_lead/v1.json",
+      "sha256": "7c205eeda429f97fe5e7421de10e84cd752f7721f60730087f4a025b880cebaa",
+      "files": {
+        "instructions.md": "0ca6655d7cccd44ec7ba729ceb340af9adfb8989193a73f2ffbd126013ac5950",
+        "persona.md": "ab558fc5a34d61b23ca2ac24877ad223bc0b1ee6c133ebf8bb9558a2d637bb4b"
+      },
+      "updated_at": "2026-11-28T12:00:00Z"
     }
   ]
 }
