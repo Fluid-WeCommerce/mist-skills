@@ -841,6 +841,15 @@
       "icon": "package-search",
       "path": "operations/autoship-stock-runway.md",
       "updated_at": "2026-11-22T12:00:00Z"
+    },
+    {
+      "slug": "sales/enrollment-kit-scorecard",
+      "name": "Enrollment kit scorecard",
+      "description": "Judge each enrollment kit by what happens to the reps who join with it — reorders, autoship, refunds and who is still active 30, 60 and 90 days later — so you keep the kits that build a field and fix the ones that only sell a box.",
+      "category": "sales",
+      "icon": "package-check",
+      "path": "sales/enrollment-kit-scorecard.md",
+      "updated_at": "2026-11-28T12:00:00Z"
     }
   ],
   "workflows": [
