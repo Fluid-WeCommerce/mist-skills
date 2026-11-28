@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "Recruiting & Enrollment Lead",
+    "description": "Grows your field the healthy way: tracks how many people join each week and market, finds where would-be reps drop out before finishing, shows which kits, pages and sponsors bring people who stay, spots loyal customers ready to become reps, and keeps every recruiting message honest."
+  },
+  "instructions": {
+    "file": "instructions.md"
+  },
+  "persona": {
+    "file": "persona.md"
+  },
+  "model": "auto",
+  "min_model_tier": "complex",
+  "singleton": true,
+  "listing": {
+    "category": "team",
+    "pitch": "Your head of recruiting: more people joining, from more sponsors, who are still here in 90 days.",
+    "character": {
+      "body": "round",
+      "color": "#0369A1",
+      "eyes": "happy",
+      "accessory": "megaphone"
+    },
+    "highlights": [
+      "Tracks new reps and enrollments by week, market and kit against your normal",
+      "Finds where people drop out of joining, and what stopped them",
+      "Shows which kits, pages and shared links bring reps who stay, not just sign-ups",
+      "Measures how many reps sponsor anyone, so growth doesn't rest on a few leaders",
+      "Spots loyal customers who look ready to become reps",
+      "Sends recruiting pages and income mentions to Moderator before anyone uses them"
+    ],
+    "example_prompts": [
+      "How many people joined this week, and is that normal for November?",
+      "Where are people dropping out of our sign-up?",
+      "Which enrollment kit brings reps who are still active after 90 days?",
+      "How many of our active reps sponsored someone this quarter?",
+      "Which customers look ready to become reps?",
+      "Why did enrollments in Mexico fall last month?"
+    ],
+    "suggested_triggers": [
+      {
+        "label": "Every weekday at 8am: enrollment check",
+        "kind": "schedule",
+        "cron": "0 8 * * 1-5",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "Every Monday at 9am: weekly recruiting review",
+        "kind": "schedule",
+        "cron": "0 9 * * 1",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "On the 2nd at 10am: monthly growth review",
+        "kind": "schedule",
+        "cron": "0 10 2 * *",
+        "timezone": "America/Denver"
+      },
+      {
+        "label": "When someone finishes enrolling",
+        "kind": "event",
+        "topic": "enrollment.completed"
+      },
+      {
+        "label": "When a customer becomes a rep",
+        "kind": "event",
+        "topic": "member_types.assigned"
+      },
+      {
+        "label": "When an order is refunded",
+        "kind": "event",
+        "topic": "order.refunded"
+      }
+    ],
+    "name_suggestions": [
+      "Recruiting & Enrollment Lead",
+      "Head of Recruiting",
+      "Field Growth Lead"
+    ]
+  }
+}
